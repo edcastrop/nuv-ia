@@ -487,12 +487,7 @@ function CasosPage() {
           </div>
         ) : (
           <>
-            <div className="flex items-center justify-between px-1 pb-1">
-              <div className="text-[10.5px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>
-                <Activity size={11} className="inline mr-1.5" />
-                {filteredRows.length} expediente{filteredRows.length === 1 ? "" : "s"} en operación
-              </div>
-            </div>
+
             {filteredRows.map((r) => (
               <TimelineCard
                 key={r.id}
@@ -945,7 +940,6 @@ function TimelineCard({
   const nivel = slaNivel(dias, umbral);
   const slaTheme = SLA_COLORS[nivel];
   const slaLabel = nivel === "critico" ? `${dias}d · SLA ${umbral}d` : nivel === "atencion" ? `${dias}d / ${umbral}d` : `${dias}d`;
-  const SlaIcon = nivel === "critico" ? AlertTriangle : Clock;
 
   const qaScore = r.qa_score ?? null;
   const qaCat = (r.qa_categoria ?? "").toString().toUpperCase();
@@ -954,122 +948,179 @@ function TimelineCard({
   // Progress: current milestone
   const currentIdx = MILESTONES.findIndex((m) => etapa.numero <= m.etapa);
   const activeIdx = currentIdx === -1 ? MILESTONES.length - 1 : currentIdx;
-  const progressPct = ((activeIdx + 1) / MILESTONES.length) * 100;
+
+  // Per-stage glow color (SIM/QA/RAD/APR/FIRM)
+  const STAGE_GLOW = ["#445DA3", "#F5C542", "#F97316", "#84B98F", "#22FF88"];
+  const stageColor = STAGE_GLOW[activeIdx] ?? AZUL;
+
+  // Analista display
+  const analistaNombre = licenciado?.nombre || licenciado?.email || asesor?.nombre || asesor?.email || "";
+  const analistaEmail  = licenciado?.email || asesor?.email || null;
+  const initialsOf = (n: string) => {
+    const clean = n.replace(/@.*$/, "").replace(/[._-]+/g, " ").trim();
+    const parts = clean.split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  };
+  const analistaIni = analistaNombre ? initialsOf(analistaNombre) : "";
+
+  // Health score (presentational): prefer QA score, fallback SLA-based
+  const healthScore = qaScore != null
+    ? Math.round(qaScore)
+    : nivel === "critico" ? 42 : nivel === "atencion" ? 68 : 88;
+  const healthColor = healthScore >= 80 ? VERDE : healthScore >= 60 ? "#F5C542" : "#FB7185";
+
+  // Priority (presentational, from SLA)
+  const prioridad = nivel === "critico" ? { label: "Alta", color: "#FB7185" }
+                  : nivel === "atencion" ? { label: "Media", color: "#F59E0B" }
+                  : { label: "Normal", color: VERDE };
 
   return (
     <div
       className="group relative overflow-hidden rounded-2xl backdrop-blur-xl transition-all duration-300 hover:-translate-y-0.5"
       style={{
-        background: `linear-gradient(180deg, rgba(10,22,40,0.75), rgba(7,17,32,0.85))`,
+        background: `linear-gradient(180deg, rgba(10,22,40,0.75), rgba(7,17,32,0.88))`,
         border: `1px solid ${BORDER}`,
-        boxShadow: "0 6px 24px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)",
+        boxShadow: `0 6px 24px -12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04)`,
       }}
     >
-      {/* Lateral bar */}
+      {/* Lateral glow bar — stage */}
       <span
         className="absolute left-0 top-0 bottom-0 w-[3px]"
-        style={{ background: `linear-gradient(180deg, ${theme.color}, ${theme.color}30)`, boxShadow: `0 0 16px ${theme.color}55` }}
+        style={{
+          background: `linear-gradient(180deg, ${stageColor}, ${stageColor}20)`,
+          boxShadow: `0 0 22px ${stageColor}88, 0 0 44px ${stageColor}44`,
+        }}
       />
       {/* Hover glow */}
       <span
         className="absolute -right-20 top-1/2 -translate-y-1/2 h-40 w-40 rounded-full opacity-0 transition-opacity duration-500 group-hover:opacity-25 blur-3xl pointer-events-none"
-        style={{ background: theme.color }}
+        style={{ background: stageColor }}
       />
 
-      <div className="relative grid gap-4 px-5 py-4 items-center" style={{ gridTemplateColumns: "minmax(0,2.4fr) minmax(0,2.6fr) minmax(190px,2fr) auto" }}>
-        {/* LEFT — Identity */}
+      <div
+        className="relative grid gap-4 px-5 py-3.5 items-center"
+        style={{ gridTemplateColumns: "minmax(0,30fr) minmax(0,35fr) minmax(200px,20fr) minmax(150px,15fr)" }}
+      >
+        {/* ============ 1 · CLIENTE (30%) ============ */}
         <div className="flex items-center gap-3 min-w-0">
-          <div
-            className="flex items-center justify-center rounded-xl text-[15px] font-black text-white shrink-0"
-            style={{
-              width: 46, height: 46,
-              background: `linear-gradient(135deg, ${aColor}, ${aColor}99)`,
-              boxShadow: `0 6px 18px -6px ${aColor}80, inset 0 1px 0 rgba(255,255,255,0.15)`,
-            }}
-          >
-            {initial}
+          {/* Avatar with stage-aware glow */}
+          <div className="relative shrink-0">
+            <span
+              className="absolute inset-0 rounded-2xl blur-lg opacity-70"
+              style={{ background: stageColor }}
+            />
+            <div
+              className="relative flex items-center justify-center rounded-2xl text-[16px] font-black text-white"
+              style={{
+                width: 50, height: 50,
+                background: `linear-gradient(135deg, ${aColor}, ${aColor}AA)`,
+                border: `1.5px solid ${stageColor}`,
+                boxShadow: `0 0 18px ${stageColor}66, inset 0 1px 0 rgba(255,255,255,0.2)`,
+              }}
+            >
+              {initial}
+            </div>
+            {/* stage ring pulse */}
+            <span
+              className="absolute -inset-1 rounded-2xl border pointer-events-none animate-pulse"
+              style={{ borderColor: `${stageColor}55` }}
+            />
           </div>
+
           <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+            <div className="flex items-center gap-1.5 mb-0.5 flex-wrap">
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8.5px] font-bold uppercase tracking-wider"
                 style={{ background: "rgba(68,93,163,0.15)", color: "#A5B5E0", border: `1px solid ${AZUL}55` }}
                 title={etapa.descripcion}
               >
-                <Flag size={9} /> E{etapa.numero}
+                <Flag size={8} /> E{etapa.numero}
               </span>
               <span
-                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[9px] font-bold uppercase tracking-wider"
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8.5px] font-bold uppercase tracking-wider"
                 style={{ background: slaTheme.bg, color: slaTheme.fg, border: `1px solid ${slaTheme.border}` }}
               >
-                <SlaIcon size={9} /> {slaLabel}
+                <Clock size={8} /> {slaLabel}
               </span>
               {isDup && (
-                <span className="rounded px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider"
+                <span className="rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider"
                   style={{ background: "rgba(245,158,11,0.15)", color: "#F59E0B", border: "1px solid rgba(245,158,11,0.4)" }}>Dup</span>
               )}
             </div>
-            <div className="font-semibold text-[13px] leading-tight truncate text-white" title={r.cliente_nombre || "Sin nombre"}>
+            <div className="font-bold text-[13.5px] leading-tight truncate text-white" title={r.cliente_nombre || "Sin nombre"}>
               {r.cliente_nombre || "Sin nombre"}
             </div>
-            <div className="flex items-center gap-2 text-[10.5px] mt-1 min-w-0" style={{ color: TEXT2 }}>
-              <span className="truncate">CC {r.cedula || "—"}</span>
+            <div className="flex items-center gap-1.5 text-[10.5px] mt-0.5 min-w-0" style={{ color: TEXT2 }}>
+              <Building2 size={9} className="shrink-0" />
+              <span className="truncate">{r.banco || "—"}</span>
               <span className="text-white/20">·</span>
-              <span className="inline-flex items-center gap-1 truncate"><Building2 size={9} /> {r.banco || "—"}</span>
+              <span className="truncate">Nº {r.numero_credito || r.cedula || "—"}</span>
+            </div>
+            <div className="flex items-center gap-1 mt-0.5 text-[9.5px]" style={{ color: TEXT2 }}>
+              <span className="uppercase tracking-wide">{r.producto || "—"}</span>
               <span className="text-white/20">·</span>
               <span className="font-bold" style={{ color: AZUL }}>{r.modo.toUpperCase()}</span>
             </div>
-            {(asesor || licenciado) && (
-              <div className="flex items-center gap-1.5 mt-1.5 min-w-0" title="Analista asignado">
-                <AnalistaAvatar
-                  nombre={(licenciado?.nombre ?? asesor?.nombre) ?? null}
-                  email={(licenciado?.email ?? asesor?.email) ?? null}
-                  size={14}
-                />
-                <span className="text-[10px] truncate" style={{ color: TEXT2 }}>
-                  {licenciado?.nombre || licenciado?.email || asesor?.nombre || asesor?.email || ""}
+            {/* Analista badge */}
+            {analistaNombre && (
+              <div className="inline-flex items-center gap-1.5 mt-1.5 pl-0.5 pr-2 py-0.5 rounded-full"
+                   style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER}` }}
+                   title={`Analista · ${analistaNombre}`}>
+                <span className="inline-flex items-center justify-center rounded-full text-[8.5px] font-black text-white"
+                      style={{ width: 18, height: 18, background: `linear-gradient(135deg, ${AZUL}, ${VERDE})` }}>
+                  {analistaIni || <AnalistaAvatar nombre={analistaNombre} email={analistaEmail} size={14} />}
+                </span>
+                <span className="text-[10px] font-semibold truncate max-w-[160px]" style={{ color: "#CBD5E1" }}>
+                  {analistaNombre}
                 </span>
               </div>
             )}
           </div>
         </div>
 
-        {/* CENTER — Progress timeline */}
-        <div className="min-w-0 px-2">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[9.5px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>Pipeline</span>
-            <span className="text-[9.5px] font-bold tabular-nums" style={{ color: theme.color }}>{Math.round(progressPct)}%</span>
+        {/* ============ 2 · PIPELINE (35%) ============ */}
+        <div className="min-w-0 px-1">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[8.5px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>Pipeline</span>
+            <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: stageColor, textShadow: `0 0 10px ${stageColor}88` }}>
+              {MILESTONES[activeIdx]?.label ?? "—"}
+            </span>
           </div>
           <div className="relative">
-            <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+            {/* rail */}
+            <div className="absolute left-1 right-1 top-1/2 -translate-y-1/2 h-[2px] rounded-full" style={{ background: "rgba(255,255,255,0.06)" }} />
+            {/* filled rail */}
             <div
-              className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500"
+              className="absolute left-1 top-1/2 -translate-y-1/2 h-[2px] rounded-full transition-all duration-500"
               style={{
-                width: `${progressPct}%`,
-                background: `linear-gradient(90deg, ${AZUL}, ${theme.color})`,
-                boxShadow: `0 0 10px ${theme.color}`,
+                width: `calc((100% - 8px) * ${activeIdx / (MILESTONES.length - 1)})`,
+                background: `linear-gradient(90deg, ${AZUL}, ${stageColor})`,
+                boxShadow: `0 0 10px ${stageColor}`,
               }}
             />
             <div className="relative flex items-center justify-between">
               {MILESTONES.map((m, i) => {
                 const done = i <= activeIdx;
                 const active = i === activeIdx;
+                const nodeColor = STAGE_GLOW[i] ?? AZUL;
                 return (
                   <div key={m.key} className="flex flex-col items-center gap-1">
                     <div
                       className="relative rounded-full transition-all"
                       style={{
                         width: active ? 14 : 10, height: active ? 14 : 10,
-                        background: done ? `linear-gradient(135deg, ${AZUL}, ${VERDE})` : "rgba(255,255,255,0.08)",
-                        border: `1.5px solid ${done ? "rgba(255,255,255,0.4)" : "rgba(255,255,255,0.1)"}`,
-                        boxShadow: active ? `0 0 12px ${VERDE}, 0 0 24px ${VERDE}55` : "none",
+                        background: done ? `linear-gradient(135deg, ${AZUL}, ${nodeColor})` : "rgba(255,255,255,0.08)",
+                        border: `1.5px solid ${done ? "rgba(255,255,255,0.45)" : "rgba(255,255,255,0.1)"}`,
+                        boxShadow: active ? `0 0 12px ${nodeColor}, 0 0 24px ${nodeColor}66` : done ? `0 0 6px ${nodeColor}55` : "none",
                       }}
                     >
                       {active && (
-                        <span className="absolute inset-0 rounded-full animate-ping" style={{ background: VERDE, opacity: 0.5 }} />
+                        <span className="absolute inset-0 rounded-full animate-ping" style={{ background: nodeColor, opacity: 0.5 }} />
                       )}
                     </div>
-                    <span className="text-[8.5px] font-bold uppercase tracking-wider" style={{ color: done ? "#fff" : TEXT2 }}>
+                    <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: done ? "#E2E8F0" : TEXT2 }}>
                       {m.label}
                     </span>
                   </div>
@@ -1077,21 +1128,60 @@ function TimelineCard({
               })}
             </div>
           </div>
+
+          {/* Health score */}
+          <div className="mt-2.5 flex items-center gap-2">
+            <div className="flex items-center gap-1 text-[8.5px] font-bold uppercase tracking-[0.18em] shrink-0" style={{ color: TEXT2 }}>
+              <Activity size={9} /> Health
+            </div>
+            <div className="relative flex-1 h-[5px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.05)" }}>
+              <div
+                className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+                style={{
+                  width: `${healthScore}%`,
+                  background: `linear-gradient(90deg, ${AZUL}, ${healthColor})`,
+                  boxShadow: `0 0 10px ${healthColor}88`,
+                }}
+              />
+            </div>
+            <div className="text-[10.5px] font-black tabular-nums shrink-0" style={{ color: healthColor, textShadow: `0 0 10px ${healthColor}66` }}>
+              {healthScore}%
+            </div>
+          </div>
         </div>
 
-        {/* RIGHT — Score / honorarios */}
-        <div className="min-w-0 flex flex-col items-end gap-1.5 max-w-full overflow-hidden">
-          <div className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: TEXT2 }}>Honorarios</div>
-          <div className="text-[18px] font-black tabular-nums leading-none" style={{ color: VERDE, textShadow: `0 0 18px ${VERDE}44` }}>
+        {/* ============ 3 · CONTROL (20%) ============ */}
+        <div className="min-w-0 rounded-xl px-3 py-2.5 flex flex-col gap-1.5"
+             style={{ background: "rgba(255,255,255,0.025)", border: `1px solid ${BORDER}` }}>
+          <div className="text-[8px] font-bold uppercase tracking-[0.22em]" style={{ color: TEXT2 }}>Honorarios</div>
+          <div className="text-[19px] font-black tabular-nums leading-none" style={{ color: VERDE, textShadow: `0 0 16px ${VERDE}44` }}>
             {formatCOP(Number(r.honorarios_final))}
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap justify-end max-w-full">
+          <div className="flex flex-wrap gap-1 mt-1">
             <QABadge categoria={r.qa_categoria ?? null} score={r.qa_score ?? null} auditoriaId={r.qa_auditoria_id ?? null} size="xs" asLink={false} />
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-full text-[8.5px] font-bold uppercase tracking-wider"
+              style={{
+                background: qaFailed ? "rgba(244,63,94,0.12)" : `${theme.color}1A`,
+                color: qaFailed ? "#FB7185" : theme.color,
+                border: `1px solid ${qaFailed ? "rgba(244,63,94,0.45)" : theme.color + "55"}`,
+              }}
+            >
+              <span className="h-1 w-1 rounded-full" style={{ background: qaFailed ? "#FB7185" : theme.color }} />
+              {qaFailed ? "QA FAIL" : theme.label}
+            </span>
+            <span
+              className="inline-flex items-center gap-1 px-1.5 py-[2px] rounded-full text-[8.5px] font-bold uppercase tracking-wider"
+              style={{ background: `${prioridad.color}1A`, color: prioridad.color, border: `1px solid ${prioridad.color}55` }}
+              title="Prioridad operativa"
+            >
+              <Zap size={8} /> {prioridad.label}
+            </span>
             {auditCode && (
               <Link
                 to="/qa-ai/$id" params={{ id: r.qa_auditoria_id ?? "" }} onClick={(e) => e.stopPropagation()}
                 title="Ir a la auditoría QA"
-                className="rounded px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider hover:brightness-125 transition truncate max-w-full"
+                className="rounded px-1.5 py-[2px] text-[8px] font-bold uppercase tracking-wider hover:brightness-125 transition truncate max-w-full"
                 style={{
                   background: "rgba(68,93,163,0.15)", color: "#A5B5E0",
                   border: "1px solid rgba(68,93,163,0.45)",
@@ -1100,39 +1190,27 @@ function TimelineCard({
               >{auditCode}</Link>
             )}
           </div>
-
-          <span
-            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
-            style={{
-              background: qaFailed ? "rgba(244,63,94,0.12)" : `${theme.color}1A`,
-              color: qaFailed ? "#FB7185" : theme.color,
-              border: `1px solid ${qaFailed ? "rgba(244,63,94,0.45)" : theme.color + "55"}`,
-            }}
-          >
-            <span className="h-1 w-1 rounded-full" style={{ background: qaFailed ? "#FB7185" : theme.color }} />
-            {qaFailed ? "QA FAIL" : theme.label}
-          </span>
         </div>
 
-        {/* ACTIONS */}
-        <div className="flex flex-col gap-1.5 shrink-0">
+        {/* ============ 4 · ACCIONES (15%) ============ */}
+        <div className="flex flex-col gap-1.5 shrink-0 w-full">
           <Link
             to="/casos/$id" params={{ id: r.id }}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-8 text-[10px] font-bold uppercase tracking-wider text-white transition hover:brightness-110 whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-8 text-[10px] font-bold uppercase tracking-wider text-white transition hover:brightness-110 whitespace-nowrap w-full"
             style={{ background: `linear-gradient(135deg, ${AZUL}, ${VERDE})`, boxShadow: `0 6px 18px -8px ${AZUL}` }}
           >
             Ver expediente <ArrowRight size={11} />
           </Link>
           <Link
             to="/casos/$id" params={{ id: r.id }} search={{ tab: "trazabilidad" } as never}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap"
-            style={{ background: "rgba(255,255,255,0.04)", color: TEXT2, border: `1px solid ${BORDER}` }}
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:bg-white/[0.06]"
+            style={{ background: "rgba(255,255,255,0.03)", color: TEXT2, border: `1px solid ${BORDER}` }}
           >
             Timeline
           </Link>
           <Link
             to="/casos/$id" params={{ id: r.id }} search={{ tab: "snapshot" } as never}
-            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-7 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:brightness-125"
             style={{ background: "rgba(132,185,143,0.08)", color: VERDE, border: `1px solid ${VERDE}44` }}
           >
             Documentos
@@ -1141,14 +1219,14 @@ function TimelineCard({
             <button
               type="button" onClick={runAuditoria} disabled={auditando}
               title="Ejecutar auditoría NUVIA"
-              className="inline-flex items-center justify-center gap-1 rounded-lg px-2 h-6 text-[9px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-60 whitespace-nowrap"
+              className="inline-flex items-center justify-center gap-1 rounded-lg px-3 h-7 text-[9.5px] font-bold uppercase tracking-wider transition hover:brightness-125 disabled:opacity-60 whitespace-nowrap w-full"
               style={{
-                background: "linear-gradient(135deg, rgba(132,185,143,0.18), rgba(68,93,163,0.18))",
+                background: "linear-gradient(135deg, rgba(132,185,143,0.16), rgba(68,93,163,0.16))",
                 color: "#B8E5C0", border: "1px solid rgba(132,185,143,0.45)",
               }}
             >
               {auditando ? <Loader2 size={10} className="animate-spin" /> : <ShieldCheck size={10} />}
-              {auditando ? "…" : "Auditar"}
+              {auditando ? "Auditando…" : "Auditar"}
             </button>
           )}
         </div>
@@ -1156,3 +1234,4 @@ function TimelineCard({
     </div>
   );
 }
+
