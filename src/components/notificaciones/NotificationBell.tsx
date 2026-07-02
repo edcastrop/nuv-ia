@@ -49,7 +49,14 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>("todas");
   const [detalle, setDetalle] = useState<Notificacion | null>(null);
+  const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+
+  const recomputeAnchor = () => {
+    const r = btnRef.current?.getBoundingClientRect();
+    if (r) setAnchor({ top: r.bottom + 8, right: window.innerWidth - r.right });
+  };
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
@@ -58,6 +65,18 @@ export function NotificationBell() {
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    recomputeAnchor();
+    const on = () => recomputeAnchor();
+    window.addEventListener("resize", on);
+    window.addEventListener("scroll", on, true);
+    return () => {
+      window.removeEventListener("resize", on);
+      window.removeEventListener("scroll", on, true);
+    };
+  }, [open]);
 
   const counts = { qa: 0, mensajes: 0, sistema: 0 } as Record<Exclude<TabKey, "todas">, number>;
   items.forEach((n) => { counts[categorize(n)] += 1; });
