@@ -6,6 +6,7 @@ import { qaCommandCenter } from "@/lib/qaAI.functions";
 import { useUserRole } from "@/hooks/useUserRole";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
 import { CommandCenter, type CCRow, type CCBank, type CCAnalista, type CCError, type CCTrend } from "@/components/qa-ai/command/CommandCenter";
+import { QASLABanner } from "@/components/qa-ai/QASLABanner";
 import { Brain, Plus, Bell, Settings, Sparkles, Trophy, Search } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/qa-ai/")({
