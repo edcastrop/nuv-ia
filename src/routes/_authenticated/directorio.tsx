@@ -1,12 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Search, Mail, MessageCircle, Phone, MapPin, BookUser, Sparkles } from "lucide-react";
+import { Mail, MessageCircle, Phone, MapPin } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { listDirectorioFull, getOrCreateDM, type DirectorioPersona } from "@/lib/colaboracion";
 import { useNavigate } from "@tanstack/react-router";
 import { PresenceDot } from "@/components/presencia/PresenceDot";
+import { DirectoryHeroHologram } from "@/components/directorio/DirectoryHeroHologram";
 
 export const Route = createFileRoute("/_authenticated/directorio")({
   component: DirectorioPage,
@@ -63,6 +64,7 @@ function DirectorioPage() {
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState<GroupKey | "todos">("todos");
   const [loading, setLoading] = useState(true);
+  const [filterFacet, setFilterFacet] = useState<string | null>(null);
 
   useEffect(() => { listDirectorioFull().then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false)); }, []);
 
@@ -92,6 +94,21 @@ function DirectorioPage() {
     return m;
   }, [data]);
 
+  const heroStats = useMemo(() => {
+    const sedes = new Set(data.map((p) => (p.ciudad ?? "").trim()).filter(Boolean)).size;
+    const areasActivas = GROUPS.filter((g) => g.key !== "otros" && (conteos.get(g.key) ?? 0) > 0).length;
+    return {
+      sedes: sedes || 2,
+      areas: areasActivas || 6,
+      quickCounts: {
+        liderazgo: conteos.get("direccion") ?? 0,
+        operativos: (conteos.get("operaciones") ?? 0) + (conteos.get("contabilidad") ?? 0),
+        juridicos: conteos.get("juridica") ?? 0,
+        comerciales: conteos.get("licenciados") ?? 0,
+      },
+    };
+  }, [data, conteos]);
+
   const abrirDM = async (uid: string) => {
     const c = await getOrCreateDM(uid);
     navigate({ to: "/colaboracion/dm/$conversationId", params: { conversationId: c.id } });
@@ -101,32 +118,18 @@ function DirectorioPage() {
     <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
       <NeuralBg />
       <div className="relative mx-auto max-w-[1500px] px-6 py-10 space-y-6">
-        <motion.header
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="rounded-[32px] border border-white/10 bg-white/[0.03] p-6 sm:p-8 backdrop-blur-2xl relative overflow-hidden"
-        >
-          <span className="pointer-events-none absolute inset-x-8 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(132,185,143,0.6), transparent)" }} />
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-bold text-[#84B98F]">
-                <Sparkles size={11} /> NUVIA · Equipo
-              </div>
-              <h1 className="text-3xl font-semibold tracking-tight mt-2 inline-flex items-center gap-2"><BookUser size={26} /> Directorio NUVEX</h1>
-              <p className="text-sm text-white/55 mt-1">Equipo corporativo agrupado por área · {data.length} colaboradores.</p>
-            </div>
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
-              <input
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar por nombre, cargo o ciudad…"
-                className="w-[320px] rounded-xl border border-white/10 bg-white/[0.04] pl-9 pr-3 py-2.5 text-sm text-white placeholder:text-white/35 outline-none backdrop-blur-xl focus:border-[#84B98F]/50 focus:bg-white/[0.06] transition"
-              />
-            </div>
-          </div>
-        </motion.header>
+        <DirectoryHeroHologram
+          total={data.length}
+          areas={heroStats.areas}
+          sedes={heroStats.sedes}
+          colaboracion={98}
+          q={q}
+          setQ={setQ}
+          quickCounts={heroStats.quickCounts}
+          activeFilter={filterFacet}
+          onFilter={setFilterFacet}
+        />
+
 
         <div className="flex flex-wrap gap-2">
           <ChipGrupo label={`Todos · ${data.length}`} active={grupo === "todos"} onClick={() => setGrupo("todos")} />
