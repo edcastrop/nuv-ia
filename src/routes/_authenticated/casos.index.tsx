@@ -415,14 +415,18 @@ function CasosPage() {
         className="rounded-2xl backdrop-blur-xl flex flex-wrap items-center gap-2 p-2"
         style={{ background: CARD, border: `1px solid ${BORDER}` }}
       >
-        <div className="relative flex-1 basis-full md:basis-[280px] min-w-[240px]">
+        <div
+          className="relative shrink-0"
+          style={{ flex: "1 1 340px", minWidth: 320 }}
+          data-cases-search="always-visible"
+        >
           <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: TEXT2 }} />
           <input
             type="text"
             value={qLocal}
             onChange={(e) => setQLocal(e.target.value)}
             placeholder="Buscar cliente, cédula, banco, crédito o código de auditoría (NUV_AUD_…)"
-            className="w-full h-11 bg-transparent pl-11 pr-4 text-[13px] outline-none placeholder:text-slate-500 rounded-lg"
+            className="block w-full h-11 bg-transparent pl-11 pr-4 text-[13px] outline-none placeholder:text-slate-500 rounded-lg"
             style={{ color: "#fff", border: `1px solid ${BORDER}` }}
           />
         </div>
@@ -885,7 +889,7 @@ function IACard({
    ===================================================== */
 function GlassSelect({ value, onChange, placeholder, children }: { value: string; onChange: (v: string) => void; placeholder: string; children: React.ReactNode }) {
   return (
-    <div className="relative">
+    <div className="relative shrink-0">
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
