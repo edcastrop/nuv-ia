@@ -551,12 +551,17 @@ function ChatHeader({ d, canal, onBack, quickCtx, ctxTab, onCtxTab }: { d: DMRes
   );
 }
 
-function HeaderBtn({ icon, label, tone = "default" }: { icon: React.ReactNode; label: string; tone?: "default" | "blue" }) {
+function HeaderBtn({ icon, label, tone = "default", active = false, onClick }: { icon: React.ReactNode; label: string; tone?: "default" | "blue"; active?: boolean; onClick?: () => void }) {
+  const baseBlue = { background: "linear-gradient(135deg, rgba(76,116,224,0.22), rgba(52,87,200,0.14))", border: "1px solid rgba(120,150,220,0.35)", color: "#c9d6ff", boxShadow: "0 0 14px rgba(76,116,224,0.24)" };
+  const baseDefault = { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)" };
+  const activeStyle = { background: "linear-gradient(135deg, rgba(91,141,255,0.32), rgba(52,87,200,0.22))", border: "1px solid rgba(147,177,255,0.65)", color: "#ffffff", boxShadow: "0 0 18px rgba(76,116,224,0.55), inset 0 0 0 1px rgba(255,255,255,0.05)" };
   return (
-    <button className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition"
-      style={tone === "blue"
-        ? { background: "linear-gradient(135deg, rgba(76,116,224,0.22), rgba(52,87,200,0.14))", border: "1px solid rgba(120,150,220,0.35)", color: "#c9d6ff", boxShadow: "0 0 14px rgba(76,116,224,0.24)" }
-        : { background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.75)" }}>
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-medium transition hover:scale-[1.03]"
+      style={active ? activeStyle : (tone === "blue" ? baseBlue : baseDefault)}
+    >
       {icon} <span className="hidden xl:inline">{label}</span>
     </button>
   );
