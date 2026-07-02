@@ -155,10 +155,10 @@ export const HOME_CONFIG: Partial<Record<AppRole, RoleHomeConfig>> = {
       prompt: "Lista los casos con discrepancias documentales más frecuentes esta semana.",
     },
     kpis: [
-      { id: "qa", label: "Casos en cola QA", icon: ClipboardCheck, tone: "warning", source: "static" },
-      { id: "halz", label: "Hallazgos abiertos", icon: FileCheck, tone: "danger", source: "static" },
-      { id: "apr", label: "% aprobación QA", icon: ShieldCheck, tone: "green", source: "static" },
-      { id: "t", label: "Tiempo medio revisión", icon: Activity, tone: "blue", source: "static" },
+      { id: "qa", label: "Casos en cola QA", icon: ClipboardCheck, tone: "warning", source: "qa.colaRevision" },
+      { id: "halz", label: "Hallazgos abiertos", icon: FileCheck, tone: "danger", source: "qa.hallazgosAbiertos" },
+      { id: "apr", label: "% aprobación QA", icon: ShieldCheck, tone: "green", source: "qa.porcentajeAprobacion" },
+      { id: "t", label: "Tiempo medio revisión", icon: Activity, tone: "blue", source: "static", staticValue: "—" },
     ],
     quickActions: [
       { to: "/pipeline", label: "Cola QA", desc: "Pipeline pendiente revisión", icon: ClipboardCheck, tone: "blue" },
