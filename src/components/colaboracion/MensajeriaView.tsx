@@ -167,7 +167,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
   const grouped = useMemo(() => groupByDate(msgs), [msgs]);
 
   return (
-    <div className="relative min-h-[calc(100dvh-4rem)] overflow-hidden" style={{ background: "#050816" }}>
+    <div className="relative h-[calc(100dvh-4rem)] flex flex-col overflow-hidden" style={{ background: "#050816" }}>
       {/* Ambient background */}
       <div className="pointer-events-none absolute inset-0 opacity-[0.06]" style={{
         backgroundImage: "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
