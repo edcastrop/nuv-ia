@@ -1647,6 +1647,75 @@ function HeaderChip({
   );
 }
 
+function HeroKpiCard({
+  icon,
+  label,
+  value,
+  accent,
+  progress = 100,
+  emphasis = false,
+}: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+  accent: string;
+  progress?: number;
+  emphasis?: boolean;
+}) {
+  return (
+    <div
+      className="group relative overflow-hidden rounded-xl border p-3 backdrop-blur-xl transition hover:-translate-y-[1px]"
+      style={{
+        borderColor: "rgba(255,255,255,0.07)",
+        background: emphasis
+          ? `linear-gradient(135deg, rgba(132,185,143,0.14), rgba(36,36,36,0.55))`
+          : `linear-gradient(135deg, rgba(255,255,255,0.045), rgba(255,255,255,0.015))`,
+        boxShadow: `inset 0 1px 0 rgba(255,255,255,0.05), 0 0 22px -12px ${accent}`,
+      }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-40 blur-2xl transition group-hover:opacity-70"
+        style={{ background: accent }}
+      />
+      <div className="relative flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[9.5px] font-semibold uppercase tracking-[0.16em] text-[rgba(200,210,230,0.65)]">
+            {label}
+          </div>
+          <div
+            className="mt-0.5 truncate text-[18px] font-bold leading-tight tabular-nums text-white"
+            style={{ textShadow: `0 0 14px ${accent}55` }}
+          >
+            {value}
+          </div>
+        </div>
+        <div
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-lg"
+          style={{
+            background: `linear-gradient(135deg, ${accent}44, ${accent}11)`,
+            color: accent,
+            boxShadow: `inset 0 0 0 1px ${accent}55`,
+          }}
+        >
+          {icon}
+        </div>
+      </div>
+      {/* micro progress line */}
+      <div className="relative mt-2 h-[3px] w-full overflow-hidden rounded-full bg-[rgba(255,255,255,0.05)]">
+        <div
+          className="h-full rounded-full"
+          style={{
+            width: `${Math.max(4, Math.min(100, progress))}%`,
+            background: `linear-gradient(90deg, ${accent}, ${accent}77)`,
+            boxShadow: `0 0 12px ${accent}`,
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
 
 
 
