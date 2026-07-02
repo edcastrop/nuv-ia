@@ -13,6 +13,9 @@ import {
 } from "@/lib/colaboracion";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+
+type CasoOwnerInfo = { cliente?: string; banco?: string; analista?: string; asesor_id?: string };
 
 export const Route = createFileRoute("/_authenticated/colaboracion/")({
   component: ColaboracionPage,
