@@ -513,107 +513,428 @@ function Hero({
       : t === "critical"
       ? "#ff8f8f"
       : "var(--nuvia-accent-blue)";
+
+  const kpiIcons = [Users, FileText, Rocket, ShieldCheck, AlertTriangle, Gauge];
+
+  // deterministic sparkline path
+  const spark = (seed: number) => {
+    const pts = Array.from({ length: 14 }, (_, i) => {
+      const y = 14 - (Math.sin(i * 0.9 + seed) * 0.5 + 0.5) * 12 - 1;
+      return `${(i / 13) * 68},${y.toFixed(1)}`;
+    });
+    return `M${pts.join(" L")}`;
+  };
+
   return (
-    <section
-      className="relative overflow-hidden rounded-[var(--nuvia-radius-xl)] p-8"
-      style={{
-        background:
-          "linear-gradient(135deg, rgba(20,28,52,0.65) 0%, rgba(28,42,78,0.5) 55%, rgba(68,93,163,0.32) 100%)",
-        border: "1px solid rgba(238,245,255,0.13)",
-        backdropFilter: "blur(34px) saturate(160%)",
-        boxShadow: "0 30px 80px -30px rgba(0,0,0,0.75), inset 0 1px 0 rgba(238,245,255,0.07)",
-      }}
-    >
-      <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full blur-3xl" style={{ background: "rgba(132,185,143,0.22)" }} />
-      <div aria-hidden className="pointer-events-none absolute -left-20 -bottom-20 h-64 w-64 rounded-full blur-3xl" style={{ background: "rgba(68,93,163,0.32)" }} />
-      <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(238,245,255,0.5), transparent)" }} />
+    <section className="relative">
+      {/* Scoped keyframes for the hologram */}
+      <style>{`
+        @keyframes nuv-spin-slow { to { transform: rotate(360deg); } }
+        @keyframes nuv-spin-rev { to { transform: rotate(-360deg); } }
+        @keyframes nuv-breathe { 0%,100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.25); } }
+        @keyframes nuv-scan { 0% { transform: translateY(-100%); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { transform: translateY(100%); opacity: 0; } }
+        @keyframes nuv-pulse-ring { 0% { transform: scale(0.6); opacity: 0.7; } 100% { transform: scale(1.6); opacity: 0; } }
+        @keyframes nuv-float-a { 0%,100% { transform: translate(0,0); } 50% { transform: translate(0,-8px); } }
+        @keyframes nuv-float-b { 0%,100% { transform: translate(0,8px); } 50% { transform: translate(0,-2px); } }
+        @keyframes nuv-orbit-1 { from { transform: rotate(0deg) translateX(120px) rotate(0deg); } to { transform: rotate(360deg) translateX(120px) rotate(-360deg); } }
+        @keyframes nuv-orbit-2 { from { transform: rotate(0deg) translateX(160px) rotate(0deg); } to { transform: rotate(-360deg) translateX(160px) rotate(360deg); } }
+        @keyframes nuv-orbit-3 { from { transform: rotate(0deg) translateX(200px) rotate(0deg); } to { transform: rotate(360deg) translateX(200px) rotate(-360deg); } }
+        @keyframes nuv-beam { 0%,100% { opacity: 0.25; } 50% { opacity: 0.55; } }
+      `}</style>
 
-      <div className="relative flex flex-wrap items-center gap-2">
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em]"
+      {/* Cinematic backdrop */}
+      <div
+        className="relative overflow-hidden rounded-[28px] p-8 md:p-10"
+        style={{
+          background:
+            "radial-gradient(1200px 500px at 78% 15%, rgba(68,93,163,0.28), transparent 60%), radial-gradient(900px 480px at 15% 90%, rgba(132,185,143,0.20), transparent 55%), linear-gradient(140deg, #050816 0%, #0a1128 55%, #0b1633 100%)",
+          border: "1px solid rgba(238,245,255,0.10)",
+          boxShadow:
+            "0 40px 100px -40px rgba(0,0,0,0.85), 0 0 40px rgba(68,93,163,0.20), 0 0 60px rgba(132,185,143,0.12), inset 0 1px 0 rgba(238,245,255,0.08)",
+        }}
+      >
+        {/* Grid + noise + beams */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-40"
           style={{
-            background: "rgba(132,185,143,0.14)",
-            color: "var(--nuvia-accent-green)",
-            border: "1px solid color-mix(in oklab, var(--nuvia-accent-green) 30%, transparent)",
+            backgroundImage:
+              "linear-gradient(rgba(238,245,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(238,245,255,0.05) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+            maskImage: "radial-gradient(ellipse at 70% 40%, rgba(0,0,0,0.9), transparent 75%)",
           }}
-        >
-          <Cpu size={11} /> Super Admin · Global Control Center
-        </span>
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
-          style={{ background: "rgba(255,255,255,0.05)", color: "var(--nuvia-text-secondary)", border: "1px solid var(--nuvia-border)" }}
-        >
-          <Server size={11} /> NUVIA Core · v4.2
-        </span>
-      </div>
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-16 top-0 h-full w-[2px]"
+          style={{ background: "linear-gradient(180deg, transparent, rgba(68,93,163,0.6), transparent)", animation: "nuv-beam 6s ease-in-out infinite" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-1/3 top-0 h-full w-[2px]"
+          style={{ background: "linear-gradient(180deg, transparent, rgba(132,185,143,0.5), transparent)", animation: "nuv-beam 8s ease-in-out infinite" }}
+        />
 
-      <h1 className="relative mt-4 text-[42px] md:text-[52px] font-bold tracking-tight leading-[1.02]">
-        NUVIA{" "}
-        <span
-          style={{
-            backgroundImage: "linear-gradient(120deg, var(--nuvia-accent-blue), var(--nuvia-accent-green))",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          CORE SYSTEM
-        </span>
-      </h1>
-      <p className="relative mt-3 max-w-2xl text-[14.5px] leading-relaxed" style={{ color: "var(--nuvia-text-secondary)" }}>
-        Centro de control global de usuarios, operaciones, seguridad, automatización y monitoreo en tiempo real.
-      </p>
-
-      {/* KPI inline */}
-      <div className="relative mt-6 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-        {kpis.map((k) => (
-          <div
-            key={k.label}
-            className="rounded-xl px-3.5 py-3"
-            style={{
-              background: "rgba(5,8,22,0.42)",
-              border: "1px solid rgba(238,245,255,0.08)",
-              boxShadow: "inset 0 1px 0 rgba(238,245,255,0.05)",
-            }}
-          >
-            <div className="text-[22px] font-bold tabular-nums leading-none" style={{ color: toneColor(k.tone) }}>
-              {k.value}
+        {/* 2-column layout */}
+        <div className="relative grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] items-center">
+          {/* ── LEFT (40%) ─────────────────────────────────────────── */}
+          <div className="relative">
+            <div className="flex flex-wrap gap-2">
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em]"
+                style={{
+                  background: "rgba(132,185,143,0.12)",
+                  color: "#84B98F",
+                  border: "1px solid rgba(132,185,143,0.30)",
+                }}
+              >
+                <Cpu size={11} /> Super Admin · Global Control Center
+              </span>
+              <span
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em]"
+                style={{
+                  background: "rgba(68,93,163,0.12)",
+                  color: "#8DA3E6",
+                  border: "1px solid rgba(68,93,163,0.35)",
+                }}
+              >
+                <Server size={11} /> NUVIA Core · v4.2
+              </span>
             </div>
-            <div className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: "var(--nuvia-text-muted)" }}>
-              {k.label}
+
+            <h1
+              className="mt-5 font-extrabold leading-[0.98]"
+              style={{
+                fontSize: "clamp(44px, 5.6vw, 72px)",
+                letterSpacing: "-0.02em",
+                backgroundImage: "linear-gradient(120deg, #FFFFFF 0%, #445DA3 55%, #84B98F 100%)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                textShadow: "0 0 40px rgba(68,93,163,0.25)",
+              }}
+            >
+              NUVIA CORE SYSTEM
+            </h1>
+
+            <p
+              className="mt-4 max-w-[580px] text-[17px] md:text-[19px] leading-relaxed"
+              style={{ color: "rgba(255,255,255,0.75)" }}
+            >
+              Centro de control global de usuarios, operaciones, seguridad,
+              automatización y monitoreo en tiempo real.
+            </p>
+
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <button
+                onClick={onLanzarSimulador}
+                className="group inline-flex items-center gap-2.5 text-[13px] font-bold uppercase tracking-[0.16em] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+                style={{
+                  height: "58px",
+                  paddingInline: "28px",
+                  borderRadius: "18px",
+                  background: "linear-gradient(135deg, #445DA3 0%, #84B98F 100%)",
+                  color: "#0a0f1f",
+                  border: "1px solid rgba(238,245,255,0.22)",
+                  boxShadow:
+                    "0 16px 40px -12px rgba(68,93,163,0.75), 0 0 30px rgba(132,185,143,0.35), inset 0 1px 0 rgba(255,255,255,0.25)",
+                }}
+              >
+                <Rocket size={17} /> Lanzar simulador
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-1" />
+              </button>
+              <Link
+                to="/dashboard"
+                className="group inline-flex items-center gap-2.5 text-[13px] font-semibold transition hover:border-white/30"
+                style={{
+                  height: "58px",
+                  paddingInline: "22px",
+                  borderRadius: "18px",
+                  background: "rgba(255,255,255,0.045)",
+                  border: "1px solid rgba(238,245,255,0.14)",
+                  color: "var(--nuvia-text-primary)",
+                  backdropFilter: "blur(18px)",
+                  boxShadow: "inset 0 1px 0 rgba(238,245,255,0.06)",
+                }}
+              >
+                <BarChart3 size={15} /> Ver dashboard ejecutivo
+                <ArrowRight size={13} className="opacity-60 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+
+            <div className="mt-6 text-[11px] italic" style={{ color: "rgba(255,255,255,0.45)" }}>
+              “El ahorro no es un lujo, es un derecho.” — NUVEX
             </div>
           </div>
-        ))}
-      </div>
 
-      <div className="relative mt-6 flex flex-wrap items-center gap-3">
-        <button
-          onClick={onLanzarSimulador}
-          className="group inline-flex items-center gap-2.5 rounded-xl px-5 py-3 text-[12.5px] font-bold uppercase tracking-[0.16em] transition-all duration-300 hover:scale-[1.03] active:scale-[0.98]"
+          {/* ── RIGHT (60%) · HOLOGRAM ─────────────────────────────── */}
+          <div className="relative flex items-center justify-center min-h-[440px]">
+            {/* Energy platform base */}
+            <div
+              aria-hidden
+              className="absolute bottom-4 h-8 w-[340px] rounded-[50%]"
+              style={{
+                background:
+                  "radial-gradient(ellipse at center, rgba(132,185,143,0.35) 0%, rgba(68,93,163,0.25) 40%, transparent 70%)",
+                filter: "blur(10px)",
+              }}
+            />
+
+            {/* Pulse rings */}
+            <div className="relative h-[380px] w-[380px]">
+              {[0, 1, 2].map((i) => (
+                <span
+                  key={`ring-${i}`}
+                  aria-hidden
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    border: "1px solid rgba(68,93,163,0.35)",
+                    animation: `nuv-pulse-ring 3.6s ease-out ${i * 1.2}s infinite`,
+                  }}
+                />
+              ))}
+
+              {/* Orbital rings */}
+              <div
+                aria-hidden
+                className="absolute inset-6 rounded-full"
+                style={{
+                  border: "1px dashed rgba(141,163,230,0.35)",
+                  animation: "nuv-spin-slow 22s linear infinite",
+                }}
+              />
+              <div
+                aria-hidden
+                className="absolute inset-14 rounded-full"
+                style={{
+                  border: "1px solid rgba(132,185,143,0.30)",
+                  animation: "nuv-spin-rev 16s linear infinite",
+                }}
+              />
+              <div
+                aria-hidden
+                className="absolute inset-24 rounded-full"
+                style={{
+                  border: "1px solid rgba(238,245,255,0.14)",
+                  animation: "nuv-spin-slow 10s linear infinite",
+                }}
+              >
+                <span
+                  className="absolute left-1/2 top-0 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+                  style={{ background: "#84B98F", boxShadow: "0 0 12px #84B98F" }}
+                />
+              </div>
+
+              {/* Orbiting particles */}
+              <div className="absolute left-1/2 top-1/2 h-0 w-0">
+                <span className="absolute h-1.5 w-1.5 rounded-full" style={{ background: "#c78bff", boxShadow: "0 0 10px #c78bff", animation: "nuv-orbit-1 7s linear infinite" }} />
+                <span className="absolute h-2 w-2 rounded-full" style={{ background: "#445DA3", boxShadow: "0 0 12px #445DA3", animation: "nuv-orbit-2 11s linear infinite" }} />
+                <span className="absolute h-1.5 w-1.5 rounded-full" style={{ background: "#5cd6ff", boxShadow: "0 0 12px #5cd6ff", animation: "nuv-orbit-3 15s linear infinite" }} />
+              </div>
+
+              {/* Main globe */}
+              <div
+                className="absolute inset-[38%] rounded-full"
+                style={{
+                  background:
+                    "radial-gradient(circle at 32% 30%, rgba(255,255,255,0.75), rgba(141,163,230,0.55) 30%, rgba(68,93,163,0.55) 55%, rgba(10,15,40,0.9) 90%)",
+                  boxShadow:
+                    "0 0 60px rgba(68,93,163,0.75), 0 0 120px rgba(132,185,143,0.35), inset 0 0 30px rgba(255,255,255,0.35)",
+                  animation: "nuv-breathe 4.5s ease-in-out infinite",
+                }}
+              >
+                {/* Longitude/latitude wireframe */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 rounded-full overflow-hidden"
+                  style={{
+                    backgroundImage:
+                      "repeating-linear-gradient(0deg, rgba(255,255,255,0.14) 0 1px, transparent 1px 12px), repeating-linear-gradient(90deg, rgba(255,255,255,0.14) 0 1px, transparent 1px 12px)",
+                    animation: "nuv-spin-slow 30s linear infinite",
+                    opacity: 0.7,
+                  }}
+                />
+                {/* Vertical scan */}
+                <div
+                  aria-hidden
+                  className="absolute inset-0 rounded-full overflow-hidden"
+                >
+                  <span
+                    className="absolute inset-x-0 h-[10px]"
+                    style={{
+                      background: "linear-gradient(180deg, transparent, rgba(132,185,143,0.9), transparent)",
+                      boxShadow: "0 0 18px rgba(132,185,143,0.9)",
+                      animation: "nuv-scan 3.5s ease-in-out infinite",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Mini floating cards */}
+              <MiniCard
+                title="Sistema"
+                value="ÓPTIMO"
+                color="#84B98F"
+                icon={CheckCircle2}
+                style={{ top: "6%", left: "-8%", animation: "nuv-float-a 4s ease-in-out infinite" }}
+              />
+              <MiniCard
+                title="Sincronización"
+                value="EN VIVO"
+                color="#5cd6ff"
+                icon={Radio}
+                style={{ top: "0%", right: "-6%", animation: "nuv-float-b 4.5s ease-in-out infinite" }}
+              />
+              <MiniCard
+                title="Latencia"
+                value="38 ms"
+                color="#8DA3E6"
+                icon={Activity}
+                style={{ bottom: "10%", left: "-10%", animation: "nuv-float-b 5s ease-in-out infinite" }}
+              />
+              <MiniCard
+                title="NUVIA Core AI"
+                value="ACTIVA"
+                color="#84B98F"
+                icon={Brain}
+                style={{ bottom: "4%", right: "-8%", animation: "nuv-float-a 4.8s ease-in-out infinite" }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── KPI BAR ─────────────────────────────────────────────── */}
+        <div className="relative mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {kpis.map((k, i) => {
+            const Icon = kpiIcons[i] ?? Activity;
+            const color = toneColor(k.tone);
+            return (
+              <div
+                key={k.label}
+                className="group relative overflow-hidden rounded-[18px] p-4 transition-all duration-300 hover:-translate-y-1"
+                style={{
+                  minHeight: "140px",
+                  background: "rgba(5,8,22,0.55)",
+                  border: "1px solid rgba(238,245,255,0.06)",
+                  backdropFilter: "blur(18px)",
+                  boxShadow:
+                    "inset 0 1px 0 rgba(238,245,255,0.05), 0 20px 40px -25px rgba(0,0,0,0.7)",
+                }}
+              >
+                <div
+                  aria-hidden
+                  className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                  style={{ background: color }}
+                />
+                <div className="flex items-center justify-between">
+                  <span
+                    className="grid h-8 w-8 place-items-center rounded-lg"
+                    style={{
+                      background: `color-mix(in oklab, ${color} 14%, transparent)`,
+                      color,
+                      border: `1px solid color-mix(in oklab, ${color} 30%, transparent)`,
+                    }}
+                  >
+                    <Icon size={14} />
+                  </span>
+                  <span
+                    className="text-[9.5px] font-bold uppercase tracking-[0.18em]"
+                    style={{ color: "rgba(255,255,255,0.55)" }}
+                  >
+                    Live
+                  </span>
+                </div>
+                <div
+                  className="mt-3 text-[30px] font-extrabold tabular-nums leading-none"
+                  style={{ color, textShadow: `0 0 20px color-mix(in oklab, ${color} 45%, transparent)` }}
+                >
+                  {k.value}
+                </div>
+                <div
+                  className="mt-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em]"
+                  style={{ color: "rgba(255,255,255,0.65)" }}
+                >
+                  {k.label}
+                </div>
+                <svg viewBox="0 0 68 14" className="mt-2 h-6 w-full" preserveAspectRatio="none">
+                  <path d={spark(i * 1.3)} fill="none" stroke={color} strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9" />
+                </svg>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── STATUS STRIP ────────────────────────────────────────── */}
+        <div
+          className="relative mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-[18px] px-5 py-4"
           style={{
-            background: "linear-gradient(135deg, var(--nuvia-accent-blue) 0%, var(--nuvia-accent-green) 100%)",
-            color: "#0a0f1f",
-            border: "1px solid rgba(238,245,255,0.22)",
-            boxShadow: "0 14px 36px -12px rgba(68,93,163,0.75), inset 0 1px 0 rgba(255,255,255,0.2)",
-          }}
-        >
-          <Rocket size={16} /> Lanzar simulador
-          <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
-        </button>
-        <Link
-          to="/dashboard"
-          className="group inline-flex items-center gap-2.5 rounded-xl px-4 py-3 text-[12.5px] font-semibold transition hover:border-white/30"
-          style={{
-            background: "rgba(255,255,255,0.045)",
-            border: "1px solid var(--nuvia-border)",
-            color: "var(--nuvia-text-primary)",
+            background: "rgba(5,8,22,0.55)",
+            border: "1px solid rgba(238,245,255,0.06)",
+            backdropFilter: "blur(18px)",
             boxShadow: "inset 0 1px 0 rgba(238,245,255,0.05)",
           }}
         >
-          <BarChart3 size={15} /> Ver dashboard ejecutivo
-          <ArrowRight size={13} className="opacity-60 transition-transform group-hover:translate-x-1" />
-        </Link>
+          <StatusPill dot="#84B98F" text="Datos en tiempo real" />
+          <StatusPill dot="#8DA3E6" text="Módulos activos 8 / 12" />
+          <StatusPill dot="#5cd6ff" text="Flujos automatizados 24" />
+          <StatusPill dot="#84B98F" text="Alertas del sistema · 0 críticas" />
+          <StatusPill dot="#c78bff" text="Seguridad · Nivel máximo" />
+        </div>
       </div>
     </section>
+  );
+}
+
+function MiniCard({
+  title,
+  value,
+  color,
+  icon: Icon,
+  style,
+}: {
+  title: string;
+  value: string;
+  color: string;
+  icon: ComponentType<{ size?: number }>;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <div
+      className="absolute rounded-xl px-3 py-2 backdrop-blur-xl"
+      style={{
+        minWidth: "128px",
+        background: "rgba(5,8,22,0.65)",
+        border: `1px solid color-mix(in oklab, ${color} 36%, transparent)`,
+        boxShadow: `0 12px 30px -12px rgba(0,0,0,0.7), 0 0 24px -8px ${color}`,
+        ...style,
+      }}
+    >
+      <div className="flex items-center gap-1.5">
+        <span
+          className="grid h-5 w-5 place-items-center rounded"
+          style={{ background: `color-mix(in oklab, ${color} 18%, transparent)`, color }}
+        >
+          <Icon size={11} />
+        </span>
+        <span className="text-[9px] font-bold uppercase tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.6)" }}>
+          {title}
+        </span>
+      </div>
+      <div className="mt-1 text-[13px] font-bold tabular-nums" style={{ color }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function StatusPill({ dot, text }: { dot: string; text: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 text-[11px] font-semibold" style={{ color: "rgba(255,255,255,0.78)" }}>
+      <span className="relative flex h-1.5 w-1.5">
+        <span className="absolute inset-0 rounded-full animate-ping" style={{ background: dot, opacity: 0.55 }} />
+        <span className="relative inline-block h-1.5 w-1.5 rounded-full" style={{ background: dot, boxShadow: `0 0 8px ${dot}` }} />
+      </span>
+      {text}
+    </span>
   );
 }
 
