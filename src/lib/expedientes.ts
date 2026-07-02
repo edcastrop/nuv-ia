@@ -301,10 +301,32 @@ export async function listExpedientes(params: { search?: string; estado?: Estado
     if (estados.length > 0) q = q.in("estado_caso", estados as never);
   }
   if (params.search && params.search.trim()) {
-    const s = `%${params.search.trim()}%`;
-    q = q.or(
-      `cliente_nombre.ilike.${s},cedula.ilike.${s},numero_credito.ilike.${s},banco.ilike.${s}`,
-    );
+    const raw = params.search.trim();
+    const s = `%${raw}%`;
+    // Si el término parece un código de auditoría NUVIA (ej. NUV_AUD_2026_DL_00002),
+    // resolvemos primero los IDs de qa_auditorias y filtramos expedientes por qa_auditoria_id.
+    const looksLikeAuditCode = /nuv[_-]?aud|^aud[_-]?|_aud_/i.test(raw);
+    if (looksLikeAuditCode) {
+      try {
+        const { data: auds } = await supabase
+          .from("qa_auditorias")
+          .select("id,expediente_id,codigo")
+          .ilike("codigo", s);
+        const audIds = (auds ?? []).map((a) => a.id).filter(Boolean) as string[];
+        const expIds = (auds ?? []).map((a) => a.expediente_id).filter(Boolean) as string[];
+        const orParts: string[] = [];
+        if (audIds.length > 0) orParts.push(`qa_auditoria_id.in.(${audIds.join(",")})`);
+        if (expIds.length > 0) orParts.push(`id.in.(${expIds.join(",")})`);
+        orParts.push(`codigo.ilike.${s}`);
+        q = q.or(orParts.join(","));
+      } catch {
+        q = q.ilike("codigo", s);
+      }
+    } else {
+      q = q.or(
+        `cliente_nombre.ilike.${s},cedula.ilike.${s},numero_credito.ilike.${s},banco.ilike.${s},codigo.ilike.${s}`,
+      );
+    }
   }
   const { data, error } = await q;
   if (error) throw error;
