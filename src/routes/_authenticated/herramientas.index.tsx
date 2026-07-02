@@ -343,7 +343,7 @@ function HerramientasLanding() {
 /*  Pieces                                                                    */
 /* -------------------------------------------------------------------------- */
 
-function Pill({ Icon, label, color }: { Icon: React.ComponentType<{ className?: string }>; label: string; color: string }) {
+function Pill({ Icon, label, color }: { Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>; label: string; color: string }) {
   return (
     <div
       className="inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-[12px] font-medium text-white/85 backdrop-blur-xl"
@@ -368,7 +368,7 @@ function ToolCard({
   accent,
 }: {
   to: string;
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   badge: string;
   title: string;
   description: string;
@@ -473,7 +473,7 @@ function StatusWidget({
   statusColor,
   pulse,
 }: {
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   label: string;
   value: string;
   status: string;
