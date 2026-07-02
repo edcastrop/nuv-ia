@@ -414,13 +414,40 @@ export function compararExtracto(
 
   if (ext.cuota && ext.cuota > 0) {
     const diff = ext.cuota - rec.cuotaTotalConSeguros;
-    const sev = severidadCuota(diff, ext.cuota, tol);
+    let sev = severidadCuota(diff, ext.cuota, tol);
+
+    // ── Regla UVR ──
+    // En créditos UVR la "cuota programada del período" que muestra el
+    // extracto NO es una cuota fija en pesos: fluctúa con el valor UVR del
+    // día, con abonos previos y con recálculos internos del banco. Comparar
+    // directamente COP vs COP contra la cuota teórica produce falsos
+    // rechazos. Se compara en unidades UVR (donde la cuota SÍ es fija) y
+    // nunca se eleva a "crítica".
+    if (sev && inputRec.modalidad === "uvr") {
+      const vUvr = inputRec.valorUVR ?? 0;
+      const cuotaUvrTeorica = rec.todasCuotas?.[0]?.cuotaUvr ?? 0;
+      if (vUvr > 0 && cuotaUvrTeorica > 0) {
+        const cuotaUvrExtracto = ext.cuota / vUvr;
+        const diffUvr = cuotaUvrExtracto - cuotaUvrTeorica;
+        const limitUvr = Math.max(50, cuotaUvrTeorica * 0.05);
+        if (Math.abs(diffUvr) <= limitUvr) {
+          sev = null; // cuota UVR cuadra → solo era conversión
+        } else {
+          sev = "warning"; // en UVR el banco puede reprogramar → nunca crítica
+        }
+      } else {
+        sev = "warning";
+      }
+    }
+
     if (sev) {
       out.push({
         tipo: "cuota", severidad: sev, campo: "cuota",
         valorExtracto: ext.cuota, valorCalculado: rec.cuotaTotalConSeguros, diferencia: diff,
         mensaje: `Diferencia en cuota mensual: $${Math.round(diff).toLocaleString("es-CO")}`,
-        sugerencia: "Verifique tasa, plazo restante, seguros y cobertura FRECH.",
+        sugerencia: inputRec.modalidad === "uvr"
+          ? "En UVR la cuota en pesos varía cada mes (valor UVR del día, abonos, recálculos). Compare la cuota en UNIDADES UVR contra el plazo pactado antes de rechazar."
+          : "Verifique tasa, plazo restante, seguros y cobertura FRECH.",
       });
     }
   }
