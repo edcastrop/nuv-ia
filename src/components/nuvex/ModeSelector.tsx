@@ -69,7 +69,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       <FloatingParticles />
 
       {/* HEADER */}
-      <header className="relative z-10 mx-auto flex max-w-[1240px] items-center justify-between px-6 pt-8 sm:px-10">
+      <header className="relative z-10 mx-auto flex max-w-[1240px] items-center justify-between px-6 pt-1 sm:px-10">
         <div className="flex items-center gap-3">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-xl text-base font-bold text-white shadow-[0_8px_30px_-8px_rgba(68,93,163,0.7)]"
@@ -85,7 +85,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       </header>
 
       {/* HERO */}
-      <section className="relative z-10 mx-auto grid max-w-[1240px] items-center gap-14 px-6 pt-16 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:pt-24">
+      <section className="relative z-10 mx-auto grid max-w-[1240px] items-start gap-8 px-6 pt-2 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:pt-3">
         {/* IZQUIERDA */}
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -100,7 +100,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
             <span className="font-semibold uppercase text-white/80">Simuladores NUVIA</span>
           </div>
 
-          <h1 className="mt-7 text-[52px] font-700 leading-[1.02] tracking-[-0.02em] text-white sm:text-[64px]" style={{ fontWeight: 700 }}>
+          <h1 className="mt-3 text-[52px] font-700 leading-[1.02] tracking-[-0.02em] text-white sm:text-[64px]" style={{ fontWeight: 700 }}>
             Simuladores
             <br />
             <span
@@ -111,11 +111,11 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
             </span>
           </h1>
 
-          <p className="mt-6 max-w-[520px] text-[16px] leading-relaxed text-white/60" style={{ fontWeight: 500 }}>
+          <p className="mt-3 max-w-[520px] text-[16px] leading-relaxed text-white/60" style={{ fontWeight: 500 }}>
             Herramientas inteligentes para analizar, comparar y optimizar créditos hipotecarios y leasing habitacional.
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-3">
             <MiniFeature Icon={BarChart3} label="Análisis avanzado" color={AZUL} />
             <MiniFeature Icon={Calculator} label="Cálculos precisos" color={VERDE} />
             <MiniFeature Icon={ShieldCheck} label="Seguridad total" color={AZUL} />
@@ -134,7 +134,7 @@ export function ModeSelector({ onPick }: { onPick: (m: "pesos" | "uvr") => void 
       </section>
 
       {/* SIMULATOR CARDS */}
-      <section className="relative z-10 mx-auto mt-24 max-w-[1240px] px-6 sm:px-10">
+      <section className="relative z-10 mx-auto mt-10 max-w-[1240px] px-6 sm:px-10">
         <div className="grid gap-7 md:grid-cols-2">
           <SimCard
             onClick={() => onPick("pesos")}
