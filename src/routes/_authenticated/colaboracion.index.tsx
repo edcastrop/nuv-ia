@@ -438,10 +438,12 @@ function PanelHeader({ label, accent, right }: { label: string; accent: string; 
 }
 
 function initialsOf(name: string): string {
+  // Regla NUVIA: primera letra del primer nombre + primera letra del primer apellido
+  // Ej: "Marsela Gomez Sierra" → MG, "Luis Gustavo Moya Arenas" → LM, "Eduard Castro" → EC
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "??";
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
 function OwnerAvatar({ name, priority }: { name: string; priority: "alta" | "media" | "baja" }) {
