@@ -13,6 +13,9 @@ import {
 } from "@/lib/colaboracion";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+
+type CasoOwnerInfo = { cliente?: string; banco?: string; analista?: string; asesor_id?: string };
 
 export const Route = createFileRoute("/_authenticated/colaboracion/")({
   component: ColaboracionPage,
@@ -57,6 +60,39 @@ function ColaboracionPage() {
 
   const canalesArea = canales.filter((c) => c.tipo === "area" || c.tipo === "custom");
   const canalesCaso = canales.filter((c) => c.tipo === "caso");
+
+  // Owner info per caso (cliente, banco, analista) — resolved from expedientes + profiles
+  const [ownerMap, setOwnerMap] = useState<Record<string, CasoOwnerInfo>>({});
+  useEffect(() => {
+    const casoIds = canalesCaso.map((c) => c.caso_id).filter((x): x is string => !!x);
+    if (casoIds.length === 0) { setOwnerMap({}); return; }
+    let active = true;
+    (async () => {
+      const { data: exps } = await supabase
+        .from("expedientes")
+        .select("id, cliente_nombre, banco, asesor_id")
+        .in("id", casoIds);
+      const rows = (exps ?? []) as Array<{ id: string; cliente_nombre: string | null; banco: string | null; asesor_id: string | null }>;
+      const asesorIds = Array.from(new Set(rows.map((r) => r.asesor_id).filter((x): x is string => !!x)));
+      let profMap: Record<string, string> = {};
+      if (asesorIds.length > 0) {
+        const { data: profs } = await supabase.from("profiles").select("id, nombre").in("id", asesorIds);
+        profMap = Object.fromEntries(((profs ?? []) as Array<{ id: string; nombre: string | null }>).map((p) => [p.id, p.nombre || ""]));
+      }
+      if (!active) return;
+      const map: Record<string, CasoOwnerInfo> = {};
+      for (const r of rows) {
+        map[r.id] = {
+          cliente: r.cliente_nombre || undefined,
+          banco: r.banco || undefined,
+          analista: r.asesor_id ? profMap[r.asesor_id] : undefined,
+          asesor_id: r.asesor_id || undefined,
+        };
+      }
+      setOwnerMap(map);
+    })();
+    return () => { active = false; };
+  }, [canalesCaso.map((c) => c.caso_id || "").join(",")]);
 
   const setCanal = (id: string) => navigate({ to: "/colaboracion", search: { canal: id, tab } });
   const setTabAndSync = (t: string) => { setTab(t); navigate({ to: "/colaboracion", search: { canal: search.canal, tab: t } }); };
@@ -216,20 +252,33 @@ function ColaboracionPage() {
                 const sla = slaOf(c.id);
                 const etapa = etapaOf(c.id);
                 const p = prioTone(prio);
+                const owner = (c.caso_id && ownerMap[c.caso_id]) || {};
+                const cliente = owner.cliente || c.nombre.replace(/^Caso\s*·\s*/i, "");
+                const banco = owner.banco || c.descripcion || "Sin banco asignado";
+                const analistaName = owner.analista || "Sin asignar";
                 return (
                   <button key={c.id} onClick={() => setCanal(c.id)}
                     className="w-full text-left rounded-lg p-2.5 transition-all relative overflow-hidden group"
                     style={active
                       ? { background: "linear-gradient(135deg, rgba(59,130,246,0.14), rgba(16,185,129,0.06))", border: "1px solid rgba(59,130,246,0.45)", boxShadow: "0 0 20px rgba(59,130,246,0.15)" }
                       : { background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="flex items-start justify-between gap-2 mb-1">
-                      <div className="text-[12px] font-bold truncate flex-1" style={{ color: "rgba(255,255,255,0.95)" }}>
-                        {c.nombre.replace(/^Caso\s*·\s*/i, "")}
+                    <div className="flex items-start justify-between gap-2 mb-0.5">
+                      <div className="text-[12px] font-bold truncate flex-1 uppercase tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
+                        {cliente}
                       </div>
                       <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5" style={{ background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>{prio}</span>
                     </div>
-                    <div className="text-[10px] mb-1.5 truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{c.descripcion || "Sin banco asignado"}</div>
-                    <div className="flex items-center justify-between gap-2 text-[10px]">
+                    <div className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{banco}</div>
+
+                    {/* Analista owner */}
+                    <div className="mt-1.5 flex items-center gap-1.5">
+                      <OwnerAvatar name={analistaName} priority={prio} />
+                      <span className="text-[10.5px] font-medium truncate" style={{ color: owner.analista ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
+                        {analistaName}
+                      </span>
+                    </div>
+
+                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
                       <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5" style={{ background: "rgba(139,92,246,0.12)", color: "#C4B5FD", border: "1px solid rgba(139,92,246,0.25)" }}>
                         <Activity size={9} /> {etapa}
                       </span>
@@ -385,6 +434,42 @@ function PanelHeader({ label, accent, right }: { label: string; accent: string; 
       </div>
       {right}
     </div>
+  );
+}
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "??";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+function OwnerAvatar({ name, priority }: { name: string; priority: "alta" | "media" | "baja" }) {
+  const border =
+    priority === "alta" ? "rgba(239,68,68,0.55)" :
+    priority === "media" ? "rgba(245,158,11,0.55)" :
+                           "rgba(16,185,129,0.55)";
+  const glow =
+    priority === "alta" ? "rgba(239,68,68,0.35)" :
+    priority === "media" ? "rgba(245,158,11,0.35)" :
+                           "rgba(16,185,129,0.35)";
+  const hasOwner = name && name !== "Sin asignar";
+  return (
+    <span
+      title={hasOwner ? `Analista responsable · ${name}` : "Analista responsable"}
+      className="relative inline-flex items-center justify-center rounded-full shrink-0 transition"
+      style={{
+        width: 28, height: 28,
+        background: "linear-gradient(135deg, rgba(11,18,32,0.9), rgba(15,23,42,0.85))",
+        border: `1.5px solid ${hasOwner ? border : "rgba(255,255,255,0.15)"}`,
+        boxShadow: hasOwner ? `0 0 10px ${glow}, inset 0 1px 0 rgba(255,255,255,0.06)` : "inset 0 1px 0 rgba(255,255,255,0.04)",
+        backdropFilter: "blur(8px)",
+      }}
+    >
+      <span className="text-[10px] font-extrabold uppercase tracking-wider" style={{ color: "rgba(255,255,255,0.95)", textShadow: "0 1px 2px rgba(0,0,0,0.5)" }}>
+        {hasOwner ? initialsOf(name) : "—"}
+      </span>
+    </span>
   );
 }
 
