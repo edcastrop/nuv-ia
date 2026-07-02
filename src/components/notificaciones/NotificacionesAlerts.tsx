@@ -10,8 +10,15 @@ import {
   type NotifPrefs,
 } from "@/lib/notifPreferencias";
 import { reproducirSonido, precalentarAudio, type SoundKind } from "@/lib/notifSound";
+import {
+  esSirena,
+  generarFaviconConBadge,
+  aplicarFavicon,
+  limpiarFaviconDinamico,
+} from "@/lib/notifSirena";
 
 const TITULO_BASE = "Nuvex";
+const SIRENA_REPEAT_MS = 5 * 60_000; // 5 min
 
 function tipoToSound(tipo: string): SoundKind {
   if (tipo === "dm" || tipo.startsWith("dm")) return "dm";
@@ -73,11 +80,59 @@ export function NotificacionesAlerts() {
     };
   }, []);
 
-  // Badge en pestaña: título y favicon.
+  // Sirena: cuántos urgentes (QA) sin leer.
+  const urgentes = items.filter((n) => !n.leida && esSirena(n.tipo)).length;
+
+  // Badge en pestaña: título parpadeante si hay urgentes + pestaña oculta,
+  // y favicon dinámico con badge rojo cuando hay urgentes.
   useEffect(() => {
     if (typeof document === "undefined") return;
-    document.title = unread > 0 ? `(${unread > 99 ? "99+" : unread}) ${TITULO_BASE}` : TITULO_BASE;
-  }, [unread]);
+    const baseTitle = unread > 0 ? `(${unread > 99 ? "99+" : unread}) ${TITULO_BASE}` : TITULO_BASE;
+    document.title = baseTitle;
+    // Favicon
+    if (urgentes > 0) {
+      const d = generarFaviconConBadge(urgentes);
+      if (d) aplicarFavicon(d);
+    } else if (unread > 0) {
+      const d = generarFaviconConBadge(unread);
+      if (d) aplicarFavicon(d);
+    } else {
+      limpiarFaviconDinamico();
+    }
+    // Blink cuando la pestaña no está visible
+    if (urgentes === 0) return;
+    let alt = false;
+    const alerta = `🔴 QA PENDIENTE (${urgentes}) — NUVIA`;
+    const iv = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        document.title = baseTitle;
+        return;
+      }
+      alt = !alt;
+      document.title = alt ? alerta : baseTitle;
+    }, 1500);
+    return () => {
+      window.clearInterval(iv);
+      document.title = baseTitle;
+    };
+  }, [unread, urgentes]);
+
+  // Sirena: sonido repetido cada 5 min mientras haya urgentes sin leer.
+  useEffect(() => {
+    if (urgentes === 0) return;
+    if (!prefs.sonido || enDND(prefs)) return;
+    const iv = window.setInterval(() => {
+      // No molestar si ya está en /qa-ai o /notificaciones con pestaña visible
+      const p = typeof window !== "undefined" ? window.location.pathname : "";
+      if (
+        document.visibilityState === "visible" &&
+        (p.startsWith("/qa-ai") || p.startsWith("/notificaciones"))
+      ) return;
+      reproducirSonido("mencion", prefs.volumen);
+    }, SIRENA_REPEAT_MS);
+    return () => window.clearInterval(iv);
+  }, [urgentes, prefs]);
+
 
   // Inicialización: marca todas las existentes como "ya vistas" (no notificar al cargar).
   useEffect(() => {
@@ -161,10 +216,11 @@ export function NotificacionesAlerts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, prefs]);
 
-  // Reset título al desmontar
+  // Reset título + favicon al desmontar
   useEffect(() => {
     return () => {
       if (typeof document !== "undefined") document.title = TITULO_BASE;
+      limpiarFaviconDinamico();
     };
   }, []);
 

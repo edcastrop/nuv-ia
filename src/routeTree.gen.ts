@@ -100,6 +100,7 @@ import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/e
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiPublicHooksRecomputeSnapshotsRouteImport } from './routes/api/public/hooks/recompute-snapshots'
+import { Route as ApiPublicHooksQaEscalacionRouteImport } from './routes/api/public/hooks/qa-escalacion'
 import { Route as ApiPublicHooksOnboardingRecordatoriosRouteImport } from './routes/api/public/hooks/onboarding-recordatorios'
 import { Route as ApiPublicHooksFinanzasCronRouteImport } from './routes/api/public/hooks/finanzas-cron'
 import { Route as ApiPublicHooksCasosAlertasRouteImport } from './routes/api/public/hooks/casos-alertas'
@@ -625,6 +626,12 @@ const ApiPublicHooksRecomputeSnapshotsRoute =
     path: '/api/public/hooks/recompute-snapshots',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksQaEscalacionRoute =
+  ApiPublicHooksQaEscalacionRouteImport.update({
+    id: '/api/public/hooks/qa-escalacion',
+    path: '/api/public/hooks/qa-escalacion',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksOnboardingRecordatoriosRoute =
   ApiPublicHooksOnboardingRecordatoriosRouteImport.update({
     id: '/api/public/hooks/onboarding-recordatorios',
@@ -816,6 +823,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  '/api/public/hooks/qa-escalacion': typeof ApiPublicHooksQaEscalacionRoute
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -919,6 +927,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  '/api/public/hooks/qa-escalacion': typeof ApiPublicHooksQaEscalacionRoute
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1028,6 +1037,7 @@ export interface FileRoutesById {
   '/api/public/hooks/casos-alertas': typeof ApiPublicHooksCasosAlertasRoute
   '/api/public/hooks/finanzas-cron': typeof ApiPublicHooksFinanzasCronRoute
   '/api/public/hooks/onboarding-recordatorios': typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  '/api/public/hooks/qa-escalacion': typeof ApiPublicHooksQaEscalacionRoute
   '/api/public/hooks/recompute-snapshots': typeof ApiPublicHooksRecomputeSnapshotsRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -1137,6 +1147,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
+    | '/api/public/hooks/qa-escalacion'
     | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1240,6 +1251,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
+    | '/api/public/hooks/qa-escalacion'
     | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1348,6 +1360,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/casos-alertas'
     | '/api/public/hooks/finanzas-cron'
     | '/api/public/hooks/onboarding-recordatorios'
+    | '/api/public/hooks/qa-escalacion'
     | '/api/public/hooks/recompute-snapshots'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -1373,6 +1386,7 @@ export interface RootRouteChildren {
   ApiPublicHooksCasosAlertasRoute: typeof ApiPublicHooksCasosAlertasRoute
   ApiPublicHooksFinanzasCronRoute: typeof ApiPublicHooksFinanzasCronRoute
   ApiPublicHooksOnboardingRecordatoriosRoute: typeof ApiPublicHooksOnboardingRecordatoriosRoute
+  ApiPublicHooksQaEscalacionRoute: typeof ApiPublicHooksQaEscalacionRoute
   ApiPublicHooksRecomputeSnapshotsRoute: typeof ApiPublicHooksRecomputeSnapshotsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -2018,6 +2032,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRecomputeSnapshotsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/qa-escalacion': {
+      id: '/api/public/hooks/qa-escalacion'
+      path: '/api/public/hooks/qa-escalacion'
+      fullPath: '/api/public/hooks/qa-escalacion'
+      preLoaderRoute: typeof ApiPublicHooksQaEscalacionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/onboarding-recordatorios': {
       id: '/api/public/hooks/onboarding-recordatorios'
       path: '/api/public/hooks/onboarding-recordatorios'
@@ -2397,6 +2418,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksFinanzasCronRoute: ApiPublicHooksFinanzasCronRoute,
   ApiPublicHooksOnboardingRecordatoriosRoute:
     ApiPublicHooksOnboardingRecordatoriosRoute,
+  ApiPublicHooksQaEscalacionRoute: ApiPublicHooksQaEscalacionRoute,
   ApiPublicHooksRecomputeSnapshotsRoute: ApiPublicHooksRecomputeSnapshotsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
@@ -2405,13 +2427,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

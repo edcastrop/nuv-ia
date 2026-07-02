@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   BellRing,
   ArrowRight,
+  Zap,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/notificaciones")({
@@ -25,7 +26,13 @@ export const Route = createFileRoute("/_authenticated/notificaciones")({
   head: () => ({ meta: [{ title: "Centro de Alertas · NUVEX" }] }),
 });
 
-type TabKey = "estancados" | "sin_seguimiento" | "honorarios";
+type TabKey = "qa" | "estancados" | "sin_seguimiento" | "honorarios";
+
+interface QAPend {
+  id: string;
+  expediente_id: string;
+  solicitada_at: string;
+}
 
 interface Alerta {
   id: string;
@@ -62,14 +69,16 @@ function diasDesde(iso: string) {
 }
 
 function NotificacionesPage() {
-  const [tab, setTab] = useState<TabKey>("estancados");
+  const [tab, setTab] = useState<TabKey>("qa");
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [expedientes, setExpedientes] = useState<Expediente[]>([]);
+  const [qaPend, setQaPend] = useState<QAPend[]>([]);
   const [loading, setLoading] = useState(true);
+  const [now, setNow] = useState(Date.now());
 
   const cargar = async () => {
     setLoading(true);
-    const [{ data: al }, { data: ex }] = await Promise.all([
+    const [{ data: al }, { data: ex }, { data: qa }] = await Promise.all([
       supabase
         .from("caso_alertas" as never)
         .select("*")
@@ -81,15 +90,24 @@ function NotificacionesPage() {
           "id, cliente_nombre, banco, producto, estado_caso, updated_at, honorarios_final" as never,
         )
         .order("updated_at", { ascending: false }),
+      supabase
+        .from("validaciones_qa" as never)
+        .select("id, expediente_id, solicitada_at")
+        .is("resultado", null)
+        .order("solicitada_at", { ascending: true }),
     ]);
     setAlertas((al ?? []) as unknown as Alerta[]);
     setExpedientes((ex ?? []) as unknown as Expediente[]);
+    setQaPend((qa ?? []) as unknown as QAPend[]);
     setLoading(false);
   };
 
   useEffect(() => {
     cargar();
+    const iv = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(iv);
   }, []);
+
 
   const expedienteById = useMemo(() => {
     const m = new Map<string, Expediente>();
@@ -126,6 +144,7 @@ function NotificacionesPage() {
   };
 
   const tabs: { key: TabKey; label: string; count: number; Icon: typeof Inbox }[] = [
+    { key: "qa", label: "QA Pendiente", count: qaPend.length, Icon: Zap },
     { key: "estancados", label: "Estancados", count: estancados.length, Icon: AlertTriangle },
     { key: "sin_seguimiento", label: "Sin seguimiento", count: sinSeguimiento.length, Icon: Clock },
     { key: "honorarios", label: "Honorarios", count: honorariosPend.length, Icon: CircleDollarSign },
@@ -148,12 +167,23 @@ function NotificacionesPage() {
               color: "var(--nuvia-danger)",
             }}
           >
-            {estancados.length + sinSeguimiento.length + honorariosPend.length} señales activas
+            {estancados.length + sinSeguimiento.length + honorariosPend.length + qaPend.length} señales activas
           </span>
         }
       />
 
-      <KpiGrid cols={3}>
+      <KpiGrid cols={4}>
+        <KpiCard
+          label="QA pendiente"
+          value={qaPend.length}
+          icon={<Zap size={14} />}
+          tone="danger"
+          hint={
+            qaPend.length > 0
+              ? `Más antigua hace ${Math.floor((now - new Date(qaPend[0].solicitada_at).getTime()) / 60_000)} min`
+              : "Sin auditorías sin dictamen"
+          }
+        />
         <KpiCard
           label="Estancados"
           value={estancados.length}
@@ -225,6 +255,47 @@ function NotificacionesPage() {
           >
             Cargando…
           </div>
+        ) : tab === "qa" ? (
+          qaPend.length === 0 ? (
+            <EmptyState
+              icon={<CheckCircle2 size={20} />}
+              title="Sin auditorías pendientes"
+              description="Todas las validaciones QA están al día."
+            />
+          ) : (
+            <ListaRows>
+              {qaPend.map((q) => {
+                const exp = expedienteById.get(q.expediente_id);
+                const mins = Math.floor((now - new Date(q.solicitada_at).getTime()) / 60_000);
+                const label = mins < 60 ? `${mins} min` : `${Math.floor(mins / 60)}h ${mins % 60}m`;
+                const critico = mins >= 120;
+                const atencion = mins >= 60;
+                const color = critico
+                  ? "var(--nuvia-danger)"
+                  : atencion
+                    ? "var(--nuvia-warning)"
+                    : "var(--nuvia-accent-blue)";
+                return (
+                  <Row
+                    key={q.id}
+                    titulo={exp?.cliente_nombre ?? "Caso"}
+                    sub={exp?.banco ?? "—"}
+                    detalle={
+                      <span style={{ color }}>
+                        {critico ? "🚨 CRÍTICO · " : atencion ? "⏰ Atención · " : "⏳ "}
+                        Esperando dictamen QA hace {label}
+                      </span>
+                    }
+                    actions={
+                      <LinkBtn to="/qa-ai" params={{}}>
+                        Auditar ahora <ArrowRight size={11} />
+                      </LinkBtn>
+                    }
+                  />
+                );
+              })}
+            </ListaRows>
+          )
         ) : tab === "estancados" ? (
           estancados.length === 0 ? (
             <EmptyState
