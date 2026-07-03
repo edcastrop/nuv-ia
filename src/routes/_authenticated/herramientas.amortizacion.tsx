@@ -56,48 +56,90 @@ type Row = {
   saldoInicial: number;
   cuota: number;
   interes: number;
+  interesBase: number;
+  fresh: number;
   capital: number;
   seguros: number;
   totalCuota: number;
   saldoFinal: number;
 };
 
+const FRESH_MAX_CUOTAS = 84;
+
 const tasaMensualFromTEA = (tea: number) => Math.pow(1 + tea, 1 / 12) - 1;
 const cuotaFija = (v: number, i: number, n: number) =>
   i === 0 ? v / n : (v * (i * Math.pow(1 + i, n))) / (Math.pow(1 + i, n) - 1);
 
-function construirTabla(valor: number, tea: number, n: number, seguros: number): Row[] {
+function construirTabla(
+  valor: number,
+  tea: number,
+  n: number,
+  seguros: number,
+  freshCOP: number = 0,
+  freshCuotas: number = 0,
+): Row[] {
   const i = tasaMensualFromTEA(tea);
   const cuota = cuotaFija(valor, i, n);
+  const fCuotas = Math.min(Math.max(0, Math.floor(freshCuotas || 0)), FRESH_MAX_CUOTAS);
+  const fCOP = Math.max(0, freshCOP || 0);
   const rows: Row[] = [];
   let saldo = valor;
   for (let p = 1; p <= n; p++) {
-    const interes = saldo * i;
-    let capital = cuota - interes;
+    const interesBase = saldo * i;
+    let capital = cuota - interesBase;
     if (p === n) capital = saldo;
     const saldoFinal = Math.max(0, saldo - capital);
-    rows.push({ periodo: p, saldoInicial: saldo, cuota, interes, capital, seguros, totalCuota: cuota + seguros, saldoFinal });
+    const fresh = p <= fCuotas ? fCOP : 0;
+    const interesTotal = interesBase + fresh;
+    rows.push({
+      periodo: p,
+      saldoInicial: saldo,
+      cuota,
+      interes: interesTotal,
+      interesBase,
+      fresh,
+      capital,
+      seguros,
+      totalCuota: cuota + seguros + fresh,
+      saldoFinal,
+    });
     saldo = saldoFinal;
   }
   return rows;
 }
 
-function construirTablaUVR(valorUVR: number, teaUVR: number, n: number, uvr0: number, varAnual: number, segurosCOP: number): Row[] {
+function construirTablaUVR(
+  valorUVR: number,
+  teaUVR: number,
+  n: number,
+  uvr0: number,
+  varAnual: number,
+  segurosCOP: number,
+  freshCOP: number = 0,
+  freshCuotas: number = 0,
+): Row[] {
+  const fCuotas = Math.min(Math.max(0, Math.floor(freshCuotas || 0)), FRESH_MAX_CUOTAS);
+  const fCOP = Math.max(0, freshCOP || 0);
   return construirTabla(valorUVR, teaUVR, n, 0).map((r) => {
     const uvrT = uvr0 * Math.pow(1 + varAnual, (r.periodo - 1) / 12);
     const cuotaCOP = r.cuota * uvrT;
+    const interesBaseCOP = r.interesBase * uvrT;
+    const fresh = r.periodo <= fCuotas ? fCOP : 0;
     return {
       periodo: r.periodo,
       saldoInicial: r.saldoInicial * uvrT,
       cuota: cuotaCOP,
-      interes: r.interes * uvrT,
+      interes: interesBaseCOP + fresh,
+      interesBase: interesBaseCOP,
+      fresh,
       capital: r.capital * uvrT,
       seguros: segurosCOP,
-      totalCuota: cuotaCOP + segurosCOP,
+      totalCuota: cuotaCOP + segurosCOP + fresh,
       saldoFinal: r.saldoFinal * uvrT,
     };
   });
 }
+
 
 const findBreakEven = (rows: Row[]) => rows.find((r) => r.capital >= r.interes)?.periodo ?? null;
 
