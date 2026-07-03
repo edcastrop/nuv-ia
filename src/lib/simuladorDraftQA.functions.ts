@@ -252,6 +252,7 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
       score: result.score.score,
       dictamen,
     });
+    const { createHash } = await import("crypto");
     const hashCalculo = createHash("sha256").update(hashPayload).digest("hex").slice(0, 32);
 
     const certificable = criticos === 0 && dictamen === "aprobado";
