@@ -913,6 +913,59 @@ function AmortizationEngine() {
           border-radius: 999px;
         }
       `}</style>
+
+      {/* ============ IMPORT CASO MODAL ============ */}
+      <AnimatePresence>
+        {importOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setImportOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0B1020] p-6"
+              style={{ boxShadow: "0 30px 80px -20px rgba(75,111,224,0.4)" }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BB0FF]">Importar caso</div>
+                  <div className="text-[15px] font-semibold text-white mt-1">Buscar expediente NUVIA</div>
+                </div>
+                <button onClick={() => setImportOpen(false)} className="text-white/50 hover:text-white p-1">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-2 focus-within:border-[#4B6FE0]/60">
+                <Search className="h-4 w-4 text-white/40 shrink-0" />
+                <input
+                  autoFocus
+                  value={importCodigo}
+                  onChange={(e) => setImportCodigo(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleImportCaso(); }}
+                  placeholder="NUV_2026_..."
+                  className="flex-1 bg-transparent text-[14px] font-semibold text-white placeholder:text-white/25 outline-none"
+                />
+              </div>
+              <div className="mt-2 text-[10.5px] text-white/40">Buscamos por coincidencia parcial. Trae el primer resultado.</div>
+              <div className="mt-5 flex gap-2 justify-end">
+                <button onClick={() => setImportOpen(false)} className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-[12px] font-semibold text-white/70 hover:text-white">
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleImportCaso}
+                  disabled={importLoading}
+                  className="rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #4B6FE0, #6BCF89)" }}
+                >
+                  {importLoading ? "Buscando..." : "Importar"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
