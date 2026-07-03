@@ -18,27 +18,10 @@ export const defaultDiscount: DiscountState = {
   vigencia: "",
 };
 
-const LEGACY_QUICK_DECISION_VIGENCIAS = new Set([
-  "12h",
-  "12 h",
-  "12 horas",
-  "24h",
-  "24 h",
-  "24 horas",
-  "48h",
-  "48 h",
-  "48 horas",
-]);
-
 export function normalizeDiscountState(value: unknown): DiscountState {
   const raw = value && typeof value === "object" ? (value as Partial<DiscountState>) : {};
   const type: DiscountType = raw.type === "fixed" ? "fixed" : "percent";
   const vigencia = String(raw.vigencia ?? "").trim();
-  const isLegacyQuickDecision = LEGACY_QUICK_DECISION_VIGENCIAS.has(vigencia.toLowerCase());
-
-  if (isLegacyQuickDecision) {
-    return { ...defaultDiscount };
-  }
 
   return {
     type,
