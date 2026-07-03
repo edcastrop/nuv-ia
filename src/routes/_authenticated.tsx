@@ -51,6 +51,7 @@ import { NotificacionesAlerts } from "@/components/notificaciones/Notificaciones
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { etiquetaNivel } from "@/lib/autonomia";
 import { EtapaTransicionDialog } from "@/components/expediente/EtapaTransicionDialog";
+import { FinancialCalculator } from "@/components/nuvia/FinancialCalculator";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
