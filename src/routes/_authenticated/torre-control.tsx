@@ -33,6 +33,15 @@ function TorreControlPage() {
 
   const fetchMetrics = useServerFn(getTorreMetrics);
   const fetchInsights = useServerFn(getTorreInsights);
+  const fetchCostos = useServerFn(getReporteCostosIA);
+
+  const costosQuery = useQuery({
+    queryKey: ["torre-control", "costos-ia"],
+    queryFn: () => fetchCostos({} as any),
+    enabled: !rolesLoading && autorizado,
+    staleTime: 60_000,
+    refetchOnWindowFocus: false,
+  });
 
   const autorizado = useMemo(
     () => roles.some((r) => ROLES_TORRE.includes(r)),
