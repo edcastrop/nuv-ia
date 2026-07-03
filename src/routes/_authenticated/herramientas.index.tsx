@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/herramientas/")({
 });
 
 /* -------------------------------------------------------------------------- */
-/*  Background — profundidad + partículas suaves                              */
+/*  Background — grid + halos institucionales                                 */
 /* -------------------------------------------------------------------------- */
 
 function CommandBg() {
@@ -40,22 +40,20 @@ function CommandBg() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(80% 60% at 15% 10%, rgba(68,93,163,0.28), transparent 60%), radial-gradient(70% 55% at 85% 90%, rgba(132,185,143,0.22), transparent 60%), radial-gradient(50% 40% at 50% 40%, rgba(123,97,255,0.14), transparent 65%)",
+            "radial-gradient(70% 55% at 12% 8%, rgba(68,93,163,0.30), transparent 60%), radial-gradient(60% 50% at 88% 92%, rgba(132,185,143,0.22), transparent 60%), radial-gradient(45% 35% at 78% 22%, rgba(123,97,255,0.16), transparent 65%)",
         }}
       />
-      {/* subtle grid */}
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)",
-          backgroundSize: "56px 56px",
-          maskImage: "radial-gradient(ellipse at center, black 40%, transparent 75%)",
+          backgroundSize: "48px 48px",
+          maskImage: "radial-gradient(ellipse at center, black 40%, transparent 78%)",
         }}
       />
-      {/* floating particles */}
       <svg className="pointer-events-none absolute inset-0 h-full w-full">
-        {Array.from({ length: 18 }).map((_, i) => {
+        {Array.from({ length: 14 }).map((_, i) => {
           const cx = (i * 53) % 100;
           const cy = (i * 89) % 100;
           const dur = 4 + (i % 5);
@@ -64,12 +62,12 @@ function CommandBg() {
               key={i}
               cx={`${cx}%`}
               cy={`${cy}%`}
-              r={1.2}
+              r={1}
               fill={i % 2 === 0 ? NUVEX.azul : NUVEX.verde}
-              opacity={0.6}
+              opacity={0.5}
             >
-              <animate attributeName="opacity" values="0.15;0.9;0.15" dur={`${dur}s`} repeatCount="indefinite" />
-              <animate attributeName="r" values="0.8;2.2;0.8" dur={`${dur}s`} repeatCount="indefinite" />
+              <animate attributeName="opacity" values="0.15;0.8;0.15" dur={`${dur}s`} repeatCount="indefinite" />
+              <animate attributeName="r" values="0.6;1.8;0.6" dur={`${dur}s`} repeatCount="indefinite" />
             </circle>
           );
         })}
@@ -79,68 +77,66 @@ function CommandBg() {
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Orb holográfico + mini cards flotantes                                    */
+/*  Holograma protagonista                                                    */
 /* -------------------------------------------------------------------------- */
 
-function HeroOrb() {
+function HeroHologram() {
   const mini = [
-    { Icon: DollarSign, x: "8%", y: "18%", delay: 0 },
-    { Icon: TrendingUp, x: "78%", y: "10%", delay: 0.4 },
-    { Icon: Calculator, x: "82%", y: "62%", delay: 0.8 },
-    { Icon: Gauge, x: "6%", y: "68%", delay: 1.2 },
-    { Icon: PiggyBank, x: "42%", y: "0%", delay: 1.6 },
-    { Icon: Bell, x: "46%", y: "82%", delay: 2 },
+    { Icon: DollarSign, x: "6%", y: "20%", delay: 0 },
+    { Icon: TrendingUp, x: "82%", y: "12%", delay: 0.4 },
+    { Icon: Calculator, x: "86%", y: "66%", delay: 0.8 },
+    { Icon: Gauge, x: "4%", y: "70%", delay: 1.2 },
+    { Icon: PiggyBank, x: "44%", y: "-2%", delay: 1.6 },
+    { Icon: Bell, x: "48%", y: "88%", delay: 2 },
   ];
   return (
-    <div className="relative h-[340px] w-full">
-      {/* halos */}
+    <div className="relative h-[420px] w-full">
       <div
         className="absolute inset-0 rounded-[32px]"
         style={{
           background:
-            "radial-gradient(50% 50% at 50% 50%, rgba(68,93,163,0.35), transparent 70%)",
+            "radial-gradient(55% 55% at 50% 50%, rgba(68,93,163,0.38), transparent 72%)",
         }}
       />
-      {/* orbit rings */}
-      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 340" fill="none">
+      <svg className="absolute inset-0 h-full w-full" viewBox="0 0 400 420" fill="none">
         <defs>
           <linearGradient id="ring" x1="0" x2="1">
-            <stop offset="0%" stopColor={NUVEX.azul} stopOpacity="0.7" />
-            <stop offset="100%" stopColor={NUVEX.verde} stopOpacity="0.7" />
+            <stop offset="0%" stopColor={NUVEX.azul} stopOpacity="0.8" />
+            <stop offset="50%" stopColor="#7B61FF" stopOpacity="0.8" />
+            <stop offset="100%" stopColor={NUVEX.verde} stopOpacity="0.8" />
           </linearGradient>
         </defs>
-        {[70, 110, 150].map((r, i) => (
+        {[80, 130, 180].map((r, i) => (
           <ellipse
             key={i}
             cx="200"
-            cy="170"
+            cy="210"
             rx={r + 30}
-            ry={r * 0.42}
+            ry={r * 0.44}
             stroke="url(#ring)"
             strokeWidth="0.7"
             strokeDasharray="2 6"
-            opacity={0.55 - i * 0.12}
+            opacity={0.6 - i * 0.12}
           />
         ))}
       </svg>
 
-      {/* central orb */}
       <motion.div
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
-        animate={{ y: [0, -6, 0] }}
+        animate={{ y: [0, -8, 0] }}
         transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
       >
         <div
-          className="relative flex h-32 w-32 items-center justify-center rounded-full border border-white/20 backdrop-blur-xl"
+          className="relative flex h-40 w-40 items-center justify-center rounded-full border border-white/25 backdrop-blur-xl"
           style={{
             background:
-              "conic-gradient(from 120deg, rgba(68,93,163,0.9), rgba(123,97,255,0.85), rgba(132,185,143,0.9), rgba(68,93,163,0.9))",
-            boxShadow: `0 0 80px rgba(68,93,163,0.55), inset 0 0 40px rgba(255,255,255,0.15)`,
+              "conic-gradient(from 120deg, rgba(68,93,163,0.95), rgba(123,97,255,0.9), rgba(132,185,143,0.95), rgba(68,93,163,0.95))",
+            boxShadow: `0 0 100px rgba(68,93,163,0.6), inset 0 0 50px rgba(255,255,255,0.18)`,
           }}
         >
-          <div className="absolute inset-2 rounded-full bg-[#050816]/70 backdrop-blur-xl flex items-center justify-center">
+          <div className="absolute inset-2 rounded-full bg-[#050816]/75 backdrop-blur-xl flex items-center justify-center">
             <span
-              className="text-4xl font-black tracking-tighter"
+              className="text-5xl font-black tracking-tighter"
               style={{
                 background: `linear-gradient(135deg, #ffffff, ${NUVEX.verde})`,
                 WebkitBackgroundClip: "text",
@@ -153,7 +149,6 @@ function HeroOrb() {
         </div>
       </motion.div>
 
-      {/* floating mini cards */}
       {mini.map(({ Icon, x, y, delay }, i) => (
         <motion.div
           key={i}
@@ -184,8 +179,8 @@ function HerramientasLanding() {
       <CommandBg />
 
       <div className="relative mx-auto w-full max-w-[1360px] px-6 py-8 space-y-8">
-        {/* ============================ HERO ============================ */}
-        <section className="grid gap-8 lg:grid-cols-[1.15fr_1fr] items-center">
+        {/* ============================ HERO 50 / 50 ============================ */}
+        <section className="grid gap-10 lg:grid-cols-2 items-center">
           <motion.div
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
@@ -203,7 +198,7 @@ function HerramientasLanding() {
               NUVIA · Motores Financieros
             </div>
 
-            <h1 className="mt-4 text-5xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
+            <h1 className="mt-5 text-5xl md:text-[56px] font-semibold tracking-tight leading-[1.03]">
               Herramientas{" "}
               <span
                 style={{
@@ -232,16 +227,16 @@ function HerramientasLanding() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.15 }}
           >
-            <HeroOrb />
+            <HeroHologram />
           </motion.div>
         </section>
 
-        {/* ============================ TOOLS ============================ */}
+        {/* ============================ GRID 2x2 ============================ */}
         <motion.div
           initial="hidden"
           animate="show"
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.12, delayChildren: 0.2 } } }}
-          className="grid gap-5 md:grid-cols-2 lg:grid-cols-3"
+          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } } }}
+          className="grid gap-5 md:grid-cols-2 auto-rows-fr"
         >
           <ToolCard
             to="/herramientas/capacidad-pago"
@@ -281,67 +276,60 @@ function HerramientasLanding() {
           />
         </motion.div>
 
-        {/* ============================ INSIGHT BAR ============================ */}
+        {/* ============================ SYSTEM STRIP ============================ */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
-          className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-2xl p-5"
-          style={{ boxShadow: "0 20px 80px rgba(68,93,163,.15)" }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+          className="relative overflow-hidden rounded-2xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-2xl"
+          style={{ boxShadow: "0 20px 60px rgba(68,93,163,.12)" }}
         >
-          <div className="flex items-center gap-4">
-            <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/15"
-              style={{
-                background: "linear-gradient(135deg, rgba(132,185,143,0.25), rgba(68,93,163,0.25))",
-              }}
-            >
-              <Sparkles className="h-5 w-5 text-[#84B98F]" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-[#84B98F]">
-                Tip NUVIA · AI System Message
-              </div>
-              <div className="mt-0.5 text-sm text-white/75">
-                Usa estas herramientas para <b className="text-white">validar viabilidad antes de crear el expediente</b>.
-                Puedes convertir la simulación en caso con un clic desde el resultado.
-              </div>
-            </div>
-            {/* animated waveform */}
-            <svg className="hidden md:block h-8 w-56 shrink-0" viewBox="0 0 220 32" fill="none">
-              <defs>
-                <linearGradient id="wave" x1="0" x2="1">
-                  <stop offset="0%" stopColor={NUVEX.azul} />
-                  <stop offset="100%" stopColor={NUVEX.verde} />
-                </linearGradient>
-              </defs>
-              <path
-                d="M0 16 Q 20 4, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16"
-                stroke="url(#wave)"
-                strokeWidth="1.6"
-                fill="none"
-              >
-                <animate attributeName="d"
-                  values="M0 16 Q 20 4, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16;
-                          M0 16 Q 20 28, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16;
-                          M0 16 Q 20 4, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16"
-                  dur="4s" repeatCount="indefinite" />
-              </path>
-            </svg>
+          <span
+            className="pointer-events-none absolute inset-x-0 top-0 h-px"
+            style={{ background: `linear-gradient(90deg, transparent, ${NUVEX.azul}, ${NUVEX.verde}, transparent)` }}
+          />
+          <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-white/[0.06]">
+            <StatusInline Icon={Cpu} label="Modelo IA" value="Gemini 2.5 Pro" status="Activo" statusColor={NUVEX.azul} />
+            <StatusInline Icon={Scale} label="Supervisión legal" value="Ley 546 / Decreto 583" status="Vigente" statusColor={NUVEX.verde} />
+            <StatusInline Icon={GitBranch} label="Versión sistema" value="v2.4.1" status="Stable" statusColor="#7B61FF" />
+            <StatusInline Icon={Users} label="Usuarios activos" value="32 live sessions" status="Live" statusColor={NUVEX.verde} pulse />
           </div>
         </motion.div>
 
-        {/* ============================ STATUS BAR ============================ */}
+        {/* ============================ TIP BAR (slim) ============================ */}
         <motion.div
-          initial="hidden"
-          animate="show"
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.7 } } }}
-          className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.5 }}
+          className="relative flex items-center gap-3 rounded-full border border-white/[0.08] bg-white/[0.03] backdrop-blur-2xl px-4 py-2"
         >
-          <StatusWidget Icon={Cpu} label="Modelo IA" value="Gemini 2.5 Pro" status="Activo" statusColor={NUVEX.azul} />
-          <StatusWidget Icon={Scale} label="Supervisión legal" value="Ley 546 / Decreto 583" status="Vigente" statusColor={NUVEX.verde} />
-          <StatusWidget Icon={GitBranch} label="Versión sistema" value="v2.4.1" status="Stable" statusColor="#7B61FF" />
-          <StatusWidget Icon={Users} label="Usuarios activos" value="32 live sessions" status="Live" statusColor={NUVEX.verde} pulse />
+          <div
+            className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full"
+            style={{ background: "linear-gradient(135deg, rgba(132,185,143,0.35), rgba(68,93,163,0.35))" }}
+          >
+            <Sparkles className="h-3 w-3 text-white" />
+          </div>
+          <div className="text-[10.5px] font-bold uppercase tracking-[0.2em] text-[#84B98F] shrink-0">
+            Tip NUVIA
+          </div>
+          <div className="text-[12.5px] text-white/70 truncate">
+            Valida viabilidad <b className="text-white">antes de crear el expediente</b> · convierte la simulación en caso con un clic.
+          </div>
+          <svg className="hidden md:block ml-auto h-5 w-32 shrink-0" viewBox="0 0 220 32" fill="none">
+            <defs>
+              <linearGradient id="wave" x1="0" x2="1">
+                <stop offset="0%" stopColor={NUVEX.azul} />
+                <stop offset="100%" stopColor={NUVEX.verde} />
+              </linearGradient>
+            </defs>
+            <path d="M0 16 Q 20 4, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16" stroke="url(#wave)" strokeWidth="1.4" fill="none">
+              <animate attributeName="d"
+                values="M0 16 Q 20 4, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16;
+                        M0 16 Q 20 28, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16;
+                        M0 16 Q 20 4, 40 16 T 80 16 T 120 16 T 160 16 T 200 16 T 240 16"
+                dur="4s" repeatCount="indefinite" />
+            </path>
+          </svg>
         </motion.div>
       </div>
     </div>
@@ -390,13 +378,12 @@ function ToolCard({
         hidden: { opacity: 0, y: 20, scale: 0.97 },
         show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.5, ease: "easeOut" } },
       }}
-      whileHover={{ y: -6, scale: 1.02 }}
+      whileHover={{ y: -6, scale: 1.015 }}
       transition={{ type: "spring", stiffness: 260, damping: 22 }}
-      className="group relative"
+      className="group relative h-full"
     >
-      {/* animated gradient border */}
       <div
-        className="absolute -inset-px rounded-[22px] opacity-60 group-hover:opacity-100 transition-opacity duration-500"
+        className="absolute -inset-px rounded-[22px] opacity-50 group-hover:opacity-100 transition-opacity duration-500"
         style={{
           background: `conic-gradient(from 90deg at 50% 50%, ${accent}55, transparent 30%, transparent 70%, ${accent}55)`,
         }}
@@ -406,12 +393,10 @@ function ToolCard({
         className="relative flex h-full flex-col overflow-hidden rounded-[22px] border border-white/[0.08] bg-[rgba(10,16,34,0.6)] p-6 backdrop-blur-2xl"
         style={{ boxShadow: `0 20px 80px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.02) inset` }}
       >
-        {/* top gradient line */}
         <span
           className="pointer-events-none absolute inset-x-6 top-0 h-px"
           style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
         />
-        {/* hover glow */}
         <span
           className="pointer-events-none absolute -inset-16 opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-3xl"
           style={{ background: `radial-gradient(circle at 50% 0%, ${accent}30, transparent 60%)` }}
@@ -455,7 +440,7 @@ function ToolCard({
           ))}
         </ul>
 
-        <div className="relative mt-6 flex items-center justify-between border-t border-white/[0.06] pt-4">
+        <div className="relative mt-auto flex items-center justify-between border-t border-white/[0.06] pt-4">
           <span className="text-[13px] font-medium text-white/80 group-hover:text-white">
             Abrir herramienta
           </span>
@@ -474,7 +459,7 @@ function ToolCard({
   );
 }
 
-function StatusWidget({
+function StatusInline({
   Icon,
   label,
   value,
@@ -490,11 +475,7 @@ function StatusWidget({
   pulse?: boolean;
 }) {
   return (
-    <motion.div
-      variants={{ hidden: { opacity: 0, y: 8 }, show: { opacity: 1, y: 0 } }}
-      className="flex items-center gap-3 rounded-xl border border-white/[0.08] bg-white/[0.03] backdrop-blur-2xl px-4 py-3"
-      style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.25)" }}
-    >
+    <div className="flex items-center gap-3 px-4 py-3.5">
       <div
         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10"
         style={{ background: `${statusColor}18` }}
@@ -502,11 +483,11 @@ function StatusWidget({
         <Icon className="h-4 w-4" style={{ color: statusColor }} />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[10px] uppercase tracking-[0.15em] text-white/40">{label}</div>
-        <div className="text-[13px] font-medium text-white/90 truncate">{value}</div>
+        <div className="text-[9.5px] uppercase tracking-[0.15em] text-white/40">{label}</div>
+        <div className="text-[12.5px] font-medium text-white/90 truncate">{value}</div>
       </div>
       <div
-        className="flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+        className="flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider"
         style={{ borderColor: `${statusColor}44`, background: `${statusColor}14`, color: statusColor }}
       >
         <span
@@ -515,6 +496,6 @@ function StatusWidget({
         />
         {status}
       </div>
-    </motion.div>
+    </div>
   );
 }
