@@ -760,6 +760,47 @@ function ResultadoQaAi() {
         </NCard>
       </div>
 
+      {/* NOTAS DEL ANALISTA AL AUDITOR (solo cuando la auditoría llegó desde el simulador escalado) */}
+      {(() => {
+        const origen = (a as unknown as { origen?: string | null }).origen ?? null;
+        const notas = (a as unknown as { notas_analista_al_auditor?: string | null }).notas_analista_al_auditor ?? null;
+        if (origen !== "simulador_escalado" && !notas) return null;
+        return (
+          <div className="mt-3">
+            <NCard>
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0 rounded-lg p-2" style={{ background: "rgba(246,196,83,0.12)", border: "1px solid rgba(246,196,83,0.35)" }}>
+                  <MessageCircle size={16} style={{ color: "var(--nuvia-warning)" }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10.5px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--nuvia-warning)" }}>
+                      Simulación escalada del analista
+                    </span>
+                    {origen === "simulador_escalado" && (
+                      <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: "rgba(246,196,83,0.14)", color: "var(--nuvia-warning)", border: "1px solid rgba(246,196,83,0.35)" }}>
+                        Sin caso · pendiente de certificar
+                      </span>
+                    )}
+                  </div>
+                  {notas ? (
+                    <p className="mt-2 text-[13px] leading-relaxed whitespace-pre-wrap" style={{ color: "var(--nuvia-text-primary)" }}>
+                      {notas}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-[12.5px]" style={{ color: "var(--nuvia-text-muted)" }}>
+                      El analista no dejó notas adicionales. Audita la simulación con el extracto y devuélvela aprobada o con observaciones desde este mismo panel.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </NCard>
+          </div>
+        );
+      })()}
+
+
+
       {/* HERO DE CERTIFICACIÓN */}
       <section
         className="relative overflow-hidden rounded-[var(--nuvia-radius-lg)]"
