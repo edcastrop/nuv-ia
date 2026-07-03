@@ -177,7 +177,7 @@ function HeroHologram() {
 
 function HerramientasLanding() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#050816] text-white">
+    <div className="relative min-h-screen overflow-x-hidden bg-[#050816] text-white">
       <CommandBg />
 
       <div className="relative mx-auto w-full max-w-[1360px] px-6 py-8 space-y-8">
@@ -233,13 +233,40 @@ function HerramientasLanding() {
           </motion.div>
         </section>
 
-        {/* ============================ GRID 2x2 ============================ */}
+        {/* ============================ GRID PRINCIPAL ============================ */}
         <motion.div
           initial="hidden"
           animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1, delayChildren: 0.2 } } }}
-          className="grid gap-5 md:grid-cols-2 auto-rows-fr"
+          className="grid gap-5 md:grid-cols-2 xl:grid-cols-3 auto-rows-fr"
         >
+          <ToolCard
+            to="/herramientas/simulador"
+            Icon={Rocket}
+            badge="SIMULADOR · PESOS + UVR"
+            title="Simulador NUVEX"
+            description="Simula propuestas Pesos o UVR sin crear expediente. Cuando esté listo, conviértelo en caso con un clic."
+            features={["Exploración sin caso", "Pesos + UVR", "Crear caso desde resultado"]}
+            accent="#84B98F"
+          />
+          <ToolCard
+            to="/herramientas/abonos"
+            Icon={PiggyBank}
+            badge="ABONOS A CAPITAL"
+            title="Abonos a capital"
+            description="Simula abonos extraordinarios a capital y visualiza ahorro en intereses, cuotas eliminadas y nueva fecha final."
+            features={["Reducir plazo o cuota", "Presets prima junio/dic", "Ahorro real"]}
+            accent="#e0a458"
+          />
+          <ToolCard
+            to="/herramientas/amortizacion"
+            Icon={Calculator}
+            badge="PESOS + UVR"
+            title="NUVIA Amortization Engine"
+            description="Motor técnico para analizar composición exacta de cualquier cuota."
+            features={["Sistema francés", "Tabla completa", "Exportable PDF"]}
+            accent={NUVEX.verde}
+          />
           <ToolCard
             to="/herramientas/capacidad-pago"
             Icon={ShieldCheck}
@@ -257,33 +284,6 @@ function HerramientasLanding() {
             description="Lee extractos, interpreta composición y construye escenarios comparativos."
             features={["OCR financiero", "Escenarios comparativos", "Ahorro proyectado"]}
             accent="#7B61FF"
-          />
-          <ToolCard
-            to="/herramientas/amortizacion"
-            Icon={Calculator}
-            badge="PESOS + UVR"
-            title="NUVIA Amortization Engine"
-            description="Motor técnico para analizar composición exacta de cualquier cuota."
-            features={["Sistema francés", "Tabla completa", "Exportable PDF"]}
-            accent={NUVEX.verde}
-          />
-          <ToolCard
-            to="/herramientas/abonos"
-            Icon={PiggyBank}
-            badge="AHORRO REAL · PESOS + UVR"
-            title="NUVIA Extra Payments Simulator"
-            description="Simula abonos extraordinarios a capital y visualiza ahorro en intereses, cuotas eliminadas y nueva fecha final."
-            features={["Reducir plazo o cuota", "Presets prima junio/dic", "Chart comparativo"]}
-            accent="#e0a458"
-          />
-          <ToolCard
-            to="/herramientas/simulador"
-            Icon={Rocket}
-            badge="EXPLORACIÓN · NO CREA CASO"
-            title="Simulador NUVEX"
-            description="Simula propuestas Pesos o UVR sin crear expediente. Cuando estés listo, conviértelo en caso con un clic."
-            features={["Modo draft (no ERP)", "Pesos + UVR", "Guardar como caso"]}
-            accent="#84B98F"
           />
 
         </motion.div>
