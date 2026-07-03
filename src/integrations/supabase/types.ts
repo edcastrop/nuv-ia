@@ -695,11 +695,13 @@ export type Database = {
         Row: {
           analista_id: string
           banco: string | null
+          certificado_nuvia: boolean
           created_at: string
           datos_analista: Json
           datos_extracto: Json
           datos_propuesta: Json
           expediente_id: string | null
+          hash_calculo: string | null
           id: string
           inconsistencias: Json
           moneda: string | null
@@ -718,11 +720,13 @@ export type Database = {
         Insert: {
           analista_id: string
           banco?: string | null
+          certificado_nuvia?: boolean
           created_at?: string
           datos_analista?: Json
           datos_extracto?: Json
           datos_propuesta?: Json
           expediente_id?: string | null
+          hash_calculo?: string | null
           id?: string
           inconsistencias?: Json
           moneda?: string | null
@@ -741,11 +745,13 @@ export type Database = {
         Update: {
           analista_id?: string
           banco?: string | null
+          certificado_nuvia?: boolean
           created_at?: string
           datos_analista?: Json
           datos_extracto?: Json
           datos_propuesta?: Json
           expediente_id?: string | null
+          hash_calculo?: string | null
           id?: string
           inconsistencias?: Json
           moneda?: string | null
@@ -1853,6 +1859,69 @@ export type Database = {
           rol?: string
           updated_at?: string
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      consultas_tecnicas: {
+        Row: {
+          ajustes_sugeridos: Json | null
+          analista_id: string
+          banco: string | null
+          created_at: string
+          dictamen_director: string | null
+          director_id: string | null
+          estado: string
+          hallazgos_nuvia: Json
+          id: string
+          moneda: string | null
+          notas_analista: string | null
+          producto: string | null
+          resolved_at: string | null
+          restore_token: string | null
+          restored_at: string | null
+          snapshot_simulacion: Json
+          tipo_credito: string | null
+          updated_at: string
+        }
+        Insert: {
+          ajustes_sugeridos?: Json | null
+          analista_id: string
+          banco?: string | null
+          created_at?: string
+          dictamen_director?: string | null
+          director_id?: string | null
+          estado?: string
+          hallazgos_nuvia?: Json
+          id?: string
+          moneda?: string | null
+          notas_analista?: string | null
+          producto?: string | null
+          resolved_at?: string | null
+          restore_token?: string | null
+          restored_at?: string | null
+          snapshot_simulacion: Json
+          tipo_credito?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ajustes_sugeridos?: Json | null
+          analista_id?: string
+          banco?: string | null
+          created_at?: string
+          dictamen_director?: string | null
+          director_id?: string | null
+          estado?: string
+          hallazgos_nuvia?: Json
+          id?: string
+          moneda?: string | null
+          notas_analista?: string | null
+          producto?: string | null
+          resolved_at?: string | null
+          restore_token?: string | null
+          restored_at?: string | null
+          snapshot_simulacion?: Json
+          tipo_credito?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

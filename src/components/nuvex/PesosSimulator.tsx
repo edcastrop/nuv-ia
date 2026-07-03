@@ -60,6 +60,7 @@ import { normalizeCreditMoneyInput } from "@/lib/creditoSanity";
 import { AuditPanel } from "./AuditPanel";
 import { useNivelAutonomia } from "@/hooks/useNivelAutonomia";
 import { triggerSimuladorAutoQA } from "@/lib/simuladorAutoQA";
+import { emitDraftRawReady } from "@/components/nuvex/NuviaDraftAuditCard";
 import { AutoQAPanel, type AutoQAResult } from "./AutoQAPanel";
 import {
   clearSimulatorDraft,
@@ -570,7 +571,9 @@ export function PesosSimulator({
             setCapitalMensualExtracto(parseOcrMoney(p.extracto?.capitalMensual));
             setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
             // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
-            // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
+            // Expediente Maestro (init?.id). En modo standalone/draft no se ejecuta,
+            // pero emitimos el snapshot para que NuviaDraftAuditCard pueda auditar
+            // en memoria sin persistir nada.
             if (init?.id && p.raw) {
               void triggerSimuladorAutoQA({
                 expedienteId: init.id,
@@ -584,6 +587,14 @@ export function PesosSimulator({
                   setAutoQALoading(false);
                 },
                 onError: () => setAutoQALoading(false),
+              });
+            } else if (!init?.id && p.raw) {
+              emitDraftRawReady({
+                banco: p.raw.banco ?? null,
+                producto: p.raw.producto ?? null,
+                moneda: p.raw.moneda ?? null,
+                tipoCredito: "pesos",
+                datos: (p.raw.datos ?? {}) as Record<string, unknown>,
               });
             }
           }}

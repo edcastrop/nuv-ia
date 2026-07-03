@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ModeSelector } from "@/components/nuvex/ModeSelector";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
+import { NuviaDraftAuditCard } from "@/components/nuvex/NuviaDraftAuditCard";
 import {
   ensureOperativeExpedienteForMaestro,
   getMaestro,
@@ -264,9 +265,18 @@ export function SimuladorPage() {
   return (
     <div>
       {draftMode && (
-        <DraftBanner
-          onSaveAsCase={() => setSaveOpen(true)}
-          canSave={!!mode}
+        <NuviaDraftAuditCard
+          mode={mode}
+          onCertificar={() => {
+            if (!mode) {
+              toast.error("Selecciona Pesos o UVR primero.");
+              return;
+            }
+            setSaveOpen(true);
+          }}
+          onSalir={() => {
+            /* Link ya navega a /herramientas; nada más que hacer aquí. */
+          }}
         />
       )}
       {auditoriaId && (
@@ -380,9 +390,9 @@ function SaveAsCaseDialog({
         className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B1220] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-white">Guardar simulación como caso</h3>
+        <h3 className="text-lg font-semibold text-white">Certificar y crear caso</h3>
         <p className="mt-1 text-[13px] text-white/60">
-          Se creará un expediente maestro en el ERP con estos datos. Puedes completar el resto después.
+          NUVIA certificó la simulación. Al confirmar se creará el expediente maestro y quedará listo para generar la propuesta comercial. Puedes completar el resto después.
         </p>
         <div className="mt-5 space-y-3">
           <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
