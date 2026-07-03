@@ -126,7 +126,7 @@ export const Route = createFileRoute("/api/public/hooks/qa-escalacion")({
             tipo: nivel >= 3 ? "qa_critico" : "qa_escalado",
             titulo,
             mensaje,
-            link: `/qa-ai`,
+            link: `/casos/${p.expediente_id}`,
             severidad: nivel >= 2 ? "alta" : "media",
             metadata: {
               expediente_id: p.expediente_id,

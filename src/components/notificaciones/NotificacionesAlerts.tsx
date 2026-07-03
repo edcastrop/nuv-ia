@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Bell } from "lucide-react";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
+import { navigateToNotification, resolveNotificationHref } from "@/lib/notificacionLinks";
 import {
   enDND,
   getNotifPrefs,
@@ -40,14 +40,6 @@ function rutaActualCoincide(link: string | null): boolean {
  */
 export function NotificacionesAlerts() {
   const { items, unread, leer } = useNotificaciones();
-  const router = useRouter();
-  const navigate = (to: string) => {
-    if (/^https?:\/\//i.test(to)) {
-      window.location.href = to;
-    } else {
-      router.navigate({ to });
-    }
-  };
   const [prefs, setPrefs] = useState<NotifPrefs>(getNotifPrefs);
   // Set de IDs ya vistos por este montaje — evita re-disparar para ítems viejos.
   const vistosRef = useRef<Set<string>>(new Set());
@@ -150,7 +142,7 @@ export function NotificacionesAlerts() {
     if (nuevas.length === 0) return;
     nuevas.forEach((n) => vistosRef.current.add(n.id));
 
-    const enRutaDelMensaje = nuevas.length === 1 && rutaActualCoincide(nuevas[0].link);
+    const enRutaDelMensaje = nuevas.length === 1 && rutaActualCoincide(resolveNotificationHref(nuevas[0]));
     const documentoVisible = typeof document !== "undefined" && document.visibilityState === "visible";
     const silenciar = enDND(prefs);
 
@@ -162,12 +154,12 @@ export function NotificacionesAlerts() {
           description: n.mensaje ?? undefined,
           icon: <Bell className="h-4 w-4" />,
           duration: 5000,
-          action: n.link
+          action: resolveNotificationHref(n)
             ? {
                 label: "Abrir",
                 onClick: () => {
                   void leer(n.id);
-                  navigate(n.link!);
+                  navigateToNotification(n);
                 },
               }
             : undefined,
@@ -202,9 +194,9 @@ export function NotificacionesAlerts() {
           });
           not.onclick = () => {
             window.focus();
-            if (n.link) {
+            if (resolveNotificationHref(n)) {
               void leer(n.id);
-              navigate(n.link);
+              navigateToNotification(n);
             }
             not.close();
           };
