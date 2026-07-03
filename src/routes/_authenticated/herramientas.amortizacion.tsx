@@ -693,9 +693,9 @@ function AmortizationEngine() {
                     <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#D6C0FF]">
                       <Wand2 className="h-3.5 w-3.5" /> Tasa Fresh
                     </div>
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">máx. {FRESH_MAX_CUOTAS} cuotas</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">solo plazos ≤ {FRESH_MAX_CUOTAS}</span>
                   </div>
-                  <div className="text-[10.5px] text-white/50 leading-snug">Valor mensual en pesos que se suma al interés durante las primeras N cuotas.</div>
+                  <div className="text-[10.5px] text-white/50 leading-snug">Valor mensual en pesos que se suma al interés durante todo el plazo del crédito. Si el plazo supera {FRESH_MAX_CUOTAS} cuotas, Fresh no aplica.</div>
                   <InputTile
                     icon={<DollarSign className="h-3.5 w-3.5" />}
                     label="Valor Fresh mensual (COP)"
