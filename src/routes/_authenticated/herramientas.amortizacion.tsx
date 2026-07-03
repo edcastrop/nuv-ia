@@ -62,6 +62,13 @@ type Row = {
   seguros: number;
   totalCuota: number;
   saldoFinal: number;
+  // Métricas nativas UVR (solo en modo UVR)
+  uvrValor?: number;
+  saldoInicialUVR?: number;
+  cuotaUVR?: number;
+  interesUVR?: number;
+  capitalUVR?: number;
+  saldoFinalUVR?: number;
 };
 
 const FRESH_MAX_CUOTAS = 84;
@@ -136,6 +143,13 @@ function construirTablaUVR(
       seguros: segurosCOP,
       totalCuota: cuotaCOP + segurosCOP + fresh,
       saldoFinal: r.saldoFinal * uvrT,
+      // Nativos en UVR
+      uvrValor: uvrT,
+      saldoInicialUVR: r.saldoInicial,
+      cuotaUVR: r.cuota,
+      interesUVR: r.interesBase,
+      capitalUVR: r.capital,
+      saldoFinalUVR: r.saldoFinal,
     };
   });
 }
@@ -917,6 +931,15 @@ function AmortizationEngine() {
                       <tr className="text-left text-[10.5px] uppercase tracking-[0.14em] text-white/50">
                         <th className="px-4 py-3 font-semibold">Periodo</th>
                         <th className="px-4 py-3 font-semibold">Fecha</th>
+                        {modo === "uvr" && (
+                          <>
+                            <th className="px-4 py-3 font-semibold text-[#84B98F]">UVR del mes</th>
+                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Saldo (UVR)</th>
+                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Cuota (UVR)</th>
+                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Interés (UVR)</th>
+                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Capital (UVR)</th>
+                          </>
+                        )}
                         <th className="px-4 py-3 font-semibold">Saldo inicial</th>
                         <th className="px-4 py-3 font-semibold">Cuota financiera</th>
                         <th className="px-4 py-3 font-semibold">Interés base</th>
@@ -930,7 +953,7 @@ function AmortizationEngine() {
                     <tbody>
                       {rows.length === 0 ? (
                         <tr>
-                          <td colSpan={10} className="px-4 py-10 text-center text-white/40 text-[12px]">
+                          <td colSpan={modo === "uvr" ? 15 : 10} className="px-4 py-10 text-center text-white/40 text-[12px]">
                             Ingresa los datos y presiona <span className="text-white/80 font-semibold">Calcular cuota</span> para ver la tabla completa.
                           </td>
                         </tr>
@@ -938,6 +961,7 @@ function AmortizationEngine() {
                         rows.map((r) => {
                           const isCurrent = r.periodo === periodoNum;
                           const isBreakEven = breakEven === r.periodo;
+                          const fmtUVR = (v: number = 0) => new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2, minimumFractionDigits: 2 }).format(v);
                           return (
                             <tr
                               key={r.periodo}
@@ -969,6 +993,15 @@ function AmortizationEngine() {
                                 {r.periodo}
                               </td>
                               <td className="px-4 py-3 text-white/70 text-[11.5px]">{fechaCuota(fechaDesembolso, r.periodo)}</td>
+                              {modo === "uvr" && (
+                                <>
+                                  <td className="px-4 py-3 text-[#B5DFC0] font-semibold">${fmtUVR(r.uvrValor)}</td>
+                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.saldoInicialUVR)}</td>
+                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.cuotaUVR)}</td>
+                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.interesUVR)}</td>
+                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.capitalUVR)}</td>
+                                </>
+                              )}
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.saldoInicial)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.cuota)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.interesBase)}</td>
