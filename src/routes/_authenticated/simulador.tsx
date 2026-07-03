@@ -289,8 +289,16 @@ export function SimuladorPage() {
               toast.error("Selecciona Pesos o UVR primero.");
               return;
             }
-            setSaveOpen(true);
+            // Si la simulación ya trae nombre del cliente (OCR o formulario),
+            // creamos el caso directamente y saltamos el diálogo.
+            const { nombre } = readDraftClient(mode);
+            if (nombre) {
+              void handleSaveAsCase(nombre);
+            } else {
+              setSaveOpen(true);
+            }
           }}
+
           onSalir={() => {
             /* Link ya navega a /herramientas; nada más que hacer aquí. */
           }}
