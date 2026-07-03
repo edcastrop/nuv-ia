@@ -73,13 +73,24 @@ export async function triggerSimuladorAutoQA(opts: {
     onStart?.();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("No autenticado");
-    const datos = normalizeQaDatos(raw);
+    // Verificamos que el expediente operativo exista antes de disparar QA.
+    // Si el simulador se abrió con un maestro sin expediente operativo (p.ej. porque
+    // falta el nombre del cliente), `expedienteId` puede ser el id del maestro y no
+    // existe en `expedientes` → la FK de `qa_auditorias` falla. En ese caso omitimos
+    // la auto-auditoría silenciosamente: se ejecutará cuando exista el expediente.
     const { data: exp } = await supabase
       .from("expedientes")
-      .select("asesor_id")
+      .select("id,asesor_id")
       .eq("id", expedienteId)
       .maybeSingle();
+    if (!exp) {
+      console.info("[simuladorAutoQA] expediente operativo aún no existe; omitiendo auto-QA.");
+      onResult?.({ auditoriaId: "", score: 0, categoria: "pendiente", hallazgosCount: 0, criticos: 0, hallazgosTop: [] } as unknown as AutoQAResult);
+      return null;
+    }
+    const datos = normalizeQaDatos(raw);
     const analistaId = (exp as { asesor_id?: string | null } | null)?.asesor_id ?? user.id;
+
     const { data: inserted, error: insErr } = await supabase
       .from("extractos_lecturas")
       .insert({
