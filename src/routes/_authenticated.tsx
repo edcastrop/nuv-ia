@@ -543,7 +543,7 @@ function AuthenticatedLayout() {
             label: "Operación",
             items: [
               { to: "/inicio", label: "Inicio", Icon: LayoutGrid, exact: true },
-              { to: "/expediente-maestro", label: "Crear Caso", Icon: FilePlus2 },
+              { to: "/simulador", label: "Crear Caso", Icon: FilePlus2 },
               { to: "/nuvex-ia", label: "NUVIA IA", Icon: Sparkles },
               { to: "/casos", label: "Casos", Icon: FolderKanban },
               ...(!(has("director_financiero_qa") && !hasAny("super_admin", "admin", "gerencia", "licenciado", "asesor"))
