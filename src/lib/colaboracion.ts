@@ -305,7 +305,6 @@ export async function listMisDMs(): Promise<DMResumen[]> {
   const otroPorCanal = new Map<string, { user_id: string; ultima_lectura: string }>();
   ((otrosMiembros ?? []) as any[]).forEach((m) => { otroPorCanal.set(m.canal_id, { user_id: m.user_id, ultima_lectura: m.ultima_lectura }); });
 
-  const otroIds = Array.from(new Set(Array.from(otroPorCanal.values()).map((v) => v.user_id).filter(Boolean)));
   const dir = await listDirectorioFull();
   const dirMap = new Map(dir.map((d) => [d.user_id, d]));
 
@@ -416,7 +415,7 @@ export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
     const rolesRaw = Array.isArray(p.roles_raw) ? p.roles_raw.map(String) : [];
     return {
       user_id: p.user_id,
-      nombre: collaboratorDisplayName(p.nombre, p.email, p.correo_corporativo),
+      nombre: collaboratorDisplayName(p.nombre, p.correo, p.correo_corp),
       correo: p.correo ?? null,
       correo_corp: p.correo_corp ?? null,
       whatsapp: p.whatsapp ?? null,
