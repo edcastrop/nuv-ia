@@ -351,3 +351,118 @@ export const marcarAuditoriaCertificada = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+// ─────────────────────────────────────────────────────────────
+// 4. Bandeja del Director Financiero: listar y resolver
+// ─────────────────────────────────────────────────────────────
+
+type Json = string | number | boolean | null | { [k: string]: Json | undefined } | Json[];
+
+export type ConsultaTecnicaRow = {
+  id: string;
+  estado: string;
+  analistaId: string;
+  analistaNombre: string | null;
+  analistaEmail: string | null;
+  banco: string | null;
+  producto: string | null;
+  tipoCredito: string | null;
+  moneda: string | null;
+  notasAnalista: string | null;
+  hallazgos: Json;
+  snapshot: Json;
+  dictamenDirector: string | null;
+  ajustesSugeridos: Json;
+  directorId: string | null;
+  resolvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+const listConsultasSchema = z.object({
+  estado: z.enum(["pendiente", "resuelta", "descartada", "todas"]).default("pendiente"),
+});
+
+export const listConsultasTecnicas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => listConsultasSchema.parse(input))
+  .handler(async ({ data, context }): Promise<ConsultaTecnicaRow[]> => {
+    const { supabase } = context;
+    let query = supabase
+      .from("consultas_tecnicas")
+      .select(
+        "id, estado, analista_id, banco, producto, tipo_credito, moneda, notas_analista, hallazgos_nuvia, snapshot_simulacion, dictamen_director, ajustes_sugeridos, director_id, resolved_at, created_at, updated_at",
+      )
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (data.estado !== "todas") query = query.eq("estado", data.estado);
+    const { data: rows, error } = await query;
+    if (error) throw new Error(error.message);
+
+    const analistaIds = Array.from(
+      new Set((rows ?? []).map((r) => r.analista_id as string).filter(Boolean)),
+    );
+    const profileMap = new Map<string, { nombre: string | null; email: string | null }>();
+    if (analistaIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id, nombre, email")
+        .in("id", analistaIds);
+      for (const p of profs ?? []) {
+        profileMap.set(p.id as string, {
+          nombre: (p.nombre as string | null) ?? null,
+          email: (p.email as string | null) ?? null,
+        });
+      }
+    }
+
+    return (rows ?? []).map((r) => {
+      const p = profileMap.get(r.analista_id as string);
+      return {
+        id: r.id as string,
+        estado: r.estado as string,
+        analistaId: r.analista_id as string,
+        analistaNombre: p?.nombre ?? null,
+        analistaEmail: p?.email ?? null,
+        banco: (r.banco as string | null) ?? null,
+        producto: (r.producto as string | null) ?? null,
+        tipoCredito: (r.tipo_credito as string | null) ?? null,
+        moneda: (r.moneda as string | null) ?? null,
+        notasAnalista: (r.notas_analista as string | null) ?? null,
+        hallazgos: r.hallazgos_nuvia,
+        snapshot: r.snapshot_simulacion,
+        dictamenDirector: (r.dictamen_director as string | null) ?? null,
+        ajustesSugeridos: r.ajustes_sugeridos,
+        directorId: (r.director_id as string | null) ?? null,
+        resolvedAt: (r.resolved_at as string | null) ?? null,
+        createdAt: r.created_at as string,
+        updatedAt: r.updated_at as string,
+      };
+    });
+  });
+
+const resolverSchema = z.object({
+  id: z.string().uuid(),
+  estado: z.enum(["resuelta", "descartada"]),
+  dictamen: z.string().min(3).max(4000),
+  ajustesSugeridos: z.record(z.unknown()).optional(),
+});
+
+export const resolverConsultaTecnica = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => resolverSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const { error } = await supabase
+      .from("consultas_tecnicas")
+      .update({
+        estado: data.estado,
+        dictamen_director: data.dictamen,
+        ajustes_sugeridos: (data.ajustesSugeridos ?? null) as never,
+        director_id: userId,
+        resolved_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });

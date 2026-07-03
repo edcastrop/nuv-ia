@@ -90,6 +90,7 @@ import { Route as AuthenticatedFinanzasAlertasRouteImport } from './routes/_auth
 import { Route as AuthenticatedExpedienteV2IdRouteImport } from './routes/_authenticated/expediente-v2.$id'
 import { Route as AuthenticatedExpedienteMaestroIdRouteImport } from './routes/_authenticated/expediente-maestro.$id'
 import { Route as AuthenticatedDireccionRevisionesRouteImport } from './routes/_authenticated/direccion.revisiones'
+import { Route as AuthenticatedDireccionConsultasTecnicasRouteImport } from './routes/_authenticated/direccion.consultas-tecnicas'
 import { Route as AuthenticatedContratacionValidacionRouteImport } from './routes/_authenticated/contratacion.validacion'
 import { Route as AuthenticatedContabilidadCuentasCobroRouteImport } from './routes/_authenticated/contabilidad.cuentas-cobro'
 import { Route as AuthenticatedComisionesIdRouteImport } from './routes/_authenticated/comisiones.$id'
@@ -572,6 +573,12 @@ const AuthenticatedDireccionRevisionesRoute =
     path: '/direccion/revisiones',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedDireccionConsultasTecnicasRoute =
+  AuthenticatedDireccionConsultasTecnicasRouteImport.update({
+    id: '/direccion/consultas-tecnicas',
+    path: '/direccion/consultas-tecnicas',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedContratacionValidacionRoute =
   AuthenticatedContratacionValidacionRouteImport.update({
     id: '/contratacion/validacion',
@@ -779,6 +786,7 @@ export interface FileRoutesByFullPath {
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
+  '/direccion/consultas-tecnicas': typeof AuthenticatedDireccionConsultasTecnicasRoute
   '/direccion/revisiones': typeof AuthenticatedDireccionRevisionesRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
@@ -886,6 +894,7 @@ export interface FileRoutesByTo {
   '/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
+  '/direccion/consultas-tecnicas': typeof AuthenticatedDireccionConsultasTecnicasRoute
   '/direccion/revisiones': typeof AuthenticatedDireccionRevisionesRoute
   '/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
@@ -997,6 +1006,7 @@ export interface FileRoutesById {
   '/_authenticated/comisiones/$id': typeof AuthenticatedComisionesIdRoute
   '/_authenticated/contabilidad/cuentas-cobro': typeof AuthenticatedContabilidadCuentasCobroRoute
   '/_authenticated/contratacion/validacion': typeof AuthenticatedContratacionValidacionRoute
+  '/_authenticated/direccion/consultas-tecnicas': typeof AuthenticatedDireccionConsultasTecnicasRoute
   '/_authenticated/direccion/revisiones': typeof AuthenticatedDireccionRevisionesRoute
   '/_authenticated/expediente-maestro/$id': typeof AuthenticatedExpedienteMaestroIdRoute
   '/_authenticated/expediente-v2/$id': typeof AuthenticatedExpedienteV2IdRoute
@@ -1109,6 +1119,7 @@ export interface FileRouteTypes {
     | '/comisiones/$id'
     | '/contabilidad/cuentas-cobro'
     | '/contratacion/validacion'
+    | '/direccion/consultas-tecnicas'
     | '/direccion/revisiones'
     | '/expediente-maestro/$id'
     | '/expediente-v2/$id'
@@ -1216,6 +1227,7 @@ export interface FileRouteTypes {
     | '/comisiones/$id'
     | '/contabilidad/cuentas-cobro'
     | '/contratacion/validacion'
+    | '/direccion/consultas-tecnicas'
     | '/direccion/revisiones'
     | '/expediente-maestro/$id'
     | '/expediente-v2/$id'
@@ -1326,6 +1338,7 @@ export interface FileRouteTypes {
     | '/_authenticated/comisiones/$id'
     | '/_authenticated/contabilidad/cuentas-cobro'
     | '/_authenticated/contratacion/validacion'
+    | '/_authenticated/direccion/consultas-tecnicas'
     | '/_authenticated/direccion/revisiones'
     | '/_authenticated/expediente-maestro/$id'
     | '/_authenticated/expediente-v2/$id'
@@ -1988,6 +2001,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDireccionRevisionesRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/direccion/consultas-tecnicas': {
+      id: '/_authenticated/direccion/consultas-tecnicas'
+      path: '/direccion/consultas-tecnicas'
+      fullPath: '/direccion/consultas-tecnicas'
+      preLoaderRoute: typeof AuthenticatedDireccionConsultasTecnicasRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/contratacion/validacion': {
       id: '/_authenticated/contratacion/validacion'
       path: '/contratacion/validacion'
@@ -2344,6 +2364,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedComisionesIdRoute: typeof AuthenticatedComisionesIdRoute
   AuthenticatedContabilidadCuentasCobroRoute: typeof AuthenticatedContabilidadCuentasCobroRoute
   AuthenticatedContratacionValidacionRoute: typeof AuthenticatedContratacionValidacionRoute
+  AuthenticatedDireccionConsultasTecnicasRoute: typeof AuthenticatedDireccionConsultasTecnicasRoute
   AuthenticatedDireccionRevisionesRoute: typeof AuthenticatedDireccionRevisionesRoute
   AuthenticatedExpedienteMaestroIdRoute: typeof AuthenticatedExpedienteMaestroIdRoute
   AuthenticatedExpedienteV2IdRoute: typeof AuthenticatedExpedienteV2IdRoute
@@ -2407,6 +2428,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
     AuthenticatedContabilidadCuentasCobroRoute,
   AuthenticatedContratacionValidacionRoute:
     AuthenticatedContratacionValidacionRoute,
+  AuthenticatedDireccionConsultasTecnicasRoute:
+    AuthenticatedDireccionConsultasTecnicasRoute,
   AuthenticatedDireccionRevisionesRoute: AuthenticatedDireccionRevisionesRoute,
   AuthenticatedExpedienteMaestroIdRoute: AuthenticatedExpedienteMaestroIdRoute,
   AuthenticatedExpedienteV2IdRoute: AuthenticatedExpedienteV2IdRoute,
