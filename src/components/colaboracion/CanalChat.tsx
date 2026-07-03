@@ -3,7 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import {
   type Canal, type Mensaje, listMensajes, enviarMensaje, suscribirMensajes,
   subirAdjunto, getAdjuntoUrl, borrarMensaje, unirseCanal,
-  marcarCanalLeido, marcarNotifsCanalLeidas,
+  marcarCanalLeido, marcarNotifsCanalLeidas, listDirectorioFull,
 } from "@/lib/colaboracion";
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon } from "lucide-react";
@@ -17,6 +17,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
   const [texto, setTexto] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [adjs, setAdjs] = useState<Mensaje["adjuntos"]>([]);
+  const [personasPorId, setPersonasPorId] = useState<Record<string, { nombre: string; foto_url: string | null }>>({});
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -33,6 +34,23 @@ export function CanalChat({ canal }: { canal: Canal }) {
     marcarNotifsCanalLeidas(canal.id).catch(() => {});
     return () => { active = false; unsub(); };
   }, [canal.id]);
+
+  useEffect(() => {
+    const ids = Array.from(new Set(msgs.map((m) => m.user_id).filter(Boolean)));
+    if (!ids.length) return;
+    let active = true;
+    listDirectorioFull()
+      .then((personas) => {
+        if (!active) return;
+        const map: Record<string, { nombre: string; foto_url: string | null }> = {};
+        personas.forEach((p) => {
+          if (ids.includes(p.user_id)) map[p.user_id] = { nombre: p.nombre, foto_url: p.foto_url };
+        });
+        setPersonasPorId(map);
+      })
+      .catch(() => { if (active) setPersonasPorId({}); });
+    return () => { active = false; };
+  }, [msgs]);
 
   // Auto-scroll SOLO dentro del contenedor del chat (no afecta el scroll de la página).
   useEffect(() => {
@@ -86,7 +104,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
         {msgs.length === 0 && (
           <div className="text-center text-sm py-10" style={{ color: "var(--nuvia-text-secondary)" }}>Sin mensajes aún. Empieza la conversación.</div>
         )}
-        {msgs.map((m) => <MensajeItem key={m.id} m={m} esMio={m.user_id === user?.id} />)}
+        {msgs.map((m) => <MensajeItem key={m.id} m={m} esMio={m.user_id === user?.id} persona={personasPorId[m.user_id]} />)}
         <div ref={endRef} />
       </div>
 
@@ -133,16 +151,16 @@ export function CanalChat({ canal }: { canal: Canal }) {
   );
 }
 
-function MensajeItem({ m, esMio }: { m: Mensaje; esMio: boolean }) {
+function MensajeItem({ m, esMio, persona }: { m: Mensaje; esMio: boolean; persona?: { nombre: string; foto_url: string | null } }) {
   if (m.borrado) {
     return <div className="text-[11px] italic pl-12" style={{ color: "var(--nuvia-text-secondary)" }}>— mensaje eliminado —</div>;
   }
   return (
     <div className="flex gap-3 group">
-      <UserAvatar userId={m.user_id} size="sm" />
+      <UserAvatar userId={m.user_id} url={persona?.foto_url ?? null} name={persona?.nombre ?? null} size="sm" />
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
-          <span className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{esMio ? "Tú" : "Usuario"}</span>
+          <span className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{esMio ? "Tú" : (persona?.nombre ?? "Colaborador")}</span>
           <span>{new Date(m.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}</span>
           {esMio && (
             <button onClick={() => { if (confirm("¿Eliminar mensaje?")) borrarMensaje(m.id); }} className="opacity-0 group-hover:opacity-100" style={{ color: "var(--nuvia-danger)" }}>
