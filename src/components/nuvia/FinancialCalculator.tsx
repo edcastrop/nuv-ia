@@ -884,10 +884,10 @@ function useCaseContext(): CaseCtx {
       if (exp.asesor_id) {
         const { data: p } = await supabase
           .from("profiles")
-          .select("nombre_completo")
+          .select("nombre")
           .eq("id", exp.asesor_id)
           .maybeSingle();
-        analistaNombre = p?.nombre_completo ?? null;
+        analistaNombre = p?.nombre ?? null;
       }
       if (cancel) return;
       setCtx({
