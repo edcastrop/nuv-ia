@@ -336,17 +336,16 @@ export function SimuladorPage() {
       {saveOpen && (
         <SaveAsCaseDialog
           nombre={saveNombre}
-          cedula={saveCedula}
           onNombre={setSaveNombre}
-          onCedula={setSaveCedula}
           onCancel={() => setSaveOpen(false)}
-          onConfirm={handleSaveAsCase}
+          onConfirm={() => void handleSaveAsCase()}
           saving={savingDraft}
         />
       )}
     </div>
   );
 }
+
 
 /* -------------------------------------------------------------------------- */
 /*  Draft banner + Save as case dialog                                        */
