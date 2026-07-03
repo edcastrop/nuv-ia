@@ -1198,10 +1198,10 @@ export function FinancialCalculator() {
       </div>
       <button
         onClick={() => copyResult(`${tab.toUpperCase()} · ${active.center}`, active.result)}
-        style={{ ...miniBtn(false), padding: "6px 10px", height: 30, gap: 4 }}
+        style={{ ...miniBtn(false), width: 30, height: 30, padding: 0 }}
         title="Copiar resultado"
       >
-        <Copy size={12} /> {copied === "__toast" ? "OK" : "Copiar"}
+        <Copy size={14} />
       </button>
     </div>
   ) : null;
@@ -1370,11 +1370,12 @@ export function FinancialCalculator() {
             </div>
             <div style={{ display: "flex", gap: 6 }}>
               <button
-                style={btnSecondaryCompact}
+                style={{ ...btnSecondaryCompact, width: 30, height: 30, padding: 0 }}
                 onClick={() => active && copyResult(`${tab.toUpperCase()} · ${active.center}`, active.result)}
                 disabled={!active}
+                title="Copiar resultado"
               >
-                <Copy size={12} /> Copiar
+                <Copy size={14} />
               </button>
               <button
                 style={btnSecondaryCompact}
@@ -1508,7 +1509,7 @@ function HistTimeline({
                 <div style={{ marginTop: 6, display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                   <span style={{ fontSize: 13, fontWeight: 800, color: N.text }}>{it.result}</span>
                   <button
-                    style={{ ...btnGhost, marginTop: 0, padding: "5px 9px", fontSize: 10 }}
+                    style={{ ...btnGhost, marginTop: 0, padding: 0, width: 26, height: 26 }}
                     onClick={async () => {
                       try {
                         await navigator.clipboard.writeText(`${it.label} — ${it.detail} → ${it.result}`);
@@ -1516,8 +1517,9 @@ function HistTimeline({
                         setTimeout(() => setCopied(null), 1500);
                       } catch { /* noop */ }
                     }}
+                    title="Copiar resultado"
                   >
-                    <Copy size={10} /> {copied === it.id ? "Copiado" : "Copiar"}
+                    <Copy size={12} />
                   </button>
                 </div>
               </div>
