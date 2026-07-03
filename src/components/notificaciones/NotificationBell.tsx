@@ -53,6 +53,7 @@ export function NotificationBell() {
   const [anchor, setAnchor] = useState<{ top: number; right: number } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const recomputeAnchor = () => {
     const r = btnRef.current?.getBoundingClientRect();
@@ -61,7 +62,9 @@ export function NotificationBell() {
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (ref.current?.contains(target) || panelRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
@@ -143,6 +146,7 @@ export function NotificationBell() {
 
         {open && anchor && typeof document !== "undefined" && createPortal(
           <div
+            ref={panelRef}
 
             className="glass-modal w-[380px] max-h-[480px] overflow-hidden flex flex-col"
             style={{
