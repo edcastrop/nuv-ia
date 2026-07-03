@@ -37,7 +37,7 @@ const TEAM_CHANNELS: { key: string; label: string; match: RegExp; icon: typeof H
 ];
 
 function ColaboracionPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const search = Route.useSearch();
   const navigate = useNavigate();
 
@@ -54,7 +54,12 @@ function ColaboracionPage() {
   const [showRight, setShowRight] = useState(true);
 
   const reload = () => listCanales().then(setCanales);
-  useEffect(() => { reload(); listDirectorio().then(setDir); listMisNotifColab().then(setNotifs); }, []);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    reload();
+    listDirectorio().then(setDir);
+    listMisNotifColab().then(setNotifs);
+  }, [authLoading, user?.id]);
 
   const canalActivo = useMemo(() => canales.find((c) => c.id === search.canal) ?? null, [canales, search.canal]);
 

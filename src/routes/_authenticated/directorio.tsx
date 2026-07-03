@@ -8,6 +8,7 @@ import { listDirectorioFull, getOrCreateDM, type DirectorioPersona } from "@/lib
 import { useNavigate } from "@tanstack/react-router";
 import { PresenceDot } from "@/components/presencia/PresenceDot";
 import { DirectoryHeroHologram } from "@/components/directorio/DirectoryHeroHologram";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/directorio")({
   component: DirectorioPage,
@@ -60,13 +61,18 @@ function NeuralBg() {
 
 function DirectorioPage() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<DirectorioPersona[]>([]);
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState<GroupKey | "todos">("todos");
   const [loading, setLoading] = useState(true);
   const [filterFacet, setFilterFacet] = useState<string | null>(null);
 
-  useEffect(() => { listDirectorioFull().then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    setLoading(true);
+    listDirectorioFull().then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  }, [authLoading, user?.id]);
 
   const filtered = useMemo(() => {
     const qn = q.trim().toLowerCase();

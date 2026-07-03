@@ -408,6 +408,8 @@ export function labelRol(r: string): string {
 }
 
 export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
   const { data, error } = await supabase.rpc("list_colaboradores_publicos" as never);
   if (error) throw error;
   const rows = (data ?? []) as any[];

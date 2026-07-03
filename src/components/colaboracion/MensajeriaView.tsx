@@ -36,7 +36,7 @@ interface QuickCtx {
 export type CtxTab = "perfil" | "casos" | "historial" | "ia";
 
 export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [dms, setDms] = useState<DMResumen[]>([]);
   const [dir, setDir] = useState<Awaited<ReturnType<typeof listDirectorio>>>([]);
   const [canal, setCanalState] = useState<Canal | null>(null);
@@ -61,7 +61,11 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 
   const recargarDMs = () => listMisDMs().then(setDms);
 
-  useEffect(() => { recargarDMs(); listDirectorio().then(setDir); }, []);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    recargarDMs();
+    listDirectorio().then(setDir);
+  }, [authLoading, user?.id]);
 
   useEffect(() => {
     if (!initialCanalId) return;
