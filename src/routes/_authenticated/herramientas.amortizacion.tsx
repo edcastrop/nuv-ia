@@ -974,7 +974,8 @@ function AmortizationEngine() {
                               <td className="px-4 py-3 text-white/70 text-[11.5px]">{fechaCuota(fechaDesembolso, r.periodo)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.saldoInicial)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.cuota)}</td>
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.interes)}</td>
+                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.interesBase)}</td>
+                              <td className={`px-4 py-3 tabular-nums ${r.fresh > 0 ? "text-[#D6C0FF] font-semibold" : "text-white/30"}`}>{r.fresh > 0 ? fmtCOP(r.fresh) : "—"}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.capital)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.seguros)}</td>
                               <td className="px-4 py-3 text-white font-semibold">{fmtCOP(r.totalCuota)}</td>
