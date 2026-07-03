@@ -293,7 +293,7 @@ export const Route = createFileRoute("/api/qa-copilot")({
               .eq("id", casoExpedienteId)
               .maybeSingle();
             if (exp) {
-              contextoCaso = `\n\n[Caso vinculado] ${exp.codigo ?? ""} · Cliente: ${exp.cliente_nombre ?? "-"} · Banco: ${exp.banco ?? "-"} · Producto: ${exp.producto ?? "-"} · Moneda: ${exp.moneda ?? "-"}`;
+              contextoCaso = `\n\n[Caso vinculado] ${exp.codigo ?? ""} · Cliente: ${exp.cliente_nombre ?? "-"} · Banco: ${exp.banco ?? "-"} · Producto: ${exp.producto ?? "-"}`;
             }
           }
 
