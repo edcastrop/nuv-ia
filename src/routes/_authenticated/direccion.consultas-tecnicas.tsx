@@ -33,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/direccion/consultas-tecnic
   head: () => ({ meta: [{ title: "Consultas técnicas · NUVIA" }] }),
 });
 
-type Estado = "pendiente" | "resuelta" | "descartada" | "todas";
+type Estado = "pendiente" | "aprobada" | "rechazada" | "devuelta" | "todas";
 
 function DireccionConsultasTecnicasPage() {
   const listFn = useServerFn(listConsultasTecnicas);
@@ -76,12 +76,12 @@ function DireccionConsultasTecnicasPage() {
   const kpis = useMemo(() => {
     const total = rows.length;
     const pend = rows.filter((r) => r.estado === "pendiente").length;
-    const resu = rows.filter((r) => r.estado === "resuelta").length;
-    const desc = rows.filter((r) => r.estado === "descartada").length;
+    const resu = rows.filter((r) => r.estado === "aprobada").length;
+    const desc = rows.filter((r) => r.estado === "rechazada").length;
     return { total, pend, resu, desc };
   }, [rows]);
 
-  const handleResolver = async (id: string, decision: "resuelta" | "descartada") => {
+  const handleResolver = async (id: string, decision: "aprobada" | "rechazada") => {
     const texto = (dictamen[id] ?? "").trim();
     if (texto.length < 3) {
       alert("Escribe un dictamen breve antes de resolver.");
@@ -149,7 +149,7 @@ function DireccionConsultasTecnicasPage() {
             />
           </div>
           <div className="inline-flex rounded-lg border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.03)] p-0.5 text-[11px]">
-            {(["pendiente", "resuelta", "descartada", "todas"] as const).map((e) => (
+            {(["pendiente", "aprobada", "rechazada", "devuelta", "todas"] as const).map((e) => (
               <button
                 key={e}
                 type="button"
@@ -208,13 +208,13 @@ function DireccionConsultasTecnicasPage() {
                             background:
                               row.estado === "pendiente"
                                 ? "color-mix(in oklab, var(--nuvia-warning) 18%, transparent)"
-                                : row.estado === "resuelta"
+                                : row.estado === "aprobada"
                                   ? "color-mix(in oklab, var(--nuvia-accent-green) 18%, transparent)"
                                   : "color-mix(in oklab, var(--nuvia-danger) 18%, transparent)",
                             color:
                               row.estado === "pendiente"
                                 ? "var(--nuvia-warning)"
-                                : row.estado === "resuelta"
+                                : row.estado === "aprobada"
                                   ? "var(--nuvia-accent-green)"
                                   : "var(--nuvia-danger)",
                           }}
@@ -304,7 +304,7 @@ function DireccionConsultasTecnicasPage() {
                           <div className="mt-2 flex justify-end gap-2">
                             <button
                               type="button"
-                              onClick={() => void handleResolver(row.id, "descartada")}
+                              onClick={() => void handleResolver(row.id, "rechazada")}
                               disabled={submitting === row.id}
                               className="inline-flex items-center gap-1 rounded-md border border-[var(--nuvia-danger)] bg-[color-mix(in_oklab,var(--nuvia-danger)_15%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--nuvia-danger)] hover:bg-[color-mix(in_oklab,var(--nuvia-danger)_25%,transparent)] disabled:opacity-50"
                             >
@@ -312,7 +312,7 @@ function DireccionConsultasTecnicasPage() {
                             </button>
                             <button
                               type="button"
-                              onClick={() => void handleResolver(row.id, "resuelta")}
+                              onClick={() => void handleResolver(row.id, "aprobada")}
                               disabled={submitting === row.id}
                               className="inline-flex items-center gap-1 rounded-md bg-[var(--nuvia-accent-green)] px-3 py-1.5 text-xs font-semibold text-white hover:opacity-90 disabled:opacity-50"
                             >

@@ -54,8 +54,8 @@ function MisConsultasTecnicasPage() {
   const kpis = useMemo(() => {
     const total = rows.length;
     const pend = rows.filter((r) => r.estado === "pendiente").length;
-    const resu = rows.filter((r) => r.estado === "resuelta").length;
-    const desc = rows.filter((r) => r.estado === "descartada").length;
+    const resu = rows.filter((r) => r.estado === "aprobada").length;
+    const desc = rows.filter((r) => r.estado === "rechazada").length;
     return { total, pend, resu, desc };
   }, [rows]);
 
@@ -69,8 +69,8 @@ function MisConsultasTecnicasPage() {
   const badge = (estado: string) => {
     const map: Record<string, { bg: string; fg: string }> = {
       pendiente: { bg: "color-mix(in oklab, var(--nuvia-warning) 18%, transparent)", fg: "var(--nuvia-warning)" },
-      resuelta: { bg: "color-mix(in oklab, var(--nuvia-accent-green) 18%, transparent)", fg: "var(--nuvia-accent-green)" },
-      descartada: { bg: "color-mix(in oklab, var(--nuvia-danger) 18%, transparent)", fg: "var(--nuvia-danger)" },
+      aprobada: { bg: "color-mix(in oklab, var(--nuvia-accent-green) 18%, transparent)", fg: "var(--nuvia-accent-green)" },
+      rechazada: { bg: "color-mix(in oklab, var(--nuvia-danger) 18%, transparent)", fg: "var(--nuvia-danger)" },
     };
     const c = map[estado] ?? { bg: "rgba(255,255,255,0.08)", fg: "var(--nuvia-text-secondary)" };
     return (
@@ -216,9 +216,9 @@ function MisConsultasTecnicasPage() {
                           className="rounded-md border p-2 text-xs whitespace-pre-wrap"
                           style={{
                             borderColor:
-                              row.estado === "resuelta"
+                              row.estado === "aprobada"
                                 ? "color-mix(in oklab, var(--nuvia-accent-green) 45%, transparent)"
-                                : row.estado === "descartada"
+                                : row.estado === "rechazada"
                                   ? "color-mix(in oklab, var(--nuvia-danger) 45%, transparent)"
                                   : "var(--nuvia-border)",
                             background: "rgba(0,0,0,0.15)",
@@ -233,7 +233,7 @@ function MisConsultasTecnicasPage() {
                         </div>
                       </div>
 
-                      {row.estado === "resuelta" && (
+                      {row.estado === "aprobada" && (
                         <div className="flex justify-end">
                           <Link
                             to="/herramientas/simulador"
