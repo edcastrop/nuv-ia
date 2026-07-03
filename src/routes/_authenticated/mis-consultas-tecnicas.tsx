@@ -39,7 +39,7 @@ function MisConsultasTecnicasPage() {
   const load = async () => {
     setRefreshing(true);
     try {
-      const data = await listFn({ data: {} });
+      const data = await listFn();
       setRows(data ?? []);
     } finally {
       setLoading(false);
