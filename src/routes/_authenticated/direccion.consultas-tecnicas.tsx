@@ -133,8 +133,8 @@ function DireccionConsultasTecnicasPage() {
       <KpiGrid cols={4}>
         <KpiCard label="Total" value={String(kpis.total)} icon={<MessageSquare size={14} />} />
         <KpiCard label="Pendientes" value={String(kpis.pend)} icon={<ShieldAlert size={14} />} tone="warning" />
-        <KpiCard label="Resueltas" value={String(kpis.resu)} icon={<CheckCircle2 size={14} />} tone="green" />
-        <KpiCard label="Descartadas" value={String(kpis.desc)} icon={<XCircle size={14} />} tone="danger" />
+        <KpiCard label="Aprobadas" value={String(kpis.resu)} icon={<CheckCircle2 size={14} />} tone="green" />
+        <KpiCard label="Rechazadas" value={String(kpis.desc)} icon={<XCircle size={14} />} tone="danger" />
       </KpiGrid>
 
       <NCard variant="elevated">
@@ -308,7 +308,7 @@ function DireccionConsultasTecnicasPage() {
                               disabled={submitting === row.id}
                               className="inline-flex items-center gap-1 rounded-md border border-[var(--nuvia-danger)] bg-[color-mix(in_oklab,var(--nuvia-danger)_15%,transparent)] px-3 py-1.5 text-xs font-semibold text-[var(--nuvia-danger)] hover:bg-[color-mix(in_oklab,var(--nuvia-danger)_25%,transparent)] disabled:opacity-50"
                             >
-                              <XCircle className="h-3 w-3" /> Descartar
+                              <XCircle className="h-3 w-3" /> Rechazar
                             </button>
                             <button
                               type="button"
@@ -321,7 +321,7 @@ function DireccionConsultasTecnicasPage() {
                               ) : (
                                 <CheckCircle2 className="h-3 w-3" />
                               )}
-                              Resolver
+                              Aprobar
                             </button>
                           </div>
                         </div>

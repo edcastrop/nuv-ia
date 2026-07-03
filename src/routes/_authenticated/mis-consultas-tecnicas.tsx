@@ -105,8 +105,8 @@ function MisConsultasTecnicasPage() {
       <KpiGrid cols={4}>
         <KpiCard label="Total" value={String(kpis.total)} />
         <KpiCard label="Pendientes" value={String(kpis.pend)} icon={<ShieldAlert size={14} />} tone="warning" />
-        <KpiCard label="Resueltas" value={String(kpis.resu)} icon={<CheckCircle2 size={14} />} tone="green" />
-        <KpiCard label="Descartadas" value={String(kpis.desc)} icon={<XCircle size={14} />} tone="danger" />
+        <KpiCard label="Aprobadas" value={String(kpis.resu)} icon={<CheckCircle2 size={14} />} tone="green" />
+        <KpiCard label="Rechazadas" value={String(kpis.desc)} icon={<XCircle size={14} />} tone="danger" />
       </KpiGrid>
 
       <NCard variant="elevated">
