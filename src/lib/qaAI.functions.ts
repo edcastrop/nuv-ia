@@ -668,12 +668,12 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
           cedula: (patch.cedula as string | undefined) ?? cedulaActual ?? (extCedula || null),
           numero_credito: (patch.numero_credito as string | undefined) ?? numCredActual ?? (extNumCred || null),
           producto: (patch.producto as string | undefined) ?? productoActual ?? null,
-          discount_data: (expRow as Record<string, unknown>).discount_data ?? null,
-          honorarios_base: (expRow as Record<string, unknown>).honorarios_base ?? null,
-          honorarios_final: (expRow as Record<string, unknown>).honorarios_final ?? null,
-          descuento: (expRow as Record<string, unknown>).descuento ?? null,
-          propuesta_data: (expRow as Record<string, unknown>).propuesta_data ?? null,
-        } as Record<string, unknown>;
+          discount_data: ((expRow as Record<string, unknown>).discount_data ?? null) as Json | null,
+          honorarios_base: ((expRow as Record<string, unknown>).honorarios_base ?? null) as number | null,
+          honorarios_final: ((expRow as Record<string, unknown>).honorarios_final ?? null) as number | null,
+          descuento: ((expRow as Record<string, unknown>).descuento ?? null) as number | null,
+          propuesta_data: ((expRow as Record<string, unknown>).propuesta_data ?? null) as Json | null,
+        };
       }
     }
     if (!expedienteInfo && (extNombre || extBanco)) {
@@ -683,13 +683,13 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         codigo: null,
         cedula: extCedula || null,
         numero_credito: extNumCred || null,
-        producto: extracto?.producto ?? null,
+        producto: (extracto?.producto ?? null) as string | null,
         discount_data: null,
         honorarios_base: null,
         honorarios_final: null,
         descuento: null,
         propuesta_data: null,
-      } as Record<string, unknown>;
+      };
     }
     const [analistaProf, ejecutorProf] = await Promise.all([
       analistaIdVista
