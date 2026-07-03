@@ -3940,6 +3940,250 @@ export type Database = {
         }
         Relationships: []
       }
+      nuvia_qa_copilot_conversaciones: {
+        Row: {
+          archivada: boolean
+          auditoria_id: string | null
+          contexto: Json
+          created_at: string
+          expediente_id: string | null
+          id: string
+          titulo: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archivada?: boolean
+          auditoria_id?: string | null
+          contexto?: Json
+          created_at?: string
+          expediente_id?: string | null
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          archivada?: boolean
+          auditoria_id?: string | null
+          contexto?: Json
+          created_at?: string
+          expediente_id?: string | null
+          id?: string
+          titulo?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuvia_qa_copilot_conversaciones_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuvia_qa_copilot_mensajes: {
+        Row: {
+          citas: Json | null
+          content: string | null
+          conversacion_id: string
+          created_at: string
+          id: string
+          role: string
+          tokens: number | null
+          tool_call_id: string | null
+          tool_calls: Json | null
+          tool_name: string | null
+        }
+        Insert: {
+          citas?: Json | null
+          content?: string | null
+          conversacion_id: string
+          created_at?: string
+          id?: string
+          role: string
+          tokens?: number | null
+          tool_call_id?: string | null
+          tool_calls?: Json | null
+          tool_name?: string | null
+        }
+        Update: {
+          citas?: Json | null
+          content?: string | null
+          conversacion_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          tokens?: number | null
+          tool_call_id?: string | null
+          tool_calls?: Json | null
+          tool_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuvia_qa_copilot_mensajes_conversacion_id_fkey"
+            columns: ["conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "nuvia_qa_copilot_conversaciones"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuvia_qa_copilot_sugerencias: {
+        Row: {
+          aprobada_at: string | null
+          aprobada_por: string | null
+          auditoria_id: string | null
+          conversacion_id: string
+          creada_por: string | null
+          created_at: string
+          estado: string
+          expediente_id: string | null
+          id: string
+          justificacion: string | null
+          propuesta: Json
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          aprobada_at?: string | null
+          aprobada_por?: string | null
+          auditoria_id?: string | null
+          conversacion_id: string
+          creada_por?: string | null
+          created_at?: string
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          justificacion?: string | null
+          propuesta: Json
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          aprobada_at?: string | null
+          aprobada_por?: string | null
+          auditoria_id?: string | null
+          conversacion_id?: string
+          creada_por?: string | null
+          created_at?: string
+          estado?: string
+          expediente_id?: string | null
+          id?: string
+          justificacion?: string | null
+          propuesta?: Json
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuvia_qa_copilot_sugerencias_conversacion_id_fkey"
+            columns: ["conversacion_id"]
+            isOneToOne: false
+            referencedRelation: "nuvia_qa_copilot_conversaciones"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuvia_qa_copilot_sugerencias_expediente_id_fkey"
+            columns: ["expediente_id"]
+            isOneToOne: false
+            referencedRelation: "expedientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuvia_qa_kb: {
+        Row: {
+          activo: boolean
+          banco: string | null
+          categoria: string
+          contenido: string
+          created_at: string
+          embedding: string | null
+          fuente: string | null
+          id: string
+          metadata: Json
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          activo?: boolean
+          banco?: string | null
+          categoria: string
+          contenido: string
+          created_at?: string
+          embedding?: string | null
+          fuente?: string | null
+          id?: string
+          metadata?: Json
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          activo?: boolean
+          banco?: string | null
+          categoria?: string
+          contenido?: string
+          created_at?: string
+          embedding?: string | null
+          fuente?: string | null
+          id?: string
+          metadata?: Json
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      nuvia_usura_mensual: {
+        Row: {
+          created_at: string
+          fecha: string
+          fuente: string | null
+          interes_bancario_corriente_ea: number | null
+          modalidad: string
+          tasa_usura_ea: number
+        }
+        Insert: {
+          created_at?: string
+          fecha: string
+          fuente?: string | null
+          interes_bancario_corriente_ea?: number | null
+          modalidad?: string
+          tasa_usura_ea: number
+        }
+        Update: {
+          created_at?: string
+          fecha?: string
+          fuente?: string | null
+          interes_bancario_corriente_ea?: number | null
+          modalidad?: string
+          tasa_usura_ea?: number
+        }
+        Relationships: []
+      }
+      nuvia_uvr_mensual: {
+        Row: {
+          created_at: string
+          fecha: string
+          fuente: string | null
+          valor: number
+        }
+        Insert: {
+          created_at?: string
+          fecha: string
+          fuente?: string | null
+          valor: number
+        }
+        Update: {
+          created_at?: string
+          fecha?: string
+          fuente?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
       onboarding_auditoria: {
         Row: {
           actor_id: string | null
@@ -5921,6 +6165,24 @@ export type Database = {
         Args: { _caso: Database["public"]["Enums"]["caso_estado"] }
         Returns: Database["public"]["Enums"]["expediente_estado"]
       }
+      match_nuvia_kb: {
+        Args: {
+          filter_banco?: string
+          filter_categoria?: string
+          match_count?: number
+          query_embedding: string
+        }
+        Returns: {
+          banco: string
+          categoria: string
+          contenido: string
+          fuente: string
+          id: string
+          metadata: Json
+          similarity: number
+          titulo: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string
@@ -5964,6 +6226,8 @@ export type Database = {
         Args: { _exp_id: string }
         Returns: undefined
       }
+      nuvia_qa_copilot_es_admin: { Args: { _uid: string }; Returns: boolean }
+      nuvia_qa_copilot_puede_usar: { Args: { _uid: string }; Returns: boolean }
       preview_desvinculacion: { Args: { _target: string }; Returns: Json }
       procesar_recordatorios_onboarding: { Args: never; Returns: Json }
       qa_bloquea_avance: { Args: { _expediente_id: string }; Returns: boolean }
