@@ -268,6 +268,8 @@ function AmortizationEngine() {
   const valorNum = parseFloat(valor) || 0;
   const periodoNum = parseInt(periodo) || 0;
   const segurosNum = parseFloat(seguros) || 0;
+  const freshValorNum = parseFloat(freshValor) || 0;
+  const freshCuotasNum = Math.min(parseInt(freshCuotasStr) || 0, FRESH_MAX_CUOTAS);
   const uvrInicialNum = parseFloat(uvrInicial) || 0;
   const varUvrNum = parseFloat(varUvr) / 100 || 0;
   const tasaMensual = teaNum > 0 ? tasaMensualFromTEA(teaNum) : 0;
@@ -276,10 +278,10 @@ function AmortizationEngine() {
     if (!calculated || teaNum <= 0 || plazoNum <= 0 || valorNum <= 0) return [];
     if (modo === "uvr") {
       if (uvrInicialNum <= 0) return [];
-      return construirTablaUVR(valorNum, teaNum, plazoNum, uvrInicialNum, varUvrNum, segurosNum);
+      return construirTablaUVR(valorNum, teaNum, plazoNum, uvrInicialNum, varUvrNum, segurosNum, freshValorNum, freshCuotasNum);
     }
-    return construirTabla(valorNum, teaNum, plazoNum, segurosNum);
-  }, [calculated, modo, teaNum, plazoNum, valorNum, segurosNum, uvrInicialNum, varUvrNum]);
+    return construirTabla(valorNum, teaNum, plazoNum, segurosNum, freshValorNum, freshCuotasNum);
+  }, [calculated, modo, teaNum, plazoNum, valorNum, segurosNum, uvrInicialNum, varUvrNum, freshValorNum, freshCuotasNum]);
 
   const currentRow = rows[Math.min(Math.max(periodoNum, 1), rows.length) - 1];
   const insight = useMemo(() => (rows.length ? generateInsight(rows, periodoNum) : ""), [rows, periodoNum]);
