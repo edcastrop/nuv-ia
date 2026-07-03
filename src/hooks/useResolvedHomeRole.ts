@@ -66,7 +66,16 @@ export function useResolvedHomeRole() {
   }, [roles, override, loading]);
 
   const primary = pickPrimary(roles);
-  const active: AppRole | null = override ?? primary;
+  const analystRole = roles.includes("licenciado")
+    ? "licenciado"
+    : roles.includes("asesor")
+      ? "asesor"
+      : null;
+  const staleOperationalOverride =
+    !!analystRole &&
+    !!override &&
+    ["contabilidad", "cartera", "operaciones", "auxiliar_operativo"].includes(override);
+  const active: AppRole | null = staleOperationalOverride ? analystRole : override ?? primary;
 
   const setActiveRole = (role: AppRole) => {
     setOverride(role);
