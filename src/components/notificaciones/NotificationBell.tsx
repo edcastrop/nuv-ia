@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, CheckCheck, X, ExternalLink } from "lucide-react";
-import { Link, useRouter } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
 import type { Notificacion } from "@/lib/notificaciones";
+import { navigateToNotification, resolveNotificationHref } from "@/lib/notificacionLinks";
 import { limpiarFaviconDinamico } from "@/lib/notifSirena";
 
 
@@ -46,7 +47,6 @@ function categorize(n: Notificacion): Exclude<TabKey, "todas"> {
 
 export function NotificationBell() {
   const { items, unread, leer, leerTodas } = useNotificaciones();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<TabKey>("todas");
   const [detalle, setDetalle] = useState<Notificacion | null>(null);
@@ -87,37 +87,20 @@ export function NotificationBell() {
   const filtered = tab === "todas" ? items : items.filter((n) => categorize(n) === tab);
 
 
-  const navegarA = (link: string) => {
-    if (/^https?:\/\//i.test(link)) {
-      window.location.assign(link);
-      return;
-    }
-    try {
-      const p = router.navigate({ to: link }) as unknown as Promise<unknown> | undefined;
-      if (p && typeof (p as Promise<unknown>).catch === "function") {
-        (p as Promise<unknown>).catch(() => window.location.assign(link));
-      }
-    } catch {
-      window.location.assign(link);
-    }
-  };
-
   const abrirDetalle = (n: Notificacion) => {
     if (!n.leida) void leer(n.id);
     setOpen(false);
     setDetalle(null);
-    if (n.link) {
-      navegarA(n.link);
+    if (navigateToNotification(n)) {
       return;
     }
     setDetalle(n);
   };
 
   const irAlEnlace = () => {
-    if (!detalle?.link) return;
-    const link = detalle.link;
+    if (!detalle) return;
     setDetalle(null);
-    navegarA(link);
+    navigateToNotification(detalle);
   };
 
   return (
@@ -424,7 +407,7 @@ export function NotificationBell() {
               >
                 Cerrar
               </button>
-              {detalle.link && (
+              {resolveNotificationHref(detalle) && (
                 <button
                   onClick={irAlEnlace}
                   className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition hover:opacity-95"

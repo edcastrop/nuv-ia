@@ -85,7 +85,7 @@ export async function notificarAsesorExpediente(expedienteId: string, p: NotifPa
 // ----- Disparadores específicos --------------------------------------------
 
 export async function notifQASolicitada(expedienteId: string): Promise<void> {
-  const link = `/qa`;
+  const link = `/casos/${expedienteId}`;
   let cliente: string | null = null;
   try {
     const { data } = await supabase
