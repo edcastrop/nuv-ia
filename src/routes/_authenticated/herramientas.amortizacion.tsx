@@ -62,6 +62,13 @@ type Row = {
   seguros: number;
   totalCuota: number;
   saldoFinal: number;
+  // Métricas nativas UVR (solo en modo UVR)
+  uvrValor?: number;
+  saldoInicialUVR?: number;
+  cuotaUVR?: number;
+  interesUVR?: number;
+  capitalUVR?: number;
+  saldoFinalUVR?: number;
 };
 
 const FRESH_MAX_CUOTAS = 84;
