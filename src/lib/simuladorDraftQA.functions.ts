@@ -489,7 +489,7 @@ export const listConsultasTecnicas = createServerFn({ method: "POST" })
 
 const resolverSchema = z.object({
   id: z.string().uuid(),
-  estado: z.enum(["resuelta", "descartada"]),
+  estado: z.enum(["aprobada", "rechazada", "devuelta"]),
   dictamen: z.string().min(3).max(4000),
   ajustesSugeridos: z.record(z.unknown()).optional(),
 });
