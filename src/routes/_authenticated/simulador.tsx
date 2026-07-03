@@ -59,7 +59,7 @@ export function SimuladorPage() {
   const [savingDraft, setSavingDraft] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveNombre, setSaveNombre] = useState("");
-  const [saveCedula, setSaveCedula] = useState("");
+
 
   // Carga del maestro existente (si llegó por URL desde Expediente Maestro).
   useEffect(() => {
@@ -179,17 +179,33 @@ export function SimuladorPage() {
     }
   };
 
-  const handleSaveAsCase = async () => {
+  const readDraftClient = (mo: "pesos" | "uvr"): { nombre: string; cedula: string } => {
+    if (typeof window === "undefined") return { nombre: "", cedula: "" };
+    try {
+      const raw = sessionStorage.getItem(`nuvex.simulatorDraft.${mo}.standalone`);
+      if (!raw) return { nombre: "", cedula: "" };
+      const parsed = JSON.parse(raw) as { client?: { nombre?: string; cedula?: string } };
+      return {
+        nombre: String(parsed?.client?.nombre ?? "").trim(),
+        cedula: String(parsed?.client?.cedula ?? "").trim(),
+      };
+    } catch {
+      return { nombre: "", cedula: "" };
+    }
+  };
+
+  const handleSaveAsCase = async (overrideNombre?: string) => {
     if (!mode) return;
-    const nombre = saveNombre.trim();
-    const cedula = saveCedula.trim();
-    if (!nombre || !cedula) {
-      toast.error("Nombre y cédula son obligatorios para crear el caso.");
+    const nombreDraft = readDraftClient(mode).nombre;
+    const nombre = (overrideNombre ?? saveNombre ?? nombreDraft).trim() || nombreDraft;
+    const cedula = readDraftClient(mode).cedula; // Puede ir vacía; se completa en el expediente.
+    if (!nombre) {
+      // No hay nombre en la simulación → abrir diálogo para pedirlo.
+      setSaveOpen(true);
       return;
     }
     setSavingDraft(true);
     try {
-      // Migrar draft de sessionStorage: standalone → futuro expediente.
       const readKey = (mo: "pesos" | "uvr") => `nuvex.simulatorDraft.${mo}.standalone`;
       const writeKey = (mo: "pesos" | "uvr", expId: string) => `nuvex.simulatorDraft.${mo}.${expId}`;
       const pesosDraft = typeof window !== "undefined" ? sessionStorage.getItem(readKey("pesos")) : null;
@@ -229,6 +245,7 @@ export function SimuladorPage() {
       setSavingDraft(false);
     }
   };
+
 
   if (maestroId && loadingMaestro) {
     return (
@@ -272,8 +289,16 @@ export function SimuladorPage() {
               toast.error("Selecciona Pesos o UVR primero.");
               return;
             }
-            setSaveOpen(true);
+            // Si la simulación ya trae nombre del cliente (OCR o formulario),
+            // creamos el caso directamente y saltamos el diálogo.
+            const { nombre } = readDraftClient(mode);
+            if (nombre) {
+              void handleSaveAsCase(nombre);
+            } else {
+              setSaveOpen(true);
+            }
           }}
+
           onSalir={() => {
             /* Link ya navega a /herramientas; nada más que hacer aquí. */
           }}
@@ -311,17 +336,16 @@ export function SimuladorPage() {
       {saveOpen && (
         <SaveAsCaseDialog
           nombre={saveNombre}
-          cedula={saveCedula}
           onNombre={setSaveNombre}
-          onCedula={setSaveCedula}
           onCancel={() => setSaveOpen(false)}
-          onConfirm={handleSaveAsCase}
+          onConfirm={() => void handleSaveAsCase()}
           saving={savingDraft}
         />
       )}
     </div>
   );
 }
+
 
 /* -------------------------------------------------------------------------- */
 /*  Draft banner + Save as case dialog                                        */
@@ -369,17 +393,13 @@ function DraftBanner({ onSaveAsCase, canSave }: { onSaveAsCase: () => void; canS
 
 function SaveAsCaseDialog({
   nombre,
-  cedula,
   onNombre,
-  onCedula,
   onCancel,
   onConfirm,
   saving,
 }: {
   nombre: string;
-  cedula: string;
   onNombre: (v: string) => void;
-  onCedula: (v: string) => void;
   onCancel: () => void;
   onConfirm: () => void;
   saving: boolean;
@@ -390,9 +410,9 @@ function SaveAsCaseDialog({
         className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B1220] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-white">Certificar y crear caso</h3>
+        <h3 className="text-lg font-semibold text-white">Falta el nombre del cliente</h3>
         <p className="mt-1 text-[13px] text-white/60">
-          NUVIA certificó la simulación. Al confirmar se creará el expediente maestro y quedará listo para generar la propuesta comercial. Puedes completar el resto después.
+          NUVIA certificó la simulación, pero el extracto no trajo el nombre del titular. Escríbelo para crear el caso; el resto de los datos se completan más adelante en el expediente.
         </p>
         <div className="mt-5 space-y-3">
           <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
@@ -402,16 +422,6 @@ function SaveAsCaseDialog({
               value={nombre}
               onChange={(e) => onNombre(e.target.value)}
               placeholder="Ej. Valentina Padilla Acevedo"
-              className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] font-normal normal-case tracking-normal text-white placeholder:text-white/30 focus:border-emerald-400/40 focus:outline-none"
-            />
-          </label>
-          <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
-            Cédula
-            <input
-              value={cedula}
-              onChange={(e) => onCedula(e.target.value)}
-              placeholder="Ej. 1234567890"
-              inputMode="numeric"
               className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[14px] font-normal normal-case tracking-normal text-white placeholder:text-white/30 focus:border-emerald-400/40 focus:outline-none"
             />
           </label>
@@ -428,9 +438,10 @@ function SaveAsCaseDialog({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={saving || !nombre.trim() || !cedula.trim()}
+            disabled={saving || !nombre.trim()}
             className="rounded-lg border border-emerald-400/40 bg-emerald-400/20 px-4 py-2 text-[12.5px] font-semibold text-emerald-100 shadow-[0_10px_30px_-15px_rgba(52,211,153,0.6)] hover:bg-emerald-400/30 disabled:cursor-not-allowed disabled:opacity-40"
           >
+
             {saving ? "Guardando…" : "Crear caso"}
           </button>
         </div>
