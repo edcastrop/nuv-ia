@@ -1081,7 +1081,7 @@ export function FinancialCalculator() {
       title="Calculadora Financiera NUVIA (Ctrl/⌘ + K)"
       aria-label="Abrir calculadora financiera"
       style={{
-        position: "fixed", right: 24, bottom: 24, zIndex: 9998,
+        position: "fixed", right: 24, bottom: 104, zIndex: 9998,
         height: 56, width: 56, padding: 0,
         borderRadius: "50%",
         border: "1px solid rgba(132,185,143,0.55)",
