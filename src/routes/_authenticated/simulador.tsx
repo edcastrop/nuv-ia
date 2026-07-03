@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { ModeSelector } from "@/components/nuvex/ModeSelector";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
+import { NuviaDraftAuditCard } from "@/components/nuvex/NuviaDraftAuditCard";
 import {
   ensureOperativeExpedienteForMaestro,
   getMaestro,
