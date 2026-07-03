@@ -524,14 +524,16 @@ export const resolverConsultaTecnica = createServerFn({ method: "POST" })
     if (prev?.analista_id) {
       const meta = [prev.banco, prev.producto].filter(Boolean).join(" · ") || "Simulación";
       const titulo =
-        data.estado === "resuelta"
-          ? "Dirección resolvió tu consulta técnica"
-          : "Dirección descartó tu consulta técnica";
+        data.estado === "aprobada"
+          ? "Dirección aprobó tu consulta técnica"
+          : data.estado === "devuelta"
+            ? "Dirección devolvió tu consulta técnica para revisión"
+            : "Dirección rechazó tu consulta técnica";
       try {
         await supabase.from("notificaciones_usuario").insert({
           user_id: prev.analista_id as string,
           tipo: "consulta_tecnica",
-          severidad: data.estado === "resuelta" ? "info" : "warning",
+          severidad: data.estado === "aprobada" ? "info" : "warning",
           titulo,
           mensaje: `${meta} — ${data.dictamen.slice(0, 220)}`,
           link: "/mis-consultas-tecnicas",
