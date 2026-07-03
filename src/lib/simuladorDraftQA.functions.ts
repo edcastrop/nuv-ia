@@ -426,7 +426,7 @@ export type ConsultaTecnicaRow = {
 };
 
 const listConsultasSchema = z.object({
-  estado: z.enum(["pendiente", "resuelta", "descartada", "todas"]).default("pendiente"),
+  estado: z.enum(["pendiente", "aprobada", "rechazada", "devuelta", "todas"]).default("pendiente"),
 });
 
 export const listConsultasTecnicas = createServerFn({ method: "POST" })
