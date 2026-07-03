@@ -177,9 +177,12 @@ function ColaboracionPage() {
       </div>
 
       {tab === "war" && (
-        <div className="grid gap-3" style={{ gridTemplateColumns: showRight ? "280px 340px 1fr 320px" : "280px 340px 1fr", height: "calc(100dvh - 190px)" }}>
+        <div
+          className={`grid gap-3 grid-cols-1 md:[grid-template-columns:260px_minmax(0,1fr)] lg:[grid-template-columns:220px_280px_minmax(0,1fr)] ${showRight ? "xl:[grid-template-columns:220px_300px_minmax(0,1fr)_300px]" : "xl:[grid-template-columns:220px_300px_minmax(0,1fr)]"}`}
+          style={{ height: "calc(100dvh - 190px)" }}
+        >
           {/* --------- COLUMN 1: TEAM CHANNELS --------- */}
-          <GlassPanel>
+          <GlassPanel className="hidden lg:flex">
             <PanelHeader label="TEAM CHANNELS" accent="#22D3EE" right={<button onClick={() => setShowNew(true)} className="rounded-md p-1 transition hover:bg-white/10" style={{ color: "rgba(255,255,255,0.6)" }}><Plus size={13} /></button>} />
             <div className="p-2 space-y-1 overflow-y-auto flex-1">
               {TEAM_CHANNELS.map((t) => {
@@ -225,7 +228,7 @@ function ColaboracionPage() {
           </GlassPanel>
 
           {/* --------- COLUMN 2: ACTIVE CASES --------- */}
-          <GlassPanel>
+          <GlassPanel className="hidden md:flex">
             <PanelHeader label="CASOS ACTIVOS" accent="#3B82F6" right={<span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "rgba(59,130,246,0.15)", color: "#93C5FD" }}>{casesFiltered.length}</span>} />
             <div className="px-2.5 pt-2 pb-1.5 space-y-1.5">
               <div className="relative">
@@ -318,7 +321,7 @@ function ColaboracionPage() {
 
           {/* --------- COLUMN 4: CASE INTELLIGENCE --------- */}
           {showRight && (
-            <GlassPanel>
+            <GlassPanel className="hidden xl:flex">
               <PanelHeader label="CASE INTELLIGENCE" accent="#10B981" right={<Sparkles size={12} style={{ color: "#6EE7B7" }} />} />
               <CaseIntelligence canal={canalActivo} sla={canalActivo ? slaOf(canalActivo.id) : 0} etapa={canalActivo ? etapaOf(canalActivo.id) : ""} />
             </GlassPanel>
