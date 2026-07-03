@@ -478,6 +478,22 @@ function AmortizationEngine() {
     toast.success("PDF descargado");
   }
 
+  // Métricas para la columna de insights (no tocan cálculos base)
+  const totalIntereses = useMemo(() => rows.reduce((s, r) => s + r.interes, 0), [rows]);
+  const totalCapital = useMemo(() => rows.reduce((s, r) => s + r.capital, 0), [rows]);
+  const costoAcumulado = useMemo(() => {
+    if (!rows.length || !periodoNum) return 0;
+    return rows.slice(0, periodoNum).reduce((s, r) => s + r.totalCuota, 0);
+  }, [rows, periodoNum]);
+  const proyeccionRestante = useMemo(() => {
+    if (!rows.length || !periodoNum) return 0;
+    return rows.slice(periodoNum).reduce((s, r) => s + r.totalCuota, 0);
+  }, [rows, periodoNum]);
+  const ratioCapInt = totalIntereses > 0 ? totalCapital / totalIntereses : 0;
+
+  // Tab activa de la sección tabla
+  const [tableTab, setTableTab] = useState<"tabla" | "escenarios" | "export">("tabla");
+
   const lastCalcLabel = lastCalc
     ? `Hoy ${lastCalc.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: true })}`
     : "—";
@@ -485,78 +501,46 @@ function AmortizationEngine() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#05070F] text-white font-[Inter,system-ui,sans-serif] antialiased">
       <BackgroundFX />
+      {/* Grid background terminal */}
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.05]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+          maskImage: "radial-gradient(ellipse at center, black 30%, transparent 80%)",
+        }}
+      />
 
-      <div className="relative mx-auto w-full max-w-[1500px] px-6 py-6">
-        {/* Back link */}
-        <Link
-          to="/herramientas"
-          className="group inline-flex items-center gap-1.5 text-[11px] font-medium text-white/50 hover:text-white transition-colors mb-4"
-        >
-          <ArrowLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-0.5" /> Volver a Herramientas
-        </Link>
+      <div className="relative mx-auto w-full max-w-[1560px] px-6 py-5">
+        {/* ============ COMPACT HEADER ============ */}
+        <CompactHeader
+          modo={modo}
+          setModo={(m) => { setModo(m); setCalculated(false); }}
+          onOpenReader={() => setShowReader(true)}
+        />
 
-        {/* ============ HEADER BAR ============ */}
-        <HeaderBar modo={modo} setModo={setModo} onCalcInvalidate={() => setCalculated(false)} />
-
-        {/* ============ EXTRACTO READER (collapsible) ============ */}
-        <div className="mt-5 rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl overflow-hidden">
-          <button
-            onClick={() => setShowReader((s) => !s)}
-            className="w-full flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-white/[0.03] transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-[#445DA3]/40 to-[#84B98F]/40 border border-white/10">
-                <FileText className="h-4 w-4 text-white/90" />
-              </div>
-              <div className="text-left">
-                <div className="text-[13px] font-semibold text-white">Lector de extractos NUVIA</div>
-                <div className="text-[11px] text-white/50">Arrastra o carga el extracto — autocompleta TEA, plazo, valor y seguros.</div>
-              </div>
-            </div>
-            <ChevronDown className={`h-4 w-4 text-white/60 transition-transform ${showReader ? "rotate-180" : ""}`} />
-          </button>
-          <AnimatePresence>
-            {showReader && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="px-5 pb-5 pt-1">
-                  <ExtractoReader modo={modo} onApply={handleExtractoApply} />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-
-        {/* ============ MAIN GRID ============ */}
-        <div className="mt-6 grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
-          {/* ==== LEFT: INPUT CONSOLE ==== */}
-          <div className="space-y-4">
-            <Panel>
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">Input Console</div>
-                <div className="text-[11px] text-white/50 mt-1">Parámetros de tu crédito</div>
-              </div>
-
-              <div className="mt-4 flex gap-2">
+        {/* ============ MAIN GRID: sidebar | hero+table | insights ============ */}
+        <div className="mt-5 grid gap-5 lg:grid-cols-[256px_minmax(0,1fr)_300px]">
+          {/* ==== LEFT: INPUT CONSOLE (sticky) ==== */}
+          <aside className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-40px)] lg:overflow-y-auto nuvia-scroll">
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-4">
+              {/* Import / Escenarios */}
+              <div className="flex gap-1.5">
                 <button
                   onClick={() => setImportOpen(true)}
-                  className="flex-1 rounded-xl border border-[#7BB0FF]/30 bg-[#7BB0FF]/[0.08] hover:bg-[#7BB0FF]/[0.14] px-3 py-2 text-[11px] font-semibold text-[#C9DDFF] transition-all inline-flex items-center justify-center gap-1.5"
+                  className="flex-1 rounded-lg border border-[#7BB0FF]/25 bg-[#7BB0FF]/[0.06] hover:bg-[#7BB0FF]/[0.12] px-2 py-1.5 text-[10px] font-semibold text-[#C9DDFF] transition-all inline-flex items-center justify-center gap-1"
                 >
-                  <Search className="h-3.5 w-3.5" /> Importar caso
+                  <Search className="h-3 w-3" /> Importar
                 </button>
                 <button
                   onClick={() => setShowScenarios((s) => !s)}
-                  className="flex-1 rounded-xl border border-[#B58BFF]/30 bg-[#B58BFF]/[0.08] hover:bg-[#B58BFF]/[0.14] px-3 py-2 text-[11px] font-semibold text-[#D6C0FF] transition-all inline-flex items-center justify-center gap-1.5"
+                  className="flex-1 rounded-lg border border-[#B58BFF]/25 bg-[#B58BFF]/[0.06] hover:bg-[#B58BFF]/[0.12] px-2 py-1.5 text-[10px] font-semibold text-[#D6C0FF] transition-all inline-flex items-center justify-center gap-1"
                 >
-                  <Save className="h-3.5 w-3.5" /> Escenarios ({scenarios.length})
+                  <Save className="h-3 w-3" /> {scenarios.length}
                 </button>
               </div>
 
-              {/* Escenarios drawer */}
               <AnimatePresence>
                 {showScenarios && (
                   <motion.div
@@ -565,24 +549,24 @@ function AmortizationEngine() {
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
+                    <div className="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.02] p-2 space-y-1.5">
                       <button
                         onClick={handleSaveScenario}
-                        className="w-full rounded-lg border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2.5 py-2 text-[11px] font-semibold text-[#B5DFC0] inline-flex items-center justify-center gap-1.5"
+                        className="w-full rounded-md border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2 py-1.5 text-[10px] font-semibold text-[#B5DFC0] inline-flex items-center justify-center gap-1"
                       >
                         <Save className="h-3 w-3" /> Guardar actual
                       </button>
                       {scenarios.length === 0 ? (
-                        <div className="text-[10.5px] text-white/40 text-center py-2">Sin escenarios guardados.</div>
+                        <div className="text-[10px] text-white/40 text-center py-1">Sin escenarios.</div>
                       ) : (
-                        <div className="space-y-1.5 max-h-[180px] overflow-auto nuvia-scroll">
+                        <div className="space-y-1 max-h-[160px] overflow-auto nuvia-scroll">
                           {scenarios.map((s) => (
-                            <div key={s.id} className="flex items-center gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5">
+                            <div key={s.id} className="flex items-center gap-1.5 rounded-md border border-white/[0.05] bg-white/[0.02] px-1.5 py-1">
                               <button onClick={() => handleLoadScenario(s)} className="flex-1 text-left min-w-0">
-                                <div className="text-[11px] font-semibold text-white truncate">{s.nombre}</div>
-                                <div className="text-[9.5px] text-white/40 uppercase tracking-wider">{s.modo} · {s.plazo}m · {new Date(s.ts).toLocaleDateString("es-CO")}</div>
+                                <div className="text-[10.5px] font-semibold text-white truncate">{s.nombre}</div>
+                                <div className="text-[9px] text-white/40 uppercase tracking-wider">{s.modo} · {s.plazo}m</div>
                               </button>
-                              <button onClick={() => handleDeleteScenario(s.id)} className="shrink-0 text-white/40 hover:text-red-400 p-1" title="Eliminar">
+                              <button onClick={() => handleDeleteScenario(s.id)} className="shrink-0 text-white/40 hover:text-red-400 p-1">
                                 <Trash2 className="h-3 w-3" />
                               </button>
                             </div>
@@ -594,367 +578,186 @@ function AmortizationEngine() {
                 )}
               </AnimatePresence>
 
-              {/* Convertidor de tasa (Tasa Fresh) */}
-              <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
-                <button
-                  onClick={() => setShowConverter((s) => !s)}
-                  className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors"
-                >
-                  <div className="flex items-center gap-2">
-                    <Wand2 className="h-3.5 w-3.5 text-[#84B98F]" />
-                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Convertidor de tasa (EA · MV · NMV · NAMV · NASV)</span>
-                  </div>
-                  <ChevronDown className={`h-3.5 w-3.5 text-white/50 transition-transform ${showConverter ? "rotate-180" : ""}`} />
-                </button>
-                <AnimatePresence>
-                  {showConverter && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <div className="px-3.5 pb-3 pt-1 space-y-2">
-                        <div className="flex gap-1.5 flex-wrap">
-                          {(["EA", "MV", "NMV", "NAMV", "NASV"] as TasaTipo[]).map((t) => (
-                            <button
-                              key={t}
-                              onClick={() => setFreshTipo(t)}
-                              className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider border transition-all ${
-                                freshTipo === t
-                                  ? "bg-[#4B6FE0]/25 border-[#4B6FE0]/60 text-white"
-                                  : "bg-white/[0.02] border-white/[0.08] text-white/50 hover:text-white/80"
-                              }`}
-                            >{t}</button>
-                          ))}
-                        </div>
-                        <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5 focus-within:border-[#4B6FE0]/60">
-                          <input
-                            type="text"
-                            inputMode="decimal"
-                            value={freshTasa}
-                            onChange={(e) => setFreshTasa(e.target.value.replace(/[^0-9.,]/g, ""))}
-                            placeholder={`Tasa ${freshTipo} (ej: 12,50)`}
-                            className="flex-1 min-w-0 bg-transparent text-[13px] font-semibold text-white placeholder:text-white/25 outline-none tabular-nums"
-                          />
-                          <span className="text-[10px] text-white/40">%</span>
-                        </div>
-                        {freshValid && (
-                          <>
-                            <div className="grid grid-cols-2 gap-1.5">
-                              {conversions.map((c) => (
-                                <div key={c.tipo} className={`rounded-md px-2 py-1.5 border ${c.tipo === freshTipo ? "border-[#4B6FE0]/40 bg-[#4B6FE0]/10" : "border-white/[0.06] bg-white/[0.02]"}`}>
-                                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/45">{c.tipo}</div>
-                                  <div className="text-[12px] font-semibold text-white tabular-nums">{c.valor.toFixed(4)}%</div>
-                                </div>
-                              ))}
-                            </div>
-                            <button
-                              onClick={handleUseFreshAsTEA}
-                              className="w-full rounded-lg border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2.5 py-2 text-[11px] font-semibold text-[#B5DFC0] inline-flex items-center justify-center gap-1.5"
-                            >
-                              <Download className="h-3 w-3" /> Usar como TEA ({(freshEA * 100).toFixed(4)}%)
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-
-              <div className="mt-4 space-y-2.5">
-                <InputTile icon={<Percent className="h-3.5 w-3.5" />} label={modo === "uvr" ? "TEA UVR" : "TEA (Tasa Efectiva Anual)"} value={tea} onChange={setTea} suffix="%" placeholder={modo === "uvr" ? "8,50" : "11,00"} />
-                <InputTile icon={<Calendar className="h-3.5 w-3.5" />} label="Plazo aprobado" value={plazo} onChange={setPlazo} suffix="meses" placeholder="240" />
-                <InputTile icon={<DollarSign className="h-3.5 w-3.5" />} label={modo === "uvr" ? "Valor crédito (UVR)" : "Valor crédito aprobado"} value={valor} onChange={setValor} prefix={modo === "uvr" ? "" : "$"} suffix={modo === "uvr" ? "UVR" : undefined} placeholder={modo === "uvr" ? "500.000" : "737.000.000"} />
-                {/* Fecha desembolso */}
-                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 hover:border-white/[0.12] focus-within:border-[#4B6FE0]/60">
-                  <div className="flex items-center gap-2 text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/45">
-                    <div className="flex h-5 w-5 items-center justify-center rounded-md bg-white/[0.04] border border-white/[0.06] text-white/60">
-                      <Calendar className="h-3.5 w-3.5" />
-                    </div>
-                    <span>Fecha de desembolso</span>
+              {/* BLOQUE 1 — Datos base */}
+              <SectionLabel>Datos base</SectionLabel>
+              <div className="space-y-2">
+                <InputTile icon={<Percent className="h-3 w-3" />} label={modo === "uvr" ? "TEA UVR" : "TEA (Efectiva anual)"} value={tea} onChange={setTea} suffix="%" placeholder={modo === "uvr" ? "8,50" : "11,00"} />
+                <InputTile icon={<Calendar className="h-3 w-3" />} label="Plazo aprobado" value={plazo} onChange={setPlazo} suffix="m" placeholder="240" />
+                <InputTile icon={<DollarSign className="h-3 w-3" />} label={modo === "uvr" ? "Valor (UVR)" : "Valor crédito"} value={valor} onChange={setValor} prefix={modo === "uvr" ? "" : "$"} suffix={modo === "uvr" ? "UVR" : undefined} placeholder={modo === "uvr" ? "500.000" : "737.000.000"} />
+                <div className="rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 hover:border-white/[0.12] focus-within:border-[#4B6FE0]/60">
+                  <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.14em] text-white/45">
+                    <Calendar className="h-3 w-3" /> Fecha desembolso
                   </div>
                   <input
                     type="month"
                     value={fechaDesembolso}
                     onChange={(e) => setFechaDesembolso(e.target.value)}
-                    className="mt-1 w-full bg-transparent text-[15px] font-semibold text-white outline-none tabular-nums [color-scheme:dark]"
+                    className="mt-0.5 w-full bg-transparent text-[13px] font-semibold text-white outline-none tabular-nums [color-scheme:dark]"
                   />
                 </div>
                 {modo === "uvr" && (
                   <>
-                    <InputTile icon={<Coins className="h-3.5 w-3.5" />} label="UVR inicial (COP/UVR)" value={uvrInicial} onChange={setUvrInicial} prefix="$" placeholder="340,50" />
-                    <InputTile icon={<TrendingUp className="h-3.5 w-3.5" />} label="Variación UVR anual" value={varUvr} onChange={setVarUvr} suffix="% EA" placeholder="5,50" />
-                    <div className="flex gap-1.5 flex-wrap">
+                    <InputTile icon={<Coins className="h-3 w-3" />} label="UVR inicial" value={uvrInicial} onChange={setUvrInicial} prefix="$" placeholder="340,50" />
+                    <InputTile icon={<TrendingUp className="h-3 w-3" />} label="Variación UVR" value={varUvr} onChange={setVarUvr} suffix="%EA" placeholder="5,50" />
+                    <div className="flex gap-1 flex-wrap">
                       {[
-                        { label: "Conservador", val: "3.00" },
+                        { label: "Cons.", val: "3.00" },
                         { label: "Base", val: "5.00" },
-                        { label: "DANE hist.", val: "6.20" },
+                        { label: "DANE", val: "6.20" },
                       ].map((p) => (
-                        <button
-                          key={p.label}
-                          onClick={() => setVarUvr(p.val)}
-                          className="rounded-md px-2 py-1 text-[9.5px] font-bold uppercase tracking-wider bg-white/[0.03] border border-white/[0.06] text-white/60 hover:text-white hover:border-[#84B98F]/40 transition-all"
-                        >
+                        <button key={p.label} onClick={() => setVarUvr(p.val)} className="rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider bg-white/[0.03] border border-white/[0.06] text-white/60 hover:text-white hover:border-[#84B98F]/40 transition-all">
                           {p.label} {p.val}%
                         </button>
                       ))}
                     </div>
                   </>
                 )}
-                <InputTile icon={<Target className="h-3.5 w-3.5" />} label="Periodo a consultar" value={periodo} onChange={setPeriodo} suffix={`/ ${plazoNum || "n"}`} placeholder="3" />
-                <InputTile icon={<ShieldCheck className="h-3.5 w-3.5" />} label="Seguros mensuales (COP)" value={seguros} onChange={setSeguros} prefix="$" placeholder="212.047" />
-
-                {/* Tasa Fresh (subsidio / componente adicional del interés) */}
-                <div className="rounded-xl border border-[#B58BFF]/25 bg-[#B58BFF]/[0.05] px-3.5 py-3 space-y-2.5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#D6C0FF]">
-                      <Wand2 className="h-3.5 w-3.5" /> Tasa Fresh
-                    </div>
-                    <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">solo plazos ≤ {FRESH_MAX_CUOTAS}</span>
-                  </div>
-                  <div className="text-[10.5px] text-white/50 leading-snug">Valor mensual en pesos que se suma al interés durante todo el plazo del crédito. Si el plazo supera {FRESH_MAX_CUOTAS} cuotas, Fresh no aplica.</div>
-                  <InputTile
-                    icon={<DollarSign className="h-3.5 w-3.5" />}
-                    label="Valor Fresh mensual (COP)"
-                    value={freshValor}
-                    onChange={setFreshValor}
-                    prefix="$"
-                    placeholder="150.000"
-                  />
-                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[10.5px] text-white/70 flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5"><Clock className="h-3 w-3 text-[#D6C0FF]" /> Cuotas Fresh</span>
-                    <span className="font-bold text-white tabular-nums">
-                      {plazoNumTmp <= 0 ? "—" : plazoNumTmp > FRESH_MAX_CUOTAS ? `No aplica (> ${FRESH_MAX_CUOTAS})` : `${plazoNumTmp} cuotas`}
-                    </span>
-                  </div>
-                  {freshValorNum > 0 && freshCuotasNum > 0 && (
-                    <div className="rounded-lg border border-[#B58BFF]/25 bg-[#B58BFF]/[0.08] px-2.5 py-1.5 text-[10.5px] text-[#D6C0FF] tabular-nums">
-                      Aporte total Fresh: <span className="font-bold text-white">{fmtCOP(freshValorNum * freshCuotasNum)}</span> en {freshCuotasNum} cuotas
-                    </div>
-                  )}
-                </div>
               </div>
 
-              {/* Tasa mensual equivalente */}
-              <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-white/50">Tasa mensual equivalente</div>
-                  <HelpCircle className="h-3.5 w-3.5 text-white/30" />
-                </div>
-                <div className="mt-1 text-xl font-semibold tabular-nums text-[#84B98F]" style={{ textShadow: "0 0 22px rgba(132,185,143,0.35)" }}>
-                  {tasaMensual > 0 ? `${(tasaMensual * 100).toFixed(6)} %` : "— %"}
-                </div>
+              {/* BLOQUE 2 — Consulta */}
+              <SectionLabel>Consulta</SectionLabel>
+              <div className="space-y-2">
+                <InputTile icon={<Target className="h-3 w-3" />} label="Periodo a consultar" value={periodo} onChange={setPeriodo} suffix={`/ ${plazoNum || "n"}`} placeholder="3" />
+                <InputTile icon={<ShieldCheck className="h-3 w-3" />} label="Seguros mensuales" value={seguros} onChange={setSeguros} prefix="$" placeholder="212.047" />
               </div>
 
-              {/* Actions */}
-              <div className="mt-4 space-y-2.5">
-                <motion.button
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleCalculate}
-                  className="w-full relative rounded-2xl px-4 py-3.5 text-[13px] font-bold tracking-wide text-white overflow-hidden group"
-                  style={{
-                    background: "linear-gradient(135deg, #4B6FE0 0%, #6BCF89 100%)",
-                    boxShadow: "0 12px 30px -10px rgba(107,207,137,0.5), inset 0 1px 0 rgba(255,255,255,0.25)",
-                  }}
-                >
-                  <span className="relative flex items-center justify-center gap-2 uppercase tracking-[0.14em]">
-                    <Zap className="h-4 w-4" /> Calcular cuota
-                  </span>
-                </motion.button>
-                <button
-                  onClick={handleReset}
-                  className="w-full rounded-2xl border border-white/[0.08] bg-white/[0.02] px-4 py-3 text-[12px] font-semibold text-white/70 hover:text-white hover:bg-white/[0.05] hover:border-white/[0.14] transition-all inline-flex items-center justify-center gap-2 uppercase tracking-[0.14em]"
-                >
-                  <RotateCcw className="h-3.5 w-3.5" /> Limpiar datos
+              {/* Tasa mensual equivalente (visual utility) */}
+              <div className="mt-3 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 flex items-center justify-between gap-2">
+                <span className="text-[9px] font-semibold uppercase tracking-[0.14em] text-white/45">Tasa mensual</span>
+                <span className="text-[13px] font-semibold tabular-nums text-[#84B98F]" style={{ textShadow: "0 0 10px rgba(132,185,143,0.4)" }}>
+                  {tasaMensual > 0 ? `${(tasaMensual * 100).toFixed(4)}%` : "—"}
+                </span>
+              </div>
+
+              {/* BLOQUE 3 — Fresh (collapsible) */}
+              <SectionLabel>
+                <button onClick={() => setShowConverter((s) => !s)} className="w-full flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.18em] text-[#D6C0FF]">
+                  <span className="inline-flex items-center gap-1.5"><Wand2 className="h-3 w-3" /> Fresh + Conversor</span>
+                  <ChevronDown className={`h-3 w-3 transition-transform ${showConverter ? "rotate-180" : ""}`} />
                 </button>
-              </div>
-            </Panel>
-
-            {/* Alcance */}
-            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-4 flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/[0.04] border border-white/[0.06]">
-                <HelpCircle className="h-4 w-4 text-[#7BB0FF]" />
-              </div>
-              <div className="text-[11.5px] text-white/60 leading-relaxed">
-                {modo === "pesos"
-                  ? "Esta herramienta solo aplica para créditos en pesos con sistema francés de cuota fija. No aplica para créditos en UVR o indexados."
-                  : "Modalidad UVR: proyecta la cuota a COP según la variación anual esperada del UVR."}
-              </div>
-            </div>
-          </div>
-
-          {/* ==== RIGHT: OUTPUT AREA ==== */}
-          <div className="space-y-5">
-            {/* Section header */}
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BB0FF]">Cuota consultada</div>
-                <div className="mt-1 flex items-baseline gap-3">
-                  <div className="text-4xl font-bold text-[#84B98F]" style={{ textShadow: "0 0 30px rgba(132,185,143,0.45)" }}>
-                    #{calculated && currentRow ? currentRow.periodo : "—"}
-                  </div>
-                  <div className="text-[12px] text-white/50">Discriminación exacta de la cuota seleccionada</div>
-                </div>
-              </div>
-              <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1.5 text-[11px] text-white/60">
-                <Clock className="h-3 w-3" /> Último cálculo: {lastCalcLabel}
-              </div>
-            </div>
-
-            {/* Total + KPIs grid */}
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              {/* Purple TOTAL CUOTA card */}
-              <TotalCard current={currentRow} calculated={calculated} />
-
-              {/* KPI grid 2x3 */}
-              <div className="grid grid-cols-2 gap-3">
-                <MiniKPI label="Saldo inicial" value={currentRow?.saldoInicial ?? 0} icon={<Layers className="h-4 w-4" />} accent="#7BB0FF" show={calculated} />
-                <MiniKPI label="Interés del periodo" value={currentRow?.interes ?? 0} icon={<DollarSign className="h-4 w-4" />} accent="#6BCF89" show={calculated} />
-                <MiniKPI label="Capital abonado" value={currentRow?.capital ?? 0} icon={<TrendingUp className="h-4 w-4" />} accent="#6BCF89" show={calculated} />
-                <MiniKPI label="Seguros" value={currentRow?.seguros ?? 0} icon={<ShieldCheck className="h-4 w-4" />} accent="#B58BFF" show={calculated} />
-                <MiniKPI label="Saldo final" value={currentRow?.saldoFinal ?? 0} icon={<Landmark className="h-4 w-4" />} accent="#7BB0FF" show={calculated} />
-                <MiniKPI label="Cuota financiera" value={currentRow?.cuota ?? 0} icon={<Calculator className="h-4 w-4" />} accent="#B58BFF" show={calculated} />
-              </div>
-            </div>
-
-            {/* Break-even KPI */}
-            <div
-              className="relative rounded-2xl border border-[#84B98F]/25 p-5 overflow-hidden backdrop-blur-xl"
-              style={{
-                background: "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(75,111,224,0.06))",
-                boxShadow: "0 20px 60px -30px rgba(132,185,143,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
-              }}
-            >
-              <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-40" style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)" }} />
-              <div className="relative flex items-center gap-5 flex-wrap">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#84B98F]/40 bg-[#84B98F]/[0.14]">
-                  <Target className="h-5 w-5 text-[#B5DFC0]" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">Punto de equilibrio Capital vs Interés</div>
-                  {calculated && breakEven ? (
-                    <>
-                      <div className="mt-1 flex items-baseline gap-3 flex-wrap">
-                        <div className="text-[32px] font-bold text-white leading-none tabular-nums" style={{ textShadow: "0 0 24px rgba(132,185,143,0.5)" }}>Cuota #{breakEven}</div>
-                        <div className="text-[13px] text-[#B5DFC0] font-semibold">{breakEvenFecha}</div>
-                        <div className="text-[11.5px] text-white/50">({breakEvenPct.toFixed(1)}% del plazo)</div>
+              </SectionLabel>
+              <AnimatePresence>
+                {showConverter && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <div className="space-y-2">
+                      <InputTile icon={<DollarSign className="h-3 w-3" />} label="Fresh mensual (COP)" value={freshValor} onChange={setFreshValor} prefix="$" placeholder="150.000" />
+                      <div className="rounded-md border border-white/[0.06] bg-white/[0.02] px-2 py-1.5 text-[10px] text-white/70 flex items-center justify-between">
+                        <span>Cuotas Fresh</span>
+                        <span className="font-bold text-white tabular-nums">
+                          {plazoNumTmp <= 0 ? "—" : plazoNumTmp > FRESH_MAX_CUOTAS ? `No aplica` : `${plazoNumTmp}`}
+                        </span>
                       </div>
-                      <div className="mt-1.5 text-[11.5px] text-white/60">A partir de esta cuota amortizas más capital que intereses — el saldo se reduce más rápido.</div>
-                    </>
-                  ) : (
-                    <div className="mt-2 text-[12px] text-white/40">Calcula para descubrir cuándo empiezas a ganarle al banco.</div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Distribution + Insight row */}
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-              {/* Distribution */}
-              <Panel padded>
-                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60 flex items-center gap-1.5">
-                  <span className="inline-block h-1 w-1 rounded-full bg-[#84B98F]" /> Distribución de esta cuota
-                </div>
-                {calculated && currentRow ? (
-                  <div className="mt-4 flex items-center gap-5">
-                    <Donut pctA={pctInteres} pctB={pctCapital} colorA="#B58BFF" colorB="#6BCF89" />
-                    <div className="space-y-3 text-[12px]">
-                      <div>
-                        <div className="flex items-center gap-1.5 font-semibold text-[#B58BFF]">
-                          <span className="inline-block h-2 w-2 rounded-full bg-[#B58BFF]" /> {pctInteres.toFixed(1)}% Intereses
+                      <div className="mt-2 pt-2 border-t border-white/5">
+                        <div className="flex gap-1 flex-wrap mb-1.5">
+                          {(["EA", "MV", "NMV", "NAMV", "NASV"] as TasaTipo[]).map((t) => (
+                            <button key={t} onClick={() => setFreshTipo(t)} className={`rounded px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider border transition-all ${freshTipo === t ? "bg-[#4B6FE0]/25 border-[#4B6FE0]/60 text-white" : "bg-white/[0.02] border-white/[0.08] text-white/50 hover:text-white/80"}`}>{t}</button>
+                          ))}
                         </div>
-                        <div className="tabular-nums text-white/80 pl-4">{fmtCOP(currentRow.interes)}</div>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-1.5 font-semibold text-[#6BCF89]">
-                          <span className="inline-block h-2 w-2 rounded-full bg-[#6BCF89]" /> {pctCapital.toFixed(1)}% Capital
+                        <div className="flex items-center gap-1.5 rounded-md border border-white/[0.08] bg-white/[0.02] px-2 py-1 focus-within:border-[#4B6FE0]/60">
+                          <input type="text" inputMode="decimal" value={freshTasa} onChange={(e) => setFreshTasa(e.target.value.replace(/[^0-9.,]/g, ""))} placeholder={`Tasa ${freshTipo}`} className="flex-1 min-w-0 bg-transparent text-[11.5px] font-semibold text-white placeholder:text-white/25 outline-none tabular-nums" />
+                          <span className="text-[9px] text-white/40">%</span>
                         </div>
-                        <div className="tabular-nums text-white/80 pl-4">{fmtCOP(currentRow.capital)}</div>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="mt-4 text-[12px] text-white/40">Calcula para ver la distribución.</div>
-                )}
-              </Panel>
-
-              {/* Insight */}
-              <div
-                className="relative rounded-2xl border border-[#6BCF89]/25 p-5 overflow-hidden backdrop-blur-xl"
-                style={{
-                  background: "linear-gradient(135deg, rgba(107,207,137,0.08), rgba(75,111,224,0.06))",
-                  boxShadow: "0 20px 60px -30px rgba(107,207,137,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
-                }}
-              >
-                <div className="absolute -bottom-8 -right-8 h-32 w-32 rounded-full blur-3xl opacity-50" style={{ background: "radial-gradient(circle, #6BCF89, transparent 70%)" }} />
-                <div className="relative">
-                  <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-[#84B98F]">
-                    <Sparkles className="h-3.5 w-3.5" /> NUVIA Insight
-                    <span className="rounded-md bg-[#6BCF89]/20 border border-[#6BCF89]/30 px-1.5 py-0.5 text-[9px] text-[#B5DFC0]">IA</span>
-                  </div>
-                  {calculated && insight ? (
-                    <p className="mt-2.5 text-[13px] text-white/85 leading-relaxed">{insight}</p>
-                  ) : (
-                    <p className="mt-2.5 text-[13px] text-white/40">El motor generará un análisis contextual una vez calcules la amortización.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Table */}
-            <Panel padded>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <div>
-                  <div className="text-[15px] font-semibold text-white">Tabla de amortización completa</div>
-                  <div className="text-[11.5px] text-white/50 mt-0.5">Visualiza el comportamiento total de tu crédito</div>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={handleExportExcel}
-                    className="rounded-xl border border-[#6BCF89]/30 bg-[#6BCF89]/[0.08] hover:bg-[#6BCF89]/[0.14] px-3.5 py-2 text-[12px] font-semibold text-[#B5DFC0] transition-all inline-flex items-center gap-1.5"
-                  >
-                    <FileSpreadsheet className="h-3.5 w-3.5" /> Exportar Excel
-                    <ChevronDown className="h-3 w-3 opacity-60" />
-                  </button>
-                  <button
-                    onClick={handleExportPDF}
-                    className="rounded-xl border border-[#EF4444]/30 bg-[#EF4444]/[0.08] hover:bg-[#EF4444]/[0.14] px-3.5 py-2 text-[12px] font-semibold text-[#FCA5A5] transition-all inline-flex items-center gap-1.5"
-                  >
-                    <FileText className="h-3.5 w-3.5" /> Exportar PDF
-                    <ChevronDown className="h-3 w-3 opacity-60" />
-                  </button>
-                </div>
-              </div>
-
-              <div className="mt-4 rounded-xl border border-white/[0.06] overflow-hidden">
-                <div className="max-h-[440px] overflow-auto nuvia-scroll">
-                  <table className="w-full text-[12.5px] tabular-nums">
-                    <thead className="sticky top-0 z-10" style={{ background: "rgba(11,16,32,0.98)", boxShadow: "0 1px 0 rgba(255,255,255,0.06)" }}>
-                      <tr className="text-left text-[10.5px] uppercase tracking-[0.14em] text-white/50">
-                        <th className="px-4 py-3 font-semibold">Periodo</th>
-                        <th className="px-4 py-3 font-semibold">Fecha</th>
-                        {modo === "uvr" && (
+                        {freshValid && (
                           <>
-                            <th className="px-4 py-3 font-semibold text-[#84B98F]">UVR del mes</th>
-                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Saldo (UVR)</th>
-                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Cuota (UVR)</th>
-                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Interés (UVR)</th>
-                            <th className="px-4 py-3 font-semibold text-[#84B98F]">Capital (UVR)</th>
+                            <div className="mt-1.5 grid grid-cols-2 gap-1">
+                              {conversions.map((c) => (
+                                <div key={c.tipo} className={`rounded px-1.5 py-1 border ${c.tipo === freshTipo ? "border-[#4B6FE0]/40 bg-[#4B6FE0]/10" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                                  <div className="text-[8.5px] font-bold uppercase tracking-wider text-white/45">{c.tipo}</div>
+                                  <div className="text-[10.5px] font-semibold text-white tabular-nums">{c.valor.toFixed(3)}%</div>
+                                </div>
+                              ))}
+                            </div>
+                            <button onClick={handleUseFreshAsTEA} className="mt-1.5 w-full rounded-md border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2 py-1.5 text-[10px] font-semibold text-[#B5DFC0]">
+                              Usar como TEA ({(freshEA * 100).toFixed(3)}%)
+                            </button>
                           </>
                         )}
-                        <th className="px-4 py-3 font-semibold">Saldo inicial</th>
-                        <th className="px-4 py-3 font-semibold">Cuota financiera</th>
-                        <th className="px-4 py-3 font-semibold">Interés base</th>
-                        <th className="px-4 py-3 font-semibold text-[#D6C0FF]">Fresh</th>
-                        <th className="px-4 py-3 font-semibold">Capital</th>
-                        <th className="px-4 py-3 font-semibold">Seguros</th>
-                        <th className="px-4 py-3 font-semibold">Total cuota</th>
-                        <th className="px-4 py-3 font-semibold">Saldo final</th>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* ==== STICKY ACTIONS ==== */}
+            <div className="sticky bottom-2 mt-3 rounded-2xl border border-white/10 bg-[#0B1020]/95 backdrop-blur-xl p-2.5 space-y-1.5" style={{ boxShadow: "0 20px 60px -20px rgba(0,0,0,0.9)" }}>
+              <motion.button
+                whileTap={{ scale: 0.98 }}
+                onClick={handleCalculate}
+                className="w-full relative rounded-xl px-3 py-2.5 text-[11.5px] font-bold tracking-[0.14em] uppercase text-white"
+                style={{
+                  background: "linear-gradient(135deg, #4B6FE0 0%, #6BCF89 100%)",
+                  boxShadow: "0 10px 24px -10px rgba(107,207,137,0.55), inset 0 1px 0 rgba(255,255,255,0.25)",
+                }}
+              >
+                <span className="inline-flex items-center justify-center gap-1.5"><Zap className="h-3.5 w-3.5" /> Calcular</span>
+              </motion.button>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button onClick={handleReset} className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-2 py-1.5 text-[10px] font-semibold text-white/70 hover:text-white hover:bg-white/[0.05] inline-flex items-center justify-center gap-1 uppercase tracking-[0.12em]">
+                  <RotateCcw className="h-3 w-3" /> Limpiar
+                </button>
+                <button onClick={() => setShowScenarios((s) => !s)} className="rounded-lg border border-[#B58BFF]/30 bg-[#B58BFF]/[0.08] hover:bg-[#B58BFF]/[0.14] px-2 py-1.5 text-[10px] font-semibold text-[#D6C0FF] inline-flex items-center justify-center gap-1 uppercase tracking-[0.12em]">
+                  <Layers className="h-3 w-3" /> Escenarios
+                </button>
+              </div>
+            </div>
+          </aside>
+
+          {/* ==== CENTER: HERO + TABLE ==== */}
+          <section className="min-w-0 space-y-5">
+            {/* HERO card holográfico */}
+            <HoloHeroCard
+              current={currentRow}
+              calculated={calculated}
+              periodoNum={periodoNum}
+              plazoNum={plazoNum}
+              lastCalcLabel={lastCalcLabel}
+              modo={modo}
+            />
+
+            {/* TABLE SECTION with tabs */}
+            <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl overflow-hidden" style={{ boxShadow: "0 20px 50px -30px rgba(0,0,0,0.9)" }}>
+              {/* Tabs */}
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-4">
+                <div className="flex items-center gap-0">
+                  <TabButton active={tableTab === "tabla"} onClick={() => setTableTab("tabla")} icon={<FileSpreadsheet className="h-3.5 w-3.5" />}>Tabla completa</TabButton>
+                  <TabButton active={tableTab === "escenarios"} onClick={() => setTableTab("escenarios")} icon={<Layers className="h-3.5 w-3.5" />}>Escenarios</TabButton>
+                  <TabButton active={tableTab === "export"} onClick={() => setTableTab("export")} icon={<Download className="h-3.5 w-3.5" />}>Exportaciones</TabButton>
+                </div>
+                <div className="text-[10px] text-white/40 uppercase tracking-[0.14em] tabular-nums">
+                  {rows.length > 0 ? `${rows.length} cuotas` : "sin datos"}
+                </div>
+              </div>
+
+              {tableTab === "tabla" && (
+                <div className="max-h-[520px] overflow-auto nuvia-scroll">
+                  <table className="w-full text-[12px] tabular-nums">
+                    <thead className="sticky top-0 z-10" style={{ background: "rgba(11,16,32,0.98)", boxShadow: "0 1px 0 rgba(255,255,255,0.06)" }}>
+                      <tr className="text-left text-[10px] uppercase tracking-[0.14em] text-white/50">
+                        <th className="px-3 py-2.5 font-semibold">#</th>
+                        <th className="px-3 py-2.5 font-semibold">Fecha</th>
+                        {modo === "uvr" && (
+                          <>
+                            <th className="px-3 py-2.5 font-semibold text-[#84B98F]">UVR</th>
+                            <th className="px-3 py-2.5 font-semibold text-[#84B98F]">Saldo (UVR)</th>
+                            <th className="px-3 py-2.5 font-semibold text-[#84B98F]">Cuota (UVR)</th>
+                          </>
+                        )}
+                        <th className="px-3 py-2.5 font-semibold">Saldo inicial</th>
+                        <th className="px-3 py-2.5 font-semibold">Cuota</th>
+                        <th className="px-3 py-2.5 font-semibold">Interés</th>
+                        <th className="px-3 py-2.5 font-semibold text-[#D6C0FF]">Fresh</th>
+                        <th className="px-3 py-2.5 font-semibold">Capital</th>
+                        <th className="px-3 py-2.5 font-semibold">Seguros</th>
+                        <th className="px-3 py-2.5 font-semibold">Total</th>
+                        <th className="px-3 py-2.5 font-semibold">Saldo final</th>
                       </tr>
                     </thead>
                     <tbody>
                       {rows.length === 0 ? (
                         <tr>
-                          <td colSpan={modo === "uvr" ? 15 : 10} className="px-4 py-10 text-center text-white/40 text-[12px]">
-                            Ingresa los datos y presiona <span className="text-white/80 font-semibold">Calcular cuota</span> para ver la tabla completa.
+                          <td colSpan={modo === "uvr" ? 13 : 10} className="px-4 py-10 text-center text-white/40 text-[12px]">
+                            Ingresa los datos y presiona <span className="text-white/80 font-semibold">Calcular</span>.
                           </td>
                         </tr>
                       ) : (
@@ -965,51 +768,30 @@ function AmortizationEngine() {
                           return (
                             <tr
                               key={r.periodo}
-                              className={`transition-colors border-t border-white/[0.04] ${
-                                isCurrent
-                                  ? ""
-                                  : r.periodo % 2 === 0
-                                    ? "bg-white/[0.012] hover:bg-white/[0.035]"
-                                    : "hover:bg-white/[0.03]"
-                              }`}
-                              style={
-                                isCurrent
-                                  ? {
-                                      background: "linear-gradient(90deg, rgba(107,90,224,0.28), rgba(107,90,224,0.14))",
-                                      boxShadow: "inset 3px 0 0 #B58BFF",
-                                    }
-                                  : isBreakEven
-                                    ? { background: "linear-gradient(90deg, rgba(132,185,143,0.14), transparent)", boxShadow: "inset 3px 0 0 #84B98F" }
-                                    : undefined
-                              }
+                              className={`transition-colors border-t border-white/[0.04] ${isCurrent ? "" : r.periodo % 2 === 0 ? "bg-white/[0.012] hover:bg-white/[0.035]" : "hover:bg-white/[0.03]"}`}
+                              style={isCurrent ? { background: "linear-gradient(90deg, rgba(107,90,224,0.28), rgba(107,90,224,0.14))", boxShadow: "inset 3px 0 0 #B58BFF" } : isBreakEven ? { background: "linear-gradient(90deg, rgba(132,185,143,0.14), transparent)", boxShadow: "inset 3px 0 0 #84B98F" } : undefined}
                             >
-                              <td className="px-4 py-3 text-white/90 font-medium">
-                                {isCurrent && (
-                                  <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle" style={{ background: "#B58BFF", boxShadow: "0 0 8px #B58BFF" }} />
-                                )}
-                                {isBreakEven && !isCurrent && (
-                                  <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle" style={{ background: "#84B98F", boxShadow: "0 0 8px #84B98F" }} />
-                                )}
+                              <td className="px-3 py-2 text-white/90 font-medium">
+                                {isCurrent && <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle" style={{ background: "#B58BFF", boxShadow: "0 0 8px #B58BFF" }} />}
+                                {isBreakEven && !isCurrent && <span className="inline-block w-1.5 h-1.5 rounded-full mr-1.5 align-middle" style={{ background: "#84B98F", boxShadow: "0 0 8px #84B98F" }} />}
                                 {r.periodo}
                               </td>
-                              <td className="px-4 py-3 text-white/70 text-[11.5px]">{fechaCuota(fechaDesembolso, r.periodo)}</td>
+                              <td className="px-3 py-2 text-white/70 text-[11px]">{fechaCuota(fechaDesembolso, r.periodo)}</td>
                               {modo === "uvr" && (
                                 <>
-                                  <td className="px-4 py-3 text-[#B5DFC0] font-semibold">${fmtUVR(r.uvrValor)}</td>
-                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.saldoInicialUVR)}</td>
-                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.cuotaUVR)}</td>
-                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.interesUVR)}</td>
-                                  <td className="px-4 py-3 text-[#B5DFC0]">{fmtUVR(r.capitalUVR)}</td>
+                                  <td className="px-3 py-2 text-[#B5DFC0] font-semibold">${fmtUVR(r.uvrValor)}</td>
+                                  <td className="px-3 py-2 text-[#B5DFC0]">{fmtUVR(r.saldoInicialUVR)}</td>
+                                  <td className="px-3 py-2 text-[#B5DFC0]">{fmtUVR(r.cuotaUVR)}</td>
                                 </>
                               )}
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.saldoInicial)}</td>
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.cuota)}</td>
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.interesBase)}</td>
-                              <td className={`px-4 py-3 tabular-nums ${r.fresh > 0 ? "text-[#D6C0FF] font-semibold" : "text-white/30"}`}>{r.fresh > 0 ? fmtCOP(r.fresh) : "—"}</td>
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.capital)}</td>
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.seguros)}</td>
-                              <td className="px-4 py-3 text-white font-semibold">{fmtCOP(r.totalCuota)}</td>
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.saldoFinal)}</td>
+                              <td className="px-3 py-2 text-white/85">{fmtCOP(r.saldoInicial)}</td>
+                              <td className="px-3 py-2 text-white/85">{fmtCOP(r.cuota)}</td>
+                              <td className="px-3 py-2 text-white/85">{fmtCOP(r.interesBase)}</td>
+                              <td className={`px-3 py-2 ${r.fresh > 0 ? "text-[#D6C0FF] font-semibold" : "text-white/30"}`}>{r.fresh > 0 ? fmtCOP(r.fresh) : "—"}</td>
+                              <td className="px-3 py-2 text-white/85">{fmtCOP(r.capital)}</td>
+                              <td className="px-3 py-2 text-white/85">{fmtCOP(r.seguros)}</td>
+                              <td className="px-3 py-2 text-white font-semibold">{fmtCOP(r.totalCuota)}</td>
+                              <td className="px-3 py-2 text-white/85">{fmtCOP(r.saldoFinal)}</td>
                             </tr>
                           );
                         })
@@ -1017,12 +799,125 @@ function AmortizationEngine() {
                     </tbody>
                   </table>
                 </div>
+              )}
+
+              {tableTab === "escenarios" && (
+                <div className="p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="text-[13px] font-semibold text-white">Escenarios guardados</div>
+                      <div className="text-[11px] text-white/50">Compara configuraciones anteriores con el cálculo actual.</div>
+                    </div>
+                    <button onClick={handleSaveScenario} className="rounded-lg border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-3 py-1.5 text-[11px] font-semibold text-[#B5DFC0] inline-flex items-center gap-1.5">
+                      <Save className="h-3 w-3" /> Guardar actual
+                    </button>
+                  </div>
+                  {scenarios.length === 0 ? (
+                    <div className="text-[12px] text-white/40 text-center py-8">Aún no has guardado escenarios.</div>
+                  ) : (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {scenarios.map((s) => (
+                        <div key={s.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 flex items-start justify-between gap-2">
+                          <button onClick={() => handleLoadScenario(s)} className="text-left min-w-0 flex-1">
+                            <div className="text-[12.5px] font-semibold text-white truncate">{s.nombre}</div>
+                            <div className="text-[10px] text-white/45 uppercase tracking-wider mt-0.5">{s.modo} · {s.plazo}m · TEA {s.tea}% · {new Date(s.ts).toLocaleDateString("es-CO")}</div>
+                          </button>
+                          <button onClick={() => handleDeleteScenario(s.id)} className="shrink-0 text-white/40 hover:text-red-400 p-1">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {tableTab === "export" && (
+                <div className="p-5 grid gap-3 sm:grid-cols-2">
+                  <button
+                    onClick={handleExportExcel}
+                    className="group relative rounded-xl border border-[#6BCF89]/25 bg-[#6BCF89]/[0.06] hover:bg-[#6BCF89]/[0.14] p-5 text-left transition-all"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#6BCF89]/40 bg-[#6BCF89]/[0.12]">
+                        <FileSpreadsheet className="h-5 w-5 text-[#B5DFC0]" />
+                      </div>
+                      <Download className="h-4 w-4 text-white/40 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="mt-3 text-[14px] font-semibold text-white">Exportar Excel</div>
+                    <div className="text-[11px] text-white/50 mt-0.5">Tabla completa lista para auditoría (.xlsx)</div>
+                  </button>
+                  <button
+                    onClick={handleExportPDF}
+                    className="group relative rounded-xl border border-[#EF4444]/25 bg-[#EF4444]/[0.06] hover:bg-[#EF4444]/[0.14] p-5 text-left transition-all"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-[#EF4444]/40 bg-[#EF4444]/[0.12]">
+                        <FileText className="h-5 w-5 text-[#FCA5A5]" />
+                      </div>
+                      <Download className="h-4 w-4 text-white/40 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="mt-3 text-[14px] font-semibold text-white">Exportar PDF</div>
+                    <div className="text-[11px] text-white/50 mt-0.5">Documento imprimible con formato NUVIA (.pdf)</div>
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* ==== RIGHT: INSIGHTS ==== */}
+          <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start">
+            <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#84B98F] flex items-center gap-1.5">
+              <Sparkles className="h-3 w-3" /> Insights NUVIA
+            </div>
+
+            <InsightCard
+              accent="#84B98F"
+              icon={<Target className="h-4 w-4" />}
+              label="Punto de equilibrio"
+              value={calculated && breakEven ? `Cuota #${breakEven}` : "—"}
+              sub={calculated && breakEven ? `${breakEvenFecha} · ${breakEvenPct.toFixed(1)}% del plazo` : "Cuando capital supera intereses"}
+            />
+            <InsightCard
+              accent="#6BCF89"
+              icon={<Scale className="h-4 w-4" />}
+              label="Relación capital / interés"
+              value={calculated && ratioCapInt > 0 ? `${ratioCapInt.toFixed(2)}x` : "—"}
+              sub={calculated && ratioCapInt > 0 ? `${fmtCOP(totalCapital)} vs ${fmtCOP(totalIntereses)}` : "Total del crédito"}
+            />
+            <InsightCard
+              accent="#B58BFF"
+              icon={<Layers className="h-4 w-4" />}
+              label="Costo acumulado"
+              value={calculated && costoAcumulado > 0 ? fmtCOP(costoAcumulado) : "—"}
+              sub={calculated && periodoNum ? `Pagado hasta cuota #${periodoNum}` : "Total pagado a la fecha"}
+            />
+            <InsightCard
+              accent="#7BB0FF"
+              icon={<TrendingUp className="h-4 w-4" />}
+              label="Proyección restante"
+              value={calculated && proyeccionRestante > 0 ? fmtCOP(proyeccionRestante) : "—"}
+              sub={calculated && periodoNum && plazoNum ? `${plazoNum - periodoNum} cuotas pendientes` : "Por pagar hasta el final"}
+            />
+
+            {/* NUVIA Insight IA */}
+            <div className="rounded-2xl border border-[#6BCF89]/25 p-4 backdrop-blur-xl relative overflow-hidden" style={{ background: "linear-gradient(135deg, rgba(107,207,137,0.08), rgba(75,111,224,0.06))" }}>
+              <div className="absolute -bottom-8 -right-8 h-24 w-24 rounded-full blur-3xl opacity-50" style={{ background: "radial-gradient(circle, #6BCF89, transparent 70%)" }} />
+              <div className="relative">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[#84B98F]">
+                  <Sparkles className="h-3 w-3" /> NUVIA · IA
+                </div>
+                {calculated && insight ? (
+                  <p className="mt-2 text-[11.5px] text-white/80 leading-relaxed">{insight}</p>
+                ) : (
+                  <p className="mt-2 text-[11.5px] text-white/40">Calcula para generar análisis contextual.</p>
+                )}
               </div>
-            </Panel>
-          </div>
+            </div>
+          </aside>
         </div>
 
-        <div className="h-16" />
+        <div className="h-10" />
       </div>
 
       <style>{`
@@ -1033,6 +928,35 @@ function AmortizationEngine() {
           border-radius: 999px;
         }
       `}</style>
+
+      {/* ============ EXTRACTO READER MODAL ============ */}
+      <AnimatePresence>
+        {showReader && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setShowReader(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-2xl rounded-2xl border border-white/[0.08] bg-[#0B1020] p-6 max-h-[85vh] overflow-auto nuvia-scroll"
+              style={{ boxShadow: "0 30px 80px -20px rgba(75,111,224,0.4)" }}
+            >
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">Lector de extractos NUVIA</div>
+                  <div className="text-[15px] font-semibold text-white mt-1">Autocompleta desde tu extracto bancario</div>
+                </div>
+                <button onClick={() => setShowReader(false)} className="text-white/50 hover:text-white p-1">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <ExtractoReader modo={modo} onApply={(p) => { const ok = handleExtractoApply(p); if (ok) setShowReader(false); return ok; }} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ============ IMPORT CASO MODAL ============ */}
       <AnimatePresence>
@@ -1094,89 +1018,258 @@ function AmortizationEngine() {
 // SUBCOMPONENTS
 // ============================================================================
 
-function HeaderBar({ modo, setModo, onCalcInvalidate }: { modo: "pesos" | "uvr"; setModo: (m: "pesos" | "uvr") => void; onCalcInvalidate: () => void }) {
+function CompactHeader({
+  modo,
+  setModo,
+  onOpenReader,
+}: {
+  modo: "pesos" | "uvr";
+  setModo: (m: "pesos" | "uvr") => void;
+  onOpenReader: () => void;
+}) {
   return (
-    <div className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl overflow-hidden">
-      <div className="relative flex flex-col md:flex-row md:items-center gap-4 px-5 py-4">
+    <div className="relative rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl overflow-hidden">
+      <div className="relative flex items-center gap-3 px-4 py-2.5">
+        {/* Back */}
+        <Link
+          to="/herramientas"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.02] text-white/60 hover:text-white hover:bg-white/[0.06] transition-all shrink-0"
+          title="Volver a Herramientas"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+        </Link>
+
         {/* Logo + name */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2.5 shrink-0">
           <div
-            className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/15"
+            className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/15"
             style={{
               background: "linear-gradient(135deg, #4B6FE0 0%, #6BCF89 100%)",
-              boxShadow: "0 12px 30px -10px rgba(107,207,137,0.6), inset 0 1px 0 rgba(255,255,255,0.3)",
+              boxShadow: "0 8px 20px -8px rgba(107,207,137,0.6), inset 0 1px 0 rgba(255,255,255,0.3)",
             }}
           >
-            <span className="text-[19px] font-black text-white leading-none" style={{ fontFamily: "'Space Grotesk', Inter, sans-serif" }}>N</span>
+            <span className="text-[14px] font-black text-white leading-none" style={{ fontFamily: "'Space Grotesk', Inter, sans-serif" }}>N</span>
           </div>
           <div className="leading-tight">
-            <div className="text-[15px] font-black tracking-[0.02em] text-white">NUVIA</div>
-            <div className="text-[9.5px] font-semibold uppercase tracking-[0.18em] text-[#84B98F]">Amortization Engine</div>
+            <div className="text-[13px] font-bold uppercase tracking-[0.12em] text-white">Motor de amortización inteligente</div>
+            <div className="text-[9.5px] text-white/45 uppercase tracking-[0.16em]">NUVIA · Financial Engine · Sistema francés {modo === "uvr" ? "UVR" : "Pesos"}</div>
           </div>
         </div>
 
-        {/* Divider vertical */}
-        <div className="hidden md:block h-10 w-px bg-white/10" />
+        {/* Spacer */}
+        <div className="flex-1" />
 
-        {/* Title / subtitle */}
-        <div className="flex-1 min-w-0">
-          <div className="text-[13px] md:text-[14px] font-bold uppercase tracking-[0.14em] text-white">
-            Motor de amortización inteligente
-          </div>
-          <div className="text-[11.5px] text-white/50 mt-0.5">
-            Sistema francés · Cuota fija {modo === "uvr" ? "en UVR" : "en pesos"}
-          </div>
-        </div>
-
-        {/* Badges + toggle */}
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {/* Modo pill (functional) */}
+        {/* Badges */}
+        <div className="hidden md:flex items-center gap-1.5">
           <button
-            onClick={() => { setModo(modo === "pesos" ? "uvr" : "pesos"); onCalcInvalidate(); }}
+            onClick={() => setModo(modo === "pesos" ? "uvr" : "pesos")}
             title="Cambiar modalidad"
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] transition-all hover:brightness-110"
+            className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em] transition-all hover:brightness-110"
             style={{
               background: "linear-gradient(135deg, rgba(107,207,137,0.16), rgba(107,207,137,0.06))",
               borderColor: "rgba(107,207,137,0.4)",
               color: "#B5DFC0",
             }}
           >
-            <Scale className="h-3 w-3" /> {modo === "pesos" ? "Solo modalidad pesos" : "Modalidad UVR"}
+            <Scale className="h-2.5 w-2.5" /> {modo === "pesos" ? "Solo Pesos" : "Modalidad UVR"}
           </button>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em]"
-            style={{
-              background: "linear-gradient(135deg, rgba(75,111,224,0.16), rgba(75,111,224,0.06))",
-              borderColor: "rgba(75,111,224,0.4)",
-              color: "#A5B4E8",
-            }}
-          >
-            <Calculator className="h-3 w-3" /> French system
+          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em]" style={{ background: "rgba(75,111,224,0.10)", borderColor: "rgba(75,111,224,0.35)", color: "#A5B4E8" }}>
+            <Calculator className="h-2.5 w-2.5" /> French System
           </span>
-          <span
-            className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em]"
-            style={{
-              background: "linear-gradient(135deg, rgba(181,139,255,0.18), rgba(181,139,255,0.06))",
-              borderColor: "rgba(181,139,255,0.4)",
-              color: "#D6C0FF",
-            }}
-          >
-            <Zap className="h-3 w-3" /> Financial engine
+          <span className="inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[9.5px] font-bold uppercase tracking-[0.12em]" style={{ background: "rgba(181,139,255,0.12)", borderColor: "rgba(181,139,255,0.35)", color: "#D6C0FF" }}>
+            <Zap className="h-2.5 w-2.5" /> Financial Engine
           </span>
-          <button className="ml-1 flex h-7 w-7 items-center justify-center rounded-full border border-white/[0.08] bg-white/[0.02] text-white/50 hover:text-white hover:bg-white/[0.06] transition-all">
-            <HelpCircle className="h-3.5 w-3.5" />
-          </button>
         </div>
+
+        {/* Extracto reader button */}
+        <button
+          onClick={onOpenReader}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.08] hover:border-[#84B98F]/30 px-2.5 py-1.5 text-[10.5px] font-semibold text-white/80 transition-all"
+          title="Abrir lector de extractos"
+        >
+          <FileText className="h-3 w-3 text-[#84B98F]" /> Lector de extractos
+        </button>
       </div>
 
-      {/* Bottom gradient line */}
-      <div
-        className="h-[2px] w-full"
-        style={{ background: "linear-gradient(90deg, transparent 0%, #4B6FE0 20%, #6BCF89 55%, #B58BFF 85%, transparent 100%)" }}
-      />
+      {/* Bottom gradient hairline */}
+      <div className="h-px w-full" style={{ background: "linear-gradient(90deg, transparent 0%, #4B6FE0 20%, #6BCF89 55%, #B58BFF 85%, transparent 100%)" }} />
     </div>
   );
 }
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="mt-4 mb-2 pb-1 border-b border-white/[0.05] text-[10px] font-bold uppercase tracking-[0.18em] text-white/50">
+      {children}
+    </div>
+  );
+}
+
+function TabButton({ active, onClick, icon, children }: { active: boolean; onClick: () => void; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`relative px-3.5 py-2.5 text-[11px] font-semibold uppercase tracking-[0.12em] inline-flex items-center gap-1.5 transition-colors ${active ? "text-white" : "text-white/50 hover:text-white/80"}`}
+    >
+      {icon}
+      {children}
+      {active && <span className="absolute bottom-0 left-2 right-2 h-[2px] rounded-full" style={{ background: "linear-gradient(90deg, #4B6FE0, #6BCF89)", boxShadow: "0 0 10px rgba(107,207,137,0.5)" }} />}
+    </button>
+  );
+}
+
+function InsightCard({ accent, icon, label, value, sub }: { accent: string; icon: React.ReactNode; label: string; value: string; sub: string }) {
+  return (
+    <motion.div
+      whileHover={{ y: -2 }}
+      className="relative rounded-xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-3 overflow-hidden transition-all"
+      style={{ boxShadow: "0 10px 30px -20px rgba(0,0,0,0.9)" }}
+    >
+      <div className="absolute -top-8 -right-8 h-20 w-20 rounded-full blur-2xl opacity-40" style={{ background: `radial-gradient(circle, ${accent}, transparent 70%)` }} />
+      <div className="relative flex items-start gap-2.5">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border" style={{ background: `${accent}18`, borderColor: `${accent}33`, color: accent }}>
+          {icon}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="text-[9px] font-bold uppercase tracking-[0.14em] text-white/50 leading-tight">{label}</div>
+          <div className="mt-0.5 text-[15px] font-bold text-white tabular-nums truncate" style={{ textShadow: `0 0 12px ${accent}55` }}>{value}</div>
+          <div className="text-[10px] text-white/45 truncate">{sub}</div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function HoloHeroCard({
+  current,
+  calculated,
+  periodoNum,
+  plazoNum,
+  lastCalcLabel,
+  modo,
+}: {
+  current: Row | undefined;
+  calculated: boolean;
+  periodoNum: number;
+  plazoNum: number;
+  lastCalcLabel: string;
+  modo: "pesos" | "uvr";
+}) {
+  const total = useCountUp(current?.totalCuota ?? 0);
+  const interes = current?.interes ?? 0;
+  const capital = current?.capital ?? 0;
+  const seguros = current?.seguros ?? 0;
+  const totalCuota = current?.totalCuota ?? 0;
+  const pctI = totalCuota > 0 ? (interes / totalCuota) * 100 : 0;
+  const pctC = totalCuota > 0 ? (capital / totalCuota) * 100 : 0;
+  const pctS = totalCuota > 0 ? (seguros / totalCuota) * 100 : 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative rounded-2xl border overflow-hidden backdrop-blur-xl"
+      style={{
+        borderColor: "rgba(139,107,255,0.28)",
+        background: "linear-gradient(135deg, rgba(107,90,224,0.18) 0%, rgba(75,111,224,0.14) 45%, rgba(15,20,45,0.5) 100%)",
+        boxShadow: "0 40px 100px -40px rgba(139,107,255,0.55), inset 0 1px 0 rgba(255,255,255,0.08), 0 0 0 1px rgba(139,107,255,0.08)",
+      }}
+    >
+      {/* Halos */}
+      <div className="absolute -top-24 -right-16 h-72 w-72 rounded-full blur-3xl opacity-45" style={{ background: "radial-gradient(circle, #8B6BFF, transparent 70%)" }} />
+      <div className="absolute -bottom-24 -left-16 h-72 w-72 rounded-full blur-3xl opacity-30" style={{ background: "radial-gradient(circle, #4B6FE0, transparent 70%)" }} />
+      <div className="absolute inset-0 pointer-events-none opacity-[0.08]" style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.6) 1px, transparent 1px)", backgroundSize: "32px 32px", maskImage: "radial-gradient(ellipse at 50% 40%, black 30%, transparent 75%)" }} />
+
+      <div className="relative p-6">
+        {/* HEADER: Cuota #X + last calc */}
+        <div className="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-[#D6C0FF]">Cuota consultada</div>
+            <div className="mt-1 flex items-baseline gap-2">
+              <div className="text-[52px] leading-none font-black text-white tabular-nums" style={{ textShadow: "0 0 40px rgba(181,139,255,0.55)" }}>
+                #{calculated && current ? current.periodo : "—"}
+              </div>
+              <div className="text-[13px] text-white/50">
+                {plazoNum ? `de ${plazoNum}` : ""}
+              </div>
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[10px] text-white/60 uppercase tracking-[0.14em]">
+              <Clock className="h-2.5 w-2.5" /> {lastCalcLabel}
+            </div>
+            <div className="mt-2 text-[10px] uppercase tracking-[0.16em] text-[#D6C0FF]">Total cuota</div>
+            <div className="text-[36px] font-bold text-white tabular-nums leading-none" style={{ textShadow: "0 0 30px rgba(181,139,255,0.55)" }}>
+              {calculated && current ? fmtCOP(total) : "$ —"}
+            </div>
+          </div>
+        </div>
+
+        {/* FILA 1: Saldo inicial · Total cuota · Saldo final */}
+        <div className="mt-6 grid grid-cols-3 gap-3">
+          <HeroStat label="Saldo inicial" value={calculated && current ? fmtCOP(current.saldoInicial) : "—"} accent="#7BB0FF" />
+          <HeroStat label="Total cuota" value={calculated && current ? fmtCOP(current.totalCuota) : "—"} accent="#B58BFF" highlight />
+          <HeroStat label="Saldo final" value={calculated && current ? fmtCOP(current.saldoFinal) : "—"} accent="#7BB0FF" />
+        </div>
+
+        {/* FILA 2: Interés · Capital · Seguros */}
+        <div className="mt-3 grid grid-cols-3 gap-3">
+          <HeroStat label="Interés" value={calculated ? fmtCOP(interes) : "—"} accent="#B58BFF" small />
+          <HeroStat label="Capital" value={calculated ? fmtCOP(capital) : "—"} accent="#6BCF89" small />
+          <HeroStat label="Seguros" value={calculated ? fmtCOP(seguros) : "—"} accent="#84B98F" small />
+        </div>
+
+        {/* FILA 3: Barra visual de composición */}
+        <div className="mt-5">
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/60">Composición de la cuota</div>
+            <div className="text-[10px] text-white/40 uppercase tracking-[0.14em] tabular-nums">
+              {calculated ? `${pctI.toFixed(1)}% · ${pctC.toFixed(1)}% · ${pctS.toFixed(1)}%` : "—"}
+            </div>
+          </div>
+          <div className="h-3 w-full rounded-full overflow-hidden border border-white/[0.06] bg-white/[0.03] flex">
+            {calculated ? (
+              <>
+                <div className="h-full transition-all duration-500" style={{ width: `${pctI}%`, background: "linear-gradient(90deg, #B58BFF, #8B6BFF)", boxShadow: "inset 0 0 8px rgba(255,255,255,0.15)" }} />
+                <div className="h-full transition-all duration-500" style={{ width: `${pctC}%`, background: "linear-gradient(90deg, #6BCF89, #84B98F)", boxShadow: "inset 0 0 8px rgba(255,255,255,0.15)" }} />
+                <div className="h-full transition-all duration-500" style={{ width: `${pctS}%`, background: "linear-gradient(90deg, #7BB0FF, #4B6FE0)", boxShadow: "inset 0 0 8px rgba(255,255,255,0.15)" }} />
+              </>
+            ) : (
+              <div className="h-full w-full opacity-30" style={{ background: "repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 8px, transparent 8px 16px)" }} />
+            )}
+          </div>
+          <div className="mt-2 flex items-center gap-4 text-[10px] flex-wrap">
+            <div className="inline-flex items-center gap-1.5 text-[#D6C0FF]"><span className="h-2 w-2 rounded-sm" style={{ background: "#B58BFF" }} /> Interés</div>
+            <div className="inline-flex items-center gap-1.5 text-[#B5DFC0]"><span className="h-2 w-2 rounded-sm" style={{ background: "#6BCF89" }} /> Capital</div>
+            <div className="inline-flex items-center gap-1.5 text-[#A5B4E8]"><span className="h-2 w-2 rounded-sm" style={{ background: "#7BB0FF" }} /> Seguros</div>
+            {modo === "uvr" && current?.uvrValor ? (
+              <div className="ml-auto inline-flex items-center gap-1.5 text-[#84B98F] font-semibold tabular-nums">
+                UVR del mes · ${new Intl.NumberFormat("es-CO", { maximumFractionDigits: 2 }).format(current.uvrValor)}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
+function HeroStat({ label, value, accent, highlight, small }: { label: string; value: string; accent: string; highlight?: boolean; small?: boolean }) {
+  return (
+    <div
+      className="relative rounded-xl border p-3 overflow-hidden"
+      style={{
+        borderColor: highlight ? `${accent}55` : "rgba(255,255,255,0.06)",
+        background: highlight ? `linear-gradient(135deg, ${accent}18, rgba(15,20,45,0.4))` : "rgba(255,255,255,0.02)",
+        boxShadow: highlight ? `0 10px 30px -15px ${accent}` : "inset 0 1px 0 rgba(255,255,255,0.03)",
+      }}
+    >
+      <div className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: highlight ? accent : "rgba(255,255,255,0.5)" }}>{label}</div>
+      <div className={`mt-1 font-bold text-white tabular-nums truncate ${small ? "text-[15px]" : "text-[19px]"}`} style={{ textShadow: highlight ? `0 0 14px ${accent}55` : "none" }}>{value}</div>
+    </div>
+  );
+}
+
 
 function Panel({ children, padded = false }: { children: React.ReactNode; padded?: boolean }) {
   return (
@@ -1230,101 +1323,6 @@ function InputTile({
   );
 }
 
-function TotalCard({ current, calculated }: { current: Row | undefined; calculated: boolean }) {
-  const total = useCountUp(current?.totalCuota ?? 0);
-  const cuota = current?.cuota ?? 0;
-  const seguros = current?.seguros ?? 0;
-  return (
-    <motion.div
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.2 }}
-      className="relative rounded-2xl border border-[#8B6BFF]/30 overflow-hidden backdrop-blur-xl p-6"
-      style={{
-        background: "linear-gradient(140deg, rgba(107,90,224,0.28) 0%, rgba(75,111,224,0.22) 45%, rgba(30,20,60,0.35) 100%)",
-        boxShadow: "0 30px 80px -30px rgba(139,107,255,0.55), inset 0 1px 0 rgba(255,255,255,0.08)",
-      }}
-    >
-      <div className="absolute -top-16 -right-16 h-56 w-56 rounded-full blur-3xl opacity-60" style={{ background: "radial-gradient(circle, #8B6BFF, transparent 70%)" }} />
-      <div className="absolute -bottom-20 -left-10 h-52 w-52 rounded-full blur-3xl opacity-30" style={{ background: "radial-gradient(circle, #4B6FE0, transparent 70%)" }} />
-
-      <div className="relative">
-        <div className="flex items-start justify-between gap-3">
-          <div className="text-[10.5px] font-bold uppercase tracking-[0.18em] text-[#D6C0FF]">Total cuota (con seguros)</div>
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/20 bg-white/[0.08]">
-            <Layers className="h-4 w-4 text-[#D6C0FF]" />
-          </div>
-        </div>
-
-        <div
-          className="mt-3 text-[44px] md:text-[52px] font-bold text-white leading-none tabular-nums"
-          style={{ textShadow: "0 0 40px rgba(181,139,255,0.6)" }}
-        >
-          {calculated && current ? fmtCOP(total) : "$ —"}
-        </div>
-
-        <div className="mt-6 pt-5 border-t border-white/10 grid grid-cols-3 items-center text-center gap-2">
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.14em] text-white/50">Cuota financiera</div>
-            <div className="mt-1 text-[13px] font-semibold text-white tabular-nums">{calculated ? fmtCOP(cuota) : "—"}</div>
-          </div>
-          <div className="text-[#B58BFF] text-lg font-bold">+</div>
-          <div>
-            <div className="text-[10px] uppercase tracking-[0.14em] text-white/50">Seguros</div>
-            <div className="mt-1 text-[13px] font-semibold text-[#6BCF89] tabular-nums">{calculated ? fmtCOP(seguros) : "—"}</div>
-          </div>
-        </div>
-        <div className="mt-3 text-center">
-          <span className="text-[10px] uppercase tracking-[0.14em] text-white/40">= </span>
-          <span className="text-[13px] font-bold text-[#7BB0FF] tabular-nums">{calculated && current ? fmtCOP(current.totalCuota) : "—"}</span>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function MiniKPI({ label, value, icon, accent, show }: { label: string; value: number; icon: React.ReactNode; accent: string; show: boolean }) {
-  const display = useCountUp(value);
-  return (
-    <motion.div
-      whileHover={{ y: -2, borderColor: `${accent}55` }}
-      className="relative rounded-2xl border border-white/[0.06] bg-white/[0.02] backdrop-blur-xl p-4 overflow-hidden transition-all"
-      style={{ boxShadow: "0 10px 30px -20px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.03)" }}
-    >
-      <div
-        className="absolute -top-10 -right-10 h-24 w-24 rounded-full blur-2xl opacity-35"
-        style={{ background: `radial-gradient(circle, ${accent}, transparent 70%)` }}
-      />
-      <div className="relative flex items-start justify-between gap-2">
-        <div className="text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/50 leading-tight max-w-[70%]">{label}</div>
-        <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border"
-          style={{ background: `${accent}18`, borderColor: `${accent}33`, color: accent }}
-        >
-          {icon}
-        </div>
-      </div>
-      <div className="relative mt-2 text-[19px] font-bold text-white tabular-nums truncate">
-        {show ? fmtCOP(display) : "$ —"}
-      </div>
-    </motion.div>
-  );
-}
-
-function Donut({ pctA, pctB, colorA, colorB }: { pctA: number; pctB: number; colorA: string; colorB: string }) {
-  const size = 110;
-  const stroke = 18;
-  const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
-  const a = (pctA / 100) * c;
-  const b = (pctB / 100) * c;
-  return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0 -rotate-90">
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={stroke} />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={colorA} strokeWidth={stroke} strokeDasharray={`${a} ${c - a}`} strokeLinecap="butt" />
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={colorB} strokeWidth={stroke} strokeDasharray={`${b} ${c - b}`} strokeDashoffset={-a} strokeLinecap="butt" />
-    </svg>
-  );
-}
 
 function useCountUp(target: number, duration = 600) {
   const [v, setV] = useState(0);
