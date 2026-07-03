@@ -432,8 +432,8 @@ function AmortizationEngine() {
       [`Valor: ${valorNum}`, `Plazo: ${plazoNum}m`, `Seguros: ${segurosNum}`],
       [`Punto de equilibrio: cuota ${breakEven ?? "—"} (${breakEvenFecha})`],
       [],
-      ["Periodo", "Fecha", "Saldo inicial", "Cuota financiera", "Interés", "Capital", "Seguros", "Total cuota", "Saldo final"],
-      ...rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interes), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
+      ["Periodo", "Fecha", "Saldo inicial", "Cuota financiera", "Interés base", "Fresh", "Capital", "Seguros", "Total cuota", "Saldo final"],
+      ...rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interesBase), Math.round(r.fresh), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
     ];
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
