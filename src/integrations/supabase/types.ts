@@ -4962,22 +4962,33 @@ export type Database = {
           auditor_score_anterior: number | null
           auditor_validated_at: string | null
           auto_ejecutada: boolean
+          banco: string | null
           categoria: Database["public"]["Enums"]["qa_categoria"]
+          cliente_nombre: string | null
           codigo: string | null
           created_at: string
+          devolucion_ajustes: Json | null
+          devolucion_notas: string | null
+          devuelto_al_analista_at: string | null
+          devuelto_al_analista_by: string | null
           dictamen: Database["public"]["Enums"]["qa_dictamen"]
           diferencias: Json
           ejecutado_at: string
           ejecutado_by: string | null
           expediente_id: string | null
+          extracto_archivo: Json | null
           extracto_id: string | null
           id: string
           inputs: Json
           modalidad: Database["public"]["Enums"]["qa_modalidad"]
           motor_version: string
+          notas_analista_al_auditor: string | null
+          origen: string
           outputs: Json
+          producto: string | null
           qa_score: number
           simulacion_id: string | null
+          simulador_snapshot: Json | null
           updated_at: string
         }
         Insert: {
@@ -4989,22 +5000,33 @@ export type Database = {
           auditor_score_anterior?: number | null
           auditor_validated_at?: string | null
           auto_ejecutada?: boolean
+          banco?: string | null
           categoria: Database["public"]["Enums"]["qa_categoria"]
+          cliente_nombre?: string | null
           codigo?: string | null
           created_at?: string
+          devolucion_ajustes?: Json | null
+          devolucion_notas?: string | null
+          devuelto_al_analista_at?: string | null
+          devuelto_al_analista_by?: string | null
           dictamen: Database["public"]["Enums"]["qa_dictamen"]
           diferencias?: Json
           ejecutado_at?: string
           ejecutado_by?: string | null
           expediente_id?: string | null
+          extracto_archivo?: Json | null
           extracto_id?: string | null
           id?: string
           inputs?: Json
           modalidad: Database["public"]["Enums"]["qa_modalidad"]
           motor_version?: string
+          notas_analista_al_auditor?: string | null
+          origen?: string
           outputs?: Json
+          producto?: string | null
           qa_score?: number
           simulacion_id?: string | null
+          simulador_snapshot?: Json | null
           updated_at?: string
         }
         Update: {
@@ -5016,22 +5038,33 @@ export type Database = {
           auditor_score_anterior?: number | null
           auditor_validated_at?: string | null
           auto_ejecutada?: boolean
+          banco?: string | null
           categoria?: Database["public"]["Enums"]["qa_categoria"]
+          cliente_nombre?: string | null
           codigo?: string | null
           created_at?: string
+          devolucion_ajustes?: Json | null
+          devolucion_notas?: string | null
+          devuelto_al_analista_at?: string | null
+          devuelto_al_analista_by?: string | null
           dictamen?: Database["public"]["Enums"]["qa_dictamen"]
           diferencias?: Json
           ejecutado_at?: string
           ejecutado_by?: string | null
           expediente_id?: string | null
+          extracto_archivo?: Json | null
           extracto_id?: string | null
           id?: string
           inputs?: Json
           modalidad?: Database["public"]["Enums"]["qa_modalidad"]
           motor_version?: string
+          notas_analista_al_auditor?: string | null
+          origen?: string
           outputs?: Json
+          producto?: string | null
           qa_score?: number
           simulacion_id?: string | null
+          simulador_snapshot?: Json | null
           updated_at?: string
         }
         Relationships: [
