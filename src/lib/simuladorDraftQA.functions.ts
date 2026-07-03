@@ -255,8 +255,7 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
     });
     const hashCalculo = createHash("sha256").update(hashPayload).digest("hex").slice(0, 32);
 
-    const certificable =
-      criticos === 0 && (dictamen === "excelente" || dictamen === "aprobado");
+    const certificable = criticos === 0 && dictamen === "aprobado";
 
     let motivoBloqueo: string | undefined;
     if (!certificable) {
