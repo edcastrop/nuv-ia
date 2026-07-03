@@ -8,6 +8,7 @@ import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import {
   ensureOperativeExpedienteForMaestro,
   getMaestro,
+  maestroToExpediente,
   upsertMaestro,
   emptyCliente,
   emptyCotitular,
@@ -65,11 +66,17 @@ function SimuladorPage() {
         if (maestroId) {
           try {
             const m = await getMaestro(maestroId);
-            exp = await ensureOperativeExpedienteForMaestro(m);
-          } catch {
+            try {
+              exp = await ensureOperativeExpedienteForMaestro(m);
+            } catch (operativeErr) {
+              console.warn("[simulador] expediente operativo pendiente; usando maestro en memoria:", operativeErr);
+              exp = maestroToExpediente(m, m.id) as unknown as Expediente;
+            }
+          } catch (maestroLoadErr) {
             if (auditoriaId) {
               try { exp = await getExpediente(maestroId); } catch { /* la auditoría puede no tener caso operativo */ }
             } else {
+              console.warn("[simulador] no se pudo cargar expediente maestro:", maestroLoadErr);
               throw new Error("No se encontró este expediente maestro o ya no está disponible.");
             }
           }
@@ -140,6 +147,7 @@ function SimuladorPage() {
         setMaestroExp(exp);
       } catch (expErr) {
         console.warn("[simulador] expediente operativo se creará al completar datos:", expErr);
+        setMaestroExp(maestroToExpediente(maestro, maestro.id) as unknown as Expediente);
       }
       setMode(m);
       navigate({
