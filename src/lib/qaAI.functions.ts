@@ -1610,9 +1610,10 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
         auditor_aprobado_at: (r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ?? null,
         ejecutado_at: r.ejecutado_at as string,
         updated_at: (r as unknown as { updated_at: string | null }).updated_at ?? null,
-        cliente_nombre: (exp?.cliente_nombre as string | null) ?? null,
-        banco: (exp?.banco as string | null) ?? null,
-        producto: (exp?.producto as string | null) ?? null,
+        cliente_nombre: (exp?.cliente_nombre as string | null) ?? ((r as { cliente_nombre?: string | null }).cliente_nombre ?? null),
+        banco: (exp?.banco as string | null) ?? ((r as { banco?: string | null }).banco ?? null),
+        producto: (exp?.producto as string | null) ?? ((r as { producto?: string | null }).producto ?? null),
+
         estado_caso: (exp?.estado_caso as string | null) ?? null,
         subestado: (exp?.subestado as string | null) ?? null,
         validacion_estado: (exp?.validacion_estado as string | null) ?? null,
