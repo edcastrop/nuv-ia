@@ -1335,16 +1335,38 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
       title={`Cola de revisión · Top ${visibles.length} de ${ordered.length}`}
       subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket"
     >
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 10 }}>
-        <button type="button" onClick={() => scrollQueue(-1)} title="Mover cola hacia la izquierda" style={{
-          width: 30, height: 28, borderRadius: 8, cursor: "pointer",
-          background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
-        }}>←</button>
-        <button type="button" onClick={() => scrollQueue(1)} title="Mover cola hacia la derecha" style={{
-          width: 30, height: 28, borderRadius: 8, cursor: "pointer",
-          background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
-        }}>→</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: C.textMuted, marginRight: 4 }}>Fecha:</span>
+          {bucketBtn("hoy", "Hoy")}
+          {bucketBtn("7d", "7 días")}
+          {bucketBtn("30d", "30 días")}
+          {bucketBtn("todo", "Todo")}
+          <input
+            type="date"
+            value={customDate}
+            onChange={(e) => { setCustomDate(e.target.value); setDateBucket(e.target.value ? "custom" : "hoy"); }}
+            style={{
+              padding: "5px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+              background: dateBucket === "custom" ? "rgba(91,140,255,0.14)" : "rgba(255,255,255,0.03)",
+              color: dateBucket === "custom" ? C.primary : C.textSec,
+              border: `1px solid ${dateBucket === "custom" ? "rgba(91,140,255,0.45)" : C.border}`,
+              colorScheme: "dark",
+            }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" onClick={() => scrollQueue(-1)} title="Mover cola hacia la izquierda" style={{
+            width: 30, height: 28, borderRadius: 8, cursor: "pointer",
+            background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
+          }}>←</button>
+          <button type="button" onClick={() => scrollQueue(1)} title="Mover cola hacia la derecha" style={{
+            width: 30, height: 28, borderRadius: 8, cursor: "pointer",
+            background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
+          }}>→</button>
+        </div>
       </div>
+
       <div ref={scrollerRef} onWheel={handleWheel} style={{ overflowX: "auto", overscrollBehaviorX: "contain", touchAction: "pan-x pan-y" }}>
         <table style={{ width: "100%", fontSize: 12, minWidth: 1100, borderCollapse: "separate", borderSpacing: 0 }}>
           <thead>
