@@ -22,8 +22,15 @@ import {
   Landmark,
   Coins,
   ChevronDown,
+  Save,
+  Search,
+  Wand2,
+  Trash2,
+  Download,
+  X,
 } from "lucide-react";
 import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/herramientas/amortizacion")({
