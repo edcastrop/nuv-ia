@@ -831,6 +831,7 @@ function AmortizationEngine() {
                     <thead className="sticky top-0 z-10" style={{ background: "rgba(11,16,32,0.98)", boxShadow: "0 1px 0 rgba(255,255,255,0.06)" }}>
                       <tr className="text-left text-[10.5px] uppercase tracking-[0.14em] text-white/50">
                         <th className="px-4 py-3 font-semibold">Periodo</th>
+                        <th className="px-4 py-3 font-semibold">Fecha</th>
                         <th className="px-4 py-3 font-semibold">Saldo inicial</th>
                         <th className="px-4 py-3 font-semibold">Cuota financiera</th>
                         <th className="px-4 py-3 font-semibold">Interés</th>
@@ -843,13 +844,14 @@ function AmortizationEngine() {
                     <tbody>
                       {rows.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="px-4 py-10 text-center text-white/40 text-[12px]">
+                          <td colSpan={9} className="px-4 py-10 text-center text-white/40 text-[12px]">
                             Ingresa los datos y presiona <span className="text-white/80 font-semibold">Calcular cuota</span> para ver la tabla completa.
                           </td>
                         </tr>
                       ) : (
                         rows.map((r) => {
                           const isCurrent = r.periodo === periodoNum;
+                          const isBreakEven = breakEven === r.periodo;
                           return (
                             <tr
                               key={r.periodo}
@@ -866,15 +868,21 @@ function AmortizationEngine() {
                                       background: "linear-gradient(90deg, rgba(107,90,224,0.28), rgba(107,90,224,0.14))",
                                       boxShadow: "inset 3px 0 0 #B58BFF",
                                     }
-                                  : undefined
+                                  : isBreakEven
+                                    ? { background: "linear-gradient(90deg, rgba(132,185,143,0.14), transparent)", boxShadow: "inset 3px 0 0 #84B98F" }
+                                    : undefined
                               }
                             >
                               <td className="px-4 py-3 text-white/90 font-medium">
                                 {isCurrent && (
                                   <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle" style={{ background: "#B58BFF", boxShadow: "0 0 8px #B58BFF" }} />
                                 )}
+                                {isBreakEven && !isCurrent && (
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle" style={{ background: "#84B98F", boxShadow: "0 0 8px #84B98F" }} />
+                                )}
                                 {r.periodo}
                               </td>
+                              <td className="px-4 py-3 text-white/70 text-[11.5px]">{fechaCuota(fechaDesembolso, r.periodo)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.saldoInicial)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.cuota)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.interes)}</td>
@@ -889,11 +897,6 @@ function AmortizationEngine() {
                     </tbody>
                   </table>
                 </div>
-                {rows.length > 60 && (
-                  <div className="border-t border-white/[0.06] px-4 py-3 text-center text-[12px] text-white/50 inline-flex items-center justify-center gap-1.5 w-full">
-                    Ver más periodos ({rows.length - 60} restantes) <ChevronDown className="h-3.5 w-3.5" />
-                  </div>
-                )}
               </div>
             </Panel>
           </div>
