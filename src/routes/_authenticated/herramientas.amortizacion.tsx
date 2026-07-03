@@ -173,9 +173,51 @@ function AmortizationEngine() {
   const [seguros, setSeguros] = useState("");
   const [uvrInicial, setUvrInicial] = useState("");
   const [varUvr, setVarUvr] = useState("");
+  const [fechaDesembolso, setFechaDesembolso] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
   const [calculated, setCalculated] = useState(false);
   const [lastCalc, setLastCalc] = useState<Date | null>(null);
   const [showReader, setShowReader] = useState(false);
+  const [showConverter, setShowConverter] = useState(false);
+  const [showScenarios, setShowScenarios] = useState(false);
+
+  // Tasa Fresh converter state
+  const [freshTasa, setFreshTasa] = useState("");
+  const [freshTipo, setFreshTipo] = useState<TasaTipo>("EA");
+
+  // Escenarios guardados (localStorage)
+  type Scenario = {
+    id: string;
+    nombre: string;
+    ts: number;
+    modo: "pesos" | "uvr";
+    tea: string;
+    plazo: string;
+    valor: string;
+    seguros: string;
+    uvrInicial: string;
+    varUvr: string;
+    fechaDesembolso: string;
+  };
+  const SCEN_KEY = "nuvia_amort_scenarios";
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SCEN_KEY);
+      if (raw) setScenarios(JSON.parse(raw));
+    } catch {}
+  }, []);
+  function persistScenarios(next: Scenario[]) {
+    setScenarios(next);
+    try { localStorage.setItem(SCEN_KEY, JSON.stringify(next)); } catch {}
+  }
+
+  // Importar caso modal
+  const [importOpen, setImportOpen] = useState(false);
+  const [importCodigo, setImportCodigo] = useState("");
+  const [importLoading, setImportLoading] = useState(false);
 
   const teaNum = parseFloat(tea) / 100 || 0;
   const plazoNum = parseInt(plazo) || 0;
@@ -199,6 +241,22 @@ function AmortizationEngine() {
   const insight = useMemo(() => (rows.length ? generateInsight(rows, periodoNum) : ""), [rows, periodoNum]);
   const pctInteres = currentRow ? (currentRow.interes / currentRow.cuota) * 100 : 0;
   const pctCapital = currentRow ? (currentRow.capital / currentRow.cuota) * 100 : 0;
+
+  // Punto de equilibrio
+  const breakEven = useMemo(() => (rows.length ? findBreakEven(rows) : null), [rows]);
+  const breakEvenFecha = breakEven ? fechaCuota(fechaDesembolso, breakEven) : "—";
+  const breakEvenPct = breakEven && plazoNum > 0 ? (breakEven / plazoNum) * 100 : 0;
+
+  // Tasa Fresh conversions
+  const freshValid = parseFloat(freshTasa) > 0;
+  const freshEA = freshValid ? tasaToEA(parseFloat(freshTasa), freshTipo) : 0;
+  const conversions = useMemo(() => {
+    const list: { tipo: TasaTipo; label: string; valor: number }[] = [];
+    (["EA", "MV", "NMV", "NAMV", "NASV"] as TasaTipo[]).forEach((t) => {
+      list.push({ tipo: t, label: TASA_LABELS[t], valor: eaToTasa(freshEA, t) * 100 });
+    });
+    return list;
+  }, [freshEA]);
 
   function handleCalculate() {
     if (teaNum <= 0) return toast.error("TEA debe ser mayor a 0");
