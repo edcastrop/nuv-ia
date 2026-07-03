@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bell, CheckCheck, X, ExternalLink } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
