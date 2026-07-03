@@ -1,0 +1,837 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { useMemo, useState } from "react";
+import {
+  ArrowLeft,
+  PiggyBank,
+  Plus,
+  Trash2,
+  Sparkles,
+  TrendingDown,
+  Calendar,
+  DollarSign,
+  Clock,
+  Target,
+  RotateCcw,
+  Zap,
+  Percent,
+  Wand2,
+} from "lucide-react";
+import { NUVEX } from "@/components/nuvex/constants";
+import { toast } from "sonner";
+
+export const Route = createFileRoute("/_authenticated/herramientas/abonos")({
+  head: () => ({
+    meta: [
+      { title: "NUVIA Extra Payments Simulator" },
+      {
+        name: "description",
+        content:
+          "Simula abonos extraordinarios a capital en créditos Pesos o UVR. Calcula ahorro real de intereses, cuotas eliminadas y nueva fecha de finalización.",
+      },
+    ],
+  }),
+  component: ExtraPayments,
+});
+
+/* ============================================================================
+   MATH
+============================================================================ */
+type Modo = "pesos" | "uvr";
+type Destino = "plazo" | "cuota";
+
+type Abono = {
+  id: string;
+  cuota: number;
+  monto: number; // en pesos o UVR según modo
+  destino: Destino;
+};
+
+type FilaSim = {
+  periodo: number;
+  saldoInicial: number;
+  cuota: number;
+  interes: number;
+  capital: number;
+  abono: number;
+  saldoFinal: number;
+  // COP (solo UVR)
+  saldoInicialCOP?: number;
+  cuotaCOP?: number;
+  abonoCOP?: number;
+  saldoFinalCOP?: number;
+};
+
+const tasaMensualFromTEA = (tea: number) => Math.pow(1 + tea, 1 / 12) - 1;
+const cuotaFija = (v: number, i: number, n: number) =>
+  i === 0 ? v / n : (v * (i * Math.pow(1 + i, n))) / (Math.pow(1 + i, n) - 1);
+
+function simular(
+  valor: number,
+  tea: number,
+  n: number,
+  abonos: Abono[],
+): { rows: FilaSim[]; totalInteres: number; cuotasUsadas: number; cuotaFinal: number } {
+  const i = tasaMensualFromTEA(tea);
+  let cuota = cuotaFija(valor, i, n);
+  let saldo = valor;
+  let restantes = n;
+  const rows: FilaSim[] = [];
+  let totalInteres = 0;
+  let periodo = 1;
+
+  const map = new Map<number, Abono[]>();
+  for (const a of abonos) {
+    if (!map.has(a.cuota)) map.set(a.cuota, []);
+    map.get(a.cuota)!.push(a);
+  }
+
+  while (saldo > 0.01 && periodo <= n + 12) {
+    const interes = saldo * i;
+    let capital = cuota - interes;
+    if (capital > saldo) capital = saldo;
+    let saldoDespuesCuota = Math.max(0, saldo - capital);
+    let abonoTotal = 0;
+    let destinoAplicado: Destino | null = null;
+
+    const abonosPeriodo = map.get(periodo);
+    if (abonosPeriodo) {
+      for (const a of abonosPeriodo) {
+        const monto = Math.min(a.monto, saldoDespuesCuota);
+        saldoDespuesCuota -= monto;
+        abonoTotal += monto;
+        destinoAplicado = a.destino; // último gana
+      }
+    }
+
+    totalInteres += interes;
+    rows.push({
+      periodo,
+      saldoInicial: saldo,
+      cuota,
+      interes,
+      capital,
+      abono: abonoTotal,
+      saldoFinal: saldoDespuesCuota,
+    });
+
+    saldo = saldoDespuesCuota;
+    restantes -= 1;
+
+    // Recalcular si hubo abono y destino=cuota (mantener plazo)
+    if (abonoTotal > 0 && destinoAplicado === "cuota" && saldo > 0 && restantes > 0) {
+      cuota = cuotaFija(saldo, i, restantes);
+    }
+    // destino=plazo → cuota se mantiene, plazo se acorta naturalmente
+
+    periodo += 1;
+  }
+
+  return {
+    rows,
+    totalInteres,
+    cuotasUsadas: rows.length,
+    cuotaFinal: cuota,
+  };
+}
+
+/* ============================================================================
+   COMPONENT
+============================================================================ */
+function ExtraPayments() {
+  const [modo, setModo] = useState<Modo>("pesos");
+  // datos base
+  const [valorStr, setValorStr] = useState("");
+  const [teaStr, setTeaStr] = useState("");
+  const [plazoStr, setPlazoStr] = useState("");
+  const [uvrInicialStr, setUvrInicialStr] = useState("");
+  const [uvrVarEAStr, setUvrVarEAStr] = useState("6.5");
+
+  const [abonos, setAbonos] = useState<Abono[]>([]);
+  const [showTable, setShowTable] = useState(false);
+
+  const valor = parseFloat(valorStr) || 0;
+  const tea = (parseFloat(teaStr) || 0) / 100;
+  const plazo = parseInt(plazoStr) || 0;
+  const uvrInicial = parseFloat(uvrInicialStr) || 0;
+  const uvrVarEA = (parseFloat(uvrVarEAStr) || 0) / 100;
+  const uvrVarMensual = Math.pow(1 + uvrVarEA, 1 / 12) - 1;
+
+  const puedeSimular = valor > 0 && tea > 0 && plazo > 0 && (modo === "pesos" || uvrInicial > 0);
+
+  const base = useMemo(() => {
+    if (!puedeSimular) return null;
+    return simular(valor, tea, plazo, []);
+  }, [valor, tea, plazo, puedeSimular]);
+
+  const conAbonos = useMemo(() => {
+    if (!puedeSimular) return null;
+    return simular(valor, tea, plazo, abonos);
+  }, [valor, tea, plazo, abonos, puedeSimular]);
+
+  // conversión UVR → COP
+  const rowsBaseCOP = useMemo(() => {
+    if (!base || modo !== "uvr") return base?.rows ?? [];
+    return base.rows.map((r) => {
+      const uvrMes = uvrInicial * Math.pow(1 + uvrVarMensual, r.periodo - 1);
+      return {
+        ...r,
+        saldoInicialCOP: r.saldoInicial * uvrMes,
+        cuotaCOP: r.cuota * uvrMes,
+        abonoCOP: r.abono * uvrMes,
+        saldoFinalCOP: r.saldoFinal * uvrMes,
+      };
+    });
+  }, [base, modo, uvrInicial, uvrVarMensual]);
+
+  const rowsAbonosCOP = useMemo(() => {
+    if (!conAbonos || modo !== "uvr") return conAbonos?.rows ?? [];
+    return conAbonos.rows.map((r) => {
+      const uvrMes = uvrInicial * Math.pow(1 + uvrVarMensual, r.periodo - 1);
+      return {
+        ...r,
+        saldoInicialCOP: r.saldoInicial * uvrMes,
+        cuotaCOP: r.cuota * uvrMes,
+        abonoCOP: r.abono * uvrMes,
+        saldoFinalCOP: r.saldoFinal * uvrMes,
+      };
+    });
+  }, [conAbonos, modo, uvrInicial, uvrVarMensual]);
+
+  const ahorroInteres = base && conAbonos ? base.totalInteres - conAbonos.totalInteres : 0;
+  const cuotasAhorradas = base && conAbonos ? base.cuotasUsadas - conAbonos.cuotasUsadas : 0;
+  const ahorroInteresCOP = modo === "uvr" ? ahorroInteres * uvrInicial : ahorroInteres;
+
+  const nuevaFecha = useMemo(() => {
+    if (!conAbonos) return "—";
+    const d = new Date();
+    d.setMonth(d.getMonth() + conAbonos.cuotasUsadas);
+    return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
+  }, [conAbonos]);
+
+  const fechaBase = useMemo(() => {
+    if (!base) return "—";
+    const d = new Date();
+    d.setMonth(d.getMonth() + base.cuotasUsadas);
+    return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
+  }, [base]);
+
+  // formatters
+  const fmtCOP = (n: number) =>
+    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
+  const fmtUVR = (n: number) =>
+    new Intl.NumberFormat("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(n || 0);
+  const fmt = (n: number) => (modo === "uvr" ? `${fmtUVR(n)} UVR` : fmtCOP(n));
+
+  // acciones
+  const addAbono = () =>
+    setAbonos((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), cuota: 12, monto: 0, destino: "plazo" },
+    ]);
+
+  const updateAbono = (id: string, patch: Partial<Abono>) =>
+    setAbonos((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
+
+  const removeAbono = (id: string) => setAbonos((prev) => prev.filter((a) => a.id !== id));
+
+  const aplicarPresetPrima = (mes: "junio" | "diciembre") => {
+    if (!plazo) {
+      toast.error("Ingresa primero el plazo del crédito");
+      return;
+    }
+    const target = mes === "junio" ? 6 : 12;
+    const nuevos: Abono[] = [];
+    for (let y = 0; y * 12 + target <= plazo; y++) {
+      nuevos.push({
+        id: crypto.randomUUID(),
+        cuota: y * 12 + target,
+        monto: modo === "uvr" ? 500 : 3_000_000,
+        destino: "plazo",
+      });
+    }
+    setAbonos((prev) => [...prev, ...nuevos]);
+    toast.success(`${nuevos.length} abonos programados (prima ${mes})`);
+  };
+
+  const resetAll = () => {
+    setValorStr("");
+    setTeaStr("");
+    setPlazoStr("");
+    setUvrInicialStr("");
+    setAbonos([]);
+    toast.info("Simulación reiniciada");
+  };
+
+  /* --------------------------------- UI --------------------------------- */
+  return (
+    <div className="relative min-h-screen bg-[#050816] text-white">
+      {/* background */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(70% 55% at 20% 5%, rgba(132,185,143,0.18), transparent 60%), radial-gradient(70% 55% at 85% 90%, rgba(68,93,163,0.22), transparent 60%)",
+        }}
+      />
+
+      <div className="relative mx-auto w-full max-w-[1360px] px-6 py-8 space-y-6">
+        {/* ============== HEADER ============== */}
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <Link
+              to="/herramientas"
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/70 hover:bg-white/[0.08] transition"
+            >
+              <ArrowLeft className="h-4 w-4" /> Herramientas
+            </Link>
+            <div>
+              <div className="flex items-center gap-2">
+                <div
+                  className="flex h-9 w-9 items-center justify-center rounded-xl"
+                  style={{
+                    background: `linear-gradient(135deg, ${NUVEX.verde}55, ${NUVEX.azul}55)`,
+                    boxShadow: `0 12px 40px -12px ${NUVEX.verde}`,
+                  }}
+                >
+                  <PiggyBank className="h-5 w-5 text-white" />
+                </div>
+                <h1 className="text-2xl font-semibold tracking-tight">
+                  NUVIA Extra Payments Simulator
+                </h1>
+              </div>
+              <p className="mt-1 text-[13px] text-white/55">
+                Simula abonos extraordinarios a capital y visualiza el ahorro real en intereses y tiempo.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setModo(modo === "pesos" ? "uvr" : "pesos")}
+              className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] transition"
+              style={{
+                borderColor: modo === "uvr" ? `${NUVEX.verde}66` : "rgba(255,255,255,0.15)",
+                background: modo === "uvr" ? `${NUVEX.verde}18` : "rgba(255,255,255,0.03)",
+                color: modo === "uvr" ? NUVEX.verde : "rgba(255,255,255,0.7)",
+              }}
+            >
+              <RotateCcw className="h-3 w-3" />
+              {modo === "uvr" ? "Modalidad UVR" : "Solo modalidad pesos"}
+            </button>
+            <button
+              onClick={resetAll}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs text-white/70 hover:bg-white/[0.08] transition"
+            >
+              <RotateCcw className="h-4 w-4" /> Reset
+            </button>
+          </div>
+        </div>
+
+        {/* ============== INPUT + KPIs ============== */}
+        <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
+          {/* CONSOLE */}
+          <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] p-5 backdrop-blur-2xl space-y-5">
+            <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">
+              <Wand2 className="h-3.5 w-3.5 text-[#84B98F]" /> Input Console
+            </div>
+
+            {/* datos base */}
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label={modo === "uvr" ? "Valor crédito (UVR)" : "Valor crédito (COP)"}
+                Icon={DollarSign}
+                value={valorStr}
+                onChange={setValorStr}
+                placeholder={modo === "uvr" ? "45000" : "180000000"}
+              />
+              <Field
+                label="Tasa EA (%)"
+                Icon={Percent}
+                value={teaStr}
+                onChange={setTeaStr}
+                placeholder="12.5"
+              />
+              <Field
+                label="Plazo (meses)"
+                Icon={Clock}
+                value={plazoStr}
+                onChange={setPlazoStr}
+                placeholder="180"
+              />
+              {modo === "uvr" && (
+                <>
+                  <Field
+                    label="UVR inicial (COP)"
+                    Icon={DollarSign}
+                    value={uvrInicialStr}
+                    onChange={setUvrInicialStr}
+                    placeholder="367.50"
+                  />
+                  <Field
+                    label="Variación UVR EA (%)"
+                    Icon={TrendingDown}
+                    value={uvrVarEAStr}
+                    onChange={setUvrVarEAStr}
+                    placeholder="6.5"
+                  />
+                </>
+              )}
+            </div>
+
+            {/* Presets */}
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60 mb-2">
+                Presets rápidos
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Preset onClick={() => aplicarPresetPrima("junio")} label="Prima junio (anual)" />
+                <Preset onClick={() => aplicarPresetPrima("diciembre")} label="Prima diciembre (anual)" />
+                <Preset
+                  onClick={() => {
+                    if (!plazo) return toast.error("Ingresa primero el plazo");
+                    setAbonos((prev) => [
+                      ...prev,
+                      {
+                        id: crypto.randomUUID(),
+                        cuota: Math.min(24, plazo),
+                        monto: modo === "uvr" ? 2000 : 10_000_000,
+                        destino: "plazo",
+                      },
+                    ]);
+                  }}
+                  label="Abono único (cuota 24)"
+                />
+              </div>
+            </div>
+
+            {/* Tabla de abonos */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">
+                  Abonos programados ({abonos.length})
+                </div>
+                <button
+                  onClick={addAbono}
+                  className="inline-flex items-center gap-1 rounded-lg border border-[#84B98F]/40 bg-[#84B98F]/10 px-2.5 py-1 text-[11px] font-semibold text-[#84B98F] hover:bg-[#84B98F]/20 transition"
+                >
+                  <Plus className="h-3 w-3" /> Agregar
+                </button>
+              </div>
+
+              <div className="max-h-[280px] overflow-y-auto space-y-1.5 pr-1">
+                {abonos.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-white/10 py-6 text-center text-[12px] text-white/40">
+                    Sin abonos. Agrega uno o usa un preset.
+                  </div>
+                ) : (
+                  abonos.map((a) => (
+                    <div
+                      key={a.id}
+                      className="grid grid-cols-[70px_1fr_110px_28px] gap-1.5 items-center rounded-lg border border-white/[0.08] bg-white/[0.02] p-1.5"
+                    >
+                      <input
+                        type="number"
+                        value={a.cuota}
+                        onChange={(e) =>
+                          updateAbono(a.id, { cuota: parseInt(e.target.value) || 1 })
+                        }
+                        className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[12px] text-white text-center focus:border-[#84B98F]/60 focus:outline-none"
+                        placeholder="#"
+                      />
+                      <input
+                        type="number"
+                        value={a.monto || ""}
+                        onChange={(e) =>
+                          updateAbono(a.id, { monto: parseFloat(e.target.value) || 0 })
+                        }
+                        className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[12px] text-white focus:border-[#84B98F]/60 focus:outline-none"
+                        placeholder={modo === "uvr" ? "UVR" : "COP"}
+                      />
+                      <select
+                        value={a.destino}
+                        onChange={(e) =>
+                          updateAbono(a.id, { destino: e.target.value as Destino })
+                        }
+                        className="h-8 rounded-md border border-white/10 bg-black/40 px-1.5 text-[11px] text-white focus:border-[#84B98F]/60 focus:outline-none"
+                      >
+                        <option value="plazo">↓ Plazo</option>
+                        <option value="cuota">↓ Cuota</option>
+                      </select>
+                      <button
+                        onClick={() => removeAbono(a.id)}
+                        className="flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-white/[0.02] text-white/50 hover:text-red-400 hover:border-red-500/30 transition"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* KPIs + Insight */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <KPI
+                Icon={DollarSign}
+                label="Ahorro en intereses"
+                value={modo === "uvr" ? fmtCOP(ahorroInteresCOP) : fmtCOP(ahorroInteres)}
+                sub={modo === "uvr" ? `${fmtUVR(ahorroInteres)} UVR` : "vs escenario base"}
+                color={NUVEX.verde}
+                hero
+              />
+              <KPI
+                Icon={Clock}
+                label="Cuotas eliminadas"
+                value={cuotasAhorradas > 0 ? `-${cuotasAhorradas}` : "0"}
+                sub={`${(cuotasAhorradas / 12).toFixed(1)} años de vida menos`}
+                color="#7B61FF"
+                hero
+              />
+              <KPI
+                Icon={Target}
+                label="Nueva cuota (aprox.)"
+                value={conAbonos ? fmt(conAbonos.cuotaFinal) : "—"}
+                sub={base ? `Base: ${fmt(base.cuotaFinal)}` : ""}
+                color={NUVEX.azul}
+              />
+              <KPI
+                Icon={Calendar}
+                label="Nueva fecha final"
+                value={nuevaFecha}
+                sub={`Base: ${fechaBase}`}
+                color="#e0a458"
+              />
+            </div>
+
+            {/* Insight bar */}
+            <div
+              className="rounded-2xl border border-white/[0.08] p-4 backdrop-blur-2xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(68,93,163,0.06))",
+              }}
+            >
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-[#84B98F] shrink-0 mt-0.5" />
+                <div className="text-[13px] leading-relaxed text-white/80">
+                  {puedeSimular && abonos.length > 0 ? (
+                    <>
+                      Con <b>{abonos.length}</b> abono(s) programado(s), el cliente ahorra{" "}
+                      <b style={{ color: NUVEX.verde }}>
+                        {modo === "uvr" ? fmtCOP(ahorroInteresCOP) : fmtCOP(ahorroInteres)}
+                      </b>{" "}
+                      en intereses y elimina{" "}
+                      <b style={{ color: "#7B61FF" }}>{cuotasAhorradas}</b> cuotas del crédito.
+                    </>
+                  ) : puedeSimular ? (
+                    <>Agrega uno o más abonos para ver el impacto en intereses y plazo.</>
+                  ) : (
+                    <>
+                      Completa <b>valor</b>, <b>tasa EA</b> y <b>plazo</b>
+                      {modo === "uvr" ? " + UVR inicial" : ""} para iniciar la simulación.
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ============== CHART ============== */}
+        {puedeSimular && base && conAbonos && (
+          <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] p-5 backdrop-blur-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <TrendingDown className="h-4 w-4 text-[#84B98F]" />
+              <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
+                Saldo Base vs Con Abonos
+              </div>
+            </div>
+            <SaldoChart baseRows={base.rows} conAbonos={conAbonos.rows} abonos={abonos} />
+          </div>
+        )}
+
+        {/* ============== TABLE ============== */}
+        {puedeSimular && conAbonos && (
+          <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] backdrop-blur-2xl overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-[#84B98F]" />
+                <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
+                  Proyección completa ({conAbonos.rows.length} cuotas)
+                </div>
+              </div>
+              <button
+                onClick={() => setShowTable((v) => !v)}
+                className="text-[11px] font-semibold text-[#84B98F] hover:underline"
+              >
+                {showTable ? "Ocultar" : "Mostrar"} tabla
+              </button>
+            </div>
+            {showTable && (
+              <div className="max-h-[520px] overflow-auto">
+                <table className="w-full text-[12px]">
+                  <thead className="sticky top-0 bg-[rgba(10,16,34,0.95)] backdrop-blur-xl">
+                    <tr className="text-left text-white/60">
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>#</th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                        Saldo inicial
+                      </th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Cuota</th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Interés</th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Capital</th>
+                      <th
+                        className="px-3 py-2 font-semibold text-right"
+                        style={{ color: NUVEX.verde }}
+                      >
+                        Abono
+                      </th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                        Saldo final
+                      </th>
+                      {modo === "uvr" && (
+                        <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                          Cuota (COP)
+                        </th>
+                      )}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(modo === "uvr" ? rowsAbonosCOP : conAbonos.rows).map((r) => {
+                      const hasAbono = r.abono > 0;
+                      return (
+                        <tr
+                          key={r.periodo}
+                          className="border-t border-white/5"
+                          style={{
+                            background: hasAbono ? "rgba(132,185,143,0.08)" : "transparent",
+                          }}
+                        >
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>
+                            {r.periodo}
+                          </td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.75)" }}>
+                            {fmt(r.saldoInicial)}
+                          </td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>
+                            {fmt(r.cuota)}
+                          </td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+                            {fmt(r.interes)}
+                          </td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>
+                            {fmt(r.capital)}
+                          </td>
+                          <td
+                            className="px-3 py-1.5 text-right font-semibold"
+                            style={{ color: hasAbono ? NUVEX.verde : "rgba(255,255,255,0.3)" }}
+                          >
+                            {hasAbono ? `+ ${fmt(r.abono)}` : "—"}
+                          </td>
+                          <td className="px-3 py-1.5 font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>
+                            {fmt(r.saldoFinal)}
+                          </td>
+                          {modo === "uvr" && (
+                            <td className="px-3 py-1.5" style={{ color: NUVEX.azul }}>
+                              {fmtCOP((r as FilaSim).cuotaCOP || 0)}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================================
+   PIECES
+============================================================================ */
+function Field({
+  label,
+  Icon,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  Icon: React.ComponentType<{ className?: string }>;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <label className="block">
+      <div className="mb-1 flex items-center gap-1.5 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white/50">
+        <Icon className="h-3 w-3" />
+        {label}
+      </div>
+      <input
+        type="number"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-[13px] text-white focus:border-[#84B98F]/60 focus:outline-none transition"
+      />
+    </label>
+  );
+}
+
+function Preset({ onClick, label }: { onClick: () => void; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className="rounded-full border border-white/10 bg-white/[0.03] px-3 py-1 text-[11px] text-white/70 hover:bg-white/[0.08] hover:border-[#84B98F]/30 transition"
+    >
+      {label}
+    </button>
+  );
+}
+
+function KPI({
+  Icon,
+  label,
+  value,
+  sub,
+  color,
+  hero,
+}: {
+  Icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  sub?: string;
+  color: string;
+  hero?: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative overflow-hidden rounded-2xl border border-white/[0.08] p-4 backdrop-blur-2xl"
+      style={{
+        background: `linear-gradient(135deg, ${color}12, rgba(10,16,34,0.6))`,
+        boxShadow: `0 12px 40px -20px ${color}`,
+      }}
+    >
+      <div className="flex items-center gap-2 text-[10.5px] font-bold uppercase tracking-[0.14em] text-white/60">
+        <Icon className="h-3 w-3" style={{ color }} />
+        {label}
+      </div>
+      <div
+        className={`mt-1.5 font-semibold ${hero ? "text-[22px]" : "text-[16px]"} tracking-tight`}
+        style={{ color: hero ? color : "white" }}
+      >
+        {value}
+      </div>
+      {sub && <div className="mt-0.5 text-[11px] text-white/45">{sub}</div>}
+    </motion.div>
+  );
+}
+
+function SaldoChart({
+  baseRows,
+  conAbonos,
+  abonos,
+}: {
+  baseRows: FilaSim[];
+  conAbonos: FilaSim[];
+  abonos: Abono[];
+}) {
+  const W = 900;
+  const H = 220;
+  const P = 30;
+  const maxLen = Math.max(baseRows.length, conAbonos.length);
+  const maxSaldo = Math.max(
+    ...baseRows.map((r) => r.saldoInicial),
+    ...conAbonos.map((r) => r.saldoInicial),
+    1,
+  );
+
+  const x = (i: number) => P + (i / Math.max(1, maxLen - 1)) * (W - 2 * P);
+  const y = (v: number) => H - P - (v / maxSaldo) * (H - 2 * P);
+
+  const path = (rows: FilaSim[]) =>
+    rows
+      .map((r, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(r.saldoInicial)}`)
+      .join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[240px]">
+      <defs>
+        <linearGradient id="baseArea" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={NUVEX.azul} stopOpacity="0.35" />
+          <stop offset="100%" stopColor={NUVEX.azul} stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="conArea" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={NUVEX.verde} stopOpacity="0.4" />
+          <stop offset="100%" stopColor={NUVEX.verde} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+
+      {/* grid */}
+      {[0.25, 0.5, 0.75].map((f) => (
+        <line
+          key={f}
+          x1={P}
+          x2={W - P}
+          y1={P + f * (H - 2 * P)}
+          y2={P + f * (H - 2 * P)}
+          stroke="rgba(255,255,255,0.06)"
+          strokeDasharray="2 4"
+        />
+      ))}
+
+      {/* base area + line */}
+      <path
+        d={`${path(baseRows)} L ${x(baseRows.length - 1)} ${H - P} L ${x(0)} ${H - P} Z`}
+        fill="url(#baseArea)"
+      />
+      <path d={path(baseRows)} fill="none" stroke={NUVEX.azul} strokeWidth={1.6} />
+
+      {/* con abonos area + line */}
+      <path
+        d={`${path(conAbonos)} L ${x(conAbonos.length - 1)} ${H - P} L ${x(0)} ${H - P} Z`}
+        fill="url(#conArea)"
+      />
+      <path d={path(conAbonos)} fill="none" stroke={NUVEX.verde} strokeWidth={2} />
+
+      {/* markers de abonos */}
+      {abonos.map((a) => {
+        const idx = a.cuota - 1;
+        if (idx < 0 || idx >= conAbonos.length) return null;
+        return (
+          <g key={a.id}>
+            <circle
+              cx={x(idx)}
+              cy={y(conAbonos[idx].saldoInicial)}
+              r={4}
+              fill={NUVEX.verde}
+              stroke="white"
+              strokeWidth={1.5}
+            />
+          </g>
+        );
+      })}
+
+      {/* legend */}
+      <g transform={`translate(${P}, ${P - 12})`}>
+        <circle cx={0} cy={0} r={3} fill={NUVEX.azul} />
+        <text x={8} y={4} fill="rgba(255,255,255,0.7)" fontSize={10}>
+          Saldo base
+        </text>
+        <circle cx={90} cy={0} r={3} fill={NUVEX.verde} />
+        <text x={98} y={4} fill="rgba(255,255,255,0.7)" fontSize={10}>
+          Con abonos
+        </text>
+      </g>
+    </svg>
+  );
+}
