@@ -9,6 +9,8 @@ export const HOME_ROLE_PRIORITY: AppRole[] = [
   "super_admin",
   "admin",
   "gerencia",
+  "licenciado", // = Analista Financiero Comercial: prioriza sus simuladores aunque tenga rol contable adicional.
+  "asesor",
   "director_financiero_qa",
   "director_juridico",
   // Auditor financiero: en BD se mapea como director_financiero_qa (no hay rol "auditor").
@@ -18,8 +20,6 @@ export const HOME_ROLE_PRIORITY: AppRole[] = [
   "auxiliar_operativo",
   "cartera",
   "contabilidad",
-  "licenciado", // = Analista Financiero Comercial (asesor)
-  "asesor",
   "apoderado",
 ];
 
