@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Bell, CheckCheck, X, ExternalLink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
@@ -84,7 +84,22 @@ export function NotificationBell() {
 
   const counts = { qa: 0, mensajes: 0, sistema: 0 } as Record<Exclude<TabKey, "todas">, number>;
   items.forEach((n) => { counts[categorize(n)] += 1; });
+  const tabOptions = useMemo(
+    () => ([
+      { k: "todas", label: "Todas", n: items.length },
+      { k: "qa", label: "QA", n: counts.qa },
+      { k: "mensajes", label: "Mensajes", n: counts.mensajes },
+      { k: "sistema", label: "Sistema", n: counts.sistema },
+    ] as Array<{ k: TabKey; label: string; n: number }>).filter((t) =>
+      t.k === "todas" || (t.n > 0 && t.n < items.length),
+    ),
+    [counts.mensajes, counts.qa, counts.sistema, items.length],
+  );
   const filtered = tab === "todas" ? items : items.filter((n) => categorize(n) === tab);
+
+  useEffect(() => {
+    if (!tabOptions.some((t) => t.k === tab)) setTab("todas");
+  }, [tab, tabOptions]);
 
 
   const abrirDetalle = (n: Notificacion) => {
@@ -167,12 +182,7 @@ export function NotificationBell() {
               className="flex items-center gap-1 px-2 py-1.5"
               style={{ borderBottom: "1px solid var(--nuvia-border)" }}
             >
-              {([
-                { k: "todas", label: "Todas", n: items.length },
-                { k: "qa", label: "QA", n: counts.qa },
-                { k: "mensajes", label: "Mensajes", n: counts.mensajes },
-                { k: "sistema", label: "Sistema", n: counts.sistema },
-              ] as Array<{ k: TabKey; label: string; n: number }>).map((t) => {
+              {tabOptions.map((t) => {
                 const active = tab === t.k;
                 return (
                   <button
