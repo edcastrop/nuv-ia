@@ -47,7 +47,7 @@ async function waitForAuthSession(maxAttempts = 8): Promise<boolean> {
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const { data } = await supabase.auth.getSession();
     if (data.session?.user) return true;
-    await new Promise((resolve) => window.setTimeout(resolve, 150));
+    await new Promise((resolve) => globalThis.setTimeout(resolve, 150));
   }
   return false;
 }
