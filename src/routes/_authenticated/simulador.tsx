@@ -181,17 +181,22 @@ export function SimuladorPage() {
 
   const readDraftClient = (mo: "pesos" | "uvr"): { nombre: string; cedula: string } => {
     if (typeof window === "undefined") return { nombre: "", cedula: "" };
-    try {
-      const raw = sessionStorage.getItem(`nuvex.simulatorDraft.${mo}.standalone`);
-      if (!raw) return { nombre: "", cedula: "" };
-      const parsed = JSON.parse(raw) as { client?: { nombre?: string; cedula?: string } };
-      return {
-        nombre: String(parsed?.client?.nombre ?? "").trim(),
-        cedula: String(parsed?.client?.cedula ?? "").trim(),
-      };
-    } catch {
-      return { nombre: "", cedula: "" };
+    // Intentamos primero el modo actual y luego el opuesto: el analista puede haber
+    // capturado nombre/cédula en un modo y cambiado al otro antes de certificar.
+    const orden: Array<"pesos" | "uvr"> = mo === "pesos" ? ["pesos", "uvr"] : ["uvr", "pesos"];
+    for (const key of orden) {
+      try {
+        const raw = sessionStorage.getItem(`nuvex.simulatorDraft.${key}.standalone`);
+        if (!raw) continue;
+        const parsed = JSON.parse(raw) as { client?: { nombre?: string; cedula?: string } };
+        const nombre = String(parsed?.client?.nombre ?? "").trim();
+        const cedula = String(parsed?.client?.cedula ?? "").trim();
+        if (nombre || cedula) return { nombre, cedula };
+      } catch {
+        /* seguir intentando con el otro modo */
+      }
     }
+    return { nombre: "", cedula: "" };
   };
 
   const handleSaveAsCase = async (overrideNombre?: string) => {

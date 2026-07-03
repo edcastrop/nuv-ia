@@ -563,7 +563,19 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       }
     }
     let analistaIdVista = (auditoria.analista_id as string | null) ?? null;
-    let expedienteInfo: { cliente_nombre: string | null; banco: string | null; codigo: string | null } | null = null;
+    let expedienteInfo: {
+      cliente_nombre: string | null;
+      banco: string | null;
+      codigo: string | null;
+      cedula: string | null;
+      numero_credito: string | null;
+      producto: string | null;
+      discount_data: Json | null;
+      honorarios_base: number | null;
+      honorarios_final: number | null;
+      descuento: number | null;
+      propuesta_data: Json | null;
+    } | null = null;
     // Hidratación defensiva: si el expediente quedó con "Sin nombre" pero el
     // extracto sí extrajo el nombre/banco/cédula, propagamos y hacemos
     // backfill silencioso para que /casos, /pipeline y esta vista dejen de
@@ -576,7 +588,7 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
     if (auditoria.expediente_id) {
       const { data: expRow } = await context.supabase
         .from("expedientes")
-        .select("asesor_id,cliente_nombre,banco,codigo,cedula,numero_credito,producto,cliente_data,credito_data")
+        .select("asesor_id,cliente_nombre,banco,codigo,cedula,numero_credito,producto,cliente_data,credito_data,discount_data,honorarios_base,honorarios_final,descuento,propuesta_data")
         .eq("id", auditoria.expediente_id as string)
         .maybeSingle();
       if (expRow?.asesor_id) analistaIdVista = expRow.asesor_id as string;
@@ -653,6 +665,14 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
           cliente_nombre: (patch.cliente_nombre as string | undefined) ?? nombreActual ?? (extNombre || null),
           banco: (patch.banco as string | undefined) ?? bancoActual ?? (extBanco || (extracto?.banco ?? null)),
           codigo: (expRow.codigo as string | null) ?? null,
+          cedula: (patch.cedula as string | undefined) ?? cedulaActual ?? (extCedula || null),
+          numero_credito: (patch.numero_credito as string | undefined) ?? numCredActual ?? (extNumCred || null),
+          producto: (patch.producto as string | undefined) ?? productoActual ?? null,
+          discount_data: ((expRow as Record<string, unknown>).discount_data ?? null) as Json | null,
+          honorarios_base: ((expRow as Record<string, unknown>).honorarios_base ?? null) as number | null,
+          honorarios_final: ((expRow as Record<string, unknown>).honorarios_final ?? null) as number | null,
+          descuento: ((expRow as Record<string, unknown>).descuento ?? null) as number | null,
+          propuesta_data: ((expRow as Record<string, unknown>).propuesta_data ?? null) as Json | null,
         };
       }
     }
@@ -661,6 +681,14 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
         cliente_nombre: extNombre || null,
         banco: extBanco || (extracto?.banco ?? null),
         codigo: null,
+        cedula: extCedula || null,
+        numero_credito: extNumCred || null,
+        producto: (extracto?.producto ?? null) as string | null,
+        discount_data: null,
+        honorarios_base: null,
+        honorarios_final: null,
+        descuento: null,
+        propuesta_data: null,
       };
     }
     const [analistaProf, ejecutorProf] = await Promise.all([
@@ -1750,7 +1778,7 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
         const { data: exp } = await supabase
           .from("expedientes")
           .select(
-            "estado_caso, propuesta_data, credito_data, cliente_data, honorarios_final, descuento, banco, producto, numero_credito",
+            "estado_caso, propuesta_data, credito_data, cliente_data, honorarios_base, honorarios_final, descuento, discount_data, banco, producto, numero_credito",
           )
           .eq("id", aud.expediente_id)
           .maybeSingle();
@@ -1759,6 +1787,7 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
           const e = exp as Record<string, unknown>;
           estadoCasoAnterior = (e.estado_caso as string | null) ?? null;
 
+          const disc = (e.discount_data ?? null) as { vigencia?: string | null; percent?: number | null } | null;
           const snapshot = {
             fechaAprobacion: new Date().toISOString(),
             aprobadoPor: userId,
@@ -1769,8 +1798,11 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
             propuesta: e.propuesta_data ?? null,
             credito: e.credito_data ?? null,
             cliente: e.cliente_data ?? null,
+            honorariosBase: e.honorarios_base ?? null,
             honorariosFinal: e.honorarios_final ?? null,
             descuento: e.descuento ?? null,
+            discountData: e.discount_data ?? null,
+            vigencia: disc?.vigencia ?? null,
             banco: e.banco ?? null,
             producto: e.producto ?? null,
             numeroCredito: e.numero_credito ?? null,
@@ -1848,7 +1880,7 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
               : ` Puedes continuar con la propuesta comercial del caso.`) +
             (data.notas ? ` Notas: ${data.notas}` : ""),
           tipo: "qa_auditoria_aprobada",
-          link: `/qa-ai/${aud.id}`,
+          link: aud.expediente_id ? `/qa-ai/${aud.id}` : `/qa-ai/${aud.id}?from=simulador`,
           metadata: {
             auditoria_id: aud.id,
             codigo: aud.codigo,
