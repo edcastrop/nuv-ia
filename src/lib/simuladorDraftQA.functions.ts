@@ -16,7 +16,6 @@
 
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createHash } from "crypto";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { auditar, TOLERANCIAS_DEFAULT, type Modalidad, type Tolerancias } from "@/lib/qaMath";
 
