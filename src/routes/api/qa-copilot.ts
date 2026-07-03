@@ -289,7 +289,7 @@ export const Route = createFileRoute("/api/qa-copilot")({
           if (casoExpedienteId) {
             const { data: exp } = await supabase
               .from("expedientes")
-              .select("id,codigo,cliente_nombre,banco,producto,cliente_data,proyeccion_data")
+              .select("id,codigo,cliente_nombre,banco,producto,cliente_data,credito_data")
               .eq("id", casoExpedienteId)
               .maybeSingle();
             if (exp) {
@@ -513,7 +513,7 @@ async function obtenerCasoActual(ctx: ToolCtx): Promise<unknown> {
   if (!ctx.casoExpedienteId) return { ok: false, error: "No hay caso vinculado a la conversación" };
   const { data: exp } = await ctx.supabase
     .from("expedientes")
-    .select("id,codigo,cliente_nombre,banco,producto,cliente_data,proyeccion_data,fees_data")
+    .select("id,codigo,cliente_nombre,banco,producto,cliente_data,credito_data,propuesta_data")
     .eq("id", ctx.casoExpedienteId)
     .maybeSingle();
   let auditoria: unknown = null;
