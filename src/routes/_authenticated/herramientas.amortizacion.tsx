@@ -490,7 +490,7 @@ function AmortizationEngine() {
                           </td>
                         </tr>
                       ) : (
-                        rows.slice(0, 60).map((r) => {
+                        rows.map((r) => {
                           const isCurrent = r.periodo === periodoNum;
                           return (
                             <tr
