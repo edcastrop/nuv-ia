@@ -79,7 +79,7 @@ export const actualizarConversacion = createServerFn({ method: "POST" })
     archivada: z.boolean().optional(),
   }).parse(i))
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: { titulo?: string; archivada?: boolean } = {};
     if (data.titulo !== undefined) patch.titulo = data.titulo;
     if (data.archivada !== undefined) patch.archivada = data.archivada;
     const { error } = await context.supabase
