@@ -716,6 +716,37 @@ function AmortizationEngine() {
               </div>
             </div>
 
+            {/* Break-even KPI */}
+            <div
+              className="relative rounded-2xl border border-[#84B98F]/25 p-5 overflow-hidden backdrop-blur-xl"
+              style={{
+                background: "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(75,111,224,0.06))",
+                boxShadow: "0 20px 60px -30px rgba(132,185,143,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+              }}
+            >
+              <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-40" style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)" }} />
+              <div className="relative flex items-center gap-5 flex-wrap">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#84B98F]/40 bg-[#84B98F]/[0.14]">
+                  <Target className="h-5 w-5 text-[#B5DFC0]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">Punto de equilibrio Capital vs Interés</div>
+                  {calculated && breakEven ? (
+                    <>
+                      <div className="mt-1 flex items-baseline gap-3 flex-wrap">
+                        <div className="text-[32px] font-bold text-white leading-none tabular-nums" style={{ textShadow: "0 0 24px rgba(132,185,143,0.5)" }}>Cuota #{breakEven}</div>
+                        <div className="text-[13px] text-[#B5DFC0] font-semibold">{breakEvenFecha}</div>
+                        <div className="text-[11.5px] text-white/50">({breakEvenPct.toFixed(1)}% del plazo)</div>
+                      </div>
+                      <div className="mt-1.5 text-[11.5px] text-white/60">A partir de esta cuota amortizas más capital que intereses — el saldo se reduce más rápido.</div>
+                    </>
+                  ) : (
+                    <div className="mt-2 text-[12px] text-white/40">Calcula para descubrir cuándo empiezas a ganarle al banco.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Distribution + Insight row */}
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
               {/* Distribution */}
