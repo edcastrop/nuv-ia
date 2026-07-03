@@ -32,6 +32,7 @@ import { Route as AuthenticatedPipelineRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedOnboardingRouteImport } from './routes/_authenticated/onboarding'
 import { Route as AuthenticatedNuvexIaRouteImport } from './routes/_authenticated/nuvex-ia'
 import { Route as AuthenticatedNotificacionesRouteImport } from './routes/_authenticated/notificaciones'
+import { Route as AuthenticatedMisConsultasTecnicasRouteImport } from './routes/_authenticated/mis-consultas-tecnicas'
 import { Route as AuthenticatedMiPerfilRouteImport } from './routes/_authenticated/mi-perfil'
 import { Route as AuthenticatedMensajeriaRouteImport } from './routes/_authenticated/mensajeria'
 import { Route as AuthenticatedInicioRouteImport } from './routes/_authenticated/inicio'
@@ -236,6 +237,12 @@ const AuthenticatedNotificacionesRoute =
   AuthenticatedNotificacionesRouteImport.update({
     id: '/notificaciones',
     path: '/notificaciones',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedMisConsultasTecnicasRoute =
+  AuthenticatedMisConsultasTecnicasRouteImport.update({
+    id: '/mis-consultas-tecnicas',
+    path: '/mis-consultas-tecnicas',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 const AuthenticatedMiPerfilRoute = AuthenticatedMiPerfilRouteImport.update({
@@ -764,6 +771,7 @@ export interface FileRoutesByFullPath {
   '/inicio': typeof AuthenticatedInicioRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
+  '/mis-consultas-tecnicas': typeof AuthenticatedMisConsultasTecnicasRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -872,6 +880,7 @@ export interface FileRoutesByTo {
   '/inicio': typeof AuthenticatedInicioRoute
   '/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/mi-perfil': typeof AuthenticatedMiPerfilRoute
+  '/mis-consultas-tecnicas': typeof AuthenticatedMisConsultasTecnicasRoute
   '/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/onboarding': typeof AuthenticatedOnboardingRoute
@@ -984,6 +993,7 @@ export interface FileRoutesById {
   '/_authenticated/inicio': typeof AuthenticatedInicioRoute
   '/_authenticated/mensajeria': typeof AuthenticatedMensajeriaRoute
   '/_authenticated/mi-perfil': typeof AuthenticatedMiPerfilRoute
+  '/_authenticated/mis-consultas-tecnicas': typeof AuthenticatedMisConsultasTecnicasRoute
   '/_authenticated/notificaciones': typeof AuthenticatedNotificacionesRoute
   '/_authenticated/nuvex-ia': typeof AuthenticatedNuvexIaRoute
   '/_authenticated/onboarding': typeof AuthenticatedOnboardingRoute
@@ -1097,6 +1107,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/mensajeria'
     | '/mi-perfil'
+    | '/mis-consultas-tecnicas'
     | '/notificaciones'
     | '/nuvex-ia'
     | '/onboarding'
@@ -1205,6 +1216,7 @@ export interface FileRouteTypes {
     | '/inicio'
     | '/mensajeria'
     | '/mi-perfil'
+    | '/mis-consultas-tecnicas'
     | '/notificaciones'
     | '/nuvex-ia'
     | '/onboarding'
@@ -1316,6 +1328,7 @@ export interface FileRouteTypes {
     | '/_authenticated/inicio'
     | '/_authenticated/mensajeria'
     | '/_authenticated/mi-perfil'
+    | '/_authenticated/mis-consultas-tecnicas'
     | '/_authenticated/notificaciones'
     | '/_authenticated/nuvex-ia'
     | '/_authenticated/onboarding'
@@ -1593,6 +1606,13 @@ declare module '@tanstack/react-router' {
       path: '/notificaciones'
       fullPath: '/notificaciones'
       preLoaderRoute: typeof AuthenticatedNotificacionesRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/mis-consultas-tecnicas': {
+      id: '/_authenticated/mis-consultas-tecnicas'
+      path: '/mis-consultas-tecnicas'
+      fullPath: '/mis-consultas-tecnicas'
+      preLoaderRoute: typeof AuthenticatedMisConsultasTecnicasRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/mi-perfil': {
@@ -2347,6 +2367,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedInicioRoute: typeof AuthenticatedInicioRoute
   AuthenticatedMensajeriaRoute: typeof AuthenticatedMensajeriaRoute
   AuthenticatedMiPerfilRoute: typeof AuthenticatedMiPerfilRoute
+  AuthenticatedMisConsultasTecnicasRoute: typeof AuthenticatedMisConsultasTecnicasRoute
   AuthenticatedNotificacionesRoute: typeof AuthenticatedNotificacionesRoute
   AuthenticatedNuvexIaRoute: typeof AuthenticatedNuvexIaRoute
   AuthenticatedOnboardingRoute: typeof AuthenticatedOnboardingRoute
@@ -2408,6 +2429,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedInicioRoute: AuthenticatedInicioRoute,
   AuthenticatedMensajeriaRoute: AuthenticatedMensajeriaRoute,
   AuthenticatedMiPerfilRoute: AuthenticatedMiPerfilRoute,
+  AuthenticatedMisConsultasTecnicasRoute:
+    AuthenticatedMisConsultasTecnicasRoute,
   AuthenticatedNotificacionesRoute: AuthenticatedNotificacionesRoute,
   AuthenticatedNuvexIaRoute: AuthenticatedNuvexIaRoute,
   AuthenticatedOnboardingRoute: AuthenticatedOnboardingRoute,

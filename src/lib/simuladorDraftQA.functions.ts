@@ -453,6 +453,15 @@ export const resolverConsultaTecnica = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => resolverSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+
+    // 1. Recuperamos analista_id + metadatos para notificar
+    const { data: prev, error: readErr } = await supabase
+      .from("consultas_tecnicas")
+      .select("analista_id, banco, producto")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (readErr) throw new Error(readErr.message);
+
     const { error } = await supabase
       .from("consultas_tecnicas")
       .update({
@@ -464,5 +473,68 @@ export const resolverConsultaTecnica = createServerFn({ method: "POST" })
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    // 2. Notificamos al analista (best-effort)
+    if (prev?.analista_id) {
+      const meta = [prev.banco, prev.producto].filter(Boolean).join(" · ") || "Simulación";
+      const titulo =
+        data.estado === "resuelta"
+          ? "Dirección resolvió tu consulta técnica"
+          : "Dirección descartó tu consulta técnica";
+      try {
+        await supabase.from("notificaciones_usuario").insert({
+          user_id: prev.analista_id as string,
+          tipo: "consulta_tecnica",
+          severidad: data.estado === "resuelta" ? "info" : "warning",
+          titulo,
+          mensaje: `${meta} — ${data.dictamen.slice(0, 220)}`,
+          link: "/mis-consultas-tecnicas",
+          metadata: { consultaId: data.id, estado: data.estado } as never,
+        });
+      } catch (e) {
+        console.warn("[consultas_tecnicas] no se pudo notificar al analista", e);
+      }
+    }
+
     return { ok: true as const };
   });
+
+// ─────────────────────────────────────────────────────────────
+// 5. Bandeja del analista: sus propias consultas técnicas
+// ─────────────────────────────────────────────────────────────
+
+export const listMisConsultasTecnicas = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ConsultaTecnicaRow[]> => {
+    const { supabase, userId } = context;
+    const { data: rows, error } = await supabase
+      .from("consultas_tecnicas")
+      .select(
+        "id, estado, analista_id, banco, producto, tipo_credito, moneda, notas_analista, hallazgos_nuvia, snapshot_simulacion, dictamen_director, ajustes_sugeridos, director_id, resolved_at, created_at, updated_at",
+      )
+      .eq("analista_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((r) => ({
+      id: r.id as string,
+      estado: r.estado as string,
+      analistaId: r.analista_id as string,
+      analistaNombre: null,
+      analistaEmail: null,
+      banco: (r.banco as string | null) ?? null,
+      producto: (r.producto as string | null) ?? null,
+      tipoCredito: (r.tipo_credito as string | null) ?? null,
+      moneda: (r.moneda as string | null) ?? null,
+      notasAnalista: (r.notas_analista as string | null) ?? null,
+      hallazgos: r.hallazgos_nuvia,
+      snapshot: r.snapshot_simulacion,
+      dictamenDirector: (r.dictamen_director as string | null) ?? null,
+      ajustesSugeridos: r.ajustes_sugeridos,
+      directorId: (r.director_id as string | null) ?? null,
+      resolvedAt: (r.resolved_at as string | null) ?? null,
+      createdAt: r.created_at as string,
+      updatedAt: r.updated_at as string,
+    }));
+  });
+
