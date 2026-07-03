@@ -241,6 +241,8 @@ function AmortizationEngine() {
     plazo: string;
     valor: string;
     seguros: string;
+    freshValor: string;
+    freshCuotas: string;
     uvrInicial: string;
     varUvr: string;
     fechaDesembolso: string;
