@@ -214,6 +214,8 @@ function AuthenticatedLayout() {
           (data as { mfa_verificado_at?: string | null } | null)?.mfa_verificado_at ?? null;
         const path = location.pathname;
         const aprobado = estado === "aprobado" || estado === "activo" || estado === "reactivado";
+        const isHerramientasPath = path === "/herramientas" || path.startsWith("/herramientas/");
+        const isAnalistaComercial = roleNames.includes("licenciado") || roleNames.includes("asesor");
 
         // GATE MFA GLOBAL: aplica a TODOS los roles sin excepción (incluido super_admin).
         // Cubre acceso directo por URL, refresco de sesión y login vía Google OAuth.
@@ -265,7 +267,8 @@ function AuthenticatedLayout() {
           !isApoderadoOnly &&
           onb !== "completado" &&
           !path.startsWith("/onboarding") &&
-          !path.startsWith("/mi-perfil")
+          !path.startsWith("/mi-perfil") &&
+          !(isAnalistaComercial && isHerramientasPath)
         ) {
           clearAccessGateCache(uid);
           setGateState("blocked");
