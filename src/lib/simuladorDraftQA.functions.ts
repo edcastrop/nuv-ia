@@ -320,6 +320,52 @@ export const escalarConsultaTecnica = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
+    // Notificamos a Dirección Financiera / super_admin / gerencia (best-effort).
+    // Usamos supabaseAdmin porque user_roles no es legible por analistas.
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: directores } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id")
+        .in("role", ["director_financiero_qa", "super_admin", "admin", "gerencia"]);
+      const uniqIds = Array.from(
+        new Set((directores ?? []).map((d) => d.user_id as string).filter(Boolean)),
+      );
+      if (uniqIds.length > 0) {
+        const { data: analista } = await supabase
+          .from("profiles")
+          .select("nombre, email")
+          .eq("id", userId)
+          .maybeSingle();
+        const nombreAnalista =
+          (analista?.nombre as string | null) ?? (analista?.email as string | null) ?? "Un analista";
+        const meta = [data.banco, data.producto].filter(Boolean).join(" · ") || "simulación";
+        const criticos = Array.isArray(data.hallazgos)
+          ? data.hallazgos.filter(
+              (h) =>
+                typeof h === "object" &&
+                h !== null &&
+                (h as { severidad?: unknown }).severidad === "critica",
+            ).length
+          : 0;
+        const totalHallazgos = Array.isArray(data.hallazgos) ? data.hallazgos.length : 0;
+
+        await supabaseAdmin.from("notificaciones_usuario").insert(
+          uniqIds.map((uid) => ({
+            user_id: uid,
+            tipo: "consulta_tecnica",
+            severidad: criticos > 0 ? "critica" : "warning",
+            titulo: "Nueva consulta técnica de simulación",
+            mensaje: `${nombreAnalista} escaló una ${meta} · ${totalHallazgos} hallazgo(s)${criticos > 0 ? ` (${criticos} crítico(s))` : ""}.`,
+            link: "/direccion/consultas-tecnicas",
+            metadata: { consultaId: row.id, analistaId: userId } as never,
+          })),
+        );
+      }
+    } catch (e) {
+      console.warn("[consultas_tecnicas] no se pudo notificar a Dirección", e);
+    }
+
     return {
       id: row.id as string,
       restoreToken: (row.restore_token as string | null) ?? null,
@@ -380,7 +426,7 @@ export type ConsultaTecnicaRow = {
 };
 
 const listConsultasSchema = z.object({
-  estado: z.enum(["pendiente", "resuelta", "descartada", "todas"]).default("pendiente"),
+  estado: z.enum(["pendiente", "aprobada", "rechazada", "devuelta", "todas"]).default("pendiente"),
 });
 
 export const listConsultasTecnicas = createServerFn({ method: "POST" })
@@ -443,7 +489,7 @@ export const listConsultasTecnicas = createServerFn({ method: "POST" })
 
 const resolverSchema = z.object({
   id: z.string().uuid(),
-  estado: z.enum(["resuelta", "descartada"]),
+  estado: z.enum(["aprobada", "rechazada", "devuelta"]),
   dictamen: z.string().min(3).max(4000),
   ajustesSugeridos: z.record(z.unknown()).optional(),
 });
@@ -478,14 +524,16 @@ export const resolverConsultaTecnica = createServerFn({ method: "POST" })
     if (prev?.analista_id) {
       const meta = [prev.banco, prev.producto].filter(Boolean).join(" · ") || "Simulación";
       const titulo =
-        data.estado === "resuelta"
-          ? "Dirección resolvió tu consulta técnica"
-          : "Dirección descartó tu consulta técnica";
+        data.estado === "aprobada"
+          ? "Dirección aprobó tu consulta técnica"
+          : data.estado === "devuelta"
+            ? "Dirección devolvió tu consulta técnica para revisión"
+            : "Dirección rechazó tu consulta técnica";
       try {
         await supabase.from("notificaciones_usuario").insert({
           user_id: prev.analista_id as string,
           tipo: "consulta_tecnica",
-          severidad: data.estado === "resuelta" ? "info" : "warning",
+          severidad: data.estado === "aprobada" ? "info" : "warning",
           titulo,
           mensaje: `${meta} — ${data.dictamen.slice(0, 220)}`,
           link: "/mis-consultas-tecnicas",
