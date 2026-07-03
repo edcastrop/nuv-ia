@@ -123,11 +123,7 @@ const FONT = "'Inter','Manrope','SF Pro Display',Arial,sans-serif";
 const SIGNATURE = "'Allura','Caveat','Brush Script MT',cursive";
 
 function cleanCommercialVigencia(value: string | undefined): string {
-  const vigencia = (value ?? "").trim();
-  if (["12h", "12 h", "12 horas", "24h", "24 h", "24 horas", "48h", "48 h", "48 horas"].includes(vigencia.toLowerCase())) {
-    return "";
-  }
-  return vigencia;
+  return (value ?? "").trim();
 }
 
 function compactMoney(n: number): string {
