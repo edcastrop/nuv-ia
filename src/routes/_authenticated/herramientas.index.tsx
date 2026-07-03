@@ -16,7 +16,9 @@ import {
   Scale,
   Users,
   GitBranch,
+  Rocket,
 } from "lucide-react";
+
 import { NUVEX } from "@/components/nuvex/constants";
 
 export const Route = createFileRoute("/_authenticated/herramientas/")({
@@ -274,6 +276,16 @@ function HerramientasLanding() {
             features={["Reducir plazo o cuota", "Presets prima junio/dic", "Chart comparativo"]}
             accent="#e0a458"
           />
+          <ToolCard
+            to="/herramientas/simulador"
+            Icon={Rocket}
+            badge="EXPLORACIÓN · NO CREA CASO"
+            title="Simulador NUVEX"
+            description="Simula propuestas Pesos o UVR sin crear expediente. Cuando estés listo, conviértelo en caso con un clic."
+            features={["Modo draft (no ERP)", "Pesos + UVR", "Guardar como caso"]}
+            accent="#84B98F"
+          />
+
         </motion.div>
 
         {/* ============================ SYSTEM STRIP ============================ */}
