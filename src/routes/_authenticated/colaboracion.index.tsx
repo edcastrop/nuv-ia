@@ -177,9 +177,12 @@ function ColaboracionPage() {
       </div>
 
       {tab === "war" && (
-        <div className="grid gap-3" style={{ gridTemplateColumns: showRight ? "280px 340px 1fr 320px" : "280px 340px 1fr", height: "calc(100dvh - 190px)" }}>
+        <div
+          className={`grid gap-3 grid-cols-1 md:[grid-template-columns:260px_minmax(0,1fr)] lg:[grid-template-columns:220px_280px_minmax(0,1fr)] ${showRight ? "xl:[grid-template-columns:220px_300px_minmax(0,1fr)_300px]" : "xl:[grid-template-columns:220px_300px_minmax(0,1fr)]"}`}
+          style={{ height: "calc(100dvh - 190px)" }}
+        >
           {/* --------- COLUMN 1: TEAM CHANNELS --------- */}
-          <GlassPanel>
+          <GlassPanel className="hidden lg:flex">
             <PanelHeader label="TEAM CHANNELS" accent="#22D3EE" right={<button onClick={() => setShowNew(true)} className="rounded-md p-1 transition hover:bg-white/10" style={{ color: "rgba(255,255,255,0.6)" }}><Plus size={13} /></button>} />
             <div className="p-2 space-y-1 overflow-y-auto flex-1">
               {TEAM_CHANNELS.map((t) => {
