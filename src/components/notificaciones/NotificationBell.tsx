@@ -83,17 +83,27 @@ export function NotificationBell() {
   const filtered = tab === "todas" ? items : items.filter((n) => categorize(n) === tab);
 
 
+  const navegarA = (link: string) => {
+    if (/^https?:\/\//i.test(link)) {
+      window.location.assign(link);
+      return;
+    }
+    try {
+      const p = router.navigate({ to: link }) as unknown as Promise<unknown> | undefined;
+      if (p && typeof (p as Promise<unknown>).catch === "function") {
+        (p as Promise<unknown>).catch(() => window.location.assign(link));
+      }
+    } catch {
+      window.location.assign(link);
+    }
+  };
+
   const abrirDetalle = (n: Notificacion) => {
     if (!n.leida) void leer(n.id);
     setOpen(false);
+    setDetalle(null);
     if (n.link) {
-      const link = n.link;
-      try {
-        if (/^https?:\/\//i.test(link)) window.location.href = link;
-        else router.navigate({ to: link });
-      } catch {
-        window.location.href = link;
-      }
+      navegarA(n.link);
       return;
     }
     setDetalle(n);
@@ -103,12 +113,7 @@ export function NotificationBell() {
     if (!detalle?.link) return;
     const link = detalle.link;
     setDetalle(null);
-    try {
-      if (/^https?:\/\//i.test(link)) window.location.href = link;
-      else router.navigate({ to: link });
-    } catch {
-      window.location.href = link;
-    }
+    navegarA(link);
   };
 
   return (
