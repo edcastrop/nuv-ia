@@ -179,17 +179,33 @@ export function SimuladorPage() {
     }
   };
 
-  const handleSaveAsCase = async () => {
+  const readDraftClient = (mo: "pesos" | "uvr"): { nombre: string; cedula: string } => {
+    if (typeof window === "undefined") return { nombre: "", cedula: "" };
+    try {
+      const raw = sessionStorage.getItem(`nuvex.simulatorDraft.${mo}.standalone`);
+      if (!raw) return { nombre: "", cedula: "" };
+      const parsed = JSON.parse(raw) as { client?: { nombre?: string; cedula?: string } };
+      return {
+        nombre: String(parsed?.client?.nombre ?? "").trim(),
+        cedula: String(parsed?.client?.cedula ?? "").trim(),
+      };
+    } catch {
+      return { nombre: "", cedula: "" };
+    }
+  };
+
+  const handleSaveAsCase = async (overrideNombre?: string) => {
     if (!mode) return;
-    const nombre = saveNombre.trim();
-    const cedula = saveCedula.trim();
-    if (!nombre || !cedula) {
-      toast.error("Nombre y cédula son obligatorios para crear el caso.");
+    const nombreDraft = readDraftClient(mode).nombre;
+    const nombre = (overrideNombre ?? saveNombre ?? nombreDraft).trim() || nombreDraft;
+    const cedula = readDraftClient(mode).cedula; // Puede ir vacía; se completa en el expediente.
+    if (!nombre) {
+      // No hay nombre en la simulación → abrir diálogo para pedirlo.
+      setSaveOpen(true);
       return;
     }
     setSavingDraft(true);
     try {
-      // Migrar draft de sessionStorage: standalone → futuro expediente.
       const readKey = (mo: "pesos" | "uvr") => `nuvex.simulatorDraft.${mo}.standalone`;
       const writeKey = (mo: "pesos" | "uvr", expId: string) => `nuvex.simulatorDraft.${mo}.${expId}`;
       const pesosDraft = typeof window !== "undefined" ? sessionStorage.getItem(readKey("pesos")) : null;
@@ -229,6 +245,7 @@ export function SimuladorPage() {
       setSavingDraft(false);
     }
   };
+
 
   if (maestroId && loadingMaestro) {
     return (
