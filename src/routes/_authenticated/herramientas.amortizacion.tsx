@@ -472,14 +472,161 @@ function AmortizationEngine() {
                 <div className="text-[11px] text-white/50 mt-1">Parámetros de tu crédito</div>
               </div>
 
-              <div className="mt-5 space-y-2.5">
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => setImportOpen(true)}
+                  className="flex-1 rounded-xl border border-[#7BB0FF]/30 bg-[#7BB0FF]/[0.08] hover:bg-[#7BB0FF]/[0.14] px-3 py-2 text-[11px] font-semibold text-[#C9DDFF] transition-all inline-flex items-center justify-center gap-1.5"
+                >
+                  <Search className="h-3.5 w-3.5" /> Importar caso
+                </button>
+                <button
+                  onClick={() => setShowScenarios((s) => !s)}
+                  className="flex-1 rounded-xl border border-[#B58BFF]/30 bg-[#B58BFF]/[0.08] hover:bg-[#B58BFF]/[0.14] px-3 py-2 text-[11px] font-semibold text-[#D6C0FF] transition-all inline-flex items-center justify-center gap-1.5"
+                >
+                  <Save className="h-3.5 w-3.5" /> Escenarios ({scenarios.length})
+                </button>
+              </div>
+
+              {/* Escenarios drawer */}
+              <AnimatePresence>
+                {showScenarios && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
+                      <button
+                        onClick={handleSaveScenario}
+                        className="w-full rounded-lg border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2.5 py-2 text-[11px] font-semibold text-[#B5DFC0] inline-flex items-center justify-center gap-1.5"
+                      >
+                        <Save className="h-3 w-3" /> Guardar actual
+                      </button>
+                      {scenarios.length === 0 ? (
+                        <div className="text-[10.5px] text-white/40 text-center py-2">Sin escenarios guardados.</div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-[180px] overflow-auto nuvia-scroll">
+                          {scenarios.map((s) => (
+                            <div key={s.id} className="flex items-center gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5">
+                              <button onClick={() => handleLoadScenario(s)} className="flex-1 text-left min-w-0">
+                                <div className="text-[11px] font-semibold text-white truncate">{s.nombre}</div>
+                                <div className="text-[9.5px] text-white/40 uppercase tracking-wider">{s.modo} · {s.plazo}m · {new Date(s.ts).toLocaleDateString("es-CO")}</div>
+                              </button>
+                              <button onClick={() => handleDeleteScenario(s.id)} className="shrink-0 text-white/40 hover:text-red-400 p-1" title="Eliminar">
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Convertidor de tasa (Tasa Fresh) */}
+              <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                <button
+                  onClick={() => setShowConverter((s) => !s)}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Wand2 className="h-3.5 w-3.5 text-[#84B98F]" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Convertidor Tasa Fresh</span>
+                  </div>
+                  <ChevronDown className={`h-3.5 w-3.5 text-white/50 transition-transform ${showConverter ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {showConverter && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="px-3.5 pb-3 pt-1 space-y-2">
+                        <div className="flex gap-1.5 flex-wrap">
+                          {(["EA", "MV", "NMV", "NAMV", "NASV"] as TasaTipo[]).map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => setFreshTipo(t)}
+                              className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider border transition-all ${
+                                freshTipo === t
+                                  ? "bg-[#4B6FE0]/25 border-[#4B6FE0]/60 text-white"
+                                  : "bg-white/[0.02] border-white/[0.08] text-white/50 hover:text-white/80"
+                              }`}
+                            >{t}</button>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5 focus-within:border-[#4B6FE0]/60">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={freshTasa}
+                            onChange={(e) => setFreshTasa(e.target.value.replace(/[^0-9.,]/g, ""))}
+                            placeholder={`Tasa ${freshTipo} (ej: 12,50)`}
+                            className="flex-1 min-w-0 bg-transparent text-[13px] font-semibold text-white placeholder:text-white/25 outline-none tabular-nums"
+                          />
+                          <span className="text-[10px] text-white/40">%</span>
+                        </div>
+                        {freshValid && (
+                          <>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {conversions.map((c) => (
+                                <div key={c.tipo} className={`rounded-md px-2 py-1.5 border ${c.tipo === freshTipo ? "border-[#4B6FE0]/40 bg-[#4B6FE0]/10" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/45">{c.tipo}</div>
+                                  <div className="text-[12px] font-semibold text-white tabular-nums">{c.valor.toFixed(4)}%</div>
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              onClick={handleUseFreshAsTEA}
+                              className="w-full rounded-lg border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2.5 py-2 text-[11px] font-semibold text-[#B5DFC0] inline-flex items-center justify-center gap-1.5"
+                            >
+                              <Download className="h-3 w-3" /> Usar como TEA ({(freshEA * 100).toFixed(4)}%)
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="mt-4 space-y-2.5">
                 <InputTile icon={<Percent className="h-3.5 w-3.5" />} label={modo === "uvr" ? "TEA UVR" : "TEA (Tasa Efectiva Anual)"} value={tea} onChange={setTea} suffix="%" placeholder={modo === "uvr" ? "8,50" : "11,00"} />
                 <InputTile icon={<Calendar className="h-3.5 w-3.5" />} label="Plazo aprobado" value={plazo} onChange={setPlazo} suffix="meses" placeholder="240" />
                 <InputTile icon={<DollarSign className="h-3.5 w-3.5" />} label={modo === "uvr" ? "Valor crédito (UVR)" : "Valor crédito aprobado"} value={valor} onChange={setValor} prefix={modo === "uvr" ? "" : "$"} suffix={modo === "uvr" ? "UVR" : undefined} placeholder={modo === "uvr" ? "500.000" : "737.000.000"} />
+                {/* Fecha desembolso */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 hover:border-white/[0.12] focus-within:border-[#4B6FE0]/60">
+                  <div className="flex items-center gap-2 text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/45">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-md bg-white/[0.04] border border-white/[0.06] text-white/60">
+                      <Calendar className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Fecha de desembolso</span>
+                  </div>
+                  <input
+                    type="month"
+                    value={fechaDesembolso}
+                    onChange={(e) => setFechaDesembolso(e.target.value)}
+                    className="mt-1 w-full bg-transparent text-[15px] font-semibold text-white outline-none tabular-nums [color-scheme:dark]"
+                  />
+                </div>
                 {modo === "uvr" && (
                   <>
                     <InputTile icon={<Coins className="h-3.5 w-3.5" />} label="UVR inicial (COP/UVR)" value={uvrInicial} onChange={setUvrInicial} prefix="$" placeholder="340,50" />
                     <InputTile icon={<TrendingUp className="h-3.5 w-3.5" />} label="Variación UVR anual" value={varUvr} onChange={setVarUvr} suffix="% EA" placeholder="5,50" />
+                    <div className="flex gap-1.5 flex-wrap">
+                      {[
+                        { label: "Conservador", val: "3.00" },
+                        { label: "Base", val: "5.00" },
+                        { label: "DANE hist.", val: "6.20" },
+                      ].map((p) => (
+                        <button
+                          key={p.label}
+                          onClick={() => setVarUvr(p.val)}
+                          className="rounded-md px-2 py-1 text-[9.5px] font-bold uppercase tracking-wider bg-white/[0.03] border border-white/[0.06] text-white/60 hover:text-white hover:border-[#84B98F]/40 transition-all"
+                        >
+                          {p.label} {p.val}%
+                        </button>
+                      ))}
+                    </div>
                   </>
                 )}
                 <InputTile icon={<Target className="h-3.5 w-3.5" />} label="Periodo a consultar" value={periodo} onChange={setPeriodo} suffix={`/ ${plazoNum || "n"}`} placeholder="3" />
