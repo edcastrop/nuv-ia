@@ -23,7 +23,16 @@ import {
   FileDown,
   Zap,
   Command,
+  Pin,
+  PinOff,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Briefcase,
+  MessageSquarePlus,
 } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 
 type Tab = "tvm" | "tasas" | "amort" | "vpn" | "hist";
