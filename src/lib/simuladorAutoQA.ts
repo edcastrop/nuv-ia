@@ -85,9 +85,10 @@ export async function triggerSimuladorAutoQA(opts: {
       .maybeSingle();
     if (!exp) {
       console.info("[simuladorAutoQA] expediente operativo aún no existe; omitiendo auto-QA.");
-      onResult?.({ auditoriaId: "", score: 0, categoria: "pendiente", hallazgosCount: 0, criticos: 0, hallazgosTop: [] } as unknown as AutoQAResult);
+      onError?.(new Error("expediente_pendiente"));
       return null;
     }
+
     const datos = normalizeQaDatos(raw);
     const analistaId = (exp as { asesor_id?: string | null } | null)?.asesor_id ?? user.id;
 
