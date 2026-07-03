@@ -390,9 +390,9 @@ function SaveAsCaseDialog({
         className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0B1220] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-white">Guardar simulación como caso</h3>
+        <h3 className="text-lg font-semibold text-white">Certificar y crear caso</h3>
         <p className="mt-1 text-[13px] text-white/60">
-          Se creará un expediente maestro en el ERP con estos datos. Puedes completar el resto después.
+          NUVIA certificó la simulación. Al confirmar se creará el expediente maestro y quedará listo para generar la propuesta comercial. Puedes completar el resto después.
         </p>
         <div className="mt-5 space-y-3">
           <label className="block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
