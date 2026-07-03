@@ -5741,20 +5741,18 @@ export type Database = {
           avatar_url: string | null
           celular: string | null
           ciudad: string | null
-          coordinador_id: string | null
           correo_corporativo: string | null
           created_at: string | null
-          departamento: string | null
-          direccion: string | null
           email: string | null
           equipo: string | null
-          fecha_ingreso: string | null
+          estado_acceso: Database["public"]["Enums"]["acceso_estado"] | null
           id: string | null
+          last_seen_at: string | null
           nombre: string | null
-          numero_documento: string | null
           pais: string | null
+          presencia_visible: boolean | null
+          rol_solicitado: string | null
           sede: string | null
-          tipo_documento: string | null
           updated_at: string | null
           whatsapp: string | null
         }
@@ -5764,20 +5762,18 @@ export type Database = {
           avatar_url?: string | null
           celular?: string | null
           ciudad?: string | null
-          coordinador_id?: string | null
           correo_corporativo?: string | null
           created_at?: string | null
-          departamento?: string | null
-          direccion?: string | null
           email?: string | null
           equipo?: string | null
-          fecha_ingreso?: string | null
+          estado_acceso?: Database["public"]["Enums"]["acceso_estado"] | null
           id?: string | null
+          last_seen_at?: string | null
           nombre?: string | null
-          numero_documento?: string | null
           pais?: string | null
+          presencia_visible?: boolean | null
+          rol_solicitado?: string | null
           sede?: string | null
-          tipo_documento?: string | null
           updated_at?: string | null
           whatsapp?: string | null
         }
@@ -5787,20 +5783,18 @@ export type Database = {
           avatar_url?: string | null
           celular?: string | null
           ciudad?: string | null
-          coordinador_id?: string | null
           correo_corporativo?: string | null
           created_at?: string | null
-          departamento?: string | null
-          direccion?: string | null
           email?: string | null
           equipo?: string | null
-          fecha_ingreso?: string | null
+          estado_acceso?: Database["public"]["Enums"]["acceso_estado"] | null
           id?: string | null
+          last_seen_at?: string | null
           nombre?: string | null
-          numero_documento?: string | null
           pais?: string | null
+          presencia_visible?: boolean | null
+          rol_solicitado?: string | null
           sede?: string | null
-          tipo_documento?: string | null
           updated_at?: string | null
           whatsapp?: string | null
         }
@@ -5901,6 +5895,27 @@ export type Database = {
       liberar_comisiones_por_recaudo: {
         Args: { _expediente_id: string; _user_validador?: string }
         Returns: undefined
+      }
+      list_colaboradores_publicos: {
+        Args: never
+        Returns: {
+          activo: boolean
+          celular: string
+          ciudad: string
+          correo: string
+          correo_corp: string
+          equipo: string
+          foto_url: string
+          last_seen_at: string
+          nombre: string
+          pais: string
+          presencia_visible: boolean
+          roles: string[]
+          roles_raw: string[]
+          sede: string
+          user_id: string
+          whatsapp: string
+        }[]
       }
       map_caso_to_expediente_estado: {
         Args: { _caso: Database["public"]["Enums"]["caso_estado"] }

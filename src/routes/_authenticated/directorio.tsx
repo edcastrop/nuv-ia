@@ -8,6 +8,7 @@ import { listDirectorioFull, getOrCreateDM, type DirectorioPersona } from "@/lib
 import { useNavigate } from "@tanstack/react-router";
 import { PresenceDot } from "@/components/presencia/PresenceDot";
 import { DirectoryHeroHologram } from "@/components/directorio/DirectoryHeroHologram";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Route = createFileRoute("/_authenticated/directorio")({
   component: DirectorioPage,
@@ -60,13 +61,18 @@ function NeuralBg() {
 
 function DirectorioPage() {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
   const [data, setData] = useState<DirectorioPersona[]>([]);
   const [q, setQ] = useState("");
   const [grupo, setGrupo] = useState<GroupKey | "todos">("todos");
   const [loading, setLoading] = useState(true);
   const [filterFacet, setFilterFacet] = useState<string | null>(null);
 
-  useEffect(() => { listDirectorioFull().then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false)); }, []);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    setLoading(true);
+    listDirectorioFull().then((d) => { setData(d); setLoading(false); }).catch(() => setLoading(false));
+  }, [authLoading, user?.id]);
 
   const filtered = useMemo(() => {
     const qn = q.trim().toLowerCase();
@@ -204,7 +210,7 @@ function PersonaCard({ p, onDM }: { p: DirectorioPersona; onDM: () => void }) {
       <span className="pointer-events-none absolute inset-x-5 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(132,185,143,0.5), transparent)" }} />
       <span className="pointer-events-none absolute -inset-px rounded-[24px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 blur-xl" style={{ background: `linear-gradient(135deg, ${NUVEX.azul}30, ${NUVEX.verde}30)` }} />
       <div className="relative flex items-start gap-3">
-        <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
+        <UserAvatar userId={p.user_id} url={p.foto_url} name={p.nombre} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <div className="text-sm font-semibold text-white truncate">{p.nombre}</div>

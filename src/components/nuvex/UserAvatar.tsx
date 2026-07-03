@@ -34,7 +34,7 @@ export function UserAvatar({ userId, url, name, email, size = "md", ring = false
   );
 
   useEffect(() => {
-    if (url !== undefined || !userId) return;
+    if (url !== undefined || name !== undefined || email !== undefined || !userId) return;
     if (cache.has(userId)) {
       setResolved(cache.get(userId)!);
       return;

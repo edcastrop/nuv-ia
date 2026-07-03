@@ -36,7 +36,7 @@ interface QuickCtx {
 export type CtxTab = "perfil" | "casos" | "historial" | "ia";
 
 export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [dms, setDms] = useState<DMResumen[]>([]);
   const [dir, setDir] = useState<Awaited<ReturnType<typeof listDirectorio>>>([]);
   const [canal, setCanalState] = useState<Canal | null>(null);
@@ -61,7 +61,11 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
 
   const recargarDMs = () => listMisDMs().then(setDms);
 
-  useEffect(() => { recargarDMs(); listDirectorio().then(setDir); }, []);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    recargarDMs();
+    listDirectorio().then(setDir);
+  }, [authLoading, user?.id]);
 
   useEffect(() => {
     if (!initialCanalId) return;
@@ -300,7 +304,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                   >
                     {activo && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full" style={{ background: "linear-gradient(180deg, #5b8dff, #3457c8)", boxShadow: "0 0 12px rgba(91,141,255,0.6)" }} />}
                     <div className="relative shrink-0">
-                      <UserAvatar userId={x.otro.user_id} name={x.otro.nombre} size="md" />
+                      <UserAvatar userId={x.otro.user_id} url={x.otro.foto_url} name={x.otro.nombre} size="md" />
                       <span className="absolute -bottom-0.5 -right-0.5 rounded-full ring-2" style={{ background: "#050816", padding: 1 }}>
                         <PresenceDot userId={x.otro.user_id} lastSeenAt={x.otro.last_seen_at} visible={x.otro.presencia_visible} />
                       </span>
@@ -452,7 +456,7 @@ export function MensajeriaView({ initialCanalId, onCanalChange }: Props) {
                 <button key={p.user_id} onClick={() => abrirConUsuario(p.user_id)}
                   className="flex items-center gap-3 rounded-xl p-3 text-left transition hover:scale-[1.01]"
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
+                  <UserAvatar userId={p.user_id} url={p.foto_url} name={p.nombre} size="md" />
                   <div className="min-w-0">
                     <div className="text-[13px] font-semibold text-white leading-tight break-words" title={p.nombre}>{p.nombre}</div>
                     <div className="text-[11px] truncate text-white/50">{p.roles.join(", ") || "—"}</div>
@@ -521,7 +525,7 @@ function ChatHeader({ d, canal, onBack, quickCtx, ctxTab, onCtxTab }: { d: DMRes
       <div className="flex flex-wrap items-start gap-3">
         {BackBtn}
         <div className="relative shrink-0">
-          <UserAvatar userId={d.otro.user_id} name={d.otro.nombre} size="md" />
+          <UserAvatar userId={d.otro.user_id} url={d.otro.foto_url} name={d.otro.nombre} size="md" />
           <span className="absolute -bottom-0.5 -right-0.5 rounded-full ring-2" style={{ background: "#050816", padding: 1 }}>
             <PresenceDot userId={d.otro.user_id} lastSeenAt={d.otro.last_seen_at} visible={d.otro.presencia_visible} />
           </span>
@@ -683,7 +687,7 @@ function TabPerfil({ d, ctx }: { d: DMResumen; ctx: QuickCtx | null }) {
   return (
     <>
       <div className="rounded-xl p-3 flex items-center gap-3" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-        <UserAvatar userId={d.otro.user_id} name={d.otro.nombre} size="md" />
+        <UserAvatar userId={d.otro.user_id} url={d.otro.foto_url} name={d.otro.nombre} size="md" />
         <div className="min-w-0">
           <div className="text-[13px] font-semibold text-white break-words">{d.otro.nombre}</div>
           <div className="text-[10.5px] text-white/50 uppercase tracking-wider">{d.otro.roles.join(" · ") || "Colaborador"}</div>

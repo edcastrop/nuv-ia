@@ -37,7 +37,7 @@ const TEAM_CHANNELS: { key: string; label: string; match: RegExp; icon: typeof H
 ];
 
 function ColaboracionPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const search = Route.useSearch();
   const navigate = useNavigate();
 
@@ -54,7 +54,12 @@ function ColaboracionPage() {
   const [showRight, setShowRight] = useState(true);
 
   const reload = () => listCanales().then(setCanales);
-  useEffect(() => { reload(); listDirectorio().then(setDir); listMisNotifColab().then(setNotifs); }, []);
+  useEffect(() => {
+    if (authLoading || !user) return;
+    reload();
+    listDirectorio().then(setDir);
+    listMisNotifColab().then(setNotifs);
+  }, [authLoading, user?.id]);
 
   const canalActivo = useMemo(() => canales.find((c) => c.id === search.canal) ?? null, [canales, search.canal]);
 
@@ -327,7 +332,7 @@ function ColaboracionPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
             {dir.filter((p) => p.user_id !== user?.id).map((p) => (
               <button key={p.user_id} onClick={async () => { const c = await getOrCreateDM(p.user_id); await reload(); setTabAndSync("war"); setCanal(c.id); }} className="flex items-center gap-3 rounded-xl border p-3 text-left transition hover:bg-white/5" style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
-                <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
+                <UserAvatar userId={p.user_id} url={p.foto_url} name={p.nombre} size="md" />
                 <div className="min-w-0">
                   <div className="text-sm font-semibold truncate" style={{ color: "rgba(255,255,255,0.92)" }}>{p.nombre}</div>
                   <div className="text-[11px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{p.roles.join(", ") || "—"}</div>
@@ -370,7 +375,7 @@ function ColaboracionPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">
             {dir.map((p) => (
               <div key={p.user_id} className="flex items-center gap-3 rounded-xl border p-3" style={{ borderColor: "rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
-                <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
+                <UserAvatar userId={p.user_id} url={p.foto_url} name={p.nombre} size="md" />
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-semibold truncate" style={{ color: "rgba(255,255,255,0.92)" }}>{p.nombre}</div>
                   <div className="text-[11px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{p.correo || "—"}</div>
