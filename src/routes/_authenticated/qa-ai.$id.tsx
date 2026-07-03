@@ -765,6 +765,75 @@ function ResultadoQaAi() {
         </NCard>
       </div>
 
+      {/* CONDICIONES COMERCIALES · propuesta que verá el cliente */}
+      {(() => {
+        const disc = expInfo?.discount_data ?? null;
+        const propuesta = expInfo?.propuesta_data ?? null;
+        const hBase = Number(expInfo?.honorarios_base ?? 0);
+        const hFinal = Number(expInfo?.honorarios_final ?? 0);
+        const descPct = Number(expInfo?.descuento ?? disc?.percent ?? 0);
+        const vigencia = disc?.vigencia ?? null;
+        const motivo = disc?.motivo ?? null;
+        const nuevaCuota = Number(propuesta?.nuevaCuota ?? 0);
+        const ahorro = Number(propuesta?.ahorroMensual ?? 0);
+        const tieneAlgo = hBase > 0 || hFinal > 0 || descPct > 0 || nuevaCuota > 0 || !!vigencia;
+        if (!tieneAlgo) return null;
+        const ahorroTotal = descPct > 0 && hBase > 0 ? hBase - (hFinal || hBase * (1 - descPct / 100)) : 0;
+        return (
+          <div className="mt-3">
+            <NCard>
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-[10.5px] font-bold uppercase tracking-[0.16em]" style={{ color: "var(--nuvia-accent-primary)" }}>
+                  Condiciones comerciales · propuesta al cliente
+                </span>
+                {descPct > 0 && (
+                  <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full" style={{ background: "rgba(132,185,143,0.14)", color: "var(--nuvia-success)", border: "1px solid rgba(132,185,143,0.35)" }}>
+                    Descuento {descPct}%
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Honorarios base</p>
+                  <p className="text-[13px] font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                    ${fmt(hBase, 0)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Honorarios final</p>
+                  <p className="text-[13px] font-semibold tabular-nums" style={{ color: descPct > 0 ? "var(--nuvia-success)" : "var(--nuvia-text-primary)" }}>
+                    ${fmt(hFinal || hBase, 0)}
+                  </p>
+                  {ahorroTotal > 0 && (
+                    <p className="text-[11px] tabular-nums" style={{ color: "var(--nuvia-success)" }}>−${fmt(ahorroTotal, 0)}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Vigencia comercial</p>
+                  <p className="text-[13px] font-semibold" style={{ color: vigencia ? "var(--nuvia-text-primary)" : "var(--nuvia-text-muted)" }}>
+                    {vigencia || "—"}
+                  </p>
+                  {motivo && (
+                    <p className="text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>{motivo}</p>
+                  )}
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Nueva cuota · ahorro</p>
+                  <p className="text-[13px] font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
+                    ${fmt(nuevaCuota, 0)}
+                  </p>
+                  {ahorro > 0 && (
+                    <p className="text-[11px] tabular-nums" style={{ color: "var(--nuvia-success)" }}>Ahorro ${fmt(ahorro, 0)}/mes</p>
+                  )}
+                </div>
+              </div>
+            </NCard>
+          </div>
+        );
+      })()}
+
+
+
       {/* NOTAS DEL ANALISTA AL AUDITOR (solo cuando la auditoría llegó desde el simulador escalado) */}
       {(() => {
         const origen = (a as unknown as { origen?: string | null }).origen ?? null;
