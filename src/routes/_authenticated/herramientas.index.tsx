@@ -270,6 +270,15 @@ function HerramientasLanding() {
             features={["Sistema francés", "Tabla completa", "Exportable PDF"]}
             accent={NUVEX.verde}
           />
+          <ToolCard
+            to="/herramientas/abonos"
+            Icon={PiggyBank}
+            badge="AHORRO REAL · PESOS + UVR"
+            title="NUVIA Extra Payments Simulator"
+            description="Simula abonos extraordinarios a capital y visualiza ahorro en intereses, cuotas eliminadas y nueva fecha final."
+            features={["Reducir plazo o cuota", "Presets prima junio/dic", "Chart comparativo"]}
+            accent="#e0a458"
+          />
         </motion.div>
 
         {/* ============================ INSIGHT BAR ============================ */}
