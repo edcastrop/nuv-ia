@@ -56,48 +56,90 @@ type Row = {
   saldoInicial: number;
   cuota: number;
   interes: number;
+  interesBase: number;
+  fresh: number;
   capital: number;
   seguros: number;
   totalCuota: number;
   saldoFinal: number;
 };
 
+const FRESH_MAX_CUOTAS = 84;
+
 const tasaMensualFromTEA = (tea: number) => Math.pow(1 + tea, 1 / 12) - 1;
 const cuotaFija = (v: number, i: number, n: number) =>
   i === 0 ? v / n : (v * (i * Math.pow(1 + i, n))) / (Math.pow(1 + i, n) - 1);
 
-function construirTabla(valor: number, tea: number, n: number, seguros: number): Row[] {
+function construirTabla(
+  valor: number,
+  tea: number,
+  n: number,
+  seguros: number,
+  freshCOP: number = 0,
+  freshCuotas: number = 0,
+): Row[] {
   const i = tasaMensualFromTEA(tea);
   const cuota = cuotaFija(valor, i, n);
+  const fCuotas = Math.min(Math.max(0, Math.floor(freshCuotas || 0)), FRESH_MAX_CUOTAS);
+  const fCOP = Math.max(0, freshCOP || 0);
   const rows: Row[] = [];
   let saldo = valor;
   for (let p = 1; p <= n; p++) {
-    const interes = saldo * i;
-    let capital = cuota - interes;
+    const interesBase = saldo * i;
+    let capital = cuota - interesBase;
     if (p === n) capital = saldo;
     const saldoFinal = Math.max(0, saldo - capital);
-    rows.push({ periodo: p, saldoInicial: saldo, cuota, interes, capital, seguros, totalCuota: cuota + seguros, saldoFinal });
+    const fresh = p <= fCuotas ? fCOP : 0;
+    const interesTotal = interesBase + fresh;
+    rows.push({
+      periodo: p,
+      saldoInicial: saldo,
+      cuota,
+      interes: interesTotal,
+      interesBase,
+      fresh,
+      capital,
+      seguros,
+      totalCuota: cuota + seguros + fresh,
+      saldoFinal,
+    });
     saldo = saldoFinal;
   }
   return rows;
 }
 
-function construirTablaUVR(valorUVR: number, teaUVR: number, n: number, uvr0: number, varAnual: number, segurosCOP: number): Row[] {
+function construirTablaUVR(
+  valorUVR: number,
+  teaUVR: number,
+  n: number,
+  uvr0: number,
+  varAnual: number,
+  segurosCOP: number,
+  freshCOP: number = 0,
+  freshCuotas: number = 0,
+): Row[] {
+  const fCuotas = Math.min(Math.max(0, Math.floor(freshCuotas || 0)), FRESH_MAX_CUOTAS);
+  const fCOP = Math.max(0, freshCOP || 0);
   return construirTabla(valorUVR, teaUVR, n, 0).map((r) => {
     const uvrT = uvr0 * Math.pow(1 + varAnual, (r.periodo - 1) / 12);
     const cuotaCOP = r.cuota * uvrT;
+    const interesBaseCOP = r.interesBase * uvrT;
+    const fresh = r.periodo <= fCuotas ? fCOP : 0;
     return {
       periodo: r.periodo,
       saldoInicial: r.saldoInicial * uvrT,
       cuota: cuotaCOP,
-      interes: r.interes * uvrT,
+      interes: interesBaseCOP + fresh,
+      interesBase: interesBaseCOP,
+      fresh,
       capital: r.capital * uvrT,
       seguros: segurosCOP,
-      totalCuota: cuotaCOP + segurosCOP,
+      totalCuota: cuotaCOP + segurosCOP + fresh,
       saldoFinal: r.saldoFinal * uvrT,
     };
   });
 }
+
 
 const findBreakEven = (rows: Row[]) => rows.find((r) => r.capital >= r.interes)?.periodo ?? null;
 
@@ -171,6 +213,8 @@ function AmortizationEngine() {
   const [valor, setValor] = useState("");
   const [periodo, setPeriodo] = useState("");
   const [seguros, setSeguros] = useState("");
+  const [freshValor, setFreshValor] = useState("");
+  const [freshCuotasStr, setFreshCuotasStr] = useState("");
   const [uvrInicial, setUvrInicial] = useState("");
   const [varUvr, setVarUvr] = useState("");
   const [fechaDesembolso, setFechaDesembolso] = useState<string>(() => {
@@ -197,6 +241,8 @@ function AmortizationEngine() {
     plazo: string;
     valor: string;
     seguros: string;
+    freshValor: string;
+    freshCuotas: string;
     uvrInicial: string;
     varUvr: string;
     fechaDesembolso: string;
@@ -224,6 +270,8 @@ function AmortizationEngine() {
   const valorNum = parseFloat(valor) || 0;
   const periodoNum = parseInt(periodo) || 0;
   const segurosNum = parseFloat(seguros) || 0;
+  const freshValorNum = parseFloat(freshValor) || 0;
+  const freshCuotasNum = Math.min(parseInt(freshCuotasStr) || 0, FRESH_MAX_CUOTAS);
   const uvrInicialNum = parseFloat(uvrInicial) || 0;
   const varUvrNum = parseFloat(varUvr) / 100 || 0;
   const tasaMensual = teaNum > 0 ? tasaMensualFromTEA(teaNum) : 0;
@@ -232,10 +280,10 @@ function AmortizationEngine() {
     if (!calculated || teaNum <= 0 || plazoNum <= 0 || valorNum <= 0) return [];
     if (modo === "uvr") {
       if (uvrInicialNum <= 0) return [];
-      return construirTablaUVR(valorNum, teaNum, plazoNum, uvrInicialNum, varUvrNum, segurosNum);
+      return construirTablaUVR(valorNum, teaNum, plazoNum, uvrInicialNum, varUvrNum, segurosNum, freshValorNum, freshCuotasNum);
     }
-    return construirTabla(valorNum, teaNum, plazoNum, segurosNum);
-  }, [calculated, modo, teaNum, plazoNum, valorNum, segurosNum, uvrInicialNum, varUvrNum]);
+    return construirTabla(valorNum, teaNum, plazoNum, segurosNum, freshValorNum, freshCuotasNum);
+  }, [calculated, modo, teaNum, plazoNum, valorNum, segurosNum, uvrInicialNum, varUvrNum, freshValorNum, freshCuotasNum]);
 
   const currentRow = rows[Math.min(Math.max(periodoNum, 1), rows.length) - 1];
   const insight = useMemo(() => (rows.length ? generateInsight(rows, periodoNum) : ""), [rows, periodoNum]);
@@ -271,6 +319,7 @@ function AmortizationEngine() {
 
   function handleReset() {
     setTea(""); setPlazo(""); setValor(""); setPeriodo(""); setSeguros("");
+    setFreshValor(""); setFreshCuotasStr("");
     setUvrInicial(""); setVarUvr("");
     setCalculated(false); setLastCalc(null);
   }
@@ -288,7 +337,9 @@ function AmortizationEngine() {
     const s: Scenario = {
       id: crypto.randomUUID(),
       nombre, ts: Date.now(),
-      modo, tea, plazo, valor, seguros, uvrInicial, varUvr, fechaDesembolso,
+      modo, tea, plazo, valor, seguros,
+      freshValor, freshCuotas: freshCuotasStr,
+      uvrInicial, varUvr, fechaDesembolso,
     };
     const next = [s, ...scenarios].slice(0, 10);
     persistScenarios(next);
@@ -296,7 +347,9 @@ function AmortizationEngine() {
   }
   function handleLoadScenario(s: Scenario) {
     setModo(s.modo); setTea(s.tea); setPlazo(s.plazo); setValor(s.valor);
-    setSeguros(s.seguros); setUvrInicial(s.uvrInicial); setVarUvr(s.varUvr);
+    setSeguros(s.seguros);
+    setFreshValor(s.freshValor || ""); setFreshCuotasStr(s.freshCuotas || "");
+    setUvrInicial(s.uvrInicial); setVarUvr(s.varUvr);
     setFechaDesembolso(s.fechaDesembolso || fechaDesembolso);
     setCalculated(false);
     toast.success(`Escenario "${s.nombre}" cargado — presiona Calcular`);
@@ -379,8 +432,8 @@ function AmortizationEngine() {
       [`Valor: ${valorNum}`, `Plazo: ${plazoNum}m`, `Seguros: ${segurosNum}`],
       [`Punto de equilibrio: cuota ${breakEven ?? "—"} (${breakEvenFecha})`],
       [],
-      ["Periodo", "Fecha", "Saldo inicial", "Cuota financiera", "Interés", "Capital", "Seguros", "Total cuota", "Saldo final"],
-      ...rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interes), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
+      ["Periodo", "Fecha", "Saldo inicial", "Cuota financiera", "Interés base", "Fresh", "Capital", "Seguros", "Total cuota", "Saldo final"],
+      ...rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interesBase), Math.round(r.fresh), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
     ];
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -400,8 +453,8 @@ function AmortizationEngine() {
     doc.setTextColor(0);
     autoTable(doc, {
       startY: 72,
-      head: [["#", "Fecha", "Saldo inicial", "Cuota", "Interés", "Capital", "Seguros", "Total", "Saldo final"]],
-      body: rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interes), fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
+      head: [["#", "Fecha", "Saldo inicial", "Cuota", "Interés base", "Fresh", "Capital", "Seguros", "Total", "Saldo final"]],
+      body: rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interesBase), r.fresh > 0 ? fmtCOP(r.fresh) : "—", fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
       styles: { fontSize: 7 },
       headStyles: { fillColor: [15, 26, 51] },
     });
@@ -533,7 +586,7 @@ function AmortizationEngine() {
                 >
                   <div className="flex items-center gap-2">
                     <Wand2 className="h-3.5 w-3.5 text-[#84B98F]" />
-                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Convertidor Tasa Fresh</span>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Convertidor de tasa (EA · MV · NMV · NAMV · NASV)</span>
                   </div>
                   <ChevronDown className={`h-3.5 w-3.5 text-white/50 transition-transform ${showConverter ? "rotate-180" : ""}`} />
                 </button>
@@ -631,6 +684,41 @@ function AmortizationEngine() {
                 )}
                 <InputTile icon={<Target className="h-3.5 w-3.5" />} label="Periodo a consultar" value={periodo} onChange={setPeriodo} suffix={`/ ${plazoNum || "n"}`} placeholder="3" />
                 <InputTile icon={<ShieldCheck className="h-3.5 w-3.5" />} label="Seguros mensuales (COP)" value={seguros} onChange={setSeguros} prefix="$" placeholder="212.047" />
+
+                {/* Tasa Fresh (subsidio / componente adicional del interés) */}
+                <div className="rounded-xl border border-[#B58BFF]/25 bg-[#B58BFF]/[0.05] px-3.5 py-3 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#D6C0FF]">
+                      <Wand2 className="h-3.5 w-3.5" /> Tasa Fresh
+                    </div>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">máx. {FRESH_MAX_CUOTAS} cuotas</span>
+                  </div>
+                  <div className="text-[10.5px] text-white/50 leading-snug">Valor mensual en pesos que se suma al interés durante las primeras N cuotas.</div>
+                  <InputTile
+                    icon={<DollarSign className="h-3.5 w-3.5" />}
+                    label="Valor Fresh mensual (COP)"
+                    value={freshValor}
+                    onChange={setFreshValor}
+                    prefix="$"
+                    placeholder="150.000"
+                  />
+                  <InputTile
+                    icon={<Clock className="h-3.5 w-3.5" />}
+                    label={`Cuotas Fresh (1 – ${FRESH_MAX_CUOTAS})`}
+                    value={freshCuotasStr}
+                    onChange={(v) => {
+                      const n = parseInt(v.replace(/[^0-9]/g, "")) || 0;
+                      setFreshCuotasStr(String(Math.min(n, FRESH_MAX_CUOTAS) || ""));
+                    }}
+                    suffix="cuotas"
+                    placeholder="60"
+                  />
+                  {freshValorNum > 0 && freshCuotasNum > 0 && (
+                    <div className="rounded-lg border border-[#B58BFF]/25 bg-[#B58BFF]/[0.08] px-2.5 py-1.5 text-[10.5px] text-[#D6C0FF] tabular-nums">
+                      Aporte total Fresh: <span className="font-bold text-white">{fmtCOP(freshValorNum * freshCuotasNum)}</span> en {freshCuotasNum} cuotas
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Tasa mensual equivalente */}
@@ -834,7 +922,8 @@ function AmortizationEngine() {
                         <th className="px-4 py-3 font-semibold">Fecha</th>
                         <th className="px-4 py-3 font-semibold">Saldo inicial</th>
                         <th className="px-4 py-3 font-semibold">Cuota financiera</th>
-                        <th className="px-4 py-3 font-semibold">Interés</th>
+                        <th className="px-4 py-3 font-semibold">Interés base</th>
+                        <th className="px-4 py-3 font-semibold text-[#D6C0FF]">Fresh</th>
                         <th className="px-4 py-3 font-semibold">Capital</th>
                         <th className="px-4 py-3 font-semibold">Seguros</th>
                         <th className="px-4 py-3 font-semibold">Total cuota</th>
@@ -844,7 +933,7 @@ function AmortizationEngine() {
                     <tbody>
                       {rows.length === 0 ? (
                         <tr>
-                          <td colSpan={9} className="px-4 py-10 text-center text-white/40 text-[12px]">
+                          <td colSpan={10} className="px-4 py-10 text-center text-white/40 text-[12px]">
                             Ingresa los datos y presiona <span className="text-white/80 font-semibold">Calcular cuota</span> para ver la tabla completa.
                           </td>
                         </tr>
@@ -885,7 +974,8 @@ function AmortizationEngine() {
                               <td className="px-4 py-3 text-white/70 text-[11.5px]">{fechaCuota(fechaDesembolso, r.periodo)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.saldoInicial)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.cuota)}</td>
-                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.interes)}</td>
+                              <td className="px-4 py-3 text-white/85">{fmtCOP(r.interesBase)}</td>
+                              <td className={`px-4 py-3 tabular-nums ${r.fresh > 0 ? "text-[#D6C0FF] font-semibold" : "text-white/30"}`}>{r.fresh > 0 ? fmtCOP(r.fresh) : "—"}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.capital)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.seguros)}</td>
                               <td className="px-4 py-3 text-white font-semibold">{fmtCOP(r.totalCuota)}</td>
