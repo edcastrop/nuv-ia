@@ -1,7 +1,8 @@
 import { Card, SectionTitle, TextField, Alert } from "./ui";
-import { NUVEX } from "./constants";
+import { NSelect } from "@/components/nuvia";
 import { formatCOP } from "../../lib/format";
 import { HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
+
 
 export type DiscountType = "percent" | "fixed";
 
