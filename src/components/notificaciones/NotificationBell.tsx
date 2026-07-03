@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bell, CheckCheck, X, ExternalLink } from "lucide-react";
 import { Link, useRouter } from "@tanstack/react-router";
 import { useNotificaciones } from "@/hooks/useNotificaciones";
@@ -83,17 +84,27 @@ export function NotificationBell() {
   const filtered = tab === "todas" ? items : items.filter((n) => categorize(n) === tab);
 
 
+  const navegarA = (link: string) => {
+    if (/^https?:\/\//i.test(link)) {
+      window.location.assign(link);
+      return;
+    }
+    try {
+      const p = router.navigate({ to: link }) as unknown as Promise<unknown> | undefined;
+      if (p && typeof (p as Promise<unknown>).catch === "function") {
+        (p as Promise<unknown>).catch(() => window.location.assign(link));
+      }
+    } catch {
+      window.location.assign(link);
+    }
+  };
+
   const abrirDetalle = (n: Notificacion) => {
     if (!n.leida) void leer(n.id);
     setOpen(false);
+    setDetalle(null);
     if (n.link) {
-      const link = n.link;
-      try {
-        if (/^https?:\/\//i.test(link)) window.location.href = link;
-        else router.navigate({ to: link });
-      } catch {
-        window.location.href = link;
-      }
+      navegarA(n.link);
       return;
     }
     setDetalle(n);
@@ -103,12 +114,7 @@ export function NotificationBell() {
     if (!detalle?.link) return;
     const link = detalle.link;
     setDetalle(null);
-    try {
-      if (/^https?:\/\//i.test(link)) window.location.href = link;
-      else router.navigate({ to: link });
-    } catch {
-      window.location.href = link;
-    }
+    navegarA(link);
   };
 
   return (
@@ -135,8 +141,9 @@ export function NotificationBell() {
           )}
         </button>
 
-        {open && anchor && (
+        {open && anchor && typeof document !== "undefined" && createPortal(
           <div
+
             className="glass-modal w-[380px] max-h-[480px] overflow-hidden flex flex-col"
             style={{
               position: "fixed",
@@ -280,15 +287,19 @@ export function NotificationBell() {
                 Ver todo el centro de alertas →
               </Link>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
 
-      {detalle && (
+
+      {detalle && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          style={{ zIndex: 2147483000 }}
           onClick={() => setDetalle(null)}
         >
+
           <div
             className="glass-modal w-full max-w-lg overflow-hidden"
             style={{ color: "var(--nuvia-text-primary)" }}
@@ -423,8 +434,10 @@ export function NotificationBell() {
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
     </>
+
   );
 }
