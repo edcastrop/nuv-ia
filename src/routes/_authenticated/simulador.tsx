@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, useRouterState, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ModeSelector } from "@/components/nuvex/ModeSelector";
