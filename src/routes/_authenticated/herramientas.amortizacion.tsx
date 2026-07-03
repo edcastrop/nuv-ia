@@ -312,33 +312,34 @@ function AmortizationEngine() {
     try {
       const { data, error } = await supabase
         .from("expedientes")
-        .select("codigo, cliente_data, extracto_data")
+        .select("codigo, cliente_nombre, modo, cliente_data, credito_data")
         .ilike("codigo", `%${cod}%`)
         .limit(1)
         .maybeSingle();
       if (error) throw error;
       if (!data) { toast.error("Expediente no encontrado"); return; }
       const cd: any = data.cliente_data || {};
-      const ed: any = data.extracto_data || {};
-      const moneda: string = ed.monedaDetectada || (ed.uvr ? "uvr" : "pesos");
+      const cr: any = data.credito_data || {};
+      const moneda: string = (data.modo === "uvr" || cr.uvr) ? "uvr" : "pesos";
       if (moneda === "uvr") setModo("uvr"); else setModo("pesos");
       let filled = 0;
       if (cd.plazoInicial) { setPlazo(String(cd.plazoInicial)); filled++; }
+      else if (cr.plazoInicial) { setPlazo(String(cr.plazoInicial)); filled++; }
       if (moneda === "uvr") {
-        if (ed.uvr?.teaCobrada) { setTea(String(ed.uvr.teaCobrada)); filled++; }
-        if (ed.uvr?.saldoUVR) { setValor(String(ed.uvr.saldoUVR)); filled++; }
-        if (ed.uvr?.valorUVR) { setUvrInicial(String(ed.uvr.valorUVR)); filled++; }
-        if (ed.uvr?.seguros) { setSeguros(String(ed.uvr.seguros)); filled++; }
+        if (cr.uvr?.teaCobrada) { setTea(String(cr.uvr.teaCobrada)); filled++; }
+        if (cr.uvr?.saldoUVR) { setValor(String(cr.uvr.saldoUVR)); filled++; }
+        if (cr.uvr?.valorUVR) { setUvrInicial(String(cr.uvr.valorUVR)); filled++; }
+        if (cr.uvr?.seguros) { setSeguros(String(cr.uvr.seguros)); filled++; }
       } else {
-        if (ed.pesos?.tea) { setTea(String(ed.pesos.tea)); filled++; }
-        const vb = ed.pesos?.valorDesembolsado && parseFloat(ed.pesos.valorDesembolsado) > 0 ? ed.pesos.valorDesembolsado : ed.pesos?.saldoCapital || "";
+        if (cr.pesos?.tea || cr.tea) { setTea(String(cr.pesos?.tea ?? cr.tea)); filled++; }
+        const vb = cr.pesos?.valorDesembolsado ?? cr.pesos?.saldoCapital ?? cr.valorDesembolsado ?? cr.saldoCapital ?? "";
         if (vb) { setValor(String(vb)); filled++; }
-        if (ed.pesos?.seguros) { setSeguros(String(ed.pesos.seguros)); filled++; }
+        if (cr.pesos?.seguros ?? cr.seguros) { setSeguros(String(cr.pesos?.seguros ?? cr.seguros)); filled++; }
       }
       setCalculated(false);
       setImportOpen(false);
       setImportCodigo("");
-      toast.success(`${data.codigo} importado (${filled} campos)`);
+      toast.success(`${data.codigo} — ${data.cliente_nombre ?? "sin nombre"} (${filled} campos)`);
     } catch (e: any) {
       toast.error(e?.message || "Error al importar");
     } finally {
