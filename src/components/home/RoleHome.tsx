@@ -314,7 +314,7 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
             </button>
           </div>
           <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
-            {config.quickActions.slice(0, 8).map((a) => (
+            {config.quickActions.map((a) => (
               <QuickActionTile key={a.to + a.label} action={a} />
             ))}
           </div>
