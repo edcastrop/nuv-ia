@@ -16,7 +16,9 @@ import {
   Scale,
   Users,
   GitBranch,
+  Rocket,
 } from "lucide-react";
+
 import { NUVEX } from "@/components/nuvex/constants";
 
 export const Route = createFileRoute("/_authenticated/herramientas/")({
