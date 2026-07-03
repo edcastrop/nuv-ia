@@ -321,7 +321,7 @@ function ColaboracionPage() {
 
           {/* --------- COLUMN 4: CASE INTELLIGENCE --------- */}
           {showRight && (
-            <GlassPanel>
+            <GlassPanel className="hidden xl:flex">
               <PanelHeader label="CASE INTELLIGENCE" accent="#10B981" right={<Sparkles size={12} style={{ color: "#6EE7B7" }} />} />
               <CaseIntelligence canal={canalActivo} sla={canalActivo ? slaOf(canalActivo.id) : 0} etapa={canalActivo ? etapaOf(canalActivo.id) : ""} />
             </GlassPanel>
