@@ -1,7 +1,8 @@
 import { Card, SectionTitle, TextField, Alert } from "./ui";
-import { NUVEX } from "./constants";
+import { NSelect } from "@/components/nuvia";
 import { formatCOP } from "../../lib/format";
 import { HONORARIOS_MIN_BASE, HONORARIOS_MIN_FINAL } from "../../lib/finance";
+
 
 export type DiscountType = "percent" | "fixed";
 
@@ -100,18 +101,19 @@ export function DiscountModule({
         Descuento comercial (opcional)
       </SectionTitle>
       <div className="grid gap-4 md:grid-cols-4">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs font-medium uppercase tracking-wide text-[#242424]/70">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[11px] font-semibold tracking-[0.08em] uppercase" style={{ color: "rgba(225,232,248,0.65)" }}>
             Tipo de descuento
           </span>
-          <select
+          <NSelect
             value={safeState.type}
-            onChange={(e) => set("type", e.target.value as DiscountType)}
-            className="rounded-lg border border-[#E3E7EE] bg-white px-3 py-2.5 text-sm outline-none focus:border-[#445DA3] focus:ring-2 focus:ring-[#445DA3]/15"
-          >
-            <option value="percent">Porcentaje (%)</option>
-            <option value="fixed">Valor fijo ($)</option>
-          </select>
+            onValueChange={(v) => set("type", v as DiscountType)}
+            options={[
+              { value: "percent", label: "Porcentaje (%)" },
+              { value: "fixed", label: "Valor fijo ($)" },
+            ]}
+            compact={false}
+          />
         </label>
         <TextField
           label={safeState.type === "percent" ? "Descuento (%)" : "Descuento ($)"}
@@ -126,22 +128,29 @@ export function DiscountModule({
           placeholder="30 nov 2026"
         />
         <div
-          className="flex flex-col justify-center rounded-xl p-3"
-          style={{ backgroundColor: NUVEX.verdeClaro, border: `2px solid ${NUVEX.verde}` }}
+          className="flex flex-col justify-center rounded-xl p-3.5"
+          style={{
+            background:
+              "linear-gradient(140deg, rgba(31,210,134,0.14) 0%, rgba(31,210,134,0.05) 100%)",
+            border: "1px solid rgba(31,210,134,0.40)",
+            boxShadow:
+              "0 0 24px -8px rgba(31,210,134,0.35), inset 0 1px 0 rgba(255,255,255,0.05)",
+          }}
         >
-          <div className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "#1F7A45" }}>
+          <div className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: "#7EE5B0" }}>
             Honorarios finales
           </div>
-          <div className="mt-0.5 text-xl font-extrabold leading-tight" style={{ color: "#1F7A45" }}>
+          <div className="mt-1 text-xl font-extrabold leading-tight" style={{ color: "#B8F5D2" }}>
             {formatCOP(final)}
           </div>
           {hasDiscount && (
-            <div className="text-[10px]" style={{ color: "#1F7A45", opacity: 0.85 }}>
-              Honorarios originales {formatCOP(honorariosBase)} · Descuento −{formatCOP(descuento)}
+            <div className="mt-1 text-[10px] font-medium" style={{ color: "rgba(184,245,210,0.80)" }}>
+              Originales {formatCOP(honorariosBase)} · −{formatCOP(descuento)}
             </div>
           )}
         </div>
       </div>
+
       {bloqueado && (
         <div className="mt-3">
           <Alert tone="error">
