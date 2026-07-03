@@ -107,7 +107,7 @@ async function cargarToleranciasActivas(
 
 export type DraftAuditHallazgo = {
   mensaje: string;
-  severidad: "critica" | "alta" | "media" | "baja";
+  severidad: "info" | "warning" | "critica";
   campo?: string | null;
   motor?: string | null;
 };
@@ -115,7 +115,7 @@ export type DraftAuditHallazgo = {
 export type DraftAuditResult = {
   score: number;
   categoria: "excelente" | "aprobado" | "revisar" | "rechazado";
-  dictamen: "excelente" | "aprobado" | "aprobado_obs" | "requiere_revision" | "rechazado";
+  dictamen: "aprobado" | "aprobado_obs" | "requiere_revision" | "rechazado";
   criticos: number;
   totalHallazgos: number;
   hallazgos: DraftAuditHallazgo[];
