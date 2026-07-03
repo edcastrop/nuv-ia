@@ -115,7 +115,7 @@ const MILESTONES = [
 function CasosPage() {
   type CasosSearch = z.infer<typeof casosSearchSchema>;
   const urlSearch = Route.useSearch();
-  const navigate = useNavigate({ from: "/casos" });
+  const navigate = useNavigate({ from: "/casos/" });
   const { user } = useAuth();
   const { q: search, estado, etapa, mios } = urlSearch;
   const [qLocal, setQLocal] = useState(search);
