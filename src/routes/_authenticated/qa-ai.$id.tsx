@@ -1466,7 +1466,7 @@ function ResultadoQaAi() {
         </div>
       </Accordion>
 
-      <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} auditoriaId={id} />
+      <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} auditoriaId={id} expedienteId={expedienteIdCert} />
     </PageLayout>
   );
 }
