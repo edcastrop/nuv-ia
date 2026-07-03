@@ -43,6 +43,15 @@ const T = (n: string) => supabase.from(n as never);
 
 const cleanName = (value?: string | null) => value?.replace(/\s+/g, " ").trim() || "";
 
+async function waitForAuthSession(maxAttempts = 8): Promise<boolean> {
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.user) return true;
+    await new Promise((resolve) => window.setTimeout(resolve, 150));
+  }
+  return false;
+}
+
 const capitalizeNamePart = (value: string) =>
   value ? value.charAt(0).toUpperCase() + value.slice(1).toLowerCase() : value;
 
@@ -408,8 +417,8 @@ export function labelRol(r: string): string {
 }
 
 export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return [];
+  const hasSession = await waitForAuthSession();
+  if (!hasSession) return [];
   const { data, error } = await supabase.rpc("list_colaboradores_publicos" as never);
   if (error) throw error;
   const rows = (data ?? []) as any[];
