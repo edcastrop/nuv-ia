@@ -213,6 +213,8 @@ function AmortizationEngine() {
   const [valor, setValor] = useState("");
   const [periodo, setPeriodo] = useState("");
   const [seguros, setSeguros] = useState("");
+  const [freshValor, setFreshValor] = useState("");
+  const [freshCuotasStr, setFreshCuotasStr] = useState("");
   const [uvrInicial, setUvrInicial] = useState("");
   const [varUvr, setVarUvr] = useState("");
   const [fechaDesembolso, setFechaDesembolso] = useState<string>(() => {
