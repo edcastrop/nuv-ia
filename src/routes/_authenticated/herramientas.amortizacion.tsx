@@ -121,6 +121,45 @@ function generateInsight(rows: Row[], periodo: number): string {
 const fmtCOP = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v || 0);
 
+// -------- Fecha por cuota (desembolso + n meses) ------
+function fechaCuota(base: string, periodo: number): string {
+  if (!base) return "—";
+  const [y, m] = base.split("-").map(Number);
+  if (!y || !m) return "—";
+  const d = new Date(y, m - 1 + periodo, 1);
+  const label = d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+// -------- Convertidor de tasa (Tasa Fresh) ------
+export type TasaTipo = "EA" | "MV" | "NMV" | "NAMV" | "NASV";
+export const TASA_LABELS: Record<TasaTipo, string> = {
+  EA: "Efectiva Anual",
+  MV: "Mes Vencido",
+  NMV: "Nominal Mensual Vencido",
+  NAMV: "Nominal Anual Mes Vencido",
+  NASV: "Nominal Anual Semestre Vencido",
+};
+export function tasaToEA(tasa: number, tipo: TasaTipo): number {
+  const r = tasa / 100;
+  switch (tipo) {
+    case "EA": return r;
+    case "MV": return Math.pow(1 + r, 12) - 1;
+    case "NMV": return Math.pow(1 + r, 12) - 1;
+    case "NAMV": return Math.pow(1 + r / 12, 12) - 1;
+    case "NASV": return Math.pow(1 + r / 2, 2) - 1;
+  }
+}
+export function eaToTasa(ea: number, tipo: TasaTipo): number {
+  switch (tipo) {
+    case "EA": return ea;
+    case "MV": return Math.pow(1 + ea, 1 / 12) - 1;
+    case "NMV": return Math.pow(1 + ea, 1 / 12) - 1;
+    case "NAMV": return (Math.pow(1 + ea, 1 / 12) - 1) * 12;
+    case "NASV": return (Math.pow(1 + ea, 1 / 2) - 1) * 2;
+  }
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
