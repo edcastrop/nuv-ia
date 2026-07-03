@@ -254,11 +254,8 @@ export function SimuladorPage() {
     }
   };
 
-  const simReturn = maestroId
-    ? { maestroId, modo: mode ?? undefined }
-    : draftMode
-    ? { draft: true as const }
-    : undefined;
+  const simReturn = maestroId ? { maestroId, modo: mode ?? undefined } : undefined;
+
 
   return (
     <div>
