@@ -143,6 +143,13 @@ function construirTablaUVR(
       seguros: segurosCOP,
       totalCuota: cuotaCOP + segurosCOP + fresh,
       saldoFinal: r.saldoFinal * uvrT,
+      // Nativos en UVR
+      uvrValor: uvrT,
+      saldoInicialUVR: r.saldoInicial,
+      cuotaUVR: r.cuota,
+      interesUVR: r.interesBase,
+      capitalUVR: r.capital,
+      saldoFinalUVR: r.saldoFinal,
     };
   });
 }
