@@ -1,22 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 
-// ─── Tipos livianos ────────────────────────────────────────────────────
+// ─── Tipos livianos (serializables) ────────────────────────────────────
 export type QAConvRow = {
   id: string; titulo: string; expediente_id: string | null; auditoria_id: string | null;
-  contexto: Record<string, unknown>; updated_at: string; created_at: string;
+  contexto: Json; updated_at: string; created_at: string;
 };
 
 export type QAMsgRow = {
   id: string; role: "system" | "user" | "assistant" | "tool";
-  content: string | null; tool_calls: unknown | null; tool_call_id: string | null;
-  tool_name: string | null; citas: unknown | null; created_at: string;
+  content: string | null; tool_calls: Json; tool_call_id: string | null;
+  tool_name: string | null; citas: Json; created_at: string;
 };
 
 export type QASugerenciaRow = {
   id: string; conversacion_id: string; expediente_id: string | null; auditoria_id: string | null;
-  tipo: string; titulo: string; propuesta: Record<string, unknown>; justificacion: string | null;
+  tipo: string; titulo: string; propuesta: Json; justificacion: string | null;
   estado: "pendiente" | "aprobada" | "rechazada";
   creada_por: string | null; aprobada_por: string | null; aprobada_at: string | null;
   created_at: string;
