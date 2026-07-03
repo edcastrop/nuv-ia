@@ -133,7 +133,7 @@ function DireccionConsultasTecnicasPage() {
       <KpiGrid cols={4}>
         <KpiCard label="Total" value={String(kpis.total)} icon={<MessageSquare size={14} />} />
         <KpiCard label="Pendientes" value={String(kpis.pend)} icon={<ShieldAlert size={14} />} tone="warning" />
-        <KpiCard label="Resueltas" value={String(kpis.resu)} icon={<CheckCircle2 size={14} />} tone="success" />
+        <KpiCard label="Resueltas" value={String(kpis.resu)} icon={<CheckCircle2 size={14} />} tone="green" />
         <KpiCard label="Descartadas" value={String(kpis.desc)} icon={<XCircle size={14} />} tone="danger" />
       </KpiGrid>
 
