@@ -23,7 +23,16 @@ import {
   FileDown,
   Zap,
   Command,
+  Pin,
+  PinOff,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Briefcase,
+  MessageSquarePlus,
 } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserRole, type AppRole } from "@/hooks/useUserRole";
 
 type Tab = "tvm" | "tasas" | "amort" | "vpn" | "hist";
@@ -831,13 +840,85 @@ const btnGhost: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 6,
 };
 
+/* ============ CASE CONTEXT ============ */
+type CaseCtx = {
+  expedienteId: string;
+  codigo: string | null;
+  cliente: string | null;
+  banco: string | null;
+  numeroCredito: string | null;
+  modo: string | null;
+  analista: string | null;
+  qaScore: number | null;
+} | null;
+
+function useCaseContext(): CaseCtx {
+  const pathname = useRouterState({ select: (r) => r.location.pathname });
+  const [ctx, setCtx] = useState<CaseCtx>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    async function load() {
+      // Match /casos/:id o /qa-ai/:id
+      const mCaso = pathname.match(/^\/casos\/([0-9a-f-]{36})/i);
+      const mQA = pathname.match(/^\/qa-ai\/([0-9a-f-]{36})/i);
+      let expedienteId: string | null = null;
+      if (mCaso) expedienteId = mCaso[1];
+      else if (mQA) {
+        // qa-ai/:auditoriaId → resolver expediente_id
+        const { data: aud } = await supabase
+          .from("qa_auditorias")
+          .select("expediente_id")
+          .eq("id", mQA[1])
+          .maybeSingle();
+        expedienteId = aud?.expediente_id ?? null;
+      }
+      if (!expedienteId) { if (!cancel) setCtx(null); return; }
+      const { data: exp } = await supabase
+        .from("expedientes")
+        .select("id,codigo,cliente_nombre,banco,numero_credito,modo,asesor_id,qa_score")
+        .eq("id", expedienteId)
+        .maybeSingle();
+      if (!exp) { if (!cancel) setCtx(null); return; }
+      let analistaNombre: string | null = null;
+      if (exp.asesor_id) {
+        const { data: p } = await supabase
+          .from("profiles")
+          .select("nombre")
+          .eq("id", exp.asesor_id)
+          .maybeSingle();
+        analistaNombre = p?.nombre ?? null;
+      }
+      if (cancel) return;
+      setCtx({
+        expedienteId: exp.id,
+        codigo: exp.codigo ?? null,
+        cliente: exp.cliente_nombre ?? null,
+        banco: exp.banco ?? null,
+        numeroCredito: exp.numero_credito ?? null,
+        modo: exp.modo ?? null,
+        analista: analistaNombre,
+        qaScore: typeof exp.qa_score === "number" ? exp.qa_score : null,
+      });
+    }
+    load();
+    return () => { cancel = true; };
+  }, [pathname]);
+  return ctx;
+}
+
 /* ============ ROOT ============ */
+type Mode = "closed" | "mini" | "panel" | "expanded";
+const PIN_KEY = "nuvia.finCalc.pinned";
+
 export function FinancialCalculator() {
   const { roles } = useUserRole();
-  const [open, setOpen] = useState(false);
+  const [mode, setMode] = useState<Mode>("closed");
+  const [pinned, setPinned] = useState(false);
   const [tab, setTab] = useState<Tab>("tvm");
   const [hist, setHist] = useState<HistEntry[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const caseCtx = useCaseContext();
 
   // TVM state persistente al cambiar de tab
   const [tvm, setTvm] = useState<TvmState>({
@@ -860,19 +941,33 @@ export function FinancialCalculator() {
 
   useEffect(() => setHist(loadHist()), []);
   useEffect(() => {
+    try {
+      const p = window.localStorage.getItem(PIN_KEY);
+      if (p === "1") { setPinned(true); setMode("panel"); }
+    } catch { /* noop */ }
+  }, []);
+  useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setOpen((o) => !o);
+        setMode((m) => (m === "closed" || m === "mini" ? "panel" : "closed"));
       }
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape" && !pinned && mode === "expanded") setMode("panel");
+      else if (e.key === "Escape" && !pinned) setMode("closed");
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [pinned, mode]);
 
   const allowed = roles.some((r) => ALLOWED.includes(r));
   if (!allowed) return null;
+
+  const togglePin = () => {
+    const next = !pinned;
+    setPinned(next);
+    try { window.localStorage.setItem(PIN_KEY, next ? "1" : "0"); } catch { /* noop */ }
+    if (next && mode === "closed") setMode("panel");
+  };
 
   const pushHist = (label: string, detail: string, result: string) => {
     const entry: HistEntry = { id: crypto.randomUUID(), ts: Date.now(), tab, label, detail, result };
@@ -880,7 +975,6 @@ export function FinancialCalculator() {
     setHist(next); saveHist(next);
   };
 
-  // Panels producen: {center, orbit, result, mini, insight, body}
   const tvmView = TvmPanel({ state: tvm, setState: setTvm, onSave: pushHist });
   const tasasView = TasasPanel({
     ratePct: tasasRate, from: tasasFrom, m: tasasM,
@@ -904,260 +998,451 @@ export function FinancialCalculator() {
   const tabs: { id: Tab; label: string }[] = [
     { id: "tvm", label: "TVM" },
     { id: "tasas", label: "Tasas" },
-    { id: "amort", label: "Amortización" },
-    { id: "vpn", label: "VPN / TIR" },
-    { id: "hist", label: `Historial · ${hist.length}` },
+    { id: "amort", label: "Amort" },
+    { id: "vpn", label: "VPN/TIR" },
+    { id: "hist", label: `Hist·${hist.length}` },
   ];
+
+  const copyResult = async (label: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(`${label} → ${value}`);
+      setCopied("__toast");
+      setTimeout(() => setCopied(null), 1500);
+    } catch { /* noop */ }
+  };
+
+  const usarEnObservacionQA = () => {
+    if (!active) return;
+    const payload = {
+      expedienteId: caseCtx?.expedienteId ?? null,
+      tab, label: active.center, result: active.result,
+      detail: (active.mini ?? []).map((m) => `${m.k}: ${m.v}`).join(" · "),
+      insight: active.insight,
+      ts: Date.now(),
+    };
+    try {
+      window.dispatchEvent(new CustomEvent("nuvia:qa-observacion-append", { detail: payload }));
+      // Fallback: dejar copiado en portapapeles como bloque de texto listo para pegar
+      const bloque = `[NUVIA · ${tab.toUpperCase()}] ${active.center} = ${active.result}\n${payload.detail}\n→ ${active.insight}`;
+      void navigator.clipboard.writeText(bloque);
+      setCopied("__obs");
+      setTimeout(() => setCopied(null), 1800);
+    } catch { /* noop */ }
+  };
+
+  const guardarEnExpediente = () => {
+    if (!active) return;
+    pushHist(
+      `${tab.toUpperCase()}${caseCtx?.codigo ? ` · ${caseCtx.codigo}` : ""}`,
+      `${caseCtx?.cliente ?? "Sin caso"} · ${caseCtx?.banco ?? "-"} · ${active.result}`,
+      active.result,
+    );
+    setCopied("__saved");
+    setTimeout(() => setCopied(null), 1500);
+  };
+
+  /* ============ RENDER MODOS ============ */
+  const globalStyles = (
+    <style>{`
+      @keyframes feSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes feSpinReverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
+      @keyframes feBreathe {
+        0%, 100% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.06); filter: brightness(1.15); }
+      }
+      @keyframes feFloat {
+        0%, 100% { transform: translate(0,0); opacity: 0.5; }
+        50% { transform: translate(6px,-8px); opacity: 1; }
+      }
+      @keyframes feSlideIn {
+        from { opacity: 0; transform: translateX(24px); }
+        to { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes feFadeIn {
+        from { opacity: 0; transform: translateY(6px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes feMiniPulse {
+        0%, 100% { box-shadow: 0 14px 34px -8px ${N.glowVerde}, 0 0 0 4px rgba(11,18,32,0.6); }
+        50% { box-shadow: 0 14px 34px -8px ${N.glowVerde}, 0 0 0 4px rgba(11,18,32,0.6), 0 0 40px ${N.glowAzul}; }
+      }
+      .fe-input:focus {
+        border-color: rgba(132,185,143,0.7) !important;
+        box-shadow: 0 0 0 3px rgba(132,185,143,0.12) !important;
+        background: rgba(9,14,26,0.9) !important;
+      }
+    `}</style>
+  );
+
+  // ---------- FAB (modo mini) ----------
+  const fab = (
+    <button
+      onClick={() => setMode("panel")}
+      title="Abrir calculadora (Ctrl/⌘ + K)"
+      style={{
+        position: "fixed", right: 24, bottom: 96, zIndex: 9998,
+        height: 48, minWidth: 48, padding: "0 16px 0 12px",
+        borderRadius: 999,
+        border: "1px solid rgba(132,185,143,0.55)",
+        background: `linear-gradient(135deg, ${N.azul}, ${N.verde})`,
+        color: "#fff", cursor: "pointer",
+        animation: "feMiniPulse 3.4s ease-in-out infinite",
+        display: mode === "closed" || mode === "mini" ? "inline-flex" : "none",
+        alignItems: "center", gap: 8,
+        fontSize: 12, fontWeight: 800, letterSpacing: "0.06em",
+      }}
+    >
+      <Calculator size={18} />
+      <span>Calculadora</span>
+    </button>
+  );
+
+  // ---------- Header actions (pin / expand / min / close) ----------
+  const headerActions = (
+    <div style={{ display: "flex", gap: 6 }}>
+      <button
+        onClick={togglePin}
+        title={pinned ? "Desfijar" : "Fijar panel"}
+        style={miniBtn(pinned)}
+      >
+        {pinned ? <PinOff size={13} /> : <Pin size={13} />}
+      </button>
+      <button
+        onClick={() => setMode(mode === "expanded" ? "panel" : "expanded")}
+        title={mode === "expanded" ? "Contraer" : "Expandir"}
+        style={miniBtn(false)}
+      >
+        {mode === "expanded" ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
+      </button>
+      <button
+        onClick={() => setMode("mini")}
+        title="Minimizar"
+        style={miniBtn(false)}
+      >
+        <Minus size={13} />
+      </button>
+      <button
+        onClick={() => setMode("closed")}
+        title="Cerrar"
+        style={miniBtn(false)}
+      >
+        <X size={13} />
+      </button>
+    </div>
+  );
+
+  // ---------- Case context block ----------
+  const caseBlock = (
+    <div style={{
+      padding: "10px 12px",
+      borderRadius: 10,
+      border: `1px solid ${caseCtx ? "rgba(132,185,143,0.35)" : N.border}`,
+      background: caseCtx
+        ? `linear-gradient(135deg, rgba(132,185,143,0.10), rgba(9,14,26,0.6))`
+        : "rgba(9,14,26,0.4)",
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 6,
+        fontSize: 9, letterSpacing: "0.18em", color: N.verde,
+        textTransform: "uppercase", fontWeight: 800,
+      }}>
+        <Briefcase size={10} /> Contexto del caso
+      </div>
+      {caseCtx ? (
+        <div style={{
+          marginTop: 6, display: "grid",
+          gridTemplateColumns: "1fr 1fr", gap: "4px 10px",
+          fontSize: 11, color: N.text,
+        }}>
+          <CtxRow k="Código" v={caseCtx.codigo ?? "—"} />
+          <CtxRow k="Modalidad" v={caseCtx.modo ?? "—"} />
+          <CtxRow k="Cliente" v={caseCtx.cliente ?? "—"} full />
+          <CtxRow k="Banco" v={caseCtx.banco ?? "—"} />
+          <CtxRow k="Nº Crédito" v={caseCtx.numeroCredito ?? "—"} />
+          <CtxRow k="Analista" v={caseCtx.analista ?? "—"} />
+          <CtxRow k="QA Score" v={caseCtx.qaScore != null ? `${caseCtx.qaScore}` : "—"} />
+        </div>
+      ) : (
+        <div style={{ marginTop: 4, fontSize: 11, color: N.textFaint }}>
+          Sin expediente detectado — abre un caso o auditoría para vincular.
+        </div>
+      )}
+    </div>
+  );
+
+  // ---------- Sticky result ----------
+  const stickyResult = active && tab !== "hist" ? (
+    <div style={{
+      position: "sticky", top: 0, zIndex: 2,
+      padding: "10px 12px",
+      borderRadius: 12,
+      border: `1px solid ${N.border2}`,
+      background: `linear-gradient(135deg, rgba(68,93,163,0.16), rgba(132,185,143,0.10)), rgba(11,18,32,0.92)`,
+      backdropFilter: "blur(8px)",
+      boxShadow: `0 10px 34px -18px ${N.glowVerde}`,
+      display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+    }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{
+          fontSize: 9, letterSpacing: "0.18em", color: N.textDim,
+          textTransform: "uppercase", fontWeight: 800,
+        }}>
+          {tab.toUpperCase()} · {active.center}
+        </div>
+        <div style={{
+          fontSize: 20, fontWeight: 900, color: N.verde,
+          textShadow: `0 0 20px ${N.glowVerde}`,
+          fontVariantNumeric: "tabular-nums", lineHeight: 1.1,
+          whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        }}>{active.result}</div>
+      </div>
+      <button
+        onClick={() => copyResult(`${tab.toUpperCase()} · ${active.center}`, active.result)}
+        style={{ ...miniBtn(false), padding: "6px 10px", height: 30, gap: 4 }}
+        title="Copiar resultado"
+      >
+        <Copy size={12} /> {copied === "__toast" ? "OK" : "Copiar"}
+      </button>
+    </div>
+  ) : null;
+
+  // ---------- PANEL / DRAWER ----------
+  const drawerWidth = mode === "expanded" ? "min(1200px, 96vw)" : "clamp(420px, 34vw, 480px)";
+
+  const drawer = mode === "panel" || mode === "expanded" ? (
+    <>
+      {/* Backdrop solo en expanded o cuando no está pinneado */}
+      {(mode === "expanded" || (!pinned && mode === "panel")) && (
+        <div
+          onClick={() => (pinned ? setMode("panel") : setMode("closed"))}
+          style={{
+            position: "fixed", inset: 0, zIndex: 9997,
+            background: mode === "expanded" ? "rgba(3,6,15,0.72)" : "rgba(3,6,15,0.35)",
+            backdropFilter: mode === "expanded" ? "blur(6px)" : "blur(2px)",
+            pointerEvents: pinned && mode === "panel" ? "none" : "auto",
+          }}
+        />
+      )}
+      <aside
+        role="dialog"
+        aria-label="Calculadora Financiera NUVIA"
+        style={{
+          position: "fixed", top: 0, right: 0, bottom: 0, zIndex: 9998,
+          width: drawerWidth,
+          borderLeft: `1px solid ${N.border2}`,
+          background: `
+            radial-gradient(circle at 90% 8%, rgba(132,185,143,0.10), transparent 45%),
+            radial-gradient(circle at 10% 90%, rgba(68,93,163,0.14), transparent 45%),
+            linear-gradient(180deg, ${N.ink}, ${N.ink3})
+          `,
+          boxShadow: `-40px 0 100px -20px rgba(0,0,0,0.6), 0 0 60px -20px ${N.glowAzul}`,
+          display: "flex", flexDirection: "column",
+          animation: "feSlideIn .28s ease-out",
+        }}
+      >
+        {/* Grid sutil de fondo */}
+        <div aria-hidden style={{
+          position: "absolute", inset: 0, opacity: 0.05, pointerEvents: "none",
+          backgroundImage: `linear-gradient(${N.text} 1px, transparent 1px), linear-gradient(90deg, ${N.text} 1px, transparent 1px)`,
+          backgroundSize: "28px 28px",
+        }} />
+
+        {/* Header compacto */}
+        <div style={{
+          position: "relative", padding: "14px 16px",
+          borderBottom: `1px solid ${N.border}`,
+          display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 10,
+        }}>
+          <div style={{ minWidth: 0 }}>
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              fontSize: 9, letterSpacing: "0.22em",
+              color: N.verde, textTransform: "uppercase", fontWeight: 800,
+            }}>
+              <Sparkles size={10} /> NUVIA · Motor Financiero
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 3 }}>
+              <h2 style={{
+                margin: 0, fontSize: 16, fontWeight: 800,
+                color: N.text, letterSpacing: "-0.01em",
+              }}>Calculadora QA</h2>
+              <span style={{
+                fontSize: 9, letterSpacing: "0.14em", fontWeight: 800,
+                padding: "2px 7px", borderRadius: 999,
+                background: "rgba(132,185,143,0.14)",
+                color: N.verde, border: "1px solid rgba(132,185,143,0.4)",
+                textTransform: "uppercase",
+              }}>Modo Auditoría</span>
+            </div>
+            <p style={{ margin: "3px 0 0", fontSize: 11, color: N.textDim, lineHeight: 1.35 }}>
+              Herramienta de apoyo para auditoría financiera del expediente.
+            </p>
+          </div>
+          {headerActions}
+        </div>
+
+        {/* Body scroll */}
+        <div style={{ position: "relative", flex: 1, overflowY: "auto", padding: 14, display: "flex", flexDirection: "column", gap: 12 }}>
+          {caseBlock}
+          {stickyResult}
+
+          {/* Tabs */}
+          <div style={{
+            display: "flex", gap: 3, padding: 3,
+            borderRadius: 10,
+            background: "rgba(9,14,26,0.55)",
+            border: `1px solid ${N.border}`,
+          }}>
+            {tabs.map((t) => {
+              const on = tab === t.id;
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => setTab(t.id)}
+                  style={{
+                    flex: 1,
+                    padding: "7px 4px",
+                    borderRadius: 7,
+                    border: "1px solid transparent",
+                    background: on
+                      ? `linear-gradient(135deg, rgba(68,93,163,0.32), rgba(68,93,163,0.18))`
+                      : "transparent",
+                    boxShadow: on ? `0 0 16px -6px ${N.glowAzul}, inset 0 0 0 1px rgba(68,93,163,0.5)` : "none",
+                    color: on ? "#C6D4F5" : N.textDim,
+                    fontSize: 10.5, fontWeight: 800, letterSpacing: "0.04em",
+                    cursor: "pointer",
+                    transition: "all .18s ease",
+                    display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 3,
+                  }}
+                >
+                  {t.id === "hist" && <History size={10} />}
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Body */}
+          <div>
+            {tab === "hist" ? (
+              <HistTimeline items={hist} onClear={() => { setHist([]); saveHist([]); }} copied={copied} setCopied={setCopied} />
+            ) : (
+              <>
+                {mode === "expanded" && active && (
+                  <div style={{ marginBottom: 14 }}>
+                    <HologramCore center={active.center} orbit={active.orbit} active />
+                  </div>
+                )}
+                {active?.body}
+                {active && (
+                  <>
+                    <ResultCard title="Resultado detallado" value={active.result} mini={active.mini} />
+                    <InsightCard text={active.insight} />
+                  </>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Footer sticky */}
+        <div style={{
+          padding: "10px 12px",
+          borderTop: `1px solid ${N.border}`,
+          background: "rgba(9,14,26,0.7)",
+          backdropFilter: "blur(6px)",
+          display: "flex", flexDirection: "column", gap: 8,
+        }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+            <button style={btnSecondaryCompact} onClick={usarEnObservacionQA} disabled={!active}>
+              <MessageSquarePlus size={12} /> {copied === "__obs" ? "¡Listo!" : "Usar en observación QA"}
+            </button>
+            <button style={btnSecondaryCompact} onClick={guardarEnExpediente} disabled={!active}>
+              <Save size={12} /> {copied === "__saved" ? "Guardado" : "Guardar cálculo"}
+            </button>
+          </div>
+          <div style={{ display: "flex", gap: 6, alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{
+              display: "flex", gap: 6, alignItems: "center",
+              fontSize: 9.5, color: N.textFaint, letterSpacing: "0.06em",
+            }}>
+              <Command size={10} /> <span><strong style={{ color: N.text }}>Ctrl/⌘ + K</strong></span>
+            </div>
+            <div style={{ display: "flex", gap: 6 }}>
+              <button
+                style={btnSecondaryCompact}
+                onClick={() => active && copyResult(`${tab.toUpperCase()} · ${active.center}`, active.result)}
+                disabled={!active}
+              >
+                <Copy size={12} /> Copiar
+              </button>
+              <button
+                style={btnSecondaryCompact}
+                onClick={() => window.print()}
+                title="Exportar (usar Guardar como PDF)"
+              >
+                <FileDown size={12} /> PDF
+              </button>
+              <button
+                style={{ ...btnPrimary, padding: "8px 12px", fontSize: 11 }}
+                onClick={() => active && copyResult(`${tab.toUpperCase()} · ${active.center}`, active.result)}
+                disabled={!active}
+              >
+                <Zap size={12} /> Usar
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
+  ) : null;
 
   return (
     <>
-      {/* Keyframes globales */}
-      <style>{`
-        @keyframes feSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        @keyframes feSpinReverse { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-        @keyframes feBreathe {
-          0%, 100% { transform: scale(1); filter: brightness(1); }
-          50% { transform: scale(1.06); filter: brightness(1.15); }
-        }
-        @keyframes feFloat {
-          0%, 100% { transform: translate(0,0); opacity: 0.5; }
-          50% { transform: translate(6px,-8px); opacity: 1; }
-        }
-        @keyframes feFadeIn {
-          from { opacity: 0; transform: translateY(6px) scale(0.98); }
-          to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .fe-input:focus {
-          border-color: rgba(132,185,143,0.7) !important;
-          box-shadow: 0 0 0 3px rgba(132,185,143,0.12) !important;
-          background: rgba(9,14,26,0.9) !important;
-        }
-      `}</style>
-
-      {/* FAB */}
-      <button
-        onClick={() => setOpen(true)}
-        title="Motor Financiero NUVIA (Ctrl+K)"
-        style={{
-          position: "fixed", right: 24, bottom: 96, zIndex: 9998,
-          width: 56, height: 56, borderRadius: "50%",
-          border: "1px solid rgba(132,185,143,0.55)",
-          background: `linear-gradient(135deg, ${N.azul}, ${N.verde})`,
-          color: "#fff", cursor: "pointer",
-          boxShadow: `0 14px 34px -8px ${N.glowVerde}, 0 0 0 4px rgba(11,18,32,0.6)`,
-          display: open ? "none" : "flex", alignItems: "center", justifyContent: "center",
-        }}
-      >
-        <Calculator size={22} />
-      </button>
-
-      {open && (
-        <>
-          <div
-            onClick={() => setOpen(false)}
-            style={{
-              position: "fixed", inset: 0, zIndex: 9998,
-              background: "rgba(3,6,15,0.72)",
-              backdropFilter: "blur(6px)",
-            }}
-          />
-          <div
-            role="dialog"
-            aria-modal="true"
-            style={{
-              position: "fixed", inset: 0, zIndex: 9999,
-              display: "flex", alignItems: "center", justifyContent: "center",
-              padding: 20, pointerEvents: "none",
-            }}
-          >
-            <div
-              style={{
-                pointerEvents: "auto",
-                width: "min(1200px, 100%)",
-                maxHeight: "min(760px, 96vh)",
-                borderRadius: 20,
-                border: `1px solid ${N.border2}`,
-                background: `
-                  radial-gradient(circle at 90% 10%, rgba(132,185,143,0.10), transparent 45%),
-                  radial-gradient(circle at 10% 90%, rgba(68,93,163,0.14), transparent 45%),
-                  linear-gradient(180deg, ${N.ink}, ${N.ink3})
-                `,
-                boxShadow: `0 40px 100px -20px rgba(0,0,0,0.6), 0 0 60px -20px ${N.glowAzul}`,
-                overflow: "hidden",
-                display: "grid",
-                gridTemplateColumns: "minmax(0,3fr) minmax(0,2fr)",
-                animation: "feFadeIn .28s ease-out",
-              }}
-            >
-              {/* ============ COL IZQUIERDA ============ */}
-              <div style={{ padding: "22px 26px", display: "flex", flexDirection: "column", minWidth: 0, borderRight: `1px solid ${N.border}` }}>
-                {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
-                  <div>
-                    <div style={{
-                      display: "inline-flex", alignItems: "center", gap: 6,
-                      fontSize: 10, letterSpacing: "0.22em",
-                      color: N.verde, textTransform: "uppercase", fontWeight: 800,
-                    }}>
-                      <Sparkles size={11} /> NUVIA · Motor Financiero
-                    </div>
-                    <h2 style={{
-                      margin: "6px 0 2px", fontSize: 22, fontWeight: 800,
-                      color: N.text, letterSpacing: "-0.01em",
-                    }}>Calculadora Financiera</h2>
-                    <p style={{ margin: 0, fontSize: 12, color: N.textDim, lineHeight: 1.4 }}>
-                      Motor avanzado de matemática financiera, amortización y análisis cuantitativo.
-                    </p>
-                  </div>
-                  <button onClick={() => setOpen(false)} style={{ ...btnSecondary, padding: 8 }} title="Cerrar (Esc)">
-                    <X size={16} />
-                  </button>
-                </div>
-
-                {/* Tabs */}
-                <div style={{
-                  marginTop: 16,
-                  display: "flex", gap: 4, padding: 4,
-                  borderRadius: 12,
-                  background: "rgba(9,14,26,0.55)",
-                  border: `1px solid ${N.border}`,
-                }}>
-                  {tabs.map((t) => {
-                    const on = tab === t.id;
-                    return (
-                      <button
-                        key={t.id}
-                        onClick={() => setTab(t.id)}
-                        style={{
-                          position: "relative",
-                          flex: 1,
-                          padding: "8px 6px",
-                          borderRadius: 8,
-                          border: "1px solid transparent",
-                          background: on
-                            ? `linear-gradient(135deg, rgba(68,93,163,0.32), rgba(68,93,163,0.18))`
-                            : "transparent",
-                          boxShadow: on ? `0 0 22px -6px ${N.glowAzul}, inset 0 0 0 1px rgba(68,93,163,0.5)` : "none",
-                          color: on ? "#C6D4F5" : N.textDim,
-                          fontSize: 11.5, fontWeight: 800, letterSpacing: "0.05em",
-                          cursor: "pointer",
-                          transition: "all .18s ease",
-                          display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4,
-                        }}
-                      >
-                        {t.id === "hist" && <History size={11} />}
-                        {t.label}
-                        {on && (
-                          <span style={{
-                            position: "absolute", bottom: -2, left: "20%", right: "20%", height: 2,
-                            background: `linear-gradient(90deg, ${N.azul}, ${N.verde})`,
-                            borderRadius: 2,
-                            boxShadow: `0 0 8px ${N.glowVerde}`,
-                          }} />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Body */}
-                <div style={{ marginTop: 16, flex: 1, overflowY: "auto", paddingRight: 4 }}>
-                  {tab === "hist" ? (
-                    <HistTimeline items={hist} onClear={() => { setHist([]); saveHist([]); }} copied={copied} setCopied={setCopied} />
-                  ) : (
-                    active?.body
-                  )}
-                </div>
-
-                {/* Footer */}
-                <div style={{
-                  marginTop: 14, paddingTop: 14,
-                  borderTop: `1px solid ${N.border}`,
-                  display: "flex", gap: 8, alignItems: "center", justifyContent: "space-between",
-                }}>
-                  <div style={{ display: "flex", gap: 8, alignItems: "center", fontSize: 10, color: N.textFaint, letterSpacing: "0.06em" }}>
-                    <Command size={11} /> <span>Atajo <strong style={{ color: N.text }}>Ctrl / ⌘ + K</strong></span>
-                  </div>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button
-                      style={btnSecondary}
-                      onClick={() => {
-                        if (!active) return;
-                        pushHist(`Guardado manual · ${tab.toUpperCase()}`, `Valor: ${active.result}`, active.result);
-                      }}
-                    >
-                      <Save size={13} /> Guardar cálculo
-                    </button>
-                    <button
-                      style={btnSecondary}
-                      onClick={() => window.print()}
-                      title="Exportar (usar Guardar como PDF)"
-                    >
-                      <FileDown size={13} /> Exportar PDF
-                    </button>
-                    <button
-                      style={btnPrimary}
-                      onClick={async () => {
-                        if (!active) return;
-                        try {
-                          await navigator.clipboard.writeText(`${tab.toUpperCase()} → ${active.result}`);
-                          setCopied("__toast");
-                          setTimeout(() => setCopied(null), 1500);
-                        } catch { /* noop */ }
-                      }}
-                    >
-                      <Zap size={13} /> {copied === "__toast" ? "¡Copiado!" : "Usar en simulación"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* ============ COL DERECHA · HOLO CORE ============ */}
-              <div style={{
-                padding: "22px 26px",
-                background: `
-                  radial-gradient(circle at 50% 20%, rgba(132,185,143,0.12), transparent 55%),
-                  linear-gradient(180deg, rgba(9,14,26,0.4), rgba(9,14,26,0.75))
-                `,
-                display: "flex", flexDirection: "column", minWidth: 0, position: "relative",
-              }}>
-                {/* Grid sutil */}
-                <div aria-hidden style={{
-                  position: "absolute", inset: 0, opacity: 0.06, pointerEvents: "none",
-                  backgroundImage: `linear-gradient(${N.text} 1px, transparent 1px), linear-gradient(90deg, ${N.text} 1px, transparent 1px)`,
-                  backgroundSize: "24px 24px",
-                }} />
-
-                {active ? (
-                  <>
-                    <div style={{ position: "relative", marginTop: 4 }}>
-                      <HologramCore center={active.center} orbit={active.orbit} active />
-                    </div>
-
-                    <ResultCard
-                      title="Resultado calculado"
-                      value={active.result}
-                      mini={active.mini}
-                    />
-
-                    <InsightCard text={active.insight} />
-                  </>
-                ) : (
-                  <div style={{
-                    height: "100%", display: "flex", flexDirection: "column",
-                    alignItems: "center", justifyContent: "center",
-                    color: N.textDim, fontSize: 13, gap: 10,
-                  }}>
-                    <History size={28} />
-                    <span>Historial de cálculos NUVIA</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      {globalStyles}
+      {fab}
+      {drawer}
     </>
+  );
+}
+
+/* ============ helpers UI drawer ============ */
+function miniBtn(active: boolean): React.CSSProperties {
+  return {
+    width: 30, height: 30,
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    borderRadius: 8,
+    border: `1px solid ${active ? "rgba(132,185,143,0.6)" : N.border2}`,
+    background: active
+      ? "rgba(132,185,143,0.14)"
+      : "rgba(9,14,26,0.6)",
+    color: active ? N.verde : N.text,
+    cursor: "pointer",
+    transition: "all .15s ease",
+  };
+}
+const btnSecondaryCompact: React.CSSProperties = {
+  padding: "8px 10px",
+  borderRadius: 8,
+  border: `1px solid ${N.border2}`,
+  background: "rgba(9,14,26,0.6)",
+  color: N.text,
+  fontSize: 11, fontWeight: 700, letterSpacing: "0.04em",
+  cursor: "pointer",
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 5,
+};
+function CtxRow({ k, v, full }: { k: string; v: string; full?: boolean }) {
+  return (
+    <div style={{ gridColumn: full ? "1 / -1" : undefined, minWidth: 0 }}>
+      <div style={{
+        fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.12em",
+        color: N.textFaint, fontWeight: 700,
+      }}>{k}</div>
+      <div style={{
+        fontSize: 11.5, color: N.text, fontWeight: 700,
+        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+      }}>{v}</div>
+    </div>
   );
 }
 
