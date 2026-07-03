@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const ALLOWED = ["super_admin", "admin", "gerencia", "licenciado", "asesor", "director_financiero_qa"];
@@ -22,12 +22,18 @@ function HerramientasLayout() {
   // el flicker de pantalla blanca/negra entre dos estados de loading.
   const { roles, loading } = useUserRole();
   const navigate = useNavigate();
+  const [readyToRedirect, setReadyToRedirect] = useState(false);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setReadyToRedirect(true), 4500);
+    return () => window.clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     if (loading) return;
     const allowed = roles.some((r) => ALLOWED.includes(r));
-    if (!allowed) navigate({ to: "/inicio" });
-  }, [loading, roles, navigate]);
+    if (!allowed && readyToRedirect) navigate({ to: "/inicio" });
+  }, [loading, roles, navigate, readyToRedirect]);
 
   return <Outlet />;
 }

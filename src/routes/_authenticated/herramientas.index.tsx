@@ -181,6 +181,25 @@ function HerramientasLanding() {
       <CommandBg />
 
       <div className="relative mx-auto w-full max-w-[1360px] px-6 py-8 space-y-8">
+        <section className="grid gap-4 md:grid-cols-2" aria-label="Simuladores principales">
+          <FeaturedToolLink
+            to="/herramientas/simulador"
+            Icon={Rocket}
+            eyebrow="Simulador · Pesos + UVR"
+            title="Simulador NUVEX"
+            description="Explora escenarios sin crear expediente."
+            accent="#84B98F"
+          />
+          <FeaturedToolLink
+            to="/herramientas/abonos"
+            Icon={PiggyBank}
+            eyebrow="Abonos a capital"
+            title="Abonos a capital"
+            description="Calcula ahorro real, plazo y cuota."
+            accent="#e0a458"
+          />
+        </section>
+
         {/* ============================ HERO 50 / 50 ============================ */}
         <section className="grid gap-10 lg:grid-cols-2 items-center">
           <motion.div
@@ -364,6 +383,56 @@ function Pill({ Icon, label, color }: { Icon: React.ComponentType<{ className?: 
       <Icon className="h-3.5 w-3.5" style={{ color }} />
       {label}
     </div>
+  );
+}
+
+function FeaturedToolLink({
+  to,
+  Icon,
+  eyebrow,
+  title,
+  description,
+  accent,
+}: {
+  to: string;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
+  eyebrow: string;
+  title: string;
+  description: string;
+  accent: string;
+}) {
+  return (
+    <Link
+      to={to}
+      className="group relative overflow-hidden rounded-2xl border border-white/[0.10] bg-white/[0.055] p-4 backdrop-blur-2xl transition-transform hover:-translate-y-0.5"
+      style={{ boxShadow: `0 18px 55px -30px ${accent}` }}
+    >
+      <span
+        className="pointer-events-none absolute inset-x-0 top-0 h-px"
+        style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
+      />
+      <div className="relative flex items-center gap-4">
+        <span
+          className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-white/15"
+          style={{ background: `linear-gradient(135deg, ${accent}44, ${accent}12)` }}
+        >
+          <Icon className="h-5 w-5 text-white" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
+            {eyebrow}
+          </span>
+          <span className="mt-1 block text-lg font-semibold tracking-tight text-white">{title}</span>
+          <span className="mt-0.5 block text-[12.5px] leading-relaxed text-white/62">{description}</span>
+        </span>
+        <span
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 transition-transform group-hover:translate-x-1"
+          style={{ background: `${accent}24` }}
+        >
+          <ArrowRight className="h-4 w-4 text-white" />
+        </span>
+      </div>
+    </Link>
   );
 }
 

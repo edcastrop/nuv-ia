@@ -9,6 +9,8 @@ export const HOME_ROLE_PRIORITY: AppRole[] = [
   "super_admin",
   "admin",
   "gerencia",
+  "licenciado", // = Analista Financiero Comercial: prioriza sus simuladores aunque tenga rol contable adicional.
+  "asesor",
   "director_financiero_qa",
   "director_juridico",
   // Auditor financiero: en BD se mapea como director_financiero_qa (no hay rol "auditor").
@@ -18,8 +20,6 @@ export const HOME_ROLE_PRIORITY: AppRole[] = [
   "auxiliar_operativo",
   "cartera",
   "contabilidad",
-  "licenciado", // = Analista Financiero Comercial (asesor)
-  "asesor",
   "apoderado",
 ];
 
@@ -66,7 +66,16 @@ export function useResolvedHomeRole() {
   }, [roles, override, loading]);
 
   const primary = pickPrimary(roles);
-  const active: AppRole | null = override ?? primary;
+  const analystRole = roles.includes("licenciado")
+    ? "licenciado"
+    : roles.includes("asesor")
+      ? "asesor"
+      : null;
+  const staleOperationalOverride =
+    !!analystRole &&
+    !!override &&
+    ["contabilidad", "cartera", "operaciones", "auxiliar_operativo"].includes(override);
+  const active: AppRole | null = staleOperationalOverride ? analystRole : override ?? primary;
 
   const setActiveRole = (role: AppRole) => {
     setOverride(role);
