@@ -1,41 +1,56 @@
-# Case Snapshot PDF — Resumen ejecutivo del caso
+## Alcance
+Enriquecer el **Input Console** del NUVIA Amortization Engine con: Fecha de desembolso, Conversor de tasa (con "Tasa fresh"), Activación completa de campos UVR, Importar desde expediente (opcional), Guardar escenarios (últimos 10), y KPI de Punto de equilibrio. Exportar PDF/Excel ya existe — solo se pule para incluir los nuevos campos.
 
-Módulo nuevo, **aditivo**: no toca expediente, PDFs comerciales, contratos, informes ni permisos existentes.
+## Cambios en `herramientas.amortizacion.tsx`
 
-## Entregables
+### 1. Fecha de desembolso
+- Nuevo state `fechaDesembolso` (input tipo `month`, default: mes actual).
+- En cada `Row` se calcula `fechaCuota = fechaDesembolso + periodo meses`.
+- Se agrega columna **Fecha** (mm/aaaa) en la tabla, PDF y Excel.
 
-1. **`src/lib/caseSnapshot.functions.ts`** — `getCaseSnapshotData(expedienteId)` server fn con `requireSupabaseAuth`. Agrupa en un único payload tipado:
-   - Expediente, cliente, banco, producto, estado, fecha, analista (resuelto vía `resolverAnalistaRealQA` ya existente), score QA, nivel autonomía.
-   - Perfil cliente (de `clientes` + `analisis_capacidad_pago` más reciente).
-   - Perfil crédito (última lectura en `extractos_lecturas` + `expedientes`).
-   - Propuesta seleccionada (de `expediente_proyecciones` / `proyeccion_escenarios` marcado como recomendado).
-   - Honorarios (`honorarios_calculos` + `cuentas_cobro` + `comisiones`).
-   - Estado operativo (de `expediente_checklist_*`, `envios_contratacion`, `audit_respuestas_banco`, `cartera`).
-   - Intervinientes (analista, director financiero, jurídica, apoderado, contabilidad, gerencias — vía `user_roles` + `profiles`).
-   - Trazabilidad (últimos 10 de `expediente_historial` / `caso_eventos`).
+### 2. Conversor de tasa (con Tasa Fresh)
+Nuevo bloque colapsable "Convertidor de tasa" arriba del input TEA:
+- **Tasa Fresh**: campo libre donde el analista pega cualquier tasa (ej. la que ve en el extracto).
+- Selector de tipo origen: `EA`, `NMV`, `NAMV`, `NASV`, `MV` (mensual vencida directa).
+- Muestra en vivo la conversión a las otras 4 tasas.
+- Botón **"Usar como TEA"** que copia el valor convertido al campo TEA principal.
 
-2. **`src/lib/caseSnapshotPdf.ts`** — Generador con `pdf-lib` (ya usado en `paqueteDocumentalPdf.ts`). Diseño **NUVIA dark premium**:
-   - Paleta: fondo `#0B1226`, superficie `#141C30`, borde `rgba(255,255,255,0.08)`, primario `#445DA3`, accent `#84B98F`, texto `#F5F7FB`, secundario `#A8B1C8`.
-   - Tipografía Helvetica/HelveticaBold (built-in pdf-lib). Mayúsculas para labels, tabular para cifras.
-   - Estructura: portada, perfil cliente, perfil crédito, propuesta (con badge "RECOMENDADA POR NUVIA"), honorarios, timeline operativo (10 hitos con check/dot), intervinientes, trazabilidad. Header con logo NUVIA + footer con paginación, fecha de emisión, "Financial Intelligence Executive Snapshot".
-   - Formateo COP con `formatCOP` existente (`src/lib/format.ts`).
+Fórmulas (agregadas al bloque MATH):
+- NMV → EA: `(1 + nmv)^12 − 1`
+- NAMV → EA: `(1 + nam/12)^12 − 1`
+- NASV → EA: `(1 + nas/2)^2 − 1`
+- MV → EA: `(1 + mv)^12 − 1`
 
-3. **`src/components/expediente/CaseSnapshotButton.tsx`** — Botón "Descargar Case Snapshot" (icono `FileDown`), tono NUVIA primary glow. Estados: idle / loading / done. Visible para roles: `analista`, `director_financiero`, `juridica`, `apoderado`, `contabilidad`, `gerencia_administrativa`, `gerencia_comercial`, `super_admin`, `admin`. Usa `useUserRole` + `useServerFn` + descarga vía `descargarBlob`.
+### 3. Activar campos UVR
+Ya existen `uvrInicial` y `varUvr`. Se agrega:
+- **Variación UVR anual esperada** con presets rápidos (chips): `Conservador 3%`, `Base 5%`, `DANE histórico 6.2%`.
+- Chip informativo con el valor UVR del día (placeholder editable — futura integración con tabla `nuvia_uvr_mensual`).
+- Validación visual: si `modo === "uvr"` y falta `uvrInicial`, el botón Calcular queda deshabilitado con tooltip.
 
-4. **Integración**: insertar `<CaseSnapshotButton expedienteId={exp.id} />` en `src/components/expediente/ResumenEjecutivo.tsx` dentro del `action` del `SectionHeader` (junto al % avance). Sin migraciones, sin cambios de schema.
+### 4. Importar desde expediente (opcional)
+Botón "Importar caso NUV_…" arriba del Input Console:
+- Abre modal con búsqueda por código de expediente (query a `expedientes` filtrando por `codigo ilike`).
+- Al seleccionar: hidrata TEA, plazo, valor, seguros, banco, cliente desde `cliente_data` / `extracto_data`.
+- Si no hay caso o el analista lo cierra, la herramienta sigue funcionando standalone.
 
-## Detalles técnicos
+### 5. Guardar escenarios (últimos 10)
+- `localStorage` key: `nuvia_amort_scenarios`.
+- Cada escenario guarda: `{ nombre, modo, tea, plazo, valor, seguros, fechaDesembolso, uvrInicial, varUvr, ts }`.
+- Nuevo Panel "Escenarios guardados" con lista + botón "Cargar" y "Eliminar".
+- Botón **"Guardar escenario"** en el footer del Input Console pide nombre (prompt) y guarda.
 
-- Server fn devuelve DTO plano (sin `Date`, sin instancias). Errores controlados → fallback con campos vacíos para no romper PDF.
-- Resolución de analista: reutiliza patrón existente que prioriza `expedientes.asesor_id` sobre el caller.
-- Datos faltantes → render como "—", nunca crashea.
-- PDF tamaño Letter, márgenes 50pt, secciones con tarjetas redondeadas simuladas (`drawRectangle` con borde + fill translúcido).
-- Timeline operativo: 10 dots horizontales con color verde (hecho) / amarillo (en curso) / gris (pendiente).
-- No instala dependencias nuevas (pdf-lib ya está).
-- No modifica RLS, permisos, ni rutas existentes.
+### 6. KPI: Punto de equilibrio
+Nueva tarjeta en la sección de resultados:
+- Muestra el número de cuota donde `capital ≥ interés` (ya existe `findBreakEven`).
+- Sub-línea: fecha estimada (usando `fechaDesembolso + breakEven meses`) y % del plazo transcurrido.
+- Visualmente: card gradiente NUVIA con ícono `Target`, número grande, y micro-copy "En la cuota X pagas más capital que intereses".
 
-## Validaciones post-build
+### 7. Exportar (ajuste)
+- PDF y Excel agregan la columna **Fecha**.
+- Header del PDF/Excel incluye fecha de desembolso y punto de equilibrio.
 
-- Build limpio.
-- Abrir caso → botón visible → PDF se descarga con datos reales del caso actual.
-- Verificar en preview (Playwright) que el botón aparece y descarga sin error de consola.
+## Notas técnicas
+- Sin cambios de esquema DB (los escenarios son locales; el import solo lee `expedientes`).
+- Sin nuevas dependencias.
+- Se preserva 100% el look actual (glass + tokens NUVIA dark).
+- Los abonos extraordinarios (#3) se construyen **después**, como herramienta independiente (aprobado por el usuario).

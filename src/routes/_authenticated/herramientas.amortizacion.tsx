@@ -22,8 +22,15 @@ import {
   Landmark,
   Coins,
   ChevronDown,
+  Save,
+  Search,
+  Wand2,
+  Trash2,
+  Download,
+  X,
 } from "lucide-react";
 import { ExtractoReader, type ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/herramientas/amortizacion")({
@@ -114,6 +121,45 @@ function generateInsight(rows: Row[], periodo: number): string {
 const fmtCOP = (v: number) =>
   new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(v || 0);
 
+// -------- Fecha por cuota (desembolso + n meses) ------
+function fechaCuota(base: string, periodo: number): string {
+  if (!base) return "—";
+  const [y, m] = base.split("-").map(Number);
+  if (!y || !m) return "—";
+  const d = new Date(y, m - 1 + periodo, 1);
+  const label = d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
+  return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+// -------- Convertidor de tasa (Tasa Fresh) ------
+export type TasaTipo = "EA" | "MV" | "NMV" | "NAMV" | "NASV";
+export const TASA_LABELS: Record<TasaTipo, string> = {
+  EA: "Efectiva Anual",
+  MV: "Mes Vencido",
+  NMV: "Nominal Mensual Vencido",
+  NAMV: "Nominal Anual Mes Vencido",
+  NASV: "Nominal Anual Semestre Vencido",
+};
+export function tasaToEA(tasa: number, tipo: TasaTipo): number {
+  const r = tasa / 100;
+  switch (tipo) {
+    case "EA": return r;
+    case "MV": return Math.pow(1 + r, 12) - 1;
+    case "NMV": return Math.pow(1 + r, 12) - 1;
+    case "NAMV": return Math.pow(1 + r / 12, 12) - 1;
+    case "NASV": return Math.pow(1 + r / 2, 2) - 1;
+  }
+}
+export function eaToTasa(ea: number, tipo: TasaTipo): number {
+  switch (tipo) {
+    case "EA": return ea;
+    case "MV": return Math.pow(1 + ea, 1 / 12) - 1;
+    case "NMV": return Math.pow(1 + ea, 1 / 12) - 1;
+    case "NAMV": return (Math.pow(1 + ea, 1 / 12) - 1) * 12;
+    case "NASV": return (Math.pow(1 + ea, 1 / 2) - 1) * 2;
+  }
+}
+
 // ============================================================================
 // COMPONENT
 // ============================================================================
@@ -127,9 +173,51 @@ function AmortizationEngine() {
   const [seguros, setSeguros] = useState("");
   const [uvrInicial, setUvrInicial] = useState("");
   const [varUvr, setVarUvr] = useState("");
+  const [fechaDesembolso, setFechaDesembolso] = useState<string>(() => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  });
   const [calculated, setCalculated] = useState(false);
   const [lastCalc, setLastCalc] = useState<Date | null>(null);
   const [showReader, setShowReader] = useState(false);
+  const [showConverter, setShowConverter] = useState(false);
+  const [showScenarios, setShowScenarios] = useState(false);
+
+  // Tasa Fresh converter state
+  const [freshTasa, setFreshTasa] = useState("");
+  const [freshTipo, setFreshTipo] = useState<TasaTipo>("EA");
+
+  // Escenarios guardados (localStorage)
+  type Scenario = {
+    id: string;
+    nombre: string;
+    ts: number;
+    modo: "pesos" | "uvr";
+    tea: string;
+    plazo: string;
+    valor: string;
+    seguros: string;
+    uvrInicial: string;
+    varUvr: string;
+    fechaDesembolso: string;
+  };
+  const SCEN_KEY = "nuvia_amort_scenarios";
+  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(SCEN_KEY);
+      if (raw) setScenarios(JSON.parse(raw));
+    } catch {}
+  }, []);
+  function persistScenarios(next: Scenario[]) {
+    setScenarios(next);
+    try { localStorage.setItem(SCEN_KEY, JSON.stringify(next)); } catch {}
+  }
+
+  // Importar caso modal
+  const [importOpen, setImportOpen] = useState(false);
+  const [importCodigo, setImportCodigo] = useState("");
+  const [importLoading, setImportLoading] = useState(false);
 
   const teaNum = parseFloat(tea) / 100 || 0;
   const plazoNum = parseInt(plazo) || 0;
@@ -154,6 +242,22 @@ function AmortizationEngine() {
   const pctInteres = currentRow ? (currentRow.interes / currentRow.cuota) * 100 : 0;
   const pctCapital = currentRow ? (currentRow.capital / currentRow.cuota) * 100 : 0;
 
+  // Punto de equilibrio
+  const breakEven = useMemo(() => (rows.length ? findBreakEven(rows) : null), [rows]);
+  const breakEvenFecha = breakEven ? fechaCuota(fechaDesembolso, breakEven) : "—";
+  const breakEvenPct = breakEven && plazoNum > 0 ? (breakEven / plazoNum) * 100 : 0;
+
+  // Tasa Fresh conversions
+  const freshValid = parseFloat(freshTasa) > 0;
+  const freshEA = freshValid ? tasaToEA(parseFloat(freshTasa), freshTipo) : 0;
+  const conversions = useMemo(() => {
+    const list: { tipo: TasaTipo; label: string; valor: number }[] = [];
+    (["EA", "MV", "NMV", "NAMV", "NASV"] as TasaTipo[]).forEach((t) => {
+      list.push({ tipo: t, label: TASA_LABELS[t], valor: eaToTasa(freshEA, t) * 100 });
+    });
+    return list;
+  }, [freshEA]);
+
   function handleCalculate() {
     if (teaNum <= 0) return toast.error("TEA debe ser mayor a 0");
     if (plazoNum <= 0) return toast.error("Plazo debe ser mayor a 0");
@@ -169,6 +273,78 @@ function AmortizationEngine() {
     setTea(""); setPlazo(""); setValor(""); setPeriodo(""); setSeguros("");
     setUvrInicial(""); setVarUvr("");
     setCalculated(false); setLastCalc(null);
+  }
+
+  function handleUseFreshAsTEA() {
+    if (!freshValid) return toast.error("Ingresa una tasa válida");
+    setTea((freshEA * 100).toFixed(4));
+    toast.success(`TEA actualizada: ${(freshEA * 100).toFixed(4)}%`);
+  }
+
+  function handleSaveScenario() {
+    if (!calculated) return toast.error("Calcula primero para guardar el escenario");
+    const nombre = prompt("Nombre del escenario:", `${modo.toUpperCase()} · ${plazoNum}m · ${fmtCOP(valorNum)}`);
+    if (!nombre) return;
+    const s: Scenario = {
+      id: crypto.randomUUID(),
+      nombre, ts: Date.now(),
+      modo, tea, plazo, valor, seguros, uvrInicial, varUvr, fechaDesembolso,
+    };
+    const next = [s, ...scenarios].slice(0, 10);
+    persistScenarios(next);
+    toast.success("Escenario guardado");
+  }
+  function handleLoadScenario(s: Scenario) {
+    setModo(s.modo); setTea(s.tea); setPlazo(s.plazo); setValor(s.valor);
+    setSeguros(s.seguros); setUvrInicial(s.uvrInicial); setVarUvr(s.varUvr);
+    setFechaDesembolso(s.fechaDesembolso || fechaDesembolso);
+    setCalculated(false);
+    toast.success(`Escenario "${s.nombre}" cargado — presiona Calcular`);
+  }
+  function handleDeleteScenario(id: string) {
+    persistScenarios(scenarios.filter((x) => x.id !== id));
+  }
+
+  async function handleImportCaso() {
+    const cod = importCodigo.trim();
+    if (!cod) return toast.error("Ingresa el código NUV_...");
+    setImportLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("expedientes")
+        .select("codigo, cliente_nombre, modo, cliente_data, credito_data")
+        .ilike("codigo", `%${cod}%`)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) { toast.error("Expediente no encontrado"); return; }
+      const cd: any = data.cliente_data || {};
+      const cr: any = data.credito_data || {};
+      const moneda: string = (data.modo === "uvr" || cr.uvr) ? "uvr" : "pesos";
+      if (moneda === "uvr") setModo("uvr"); else setModo("pesos");
+      let filled = 0;
+      if (cd.plazoInicial) { setPlazo(String(cd.plazoInicial)); filled++; }
+      else if (cr.plazoInicial) { setPlazo(String(cr.plazoInicial)); filled++; }
+      if (moneda === "uvr") {
+        if (cr.uvr?.teaCobrada) { setTea(String(cr.uvr.teaCobrada)); filled++; }
+        if (cr.uvr?.saldoUVR) { setValor(String(cr.uvr.saldoUVR)); filled++; }
+        if (cr.uvr?.valorUVR) { setUvrInicial(String(cr.uvr.valorUVR)); filled++; }
+        if (cr.uvr?.seguros) { setSeguros(String(cr.uvr.seguros)); filled++; }
+      } else {
+        if (cr.pesos?.tea || cr.tea) { setTea(String(cr.pesos?.tea ?? cr.tea)); filled++; }
+        const vb = cr.pesos?.valorDesembolsado ?? cr.pesos?.saldoCapital ?? cr.valorDesembolsado ?? cr.saldoCapital ?? "";
+        if (vb) { setValor(String(vb)); filled++; }
+        if (cr.pesos?.seguros ?? cr.seguros) { setSeguros(String(cr.pesos?.seguros ?? cr.seguros)); filled++; }
+      }
+      setCalculated(false);
+      setImportOpen(false);
+      setImportCodigo("");
+      toast.success(`${data.codigo} — ${data.cliente_nombre ?? "sin nombre"} (${filled} campos)`);
+    } catch (e: any) {
+      toast.error(e?.message || "Error al importar");
+    } finally {
+      setImportLoading(false);
+    }
   }
 
   function handleExtractoApply(p: ExtractoApplyPayload) {
@@ -199,11 +375,12 @@ function AmortizationEngine() {
     const XLSX = await import("xlsx");
     const data = [
       ["NUVIA AMORTIZATION ENGINE"],
-      [`TEA: ${(teaNum * 100).toFixed(4)}%`, `Tasa Mensual: ${(tasaMensual * 100).toFixed(6)}%`],
+      [`Fecha desembolso: ${fechaDesembolso}`, `TEA: ${(teaNum * 100).toFixed(4)}%`, `Tasa Mensual: ${(tasaMensual * 100).toFixed(6)}%`],
       [`Valor: ${valorNum}`, `Plazo: ${plazoNum}m`, `Seguros: ${segurosNum}`],
+      [`Punto de equilibrio: cuota ${breakEven ?? "—"} (${breakEvenFecha})`],
       [],
-      ["Periodo", "Saldo inicial", "Cuota financiera", "Interés", "Capital", "Seguros", "Total cuota", "Saldo final"],
-      ...rows.map((r) => [r.periodo, Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interes), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
+      ["Periodo", "Fecha", "Saldo inicial", "Cuota financiera", "Interés", "Capital", "Seguros", "Total cuota", "Saldo final"],
+      ...rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interes), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
     ];
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -218,10 +395,13 @@ function AmortizationEngine() {
     const autoTable = (await import("jspdf-autotable")).default;
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     doc.setFontSize(16); doc.text("NUVIA Amortization Engine", 40, 40);
+    doc.setFontSize(9); doc.setTextColor(90);
+    doc.text(`Desembolso: ${fechaDesembolso}  ·  TEA: ${(teaNum * 100).toFixed(4)}%  ·  Plazo: ${plazoNum}m  ·  Break-even cuota ${breakEven ?? "—"} (${breakEvenFecha})`, 40, 56);
+    doc.setTextColor(0);
     autoTable(doc, {
-      startY: 60,
-      head: [["#", "Saldo inicial", "Cuota", "Interés", "Capital", "Seguros", "Total", "Saldo final"]],
-      body: rows.map((r) => [r.periodo, fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interes), fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
+      startY: 72,
+      head: [["#", "Fecha", "Saldo inicial", "Cuota", "Interés", "Capital", "Seguros", "Total", "Saldo final"]],
+      body: rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interes), fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
       styles: { fontSize: 7 },
       headStyles: { fillColor: [15, 26, 51] },
     });
@@ -292,14 +472,161 @@ function AmortizationEngine() {
                 <div className="text-[11px] text-white/50 mt-1">Parámetros de tu crédito</div>
               </div>
 
-              <div className="mt-5 space-y-2.5">
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => setImportOpen(true)}
+                  className="flex-1 rounded-xl border border-[#7BB0FF]/30 bg-[#7BB0FF]/[0.08] hover:bg-[#7BB0FF]/[0.14] px-3 py-2 text-[11px] font-semibold text-[#C9DDFF] transition-all inline-flex items-center justify-center gap-1.5"
+                >
+                  <Search className="h-3.5 w-3.5" /> Importar caso
+                </button>
+                <button
+                  onClick={() => setShowScenarios((s) => !s)}
+                  className="flex-1 rounded-xl border border-[#B58BFF]/30 bg-[#B58BFF]/[0.08] hover:bg-[#B58BFF]/[0.14] px-3 py-2 text-[11px] font-semibold text-[#D6C0FF] transition-all inline-flex items-center justify-center gap-1.5"
+                >
+                  <Save className="h-3.5 w-3.5" /> Escenarios ({scenarios.length})
+                </button>
+              </div>
+
+              {/* Escenarios drawer */}
+              <AnimatePresence>
+                {showScenarios && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-3 rounded-xl border border-white/[0.06] bg-white/[0.02] p-3 space-y-2">
+                      <button
+                        onClick={handleSaveScenario}
+                        className="w-full rounded-lg border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2.5 py-2 text-[11px] font-semibold text-[#B5DFC0] inline-flex items-center justify-center gap-1.5"
+                      >
+                        <Save className="h-3 w-3" /> Guardar actual
+                      </button>
+                      {scenarios.length === 0 ? (
+                        <div className="text-[10.5px] text-white/40 text-center py-2">Sin escenarios guardados.</div>
+                      ) : (
+                        <div className="space-y-1.5 max-h-[180px] overflow-auto nuvia-scroll">
+                          {scenarios.map((s) => (
+                            <div key={s.id} className="flex items-center gap-2 rounded-lg border border-white/[0.05] bg-white/[0.02] px-2 py-1.5">
+                              <button onClick={() => handleLoadScenario(s)} className="flex-1 text-left min-w-0">
+                                <div className="text-[11px] font-semibold text-white truncate">{s.nombre}</div>
+                                <div className="text-[9.5px] text-white/40 uppercase tracking-wider">{s.modo} · {s.plazo}m · {new Date(s.ts).toLocaleDateString("es-CO")}</div>
+                              </button>
+                              <button onClick={() => handleDeleteScenario(s.id)} className="shrink-0 text-white/40 hover:text-red-400 p-1" title="Eliminar">
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Convertidor de tasa (Tasa Fresh) */}
+              <div className="mt-4 rounded-xl border border-white/[0.06] bg-white/[0.02] overflow-hidden">
+                <button
+                  onClick={() => setShowConverter((s) => !s)}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 hover:bg-white/[0.03] transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <Wand2 className="h-3.5 w-3.5 text-[#84B98F]" />
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Convertidor Tasa Fresh</span>
+                  </div>
+                  <ChevronDown className={`h-3.5 w-3.5 text-white/50 transition-transform ${showConverter ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {showConverter && (
+                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                      <div className="px-3.5 pb-3 pt-1 space-y-2">
+                        <div className="flex gap-1.5 flex-wrap">
+                          {(["EA", "MV", "NMV", "NAMV", "NASV"] as TasaTipo[]).map((t) => (
+                            <button
+                              key={t}
+                              onClick={() => setFreshTipo(t)}
+                              className={`rounded-md px-2 py-1 text-[10px] font-bold uppercase tracking-wider border transition-all ${
+                                freshTipo === t
+                                  ? "bg-[#4B6FE0]/25 border-[#4B6FE0]/60 text-white"
+                                  : "bg-white/[0.02] border-white/[0.08] text-white/50 hover:text-white/80"
+                              }`}
+                            >{t}</button>
+                          ))}
+                        </div>
+                        <div className="flex items-center gap-2 rounded-lg border border-white/[0.08] bg-white/[0.02] px-2.5 py-1.5 focus-within:border-[#4B6FE0]/60">
+                          <input
+                            type="text"
+                            inputMode="decimal"
+                            value={freshTasa}
+                            onChange={(e) => setFreshTasa(e.target.value.replace(/[^0-9.,]/g, ""))}
+                            placeholder={`Tasa ${freshTipo} (ej: 12,50)`}
+                            className="flex-1 min-w-0 bg-transparent text-[13px] font-semibold text-white placeholder:text-white/25 outline-none tabular-nums"
+                          />
+                          <span className="text-[10px] text-white/40">%</span>
+                        </div>
+                        {freshValid && (
+                          <>
+                            <div className="grid grid-cols-2 gap-1.5">
+                              {conversions.map((c) => (
+                                <div key={c.tipo} className={`rounded-md px-2 py-1.5 border ${c.tipo === freshTipo ? "border-[#4B6FE0]/40 bg-[#4B6FE0]/10" : "border-white/[0.06] bg-white/[0.02]"}`}>
+                                  <div className="text-[9px] font-bold uppercase tracking-wider text-white/45">{c.tipo}</div>
+                                  <div className="text-[12px] font-semibold text-white tabular-nums">{c.valor.toFixed(4)}%</div>
+                                </div>
+                              ))}
+                            </div>
+                            <button
+                              onClick={handleUseFreshAsTEA}
+                              className="w-full rounded-lg border border-[#6BCF89]/30 bg-[#6BCF89]/[0.10] hover:bg-[#6BCF89]/[0.18] px-2.5 py-2 text-[11px] font-semibold text-[#B5DFC0] inline-flex items-center justify-center gap-1.5"
+                            >
+                              <Download className="h-3 w-3" /> Usar como TEA ({(freshEA * 100).toFixed(4)}%)
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div className="mt-4 space-y-2.5">
                 <InputTile icon={<Percent className="h-3.5 w-3.5" />} label={modo === "uvr" ? "TEA UVR" : "TEA (Tasa Efectiva Anual)"} value={tea} onChange={setTea} suffix="%" placeholder={modo === "uvr" ? "8,50" : "11,00"} />
                 <InputTile icon={<Calendar className="h-3.5 w-3.5" />} label="Plazo aprobado" value={plazo} onChange={setPlazo} suffix="meses" placeholder="240" />
                 <InputTile icon={<DollarSign className="h-3.5 w-3.5" />} label={modo === "uvr" ? "Valor crédito (UVR)" : "Valor crédito aprobado"} value={valor} onChange={setValor} prefix={modo === "uvr" ? "" : "$"} suffix={modo === "uvr" ? "UVR" : undefined} placeholder={modo === "uvr" ? "500.000" : "737.000.000"} />
+                {/* Fecha desembolso */}
+                <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3.5 py-2.5 hover:border-white/[0.12] focus-within:border-[#4B6FE0]/60">
+                  <div className="flex items-center gap-2 text-[9.5px] font-bold uppercase tracking-[0.14em] text-white/45">
+                    <div className="flex h-5 w-5 items-center justify-center rounded-md bg-white/[0.04] border border-white/[0.06] text-white/60">
+                      <Calendar className="h-3.5 w-3.5" />
+                    </div>
+                    <span>Fecha de desembolso</span>
+                  </div>
+                  <input
+                    type="month"
+                    value={fechaDesembolso}
+                    onChange={(e) => setFechaDesembolso(e.target.value)}
+                    className="mt-1 w-full bg-transparent text-[15px] font-semibold text-white outline-none tabular-nums [color-scheme:dark]"
+                  />
+                </div>
                 {modo === "uvr" && (
                   <>
                     <InputTile icon={<Coins className="h-3.5 w-3.5" />} label="UVR inicial (COP/UVR)" value={uvrInicial} onChange={setUvrInicial} prefix="$" placeholder="340,50" />
                     <InputTile icon={<TrendingUp className="h-3.5 w-3.5" />} label="Variación UVR anual" value={varUvr} onChange={setVarUvr} suffix="% EA" placeholder="5,50" />
+                    <div className="flex gap-1.5 flex-wrap">
+                      {[
+                        { label: "Conservador", val: "3.00" },
+                        { label: "Base", val: "5.00" },
+                        { label: "DANE hist.", val: "6.20" },
+                      ].map((p) => (
+                        <button
+                          key={p.label}
+                          onClick={() => setVarUvr(p.val)}
+                          className="rounded-md px-2 py-1 text-[9.5px] font-bold uppercase tracking-wider bg-white/[0.03] border border-white/[0.06] text-white/60 hover:text-white hover:border-[#84B98F]/40 transition-all"
+                        >
+                          {p.label} {p.val}%
+                        </button>
+                      ))}
+                    </div>
                   </>
                 )}
                 <InputTile icon={<Target className="h-3.5 w-3.5" />} label="Periodo a consultar" value={periodo} onChange={setPeriodo} suffix={`/ ${plazoNum || "n"}`} placeholder="3" />
@@ -389,6 +716,37 @@ function AmortizationEngine() {
               </div>
             </div>
 
+            {/* Break-even KPI */}
+            <div
+              className="relative rounded-2xl border border-[#84B98F]/25 p-5 overflow-hidden backdrop-blur-xl"
+              style={{
+                background: "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(75,111,224,0.06))",
+                boxShadow: "0 20px 60px -30px rgba(132,185,143,0.5), inset 0 1px 0 rgba(255,255,255,0.04)",
+              }}
+            >
+              <div className="absolute -bottom-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-40" style={{ background: "radial-gradient(circle, #84B98F, transparent 70%)" }} />
+              <div className="relative flex items-center gap-5 flex-wrap">
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#84B98F]/40 bg-[#84B98F]/[0.14]">
+                  <Target className="h-5 w-5 text-[#B5DFC0]" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#84B98F]">Punto de equilibrio Capital vs Interés</div>
+                  {calculated && breakEven ? (
+                    <>
+                      <div className="mt-1 flex items-baseline gap-3 flex-wrap">
+                        <div className="text-[32px] font-bold text-white leading-none tabular-nums" style={{ textShadow: "0 0 24px rgba(132,185,143,0.5)" }}>Cuota #{breakEven}</div>
+                        <div className="text-[13px] text-[#B5DFC0] font-semibold">{breakEvenFecha}</div>
+                        <div className="text-[11.5px] text-white/50">({breakEvenPct.toFixed(1)}% del plazo)</div>
+                      </div>
+                      <div className="mt-1.5 text-[11.5px] text-white/60">A partir de esta cuota amortizas más capital que intereses — el saldo se reduce más rápido.</div>
+                    </>
+                  ) : (
+                    <div className="mt-2 text-[12px] text-white/40">Calcula para descubrir cuándo empiezas a ganarle al banco.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+
             {/* Distribution + Insight row */}
             <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
               {/* Distribution */}
@@ -473,6 +831,7 @@ function AmortizationEngine() {
                     <thead className="sticky top-0 z-10" style={{ background: "rgba(11,16,32,0.98)", boxShadow: "0 1px 0 rgba(255,255,255,0.06)" }}>
                       <tr className="text-left text-[10.5px] uppercase tracking-[0.14em] text-white/50">
                         <th className="px-4 py-3 font-semibold">Periodo</th>
+                        <th className="px-4 py-3 font-semibold">Fecha</th>
                         <th className="px-4 py-3 font-semibold">Saldo inicial</th>
                         <th className="px-4 py-3 font-semibold">Cuota financiera</th>
                         <th className="px-4 py-3 font-semibold">Interés</th>
@@ -485,13 +844,14 @@ function AmortizationEngine() {
                     <tbody>
                       {rows.length === 0 ? (
                         <tr>
-                          <td colSpan={8} className="px-4 py-10 text-center text-white/40 text-[12px]">
+                          <td colSpan={9} className="px-4 py-10 text-center text-white/40 text-[12px]">
                             Ingresa los datos y presiona <span className="text-white/80 font-semibold">Calcular cuota</span> para ver la tabla completa.
                           </td>
                         </tr>
                       ) : (
                         rows.map((r) => {
                           const isCurrent = r.periodo === periodoNum;
+                          const isBreakEven = breakEven === r.periodo;
                           return (
                             <tr
                               key={r.periodo}
@@ -508,15 +868,21 @@ function AmortizationEngine() {
                                       background: "linear-gradient(90deg, rgba(107,90,224,0.28), rgba(107,90,224,0.14))",
                                       boxShadow: "inset 3px 0 0 #B58BFF",
                                     }
-                                  : undefined
+                                  : isBreakEven
+                                    ? { background: "linear-gradient(90deg, rgba(132,185,143,0.14), transparent)", boxShadow: "inset 3px 0 0 #84B98F" }
+                                    : undefined
                               }
                             >
                               <td className="px-4 py-3 text-white/90 font-medium">
                                 {isCurrent && (
                                   <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle" style={{ background: "#B58BFF", boxShadow: "0 0 8px #B58BFF" }} />
                                 )}
+                                {isBreakEven && !isCurrent && (
+                                  <span className="inline-block w-1.5 h-1.5 rounded-full mr-2 align-middle" style={{ background: "#84B98F", boxShadow: "0 0 8px #84B98F" }} />
+                                )}
                                 {r.periodo}
                               </td>
+                              <td className="px-4 py-3 text-white/70 text-[11.5px]">{fechaCuota(fechaDesembolso, r.periodo)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.saldoInicial)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.cuota)}</td>
                               <td className="px-4 py-3 text-white/85">{fmtCOP(r.interes)}</td>
@@ -531,11 +897,6 @@ function AmortizationEngine() {
                     </tbody>
                   </table>
                 </div>
-                {rows.length > 60 && (
-                  <div className="border-t border-white/[0.06] px-4 py-3 text-center text-[12px] text-white/50 inline-flex items-center justify-center gap-1.5 w-full">
-                    Ver más periodos ({rows.length - 60} restantes) <ChevronDown className="h-3.5 w-3.5" />
-                  </div>
-                )}
               </div>
             </Panel>
           </div>
@@ -552,6 +913,59 @@ function AmortizationEngine() {
           border-radius: 999px;
         }
       `}</style>
+
+      {/* ============ IMPORT CASO MODAL ============ */}
+      <AnimatePresence>
+        {importOpen && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            onClick={() => setImportOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 10 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 10 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md rounded-2xl border border-white/[0.08] bg-[#0B1020] p-6"
+              style={{ boxShadow: "0 30px 80px -20px rgba(75,111,224,0.4)" }}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7BB0FF]">Importar caso</div>
+                  <div className="text-[15px] font-semibold text-white mt-1">Buscar expediente NUVIA</div>
+                </div>
+                <button onClick={() => setImportOpen(false)} className="text-white/50 hover:text-white p-1">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.02] px-3 py-2 focus-within:border-[#4B6FE0]/60">
+                <Search className="h-4 w-4 text-white/40 shrink-0" />
+                <input
+                  autoFocus
+                  value={importCodigo}
+                  onChange={(e) => setImportCodigo(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleImportCaso(); }}
+                  placeholder="NUV_2026_..."
+                  className="flex-1 bg-transparent text-[14px] font-semibold text-white placeholder:text-white/25 outline-none"
+                />
+              </div>
+              <div className="mt-2 text-[10.5px] text-white/40">Buscamos por coincidencia parcial. Trae el primer resultado.</div>
+              <div className="mt-5 flex gap-2 justify-end">
+                <button onClick={() => setImportOpen(false)} className="rounded-lg border border-white/[0.08] bg-white/[0.02] px-4 py-2 text-[12px] font-semibold text-white/70 hover:text-white">
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleImportCaso}
+                  disabled={importLoading}
+                  className="rounded-lg px-4 py-2 text-[12px] font-bold text-white disabled:opacity-50"
+                  style={{ background: "linear-gradient(135deg, #4B6FE0, #6BCF89)" }}
+                >
+                  {importLoading ? "Buscando..." : "Importar"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
