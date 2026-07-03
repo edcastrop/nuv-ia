@@ -684,6 +684,41 @@ function AmortizationEngine() {
                 )}
                 <InputTile icon={<Target className="h-3.5 w-3.5" />} label="Periodo a consultar" value={periodo} onChange={setPeriodo} suffix={`/ ${plazoNum || "n"}`} placeholder="3" />
                 <InputTile icon={<ShieldCheck className="h-3.5 w-3.5" />} label="Seguros mensuales (COP)" value={seguros} onChange={setSeguros} prefix="$" placeholder="212.047" />
+
+                {/* Tasa Fresh (subsidio / componente adicional del interés) */}
+                <div className="rounded-xl border border-[#B58BFF]/25 bg-[#B58BFF]/[0.05] px-3.5 py-3 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#D6C0FF]">
+                      <Wand2 className="h-3.5 w-3.5" /> Tasa Fresh
+                    </div>
+                    <span className="text-[9px] font-semibold uppercase tracking-wider text-white/40">máx. {FRESH_MAX_CUOTAS} cuotas</span>
+                  </div>
+                  <div className="text-[10.5px] text-white/50 leading-snug">Valor mensual en pesos que se suma al interés durante las primeras N cuotas.</div>
+                  <InputTile
+                    icon={<DollarSign className="h-3.5 w-3.5" />}
+                    label="Valor Fresh mensual (COP)"
+                    value={freshValor}
+                    onChange={setFreshValor}
+                    prefix="$"
+                    placeholder="150.000"
+                  />
+                  <InputTile
+                    icon={<Clock className="h-3.5 w-3.5" />}
+                    label={`Cuotas Fresh (1 – ${FRESH_MAX_CUOTAS})`}
+                    value={freshCuotasStr}
+                    onChange={(v) => {
+                      const n = parseInt(v.replace(/[^0-9]/g, "")) || 0;
+                      setFreshCuotasStr(String(Math.min(n, FRESH_MAX_CUOTAS) || ""));
+                    }}
+                    suffix="cuotas"
+                    placeholder="60"
+                  />
+                  {freshValorNum > 0 && freshCuotasNum > 0 && (
+                    <div className="rounded-lg border border-[#B58BFF]/25 bg-[#B58BFF]/[0.08] px-2.5 py-1.5 text-[10.5px] text-[#D6C0FF] tabular-nums">
+                      Aporte total Fresh: <span className="font-bold text-white">{fmtCOP(freshValorNum * freshCuotasNum)}</span> en {freshCuotasNum} cuotas
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Tasa mensual equivalente */}
