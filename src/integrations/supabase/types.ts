@@ -5741,20 +5741,18 @@ export type Database = {
           avatar_url: string | null
           celular: string | null
           ciudad: string | null
-          coordinador_id: string | null
           correo_corporativo: string | null
           created_at: string | null
-          departamento: string | null
-          direccion: string | null
           email: string | null
           equipo: string | null
-          fecha_ingreso: string | null
+          estado_acceso: Database["public"]["Enums"]["acceso_estado"] | null
           id: string | null
+          last_seen_at: string | null
           nombre: string | null
-          numero_documento: string | null
           pais: string | null
+          presencia_visible: boolean | null
+          rol_solicitado: string | null
           sede: string | null
-          tipo_documento: string | null
           updated_at: string | null
           whatsapp: string | null
         }
@@ -5764,20 +5762,18 @@ export type Database = {
           avatar_url?: string | null
           celular?: string | null
           ciudad?: string | null
-          coordinador_id?: string | null
           correo_corporativo?: string | null
           created_at?: string | null
-          departamento?: string | null
-          direccion?: string | null
           email?: string | null
           equipo?: string | null
-          fecha_ingreso?: string | null
+          estado_acceso?: Database["public"]["Enums"]["acceso_estado"] | null
           id?: string | null
+          last_seen_at?: string | null
           nombre?: string | null
-          numero_documento?: string | null
           pais?: string | null
+          presencia_visible?: boolean | null
+          rol_solicitado?: string | null
           sede?: string | null
-          tipo_documento?: string | null
           updated_at?: string | null
           whatsapp?: string | null
         }
@@ -5787,20 +5783,18 @@ export type Database = {
           avatar_url?: string | null
           celular?: string | null
           ciudad?: string | null
-          coordinador_id?: string | null
           correo_corporativo?: string | null
           created_at?: string | null
-          departamento?: string | null
-          direccion?: string | null
           email?: string | null
           equipo?: string | null
-          fecha_ingreso?: string | null
+          estado_acceso?: Database["public"]["Enums"]["acceso_estado"] | null
           id?: string | null
+          last_seen_at?: string | null
           nombre?: string | null
-          numero_documento?: string | null
           pais?: string | null
+          presencia_visible?: boolean | null
+          rol_solicitado?: string | null
           sede?: string | null
-          tipo_documento?: string | null
           updated_at?: string | null
           whatsapp?: string | null
         }
