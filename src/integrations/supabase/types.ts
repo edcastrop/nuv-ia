@@ -5896,6 +5896,27 @@ export type Database = {
         Args: { _expediente_id: string; _user_validador?: string }
         Returns: undefined
       }
+      list_colaboradores_publicos: {
+        Args: never
+        Returns: {
+          activo: boolean
+          celular: string
+          ciudad: string
+          correo: string
+          correo_corp: string
+          equipo: string
+          foto_url: string
+          last_seen_at: string
+          nombre: string
+          pais: string
+          presencia_visible: boolean
+          roles: string[]
+          roles_raw: string[]
+          sede: string
+          user_id: string
+          whatsapp: string
+        }[]
+      }
       map_caso_to_expediente_estado: {
         Args: { _caso: Database["public"]["Enums"]["caso_estado"] }
         Returns: Database["public"]["Enums"]["expediente_estado"]
