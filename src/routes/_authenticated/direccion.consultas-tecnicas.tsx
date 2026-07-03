@@ -4,7 +4,8 @@
 // Dirección resuelva.
 
 import { useEffect, useMemo, useState } from "react";
-import { createFileRoute, useServerFn } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import {
   ShieldAlert,
   RefreshCw,
