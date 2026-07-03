@@ -704,17 +704,12 @@ function AmortizationEngine() {
                     prefix="$"
                     placeholder="150.000"
                   />
-                  <InputTile
-                    icon={<Clock className="h-3.5 w-3.5" />}
-                    label={`Cuotas Fresh (1 – ${FRESH_MAX_CUOTAS})`}
-                    value={freshCuotasStr}
-                    onChange={(v) => {
-                      const n = parseInt(v.replace(/[^0-9]/g, "")) || 0;
-                      setFreshCuotasStr(String(Math.min(n, FRESH_MAX_CUOTAS) || ""));
-                    }}
-                    suffix="cuotas"
-                    placeholder="60"
-                  />
+                  <div className="rounded-lg border border-white/[0.06] bg-white/[0.03] px-2.5 py-2 text-[10.5px] text-white/70 flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5"><Clock className="h-3 w-3 text-[#D6C0FF]" /> Cuotas Fresh</span>
+                    <span className="font-bold text-white tabular-nums">
+                      {plazoNumTmp <= 0 ? "—" : plazoNumTmp > FRESH_MAX_CUOTAS ? `No aplica (> ${FRESH_MAX_CUOTAS})` : `${plazoNumTmp} cuotas`}
+                    </span>
+                  </div>
                   {freshValorNum > 0 && freshCuotasNum > 0 && (
                     <div className="rounded-lg border border-[#B58BFF]/25 bg-[#B58BFF]/[0.08] px-2.5 py-1.5 text-[10.5px] text-[#D6C0FF] tabular-nums">
                       Aporte total Fresh: <span className="font-bold text-white">{fmtCOP(freshValorNum * freshCuotasNum)}</span> en {freshCuotasNum} cuotas
