@@ -1227,8 +1227,31 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
     rechazado: { label: "RECHAZADO", color: C.danger },
   };
 
+  type DateBucket = "hoy" | "7d" | "30d" | "todo" | "custom";
+  const [dateBucket, setDateBucket] = useState<DateBucket>("hoy");
+  const [customDate, setCustomDate] = useState<string>("");
+
+  const dateFiltered = useMemo(() => {
+    if (dateBucket === "todo") return rows;
+    if (dateBucket === "custom") {
+      if (!customDate) return rows;
+      return rows.filter((r) => (r.ejecutado_at ?? "").slice(0, 10) === customDate);
+    }
+    const now = Date.now();
+    const day = 86400000;
+    if (dateBucket === "hoy") {
+      const today = new Date().toISOString().slice(0, 10);
+      return rows.filter((r) => (r.ejecutado_at ?? "").slice(0, 10) === today);
+    }
+    const windowMs = dateBucket === "7d" ? 7 * day : 30 * day;
+    return rows.filter((r) => {
+      const t = new Date(r.ejecutado_at).getTime();
+      return !Number.isNaN(t) && now - t <= windowMs;
+    });
+  }, [rows, dateBucket, customDate]);
+
   const ordered = useMemo(() => {
-    return [...rows].sort((a, b) => {
+    return [...dateFiltered].sort((a, b) => {
       const aCrit = a.alertas_criticas > 0 ? 1 : 0;
       const bCrit = b.alertas_criticas > 0 ? 1 : 0;
       if (aCrit !== bCrit) return bCrit - aCrit;
@@ -1238,10 +1261,10 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
       if (a.qa_score !== b.qa_score) return a.qa_score - b.qa_score;
       const aT = new Date(a.ejecutado_at).getTime();
       const bT = new Date(b.ejecutado_at).getTime();
-      if (aT !== bT) return aT - bT;
+      if (aT !== bT) return bT - aT;
       return b.ticket - a.ticket;
     });
-  }, [rows]);
+  }, [dateFiltered]);
 
   const prioridad = (r: CCRow): { label: string; color: string } => {
     if (r.alertas_criticas > 0) return { label: "P0 · Crítico", color: C.danger };
@@ -1287,21 +1310,63 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
   };
   const td: React.CSSProperties = { padding: "0 12px", whiteSpace: "nowrap" };
 
+  const bucketBtn = (key: DateBucket, label: string) => {
+    const active = dateBucket === key;
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={() => setDateBucket(key)}
+        style={{
+          padding: "5px 11px", borderRadius: 8, cursor: "pointer",
+          fontSize: 11, fontWeight: 700, letterSpacing: 0.3,
+          background: active ? "rgba(91,140,255,0.18)" : "rgba(255,255,255,0.03)",
+          color: active ? C.primary : C.textSec,
+          border: `1px solid ${active ? "rgba(91,140,255,0.45)" : C.border}`,
+          whiteSpace: "nowrap",
+        }}
+      >{label}</button>
+    );
+  };
+
+
   return (
     <Section
       title={`Cola de revisión · Top ${visibles.length} de ${ordered.length}`}
       subtitle="Orden inteligente: criticidad → bloqueo → score → antigüedad → ticket"
     >
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginBottom: 10 }}>
-        <button type="button" onClick={() => scrollQueue(-1)} title="Mover cola hacia la izquierda" style={{
-          width: 30, height: 28, borderRadius: 8, cursor: "pointer",
-          background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
-        }}>←</button>
-        <button type="button" onClick={() => scrollQueue(1)} title="Mover cola hacia la derecha" style={{
-          width: 30, height: 28, borderRadius: 8, cursor: "pointer",
-          background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
-        }}>→</button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10, marginBottom: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+          <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: C.textMuted, marginRight: 4 }}>Fecha:</span>
+          {bucketBtn("hoy", "Hoy")}
+          {bucketBtn("7d", "7 días")}
+          {bucketBtn("30d", "30 días")}
+          {bucketBtn("todo", "Todo")}
+          <input
+            type="date"
+            value={customDate}
+            onChange={(e) => { setCustomDate(e.target.value); setDateBucket(e.target.value ? "custom" : "hoy"); }}
+            style={{
+              padding: "5px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+              background: dateBucket === "custom" ? "rgba(91,140,255,0.14)" : "rgba(255,255,255,0.03)",
+              color: dateBucket === "custom" ? C.primary : C.textSec,
+              border: `1px solid ${dateBucket === "custom" ? "rgba(91,140,255,0.45)" : C.border}`,
+              colorScheme: "dark",
+            }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button type="button" onClick={() => scrollQueue(-1)} title="Mover cola hacia la izquierda" style={{
+            width: 30, height: 28, borderRadius: 8, cursor: "pointer",
+            background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
+          }}>←</button>
+          <button type="button" onClick={() => scrollQueue(1)} title="Mover cola hacia la derecha" style={{
+            width: 30, height: 28, borderRadius: 8, cursor: "pointer",
+            background: "rgba(255,255,255,0.04)", color: C.textSec, border: `1px solid ${C.border}`,
+          }}>→</button>
+        </div>
       </div>
+
       <div ref={scrollerRef} onWheel={handleWheel} style={{ overflowX: "auto", overscrollBehaviorX: "contain", touchAction: "pan-x pan-y" }}>
         <table style={{ width: "100%", fontSize: 12, minWidth: 1100, borderCollapse: "separate", borderSpacing: 0 }}>
           <thead>
