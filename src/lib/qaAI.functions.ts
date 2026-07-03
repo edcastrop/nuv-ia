@@ -1535,10 +1535,11 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
 
     const { data: audRaw, error: audError } = await supabase
       .from("qa_auditorias")
-      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by,origen,banco,producto,cliente_nombre")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (audError) throw new Error(audError.message);
+
     const audits = audRaw ?? [];
 
     const expIds = [...new Set(audits.map((r) => r.expediente_id).filter((id): id is string => !!id))];
