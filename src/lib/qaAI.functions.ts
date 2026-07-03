@@ -1535,10 +1535,11 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
 
     const { data: audRaw, error: audError } = await supabase
       .from("qa_auditorias")
-      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by")
+      .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by,origen,banco,producto,cliente_nombre")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (audError) throw new Error(audError.message);
+
     const audits = audRaw ?? [];
 
     const expIds = [...new Set(audits.map((r) => r.expediente_id).filter((id): id is string => !!id))];
@@ -1609,9 +1610,10 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
         auditor_aprobado_at: (r as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at ?? null,
         ejecutado_at: r.ejecutado_at as string,
         updated_at: (r as unknown as { updated_at: string | null }).updated_at ?? null,
-        cliente_nombre: (exp?.cliente_nombre as string | null) ?? null,
-        banco: (exp?.banco as string | null) ?? null,
-        producto: (exp?.producto as string | null) ?? null,
+        cliente_nombre: (exp?.cliente_nombre as string | null) ?? ((r as { cliente_nombre?: string | null }).cliente_nombre ?? null),
+        banco: (exp?.banco as string | null) ?? ((r as { banco?: string | null }).banco ?? null),
+        producto: (exp?.producto as string | null) ?? ((r as { producto?: string | null }).producto ?? null),
+
         estado_caso: (exp?.estado_caso as string | null) ?? null,
         subestado: (exp?.subestado as string | null) ?? null,
         validacion_estado: (exp?.validacion_estado as string | null) ?? null,
