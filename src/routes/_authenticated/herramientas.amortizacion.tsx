@@ -586,7 +586,7 @@ function AmortizationEngine() {
                 >
                   <div className="flex items-center gap-2">
                     <Wand2 className="h-3.5 w-3.5 text-[#84B98F]" />
-                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Convertidor Tasa Fresh</span>
+                    <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-white/70">Convertidor de tasa (EA · MV · NMV · NAMV · NASV)</span>
                   </div>
                   <ChevronDown className={`h-3.5 w-3.5 text-white/50 transition-transform ${showConverter ? "rotate-180" : ""}`} />
                 </button>
