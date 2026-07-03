@@ -204,7 +204,7 @@ function PersonaCard({ p, onDM }: { p: DirectorioPersona; onDM: () => void }) {
       <span className="pointer-events-none absolute inset-x-5 top-0 h-px" style={{ background: "linear-gradient(90deg, transparent, rgba(132,185,143,0.5), transparent)" }} />
       <span className="pointer-events-none absolute -inset-px rounded-[24px] opacity-0 transition-opacity duration-500 group-hover:opacity-100 blur-xl" style={{ background: `linear-gradient(135deg, ${NUVEX.azul}30, ${NUVEX.verde}30)` }} />
       <div className="relative flex items-start gap-3">
-        <UserAvatar userId={p.user_id} name={p.nombre} size="md" />
+        <UserAvatar userId={p.user_id} url={p.foto_url} name={p.nombre} size="md" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <div className="text-sm font-semibold text-white truncate">{p.nombre}</div>

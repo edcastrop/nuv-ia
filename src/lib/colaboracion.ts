@@ -306,35 +306,8 @@ export async function listMisDMs(): Promise<DMResumen[]> {
   ((otrosMiembros ?? []) as any[]).forEach((m) => { otroPorCanal.set(m.canal_id, { user_id: m.user_id, ultima_lectura: m.ultima_lectura }); });
 
   const otroIds = Array.from(new Set(Array.from(otroPorCanal.values()).map((v) => v.user_id).filter(Boolean)));
-  const [dir, perfilesOtros, rolesOtros] = await Promise.all([
-    listDirectorioFull(),
-    otroIds.length
-      ? T("profiles")
-        .select("id, nombre, email, correo_corporativo, avatar_url, last_seen_at, presencia_visible")
-        .in("id", otroIds as never)
-      : Promise.resolve({ data: [] as any[], error: null }),
-    otroIds.length
-      ? supabase.from("user_roles").select("user_id, role").in("user_id", otroIds)
-      : Promise.resolve({ data: [] as any[], error: null }),
-  ]);
+  const dir = await listDirectorioFull();
   const dirMap = new Map(dir.map((d) => [d.user_id, d]));
-  const rolesMap = new Map<string, string[]>();
-  ((rolesOtros.data ?? []) as any[]).forEach((r) => {
-    const arr = rolesMap.get(r.user_id) ?? [];
-    arr.push(r.role);
-    rolesMap.set(r.user_id, arr);
-  });
-  const perfilDirectoMap = new Map(((perfilesOtros.data ?? []) as any[]).map((p) => {
-    const rolesRaw = rolesMap.get(p.id) ?? [];
-    return [p.id, {
-      user_id: p.id,
-      nombre: collaboratorDisplayName(p.nombre, p.email, p.correo_corporativo),
-      foto_url: p.avatar_url ?? null,
-      roles: rolesRaw.map(labelRol),
-      last_seen_at: p.last_seen_at ?? null,
-      presencia_visible: p.presencia_visible !== false,
-    }];
-  }));
 
   const { data: ultMsgs } = await T("colab_mensajes")
     .select("canal_id, user_id, texto, created_at, borrado")
@@ -346,7 +319,7 @@ export async function listMisDMs(): Promise<DMResumen[]> {
 
   const resumen: DMResumen[] = dmRows.map((r) => {
     const otroRef = otroPorCanal.get(r.canal_id);
-    const perfil = otroRef ? (dirMap.get(otroRef.user_id) ?? perfilDirectoMap.get(otroRef.user_id)) : undefined;
+    const perfil = otroRef ? dirMap.get(otroRef.user_id) : undefined;
     const myRead = myReadByCanal.get(r.canal_id);
     const noLeidos = ((ultMsgs ?? []) as any[]).filter((m) => m.canal_id === r.canal_id && m.user_id !== user.id && (!myRead || new Date(m.created_at) > new Date(myRead))).length;
     return {
@@ -436,42 +409,26 @@ export function labelRol(r: string): string {
 }
 
 export async function listDirectorioFull(): Promise<DirectorioPersona[]> {
-  const { data, error } = await T("profiles")
-    .select("id, nombre, email, avatar_url, correo_corporativo, whatsapp, celular, ciudad, pais, equipo, sede, activo, estado_acceso, rol_solicitado, last_seen_at, presencia_visible")
-    .eq("activo", true)
-    .eq("estado_acceso", "aprobado")
-    .order("nombre", { ascending: true });
+  const { data, error } = await supabase.rpc("list_colaboradores_publicos" as never);
   if (error) throw error;
   const rows = (data ?? []) as any[];
-  const ids = rows.map((p) => p.id);
-  const { data: rolesData } = await supabase.from("user_roles").select("user_id, role").in("user_id", ids.length ? ids : ["00000000-0000-0000-0000-000000000000"]);
-  const map = new Map<string, string[]>();
-  (rolesData ?? []).forEach((r: any) => {
-    const arr = map.get(r.user_id) ?? [];
-    arr.push(r.role);
-    map.set(r.user_id, arr);
-  });
   return rows.map((p) => {
-    const rolesRaw = map.get(p.id) ?? [];
-    // Fallback al rol solicitado si todavía no hay asignación en user_roles
-    const roles = rolesRaw.length > 0
-      ? rolesRaw
-      : (p.rol_solicitado ? [String(p.rol_solicitado)] : []);
+    const rolesRaw = Array.isArray(p.roles_raw) ? p.roles_raw.map(String) : [];
     return {
-      user_id: p.id,
+      user_id: p.user_id,
       nombre: collaboratorDisplayName(p.nombre, p.email, p.correo_corporativo),
-      correo: p.email ?? null,
-      correo_corp: p.correo_corporativo ?? null,
+      correo: p.correo ?? null,
+      correo_corp: p.correo_corp ?? null,
       whatsapp: p.whatsapp ?? null,
       celular: p.celular ?? null,
       ciudad: p.ciudad ?? null,
       pais: p.pais ?? null,
       equipo: p.equipo ?? null,
       sede: p.sede ?? null,
-      foto_url: p.avatar_url ?? null,
+      foto_url: p.foto_url ?? null,
       activo: p.activo ?? true,
-      roles: roles.map(labelRol),
-      rolesRaw: roles,
+      roles: rolesRaw.map(labelRol),
+      rolesRaw,
       last_seen_at: p.last_seen_at ?? null,
       presencia_visible: p.presencia_visible !== false,
     };
