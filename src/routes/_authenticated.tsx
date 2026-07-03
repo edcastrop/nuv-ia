@@ -36,6 +36,8 @@ import {
   ArrowRight,
   ShieldAlert,
   FilePlus2,
+  Calculator,
+  PiggyBank,
 
 } from "lucide-react";
 import { useRouter } from "@tanstack/react-router";
@@ -62,6 +64,14 @@ export const Route = createFileRoute("/_authenticated")({
 const AZUL = "var(--nuvia-accent-blue)";
 const VERDE = "var(--nuvia-accent-green)";
 const GRADIENT = "var(--nuvia-gradient-primary)";
+const HERRAMIENTAS_ROLES = [
+  "super_admin",
+  "admin",
+  "gerencia",
+  "licenciado",
+  "asesor",
+  "director_financiero_qa",
+];
 
 const GATE_CACHE_PREFIX = "nuvex.accessGate.";
 const GATE_CACHE_TTL_MS = 30 * 60 * 1000;
@@ -556,14 +566,7 @@ function AuthenticatedLayout() {
               { to: "/expediente-maestro", label: "Expediente", Icon: UserSquare2 },
               { to: "/proyeccion", label: "Proyección", Icon: LineChart },
               // Proyección Financiera ahora vive dentro de /herramientas
-              ...(hasAny(
-                "super_admin",
-                "admin",
-                "gerencia",
-                "licenciado",
-                "asesor",
-                "director_financiero_qa",
-              )
+              ...(hasAny(...HERRAMIENTAS_ROLES)
                 ? [{ to: "/herramientas", label: "Herramientas", Icon: Wrench }]
                 : []),
               // Superficies transversales: Centro de Alertas y Directorio deben estar
@@ -580,6 +583,20 @@ function AuthenticatedLayout() {
 
             ],
           },
+          ...(hasAny(...HERRAMIENTAS_ROLES)
+            ? [
+                {
+                  label: "Herramientas",
+                  items: [
+                    { to: "/herramientas/simulador", label: "Simulador NUVEX", Icon: Rocket },
+                    { to: "/herramientas/abonos", label: "Abonos a capital", Icon: PiggyBank },
+                    { to: "/herramientas/proyeccion", label: "Proyección financiera", Icon: LineChart },
+                    { to: "/herramientas/amortizacion", label: "Amortización", Icon: Calculator },
+                    { to: "/herramientas/capacidad-pago", label: "Capacidad de pago", Icon: ShieldCheck },
+                  ],
+                },
+              ]
+            : []),
           {
             label: "Análisis",
             items: [
