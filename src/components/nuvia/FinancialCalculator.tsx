@@ -960,7 +960,6 @@ export function FinancialCalculator() {
   }, [pinned, mode]);
 
   const allowed = roles.some((r) => ALLOWED.includes(r));
-  if (!allowed) return null;
 
   const togglePin = () => {
     const next = !pinned;
@@ -994,6 +993,8 @@ export function FinancialCalculator() {
     : tab === "amort" ? amortView
     : tab === "vpn" ? vpnView
     : null;
+
+  if (!allowed) return null;
 
   const tabs: { id: Tab; label: string }[] = [
     { id: "tvm", label: "TVM" },
