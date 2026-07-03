@@ -704,7 +704,7 @@ function KPI({
   color,
   hero,
 }: {
-  Icon: React.ComponentType<{ className?: string }>;
+  Icon: React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
   label: string;
   value: string;
   sub?: string;
