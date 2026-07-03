@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { getTorreMetrics, type TorreKpi, type TorrePeriod } from "@/lib/torreControlMetrics.functions";
 import { getTorreInsights } from "@/lib/torreControlInsights.functions";
+import { getReporteCostosIA } from "@/lib/costosIA.functions";
 import {
   ExecutiveHero, KpiStripCard, FunnelChart, AgingStackedBar,
   AreaProductivityBars, ProjectedRevenueChart, ExecutiveInsightsCard, RiskTable, KpiDetailModal,
@@ -13,6 +14,7 @@ import {
 import {
   CommandCenterTabs, HealthScoreGauge,
 } from "@/components/torre-control/command-center/CommandCenter";
+import { Cpu, ArrowRight } from "lucide-react";
 
 const ROLES_TORRE = ["super_admin", "admin", "gerencia", "director_financiero_qa", "director_juridico"];
 
