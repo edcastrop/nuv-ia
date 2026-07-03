@@ -567,14 +567,14 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       cliente_nombre: string | null;
       banco: string | null;
       codigo: string | null;
-      cedula?: string | null;
-      numero_credito?: string | null;
-      producto?: string | null;
-      discount_data?: unknown;
-      honorarios_base?: unknown;
-      honorarios_final?: unknown;
-      descuento?: unknown;
-      propuesta_data?: unknown;
+      cedula: string | null;
+      numero_credito: string | null;
+      producto: string | null;
+      discount_data: Json | null;
+      honorarios_base: number | null;
+      honorarios_final: number | null;
+      descuento: number | null;
+      propuesta_data: Json | null;
     } | null = null;
     // Hidratación defensiva: si el expediente quedó con "Sin nombre" pero el
     // extracto sí extrajo el nombre/banco/cédula, propagamos y hacemos
