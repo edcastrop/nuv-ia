@@ -700,6 +700,14 @@ export function UVRSimulator({
               setPendingAutoQARaw({ raw: { ...p.raw, archivoPath: p.archivoPath ?? null } });
               autoQAFiredRef.current = false;
               setAutoQA(null);
+            } else if (!init?.id && p.raw) {
+              emitDraftRawReady({
+                banco: p.raw.banco ?? null,
+                producto: p.raw.producto ?? null,
+                moneda: p.raw.moneda ?? "UVR",
+                tipoCredito: "uvr",
+                datos: (p.raw.datos ?? {}) as Record<string, unknown>,
+              });
             }
           }}
         />}
