@@ -287,9 +287,11 @@ export function NotificationBell() {
                 Ver todo el centro de alertas →
               </Link>
             </div>
-          </div>
+          </div>,
+          document.body,
         )}
       </div>
+
 
       {detalle && (
         <div
