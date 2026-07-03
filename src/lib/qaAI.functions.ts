@@ -563,7 +563,19 @@ export const obtenerAuditoriaQA = createServerFn({ method: "POST" })
       }
     }
     let analistaIdVista = (auditoria.analista_id as string | null) ?? null;
-    let expedienteInfo: { cliente_nombre: string | null; banco: string | null; codigo: string | null } | null = null;
+    let expedienteInfo: {
+      cliente_nombre: string | null;
+      banco: string | null;
+      codigo: string | null;
+      cedula?: string | null;
+      numero_credito?: string | null;
+      producto?: string | null;
+      discount_data?: unknown;
+      honorarios_base?: unknown;
+      honorarios_final?: unknown;
+      descuento?: unknown;
+      propuesta_data?: unknown;
+    } | null = null;
     // Hidratación defensiva: si el expediente quedó con "Sin nombre" pero el
     // extracto sí extrajo el nombre/banco/cédula, propagamos y hacemos
     // backfill silencioso para que /casos, /pipeline y esta vista dejen de
