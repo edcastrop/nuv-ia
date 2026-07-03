@@ -1044,6 +1044,7 @@ function AuthenticatedLayout() {
         </main>
 
         {!isApoderado && !isDirectMessagesRoute && <NuvexGptButton />}
+        {!isApoderado && <FinancialCalculator />}
         <NotificacionesAlerts />
         <EtapaTransicionDialog />
 
