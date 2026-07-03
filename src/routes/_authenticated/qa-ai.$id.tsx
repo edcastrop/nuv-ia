@@ -555,7 +555,7 @@ function ResultadoQaAi() {
   const proyCuotaCliente = numDato(proyInfo?.cuotaClienteAplicada) ?? numDato(ex.cuota);
   const proyCuotaFinanciera = numDato(proyInfo?.cuotaFinancieraAplicada) ?? numDato(recSnap.cuotaFinancieraSinSeguros);
   const proyTasaEa = numDato(proyInfo?.tasaEaAplicada) ?? numDato(recSnap.tasaEa);
-  const expInfo = (data as unknown as { expediente?: { cliente_nombre: string | null; banco: string | null; codigo: string | null } | null })?.expediente ?? null;
+  const expInfo = (data as unknown as { expediente?: { cliente_nombre: string | null; banco: string | null; codigo: string | null; cedula?: string | null; numero_credito?: string | null; producto?: string | null; discount_data?: { percent?: number; vigencia?: string; motivo?: string } | null; honorarios_base?: number | null; honorarios_final?: number | null; descuento?: number | null; propuesta_data?: { honorariosPactados?: number; nuevaCuota?: number; ahorroMensual?: number } | null } | null })?.expediente ?? null;
   const cliente = (ex.cliente as string) || (ex.titular as string) || expInfo?.cliente_nombre || "Cliente";
   const banco = (ex.banco as string) || expInfo?.banco || "—";
   const producto = a.modalidad === "uvr" ? "Hipotecario UVR" : a.modalidad === "hipotecario" ? "Hipotecario" : a.modalidad === "leasing" ? "Leasing" : String(a.modalidad ?? "Crédito");
@@ -733,9 +733,14 @@ function ResultadoQaAi() {
             <div className="space-y-1">
               <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Cliente · Obligación</p>
               <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{cliente}</p>
-              {!!(ex.numeroObligacion ?? ex.numeroCredito) && (
+              {!!(expInfo?.cedula ?? ex.cedula) && (
+                <p className="text-[11.5px] tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
+                  CC {String(expInfo?.cedula ?? ex.cedula)}
+                </p>
+              )}
+              {!!(ex.numeroObligacion ?? ex.numeroCredito ?? expInfo?.numero_credito) && (
                 <p className="text-[12px] tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
-                  N° {String(ex.numeroObligacion ?? ex.numeroCredito)}
+                  N° {String(ex.numeroObligacion ?? ex.numeroCredito ?? expInfo?.numero_credito)}
                 </p>
               )}
             </div>
