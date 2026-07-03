@@ -293,11 +293,13 @@ export function NotificationBell() {
       </div>
 
 
-      {detalle && (
+      {detalle && typeof document !== "undefined" && createPortal(
         <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          className="fixed inset-0 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          style={{ zIndex: 2147483000 }}
           onClick={() => setDetalle(null)}
         >
+
           <div
             className="glass-modal w-full max-w-lg overflow-hidden"
             style={{ color: "var(--nuvia-text-primary)" }}
