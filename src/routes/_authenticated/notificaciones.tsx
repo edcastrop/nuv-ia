@@ -263,6 +263,24 @@ function NotificacionesPage() {
     honorarios: honorariosPend.length,
   }), [items, qaPend, alertas, sinSeguimiento, honorariosPend]);
 
+  const tabOptions = useMemo(
+    () => ([
+      { k: "todos", label: "Todos", n: counts.todos, c: C.blue },
+      { k: "criticos", label: "Críticos", n: counts.criticos, c: C.crit },
+      { k: "qa", label: "QA", n: counts.qa, c: C.blue },
+      { k: "estancados", label: "Estancados", n: counts.estancados, c: C.alto },
+      { k: "sin_seguimiento", label: "Sin seguimiento", n: counts.seguimiento, c: C.medio },
+      { k: "honorarios", label: "Honorarios", n: counts.honorarios, c: C.green },
+    ] as { k: TabKey; label: string; n: number; c: string }[]).filter((t) =>
+      t.k === "todos" || (t.n > 0 && t.n < counts.todos),
+    ),
+    [counts.criticos, counts.estancados, counts.honorarios, counts.qa, counts.seguimiento, counts.todos],
+  );
+
+  useEffect(() => {
+    if (!tabOptions.some((t) => t.k === tab)) setTab("todos");
+  }, [tab, tabOptions]);
+
   const honorariosTotal = honorariosPend.reduce((s, e) => s + (e.honorarios_final ?? 0), 0);
   const riesgo = alertas.length * 28_000_000 + qaPend.length * 12_000_000;
   const recuperable = items.length * 32_500_000 + honorariosTotal;
@@ -461,14 +479,7 @@ function NotificacionesPage() {
 
       {/* ============ TABS ============ */}
       <div className="flex items-center gap-2 flex-wrap mt-4">
-        {([
-          { k: "todos", label: "Todos", n: counts.todos, c: C.blue },
-          { k: "criticos", label: "Críticos", n: counts.criticos, c: C.crit },
-          { k: "qa", label: "QA", n: counts.qa, c: C.blue },
-          { k: "estancados", label: "Estancados", n: counts.estancados, c: C.alto },
-          { k: "sin_seguimiento", label: "Sin seguimiento", n: counts.seguimiento, c: C.medio },
-          { k: "honorarios", label: "Honorarios", n: counts.honorarios, c: C.green },
-        ] as { k: TabKey; label: string; n: number; c: string }[]).map((t) => (
+        {tabOptions.map((t) => (
           <button
             key={t.k}
             onClick={() => setTab(t.k)}
