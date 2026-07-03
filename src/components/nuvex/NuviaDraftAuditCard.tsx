@@ -352,14 +352,15 @@ function EscalarDialog({
   const handleEnviar = async () => {
     setSaving(true);
     try {
-      const r = await escalar({ data: { ...payload, notas: notas.trim() || undefined } });
-      toast.success("Consulta enviada al Director Financiero.", {
-        description: `Ref: ${r.id.slice(0, 8)}`,
-        duration: 6000,
+      const r = await escalar({ data: { ...payload, notasParaAuditor: notas.trim() || undefined } });
+      const codigo = (r as { codigo?: string | null }).codigo ?? null;
+      toast.success("Simulación enviada a la Cola de Revisión NUVIA QA AI.", {
+        description: codigo ? `Ref auditoría: ${codigo}` : `Ref: ${(r as { id: string }).id.slice(0, 8)}`,
+        duration: 6500,
       });
       onClose();
     } catch (e) {
-      toast.error(`No se pudo enviar la consulta: ${e instanceof Error ? e.message : "error"}`);
+      toast.error(`No se pudo enviar la simulación: ${e instanceof Error ? e.message : "error"}`);
     } finally {
       setSaving(false);
     }
@@ -374,10 +375,12 @@ function EscalarDialog({
         className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#0B1220] p-6 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-semibold text-white">Escalar a Dirección Financiera</h3>
+        <h3 className="text-lg font-semibold text-white">Escalar simulación al auditor</h3>
         <p className="mt-1 text-[13px] text-white/60">
-          Se enviará una <strong>consulta técnica</strong> al Director Financiero con el snapshot de la
-          simulación y los hallazgos de NUVIA. Este envío <strong>no crea un caso</strong> en el ERP.
+          Se enviará la simulación completa (extracto + hallazgos NUVIA) a la{" "}
+          <strong>Cola de Revisión NUVIA Financial QA AI</strong> con su código de auditoría propio.
+          El Director Financiero la audita, corrige lo que corresponda y te la devuelve aprobada
+          desde el panel de siempre. <strong>Esto no crea un caso en el ERP</strong>.
         </p>
 
         <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[12px] text-slate-300">
@@ -388,15 +391,18 @@ function EscalarDialog({
         </div>
 
         <label className="mt-4 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
-          Notas para el director (opcional)
+          Comentarios para el auditor (comunicación con el cliente, contexto extra)
           <textarea
             autoFocus
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
             rows={4}
-            placeholder="Ej. El extracto no muestra el subsidio FRECH aunque el cliente afirma tenerlo…"
+            placeholder="Ej. El cliente confirma FRECH activo desde 2019 aunque el extracto no lo detalla · Reporta que la cuota bajó de $2.4M a $1.8M en 2023 · Está pagando dos seguros pero solo aparece uno en el extracto…"
             className="mt-1.5 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[13px] font-normal normal-case tracking-normal text-white placeholder:text-white/30 focus:border-amber-400/40 focus:outline-none"
           />
+          <span className="mt-1 block text-[10.5px] normal-case tracking-normal text-white/40">
+            Todo lo que el cliente te haya dicho por WhatsApp o llamada ayuda al auditor a decidir más rápido.
+          </span>
         </label>
 
         <div className="mt-5 flex justify-end gap-2">
@@ -414,10 +420,11 @@ function EscalarDialog({
             disabled={saving}
             className="rounded-lg border border-amber-400/40 bg-amber-400/20 px-4 py-2 text-[12.5px] font-semibold text-amber-100 shadow-[0_10px_30px_-15px_rgba(251,191,36,0.6)] hover:bg-amber-400/30 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving ? "Enviando…" : "Enviar consulta"}
+            {saving ? "Enviando…" : "Enviar a NUVIA QA AI"}
           </button>
         </div>
       </div>
     </div>
   );
 }
+
