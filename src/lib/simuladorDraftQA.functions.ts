@@ -285,7 +285,13 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
   });
 
 // ─────────────────────────────────────────────────────────────
-// 2. Escalar consulta técnica al Director Financiero (sin caso)
+// 2. Escalar simulación → Cola de Revisión NUVIA QA AI
+//    Crea una auditoría REAL en qa_auditorias (origen=simulador_escalado)
+//    con expediente_id=null, para que llegue al director en /qa-ai igual
+//    que llegaba antes con las lecturas de extracto — con su código
+//    NUV_AUD_YYYY_XX_00000 y su score/dictamen. No se crea expediente
+//    hasta que el analista, después de recibir la simulación auditada,
+//    ejecute "Certificar y crear caso" en el simulador.
 // ─────────────────────────────────────────────────────────────
 
 const escalarInputSchema = z.object({
@@ -296,6 +302,7 @@ const escalarInputSchema = z.object({
   moneda: z.string().nullable().optional(),
   hallazgos: z.array(z.unknown()).default([]),
   notas: z.string().max(4000).optional(),
+  notasParaAuditor: z.string().max(4000).optional(),
 });
 
 export const escalarConsultaTecnica = createServerFn({ method: "POST" })
@@ -304,75 +311,304 @@ export const escalarConsultaTecnica = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
 
-    const { data: row, error } = await supabase
-      .from("consultas_tecnicas")
-      .insert({
-        analista_id: userId,
-        estado: "pendiente",
-        banco: data.banco ?? null,
-        producto: data.producto ?? null,
-        tipo_credito: data.tipoCredito ?? null,
-        moneda: data.moneda ?? null,
-        snapshot_simulacion: data.snapshot as never,
-        hallazgos_nuvia: data.hallazgos as never,
-        notas_analista: data.notas ?? null,
-      })
-      .select("id,restore_token,created_at")
-      .single();
-    if (error) throw new Error(error.message);
+    const snap = (data.snapshot ?? {}) as Record<string, unknown>;
+    const d = (snap.datos ?? snap) as Record<string, unknown>;
 
-    // Notificamos a Dirección Financiera / super_admin / gerencia (best-effort).
-    // Usamos supabaseAdmin porque user_roles no es legible por analistas.
+    // ── 1. Normalización idéntica a auditarLecturaAutomatica ──
+    const productoStr = String(d.producto ?? data.producto ?? "").toUpperCase();
+    const modalidad: Modalidad = productoStr.includes("LEASING")
+      ? "leasing"
+      : d.saldoUVR || d.valorUVR
+        ? "uvr"
+        : "hipotecario";
+
+    const saldo = parseNum(d.saldoCapital) ?? 0;
+    const tasa = parseNum(d.tasaEA) ?? parseNum(d.teaCobrada) ?? 0;
+    const tasaPactada = parseNum(d.teaPactada);
+    let cuotasPend = parseNum(d.cuotasPendientes) ?? 0;
+    const cuotasPag = parseNum(d.cuotasPagadas) ?? 0;
+    const seguros = parseNum(d.seguros) ?? 0;
+    const frech = parseNum(d.tasaCobertura);
+    const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
+    const desemb = parseNum(d.valorDesembolsado);
+    const saldoUVR = parseNum(d.saldoUVR);
+    const valorUVR = parseNum(d.valorUVR);
+    const cuotaBaseSinSubsidio =
+      parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
+    const cuotaFinancieraSinSeguros =
+      parseNum(d.cuotaConInteresSinSeguros) ??
+      parseNum(d.cuotaSinSeguros) ??
+      (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
+
+    const bancoProducto = `${String(d.banco ?? data.banco ?? "")} ${String(d.producto ?? data.producto ?? "")}`;
+    if (/fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(bancoProducto)) {
+      const inferred = inferRemainingPayments(saldo, tasa, cuotaFinancieraSinSeguros ?? 0);
+      const plazoLeido = parseNum(d.plazoInicial) ?? 0;
+      if (inferred > 0 && cuotasPag > 0) {
+        const totalIncluyendoActual = cuotasPag + inferred - 1;
+        const plazoEstandar = nearestStandardTerm(totalIncluyendoActual);
+        const plazoCorregido =
+          Math.abs(plazoEstandar - totalIncluyendoActual) <= 2
+            ? plazoEstandar
+            : totalIncluyendoActual;
+        if (plazoLeido >= 300 && plazoLeido <= 366 && plazoCorregido < plazoLeido - 24) {
+          cuotasPend = inferred;
+        } else if (!cuotasPend || Math.abs(cuotasPend - inferred) > 12) {
+          cuotasPend = inferred;
+        }
+      }
+    }
+
+    const cuotaExt =
+      (frech && frech > 0) || (frechValorMensual && frechValorMensual > 0)
+        ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? parseNum(d.cuotaActual)
+        : parseNum(d.cuotaActual);
+
+    const FRECH_MAX = 84;
+    const tieneFrech = (frech && frech > 0) || (frechValorMensual && frechValorMensual > 0);
+    const frechCuotasRestantes = tieneFrech
+      ? Math.max(0, Math.min(cuotasPend, FRECH_MAX - cuotasPag))
+      : undefined;
+
+    const overrides = await cargarToleranciasActivas(supabase);
+    const tol: Tolerancias = { ...TOLERANCIAS_DEFAULT, ...overrides };
+
+    const result = auditar({
+      modalidad,
+      reconstruccion: {
+        modalidad,
+        saldoCapital: saldo,
+        tasaEa: tasa,
+        tasaEaPactada: tasaPactada,
+        cuotasPendientes: cuotasPend,
+        seguros,
+        coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
+        coberturaFrechCuotasRestantes: frechCuotasRestantes,
+        valorDesembolsado: desemb,
+        saldoUVR,
+        valorUVR,
+        cuotaBaseSinSubsidio,
+        cuotaFinancieraSinSeguros,
+      },
+      extracto: {
+        saldoCapital: saldo || undefined,
+        tasaEa: tasa || undefined,
+        cuota: cuotaExt,
+        seguros: seguros || undefined,
+        coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
+      },
+      tolerancias: tol,
+    });
+
+    // ── 2. Crear extractos_lecturas (sin expediente) para que el auditor
+    //       vea el snapshot del extracto en la UI de siempre.
+    const bancoFinal = String(d.banco ?? data.banco ?? "") || "SIN_BANCO";
+    const productoFinal = String(d.producto ?? data.producto ?? "") || null;
+    const monedaFinal = String(d.moneda ?? data.moneda ?? "") || null;
+    const clienteNombre =
+      (typeof d.cliente === "string" && d.cliente.trim())
+        ? d.cliente.trim()
+        : (typeof d.titular === "string" && d.titular.trim())
+          ? d.titular.trim()
+          : null;
+
+    const { data: extIns, error: errExt } = await supabase
+      .from("extractos_lecturas")
+      .insert({
+        expediente_id: null,
+        asesor_id: userId,
+        banco: bancoFinal,
+        producto: productoFinal,
+        moneda: monedaFinal,
+        datos: d as never,
+        scores: {} as never,
+        confianza_global: 0.9,
+        estado: "validada",
+        motor_version: "v1",
+      })
+      .select("id")
+      .single();
+    if (errExt) throw new Error(`No se pudo registrar el extracto: ${errExt.message}`);
+    const extractoId = extIns!.id as string;
+
+    // ── 3. Snapshot completo de la simulación (para trazabilidad y
+    //       para que el analista pueda restaurar exactamente lo que envió).
+    const simuladorSnapshot = {
+      ...snap,
+      escaladoAt: new Date().toISOString(),
+      hallazgosNuvia: data.hallazgos,
+    };
+
+    const inputsSnap = {
+      modalidad,
+      extractoLecturaId: extractoId,
+      expedienteId: null,
+      reconstruccion: {
+        saldoCapital: saldo,
+        tasaEa: tasa,
+        tasaEaPactada: tasaPactada,
+        cuotasPendientes: cuotasPend,
+        cuotasPagadas: cuotasPag,
+        seguros,
+        coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
+        coberturaFrechCuotasRestantes: frechCuotasRestantes,
+        valorDesembolsado: desemb,
+        saldoUVR,
+        valorUVR,
+        cuotaBaseSinSubsidio,
+        cuotaFinancieraSinSeguros,
+      },
+      extracto: {
+        saldoCapital: saldo,
+        tasaEa: tasa,
+        cuota: cuotaExt,
+        seguros,
+        coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
+      },
+      origenEscalacion: "simulador_escalado",
+      notasParaAuditor: data.notasParaAuditor ?? data.notas ?? null,
+    };
+
+    // ── 4. Insertar la auditoría (código NUV_AUD_YYYY_XX_00000 lo pone el trigger)
+    const { data: aud, error: errAud } = await supabase
+      .from("qa_auditorias")
+      .insert({
+        expediente_id: null,
+        analista_id: userId,
+        extracto_id: extractoId,
+        modalidad,
+        motor_version: QA_MOTOR_VERSION,
+        qa_score: result.score.score,
+        categoria: result.score.categoria,
+        dictamen: result.score.dictamen,
+        auto_ejecutada: false,
+        inputs: JSON.parse(JSON.stringify(inputsSnap)),
+        outputs: JSON.parse(JSON.stringify({
+          cuotaTeorica: result.reconstruccion.cuotaTeorica,
+          cuotaConSubsidio: result.reconstruccion.cuotaConSubsidio,
+          cuotaTotalConSeguros: result.reconstruccion.cuotaTotalConSeguros,
+          beneficioMensualFrech: result.reconstruccion.beneficioMensualFrech,
+          costoTotal: result.reconstruccion.costoTotal,
+          vecesPagado: result.reconstruccion.vecesPagado,
+          totalIntereses: result.reconstruccion.totalIntereses,
+          totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
+          iMv: result.reconstruccion.iMv,
+          primerasCuotas: result.reconstruccion.primerasCuotas,
+          ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
+          veredicto: result.veredicto,
+        })),
+        diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
+        alertas: JSON.parse(JSON.stringify(result.inconsistencias.filter((i) => i.severidad === "critica"))),
+        ejecutado_by: userId,
+        origen: "simulador_escalado",
+        banco: bancoFinal,
+        producto: productoFinal,
+        cliente_nombre: clienteNombre,
+        notas_analista_al_auditor: data.notasParaAuditor ?? data.notas ?? null,
+        simulador_snapshot: JSON.parse(JSON.stringify(simuladorSnapshot)),
+      } as never)
+      .select("id, codigo")
+      .single();
+    if (errAud) throw new Error(`No se pudo escalar la simulación: ${errAud.message}`);
+    const auditoriaId = aud!.id as string;
+    const codigo = (aud as { codigo: string | null }).codigo ?? null;
+
+    // ── 5. Inconsistencias + alertas + log
+    if (result.inconsistencias.length) {
+      await supabase.from("qa_inconsistencias").insert(
+        result.inconsistencias.map((i) => ({
+          auditoria_id: auditoriaId,
+          tipo: i.tipo,
+          severidad: i.severidad,
+          campo: i.campo ?? null,
+          valor_extracto: i.valorExtracto ?? null,
+          valor_calculado: i.valorCalculado ?? null,
+          diferencia: i.diferencia ?? null,
+          mensaje: i.mensaje,
+          sugerencia: i.sugerencia ?? null,
+        })),
+      );
+      const criticas = result.inconsistencias.filter((i) => i.severidad === "critica");
+      if (criticas.length) {
+        await supabase.from("qa_alertas").insert(
+          criticas.map((i) => ({
+            auditoria_id: auditoriaId,
+            expediente_id: null,
+            tipo: i.tipo,
+            severidad: i.severidad,
+            mensaje: i.mensaje,
+          })),
+        );
+      }
+    }
+
+    await supabase.from("qa_auditoria_log").insert({
+      auditoria_id: auditoriaId,
+      accion: "crear",
+      payload: { score: result.score.score, dictamen: result.score.dictamen, fuente: "simulador_escalado" } as never,
+      user_id: userId,
+    });
+
+    // ── 6. Notificar al Director Financiero QA — link a la Cola de Revisión.
     try {
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data: directores } = await supabaseAdmin
         .from("user_roles")
         .select("user_id")
-        .in("role", ["director_financiero_qa", "super_admin", "admin", "gerencia"]);
+        .in("role", ["director_financiero_qa", "super_admin"]);
       const uniqIds = Array.from(
-        new Set((directores ?? []).map((d) => d.user_id as string).filter(Boolean)),
+        new Set((directores ?? []).map((r) => r.user_id as string).filter(Boolean).filter((u) => u !== userId)),
       );
       if (uniqIds.length > 0) {
         const { data: analista } = await supabase
-          .from("profiles")
-          .select("nombre, email")
-          .eq("id", userId)
-          .maybeSingle();
+          .from("profiles").select("nombre, email").eq("id", userId).maybeSingle();
         const nombreAnalista =
           (analista?.nombre as string | null) ?? (analista?.email as string | null) ?? "Un analista";
-        const meta = [data.banco, data.producto].filter(Boolean).join(" · ") || "simulación";
-        const criticos = Array.isArray(data.hallazgos)
-          ? data.hallazgos.filter(
-              (h) =>
-                typeof h === "object" &&
-                h !== null &&
-                (h as { severidad?: unknown }).severidad === "critica",
-            ).length
-          : 0;
-        const totalHallazgos = Array.isArray(data.hallazgos) ? data.hallazgos.length : 0;
+        const meta = [bancoFinal, productoFinal, clienteNombre].filter(Boolean).join(" · ") || "simulación";
+        const criticos = result.inconsistencias.filter((i) => i.severidad === "critica").length;
+        const severidad: "alta" | "media" = criticos > 0 || result.score.score < 80 ? "alta" : "media";
 
         await supabaseAdmin.from("notificaciones_usuario").insert(
           uniqIds.map((uid) => ({
             user_id: uid,
-            tipo: "consulta_tecnica",
-            severidad: criticos > 0 ? "critica" : "warning",
-            titulo: "Nueva consulta técnica de simulación",
-            mensaje: `${nombreAnalista} escaló una ${meta} · ${totalHallazgos} hallazgo(s)${criticos > 0 ? ` (${criticos} crítico(s))` : ""}.`,
-            link: "/direccion/consultas-tecnicas",
-            metadata: { consultaId: row.id, analistaId: userId } as never,
+            tipo: "qa_solicitada",
+            severidad,
+            titulo: codigo ? `Simulación escalada · ${codigo}` : "Simulación escalada para auditar",
+            mensaje: `${nombreAnalista} escaló ${meta} · score ${Math.round(result.score.score)} · ${result.inconsistencias.length} hallazgo(s)${criticos > 0 ? ` (${criticos} crítico(s))` : ""}.`,
+            link: `/qa-ai/${auditoriaId}`,
+            metadata: {
+              auditoria_id: auditoriaId,
+              codigo,
+              analista_id: userId,
+              origen: "simulador_escalado",
+              score: result.score.score,
+              dictamen: result.score.dictamen,
+            } as never,
           })),
         );
       }
     } catch (e) {
-      console.warn("[consultas_tecnicas] no se pudo notificar a Dirección", e);
+      console.warn("[escalarConsultaTecnica] no se pudo notificar al director", e);
     }
 
     return {
-      id: row.id as string,
-      restoreToken: (row.restore_token as string | null) ?? null,
-      createdAt: row.created_at as string,
+      id: auditoriaId,
+      auditoriaId,
+      codigo,
+      score: result.score.score,
+      dictamen: result.score.dictamen,
+      criticos: result.inconsistencias.filter((i) => i.severidad === "critica").length,
+      totalHallazgos: result.inconsistencias.length,
+      createdAt: new Date().toISOString(),
+      restoreToken: null as string | null,
     };
   });
+
 
 // ─────────────────────────────────────────────────────────────
 // 3. Marcar una auditoría real como certificada por NUVIA
