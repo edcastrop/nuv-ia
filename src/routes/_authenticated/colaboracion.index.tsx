@@ -228,7 +228,7 @@ function ColaboracionPage() {
           </GlassPanel>
 
           {/* --------- COLUMN 2: ACTIVE CASES --------- */}
-          <GlassPanel>
+          <GlassPanel className="hidden md:flex">
             <PanelHeader label="CASOS ACTIVOS" accent="#3B82F6" right={<span className="text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: "rgba(59,130,246,0.15)", color: "#93C5FD" }}>{casesFiltered.length}</span>} />
             <div className="px-2.5 pt-2 pb-1.5 space-y-1.5">
               <div className="relative">
