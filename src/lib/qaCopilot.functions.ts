@@ -62,7 +62,7 @@ export const crearConversacion = createServerFn({ method: "POST" })
         titulo: data.titulo,
         expediente_id: data.expedienteId ?? null,
         auditoria_id: data.auditoriaId ?? null,
-        contexto: data.contexto,
+        contexto: data.contexto as Json,
       })
       .select("id,titulo,expediente_id,auditoria_id,contexto,created_at,updated_at")
       .single();
