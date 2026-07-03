@@ -264,9 +264,18 @@ export function SimuladorPage() {
   return (
     <div>
       {draftMode && (
-        <DraftBanner
-          onSaveAsCase={() => setSaveOpen(true)}
-          canSave={!!mode}
+        <NuviaDraftAuditCard
+          mode={mode}
+          onCertificar={() => {
+            if (!mode) {
+              toast.error("Selecciona Pesos o UVR primero.");
+              return;
+            }
+            setSaveOpen(true);
+          }}
+          onSalir={() => {
+            /* Link ya navega a /herramientas; nada más que hacer aquí. */
+          }}
         />
       )}
       {auditoriaId && (
