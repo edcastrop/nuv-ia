@@ -922,7 +922,8 @@ function AmortizationEngine() {
                         <th className="px-4 py-3 font-semibold">Fecha</th>
                         <th className="px-4 py-3 font-semibold">Saldo inicial</th>
                         <th className="px-4 py-3 font-semibold">Cuota financiera</th>
-                        <th className="px-4 py-3 font-semibold">Interés</th>
+                        <th className="px-4 py-3 font-semibold">Interés base</th>
+                        <th className="px-4 py-3 font-semibold text-[#D6C0FF]">Fresh</th>
                         <th className="px-4 py-3 font-semibold">Capital</th>
                         <th className="px-4 py-3 font-semibold">Seguros</th>
                         <th className="px-4 py-3 font-semibold">Total cuota</th>
@@ -932,7 +933,7 @@ function AmortizationEngine() {
                     <tbody>
                       {rows.length === 0 ? (
                         <tr>
-                          <td colSpan={9} className="px-4 py-10 text-center text-white/40 text-[12px]">
+                          <td colSpan={10} className="px-4 py-10 text-center text-white/40 text-[12px]">
                             Ingresa los datos y presiona <span className="text-white/80 font-semibold">Calcular cuota</span> para ver la tabla completa.
                           </td>
                         </tr>
