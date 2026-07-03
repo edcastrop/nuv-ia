@@ -275,6 +275,77 @@ function AmortizationEngine() {
     setCalculated(false); setLastCalc(null);
   }
 
+  function handleUseFreshAsTEA() {
+    if (!freshValid) return toast.error("Ingresa una tasa válida");
+    setTea((freshEA * 100).toFixed(4));
+    toast.success(`TEA actualizada: ${(freshEA * 100).toFixed(4)}%`);
+  }
+
+  function handleSaveScenario() {
+    if (!calculated) return toast.error("Calcula primero para guardar el escenario");
+    const nombre = prompt("Nombre del escenario:", `${modo.toUpperCase()} · ${plazoNum}m · ${fmtCOP(valorNum)}`);
+    if (!nombre) return;
+    const s: Scenario = {
+      id: crypto.randomUUID(),
+      nombre, ts: Date.now(),
+      modo, tea, plazo, valor, seguros, uvrInicial, varUvr, fechaDesembolso,
+    };
+    const next = [s, ...scenarios].slice(0, 10);
+    persistScenarios(next);
+    toast.success("Escenario guardado");
+  }
+  function handleLoadScenario(s: Scenario) {
+    setModo(s.modo); setTea(s.tea); setPlazo(s.plazo); setValor(s.valor);
+    setSeguros(s.seguros); setUvrInicial(s.uvrInicial); setVarUvr(s.varUvr);
+    setFechaDesembolso(s.fechaDesembolso || fechaDesembolso);
+    setCalculated(false);
+    toast.success(`Escenario "${s.nombre}" cargado — presiona Calcular`);
+  }
+  function handleDeleteScenario(id: string) {
+    persistScenarios(scenarios.filter((x) => x.id !== id));
+  }
+
+  async function handleImportCaso() {
+    const cod = importCodigo.trim();
+    if (!cod) return toast.error("Ingresa el código NUV_...");
+    setImportLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("expedientes")
+        .select("codigo, cliente_data, extracto_data")
+        .ilike("codigo", `%${cod}%`)
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) { toast.error("Expediente no encontrado"); return; }
+      const cd: any = data.cliente_data || {};
+      const ed: any = data.extracto_data || {};
+      const moneda: string = ed.monedaDetectada || (ed.uvr ? "uvr" : "pesos");
+      if (moneda === "uvr") setModo("uvr"); else setModo("pesos");
+      let filled = 0;
+      if (cd.plazoInicial) { setPlazo(String(cd.plazoInicial)); filled++; }
+      if (moneda === "uvr") {
+        if (ed.uvr?.teaCobrada) { setTea(String(ed.uvr.teaCobrada)); filled++; }
+        if (ed.uvr?.saldoUVR) { setValor(String(ed.uvr.saldoUVR)); filled++; }
+        if (ed.uvr?.valorUVR) { setUvrInicial(String(ed.uvr.valorUVR)); filled++; }
+        if (ed.uvr?.seguros) { setSeguros(String(ed.uvr.seguros)); filled++; }
+      } else {
+        if (ed.pesos?.tea) { setTea(String(ed.pesos.tea)); filled++; }
+        const vb = ed.pesos?.valorDesembolsado && parseFloat(ed.pesos.valorDesembolsado) > 0 ? ed.pesos.valorDesembolsado : ed.pesos?.saldoCapital || "";
+        if (vb) { setValor(String(vb)); filled++; }
+        if (ed.pesos?.seguros) { setSeguros(String(ed.pesos.seguros)); filled++; }
+      }
+      setCalculated(false);
+      setImportOpen(false);
+      setImportCodigo("");
+      toast.success(`${data.codigo} importado (${filled} campos)`);
+    } catch (e: any) {
+      toast.error(e?.message || "Error al importar");
+    } finally {
+      setImportLoading(false);
+    }
+  }
+
   function handleExtractoApply(p: ExtractoApplyPayload) {
     const moneda = p.monedaDetectada;
     if (moneda === "uvr" && modo !== "uvr") setModo("uvr");
@@ -303,11 +374,12 @@ function AmortizationEngine() {
     const XLSX = await import("xlsx");
     const data = [
       ["NUVIA AMORTIZATION ENGINE"],
-      [`TEA: ${(teaNum * 100).toFixed(4)}%`, `Tasa Mensual: ${(tasaMensual * 100).toFixed(6)}%`],
+      [`Fecha desembolso: ${fechaDesembolso}`, `TEA: ${(teaNum * 100).toFixed(4)}%`, `Tasa Mensual: ${(tasaMensual * 100).toFixed(6)}%`],
       [`Valor: ${valorNum}`, `Plazo: ${plazoNum}m`, `Seguros: ${segurosNum}`],
+      [`Punto de equilibrio: cuota ${breakEven ?? "—"} (${breakEvenFecha})`],
       [],
-      ["Periodo", "Saldo inicial", "Cuota financiera", "Interés", "Capital", "Seguros", "Total cuota", "Saldo final"],
-      ...rows.map((r) => [r.periodo, Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interes), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
+      ["Periodo", "Fecha", "Saldo inicial", "Cuota financiera", "Interés", "Capital", "Seguros", "Total cuota", "Saldo final"],
+      ...rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), Math.round(r.saldoInicial), Math.round(r.cuota), Math.round(r.interes), Math.round(r.capital), Math.round(r.seguros), Math.round(r.totalCuota), Math.round(r.saldoFinal)]),
     ];
     const ws = XLSX.utils.aoa_to_sheet(data);
     const wb = XLSX.utils.book_new();
@@ -322,10 +394,13 @@ function AmortizationEngine() {
     const autoTable = (await import("jspdf-autotable")).default;
     const doc = new jsPDF({ unit: "pt", format: "a4" });
     doc.setFontSize(16); doc.text("NUVIA Amortization Engine", 40, 40);
+    doc.setFontSize(9); doc.setTextColor(90);
+    doc.text(`Desembolso: ${fechaDesembolso}  ·  TEA: ${(teaNum * 100).toFixed(4)}%  ·  Plazo: ${plazoNum}m  ·  Break-even cuota ${breakEven ?? "—"} (${breakEvenFecha})`, 40, 56);
+    doc.setTextColor(0);
     autoTable(doc, {
-      startY: 60,
-      head: [["#", "Saldo inicial", "Cuota", "Interés", "Capital", "Seguros", "Total", "Saldo final"]],
-      body: rows.map((r) => [r.periodo, fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interes), fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
+      startY: 72,
+      head: [["#", "Fecha", "Saldo inicial", "Cuota", "Interés", "Capital", "Seguros", "Total", "Saldo final"]],
+      body: rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interes), fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
       styles: { fontSize: 7 },
       headStyles: { fillColor: [15, 26, 51] },
     });
