@@ -141,8 +141,9 @@ export function NotificationBell() {
           )}
         </button>
 
-        {open && anchor && (
+        {open && anchor && typeof document !== "undefined" && createPortal(
           <div
+
             className="glass-modal w-[380px] max-h-[480px] overflow-hidden flex flex-col"
             style={{
               position: "fixed",
