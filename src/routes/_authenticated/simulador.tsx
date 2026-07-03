@@ -38,7 +38,11 @@ export const Route = createFileRoute("/_authenticated/simulador")({
 });
 
 export function SimuladorPage() {
-  const { maestroId, modo: modoSearch, auditoriaId } = Route.useSearch();
+  const { maestroId, modo: modoSearch, auditoriaId } = useSearch({ strict: false }) as {
+    maestroId?: string;
+    modo?: "pesos" | "uvr";
+    auditoriaId?: string;
+  };
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   // Draft mode: cuando el simulador se abre desde /herramientas/simulador NO se
