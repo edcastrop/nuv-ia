@@ -73,6 +73,7 @@ import { Route as AuthenticatedQaAiIdRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedHerramientasProyeccionRouteImport } from './routes/_authenticated/herramientas.proyeccion'
 import { Route as AuthenticatedHerramientasCapacidadPagoRouteImport } from './routes/_authenticated/herramientas.capacidad-pago'
 import { Route as AuthenticatedHerramientasAmortizacionRouteImport } from './routes/_authenticated/herramientas.amortizacion'
+import { Route as AuthenticatedHerramientasAbonosRouteImport } from './routes/_authenticated/herramientas.abonos'
 import { Route as AuthenticatedFinanzasWalletsRouteImport } from './routes/_authenticated/finanzas.wallets'
 import { Route as AuthenticatedFinanzasTreasuryRouteImport } from './routes/_authenticated/finanzas.treasury'
 import { Route as AuthenticatedFinanzasTesoreriaRouteImport } from './routes/_authenticated/finanzas.tesoreria'
@@ -468,6 +469,12 @@ const AuthenticatedHerramientasAmortizacionRoute =
     path: '/amortizacion',
     getParentRoute: () => AuthenticatedHerramientasRoute,
   } as any)
+const AuthenticatedHerramientasAbonosRoute =
+  AuthenticatedHerramientasAbonosRouteImport.update({
+    id: '/abonos',
+    path: '/abonos',
+    getParentRoute: () => AuthenticatedHerramientasRoute,
+  } as any)
 const AuthenticatedFinanzasWalletsRoute =
   AuthenticatedFinanzasWalletsRouteImport.update({
     id: '/wallets',
@@ -780,6 +787,7 @@ export interface FileRoutesByFullPath {
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRouteWithChildren
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/herramientas/abonos': typeof AuthenticatedHerramientasAbonosRoute
   '/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -884,6 +892,7 @@ export interface FileRoutesByTo {
   '/finanzas/reportes': typeof AuthenticatedFinanzasReportesRoute
   '/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/herramientas/abonos': typeof AuthenticatedHerramientasAbonosRoute
   '/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -994,6 +1003,7 @@ export interface FileRoutesById {
   '/_authenticated/finanzas/tesoreria': typeof AuthenticatedFinanzasTesoreriaRoute
   '/_authenticated/finanzas/treasury': typeof AuthenticatedFinanzasTreasuryRouteWithChildren
   '/_authenticated/finanzas/wallets': typeof AuthenticatedFinanzasWalletsRoute
+  '/_authenticated/herramientas/abonos': typeof AuthenticatedHerramientasAbonosRoute
   '/_authenticated/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/_authenticated/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/_authenticated/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
@@ -1104,6 +1114,7 @@ export interface FileRouteTypes {
     | '/finanzas/tesoreria'
     | '/finanzas/treasury'
     | '/finanzas/wallets'
+    | '/herramientas/abonos'
     | '/herramientas/amortizacion'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
@@ -1208,6 +1219,7 @@ export interface FileRouteTypes {
     | '/finanzas/reportes'
     | '/finanzas/tesoreria'
     | '/finanzas/wallets'
+    | '/herramientas/abonos'
     | '/herramientas/amortizacion'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
@@ -1317,6 +1329,7 @@ export interface FileRouteTypes {
     | '/_authenticated/finanzas/tesoreria'
     | '/_authenticated/finanzas/treasury'
     | '/_authenticated/finanzas/wallets'
+    | '/_authenticated/herramientas/abonos'
     | '/_authenticated/herramientas/amortizacion'
     | '/_authenticated/herramientas/capacidad-pago'
     | '/_authenticated/herramientas/proyeccion'
@@ -1843,6 +1856,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHerramientasAmortizacionRouteImport
       parentRoute: typeof AuthenticatedHerramientasRoute
     }
+    '/_authenticated/herramientas/abonos': {
+      id: '/_authenticated/herramientas/abonos'
+      path: '/abonos'
+      fullPath: '/herramientas/abonos'
+      preLoaderRoute: typeof AuthenticatedHerramientasAbonosRouteImport
+      parentRoute: typeof AuthenticatedHerramientasRoute
+    }
     '/_authenticated/finanzas/wallets': {
       id: '/_authenticated/finanzas/wallets'
       path: '/wallets'
@@ -2246,6 +2266,7 @@ const AuthenticatedFinanzasRouteWithChildren =
   )
 
 interface AuthenticatedHerramientasRouteChildren {
+  AuthenticatedHerramientasAbonosRoute: typeof AuthenticatedHerramientasAbonosRoute
   AuthenticatedHerramientasAmortizacionRoute: typeof AuthenticatedHerramientasAmortizacionRoute
   AuthenticatedHerramientasCapacidadPagoRoute: typeof AuthenticatedHerramientasCapacidadPagoRoute
   AuthenticatedHerramientasProyeccionRoute: typeof AuthenticatedHerramientasProyeccionRoute
@@ -2254,6 +2275,7 @@ interface AuthenticatedHerramientasRouteChildren {
 
 const AuthenticatedHerramientasRouteChildren: AuthenticatedHerramientasRouteChildren =
   {
+    AuthenticatedHerramientasAbonosRoute: AuthenticatedHerramientasAbonosRoute,
     AuthenticatedHerramientasAmortizacionRoute:
       AuthenticatedHerramientasAmortizacionRoute,
     AuthenticatedHerramientasCapacidadPagoRoute:
