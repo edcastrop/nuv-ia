@@ -17,7 +17,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { auditar, TOLERANCIAS_DEFAULT, type Modalidad, type Tolerancias } from "@/lib/qaMath";
+import { auditar, TOLERANCIAS_DEFAULT, QA_MOTOR_VERSION, type Modalidad, type Tolerancias } from "@/lib/qaMath";
+
 
 // ─────────────────────────────────────────────────────────────
 // Utilidades locales (duplicadas de qaAI.functions.ts para
