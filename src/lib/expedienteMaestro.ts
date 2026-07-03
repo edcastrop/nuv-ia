@@ -363,6 +363,11 @@ export async function ensureOperativeExpedienteForMaestro(
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("No autenticado");
 
+  const nombreCliente = String(m.cliente?.nombre || m.nombre_cliente || "").trim();
+  if (!nombreCliente || nombreCliente.toLowerCase() === "sin nombre") {
+    throw new Error("El expediente operativo se creará cuando completes el nombre del cliente.");
+  }
+
   const exp = maestroToExpediente(m, m.id) as unknown as Expediente;
   const { data, error } = await supabase
     .from("expedientes")
