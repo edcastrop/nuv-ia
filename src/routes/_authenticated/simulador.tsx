@@ -131,8 +131,16 @@ function SimuladorPage() {
         licenciado: emptyLicenciado(),
         apoderado: emptyApoderado(),
       });
-      const exp = await ensureOperativeExpedienteForMaestro(maestro);
-      setMaestroExp(exp);
+      // El expediente operativo requiere el NOMBRE del cliente (constraint NUVIA_NOMBRE_REQUERIDO).
+      // Como al iniciar la simulación aún no tenemos ese dato, intentamos crearlo pero NO bloqueamos
+      // la apertura del simulador si falla: se creará más adelante al subir el extracto o completar
+      // la ficha del cliente.
+      try {
+        const exp = await ensureOperativeExpedienteForMaestro(maestro);
+        setMaestroExp(exp);
+      } catch (expErr) {
+        console.warn("[simulador] expediente operativo se creará al completar datos:", expErr);
+      }
       setMode(m);
       navigate({
         to: "/simulador",
@@ -146,6 +154,7 @@ function SimuladorPage() {
     } finally {
       setCreating(false);
     }
+
   };
 
   if (maestroId && loadingMaestro) {
