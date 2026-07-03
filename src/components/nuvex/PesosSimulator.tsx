@@ -926,11 +926,17 @@ export function PesosSimulator({
                       `NUVEX_Propuesta_Pesos_${sanitizeFileName(client.nombre)}.pdf`,
                     );
                   }}
-                  className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
-                  style={{ backgroundColor: NUVEX.negro }}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-semibold transition-transform hover:scale-[1.01]"
+                  style={{
+                    background: "linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%)",
+                    color: "#E1E8F8",
+                    border: "1px solid rgba(255,255,255,0.14)",
+                    boxShadow: "0 8px 22px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)",
+                  }}
                 >
                   Exportar propuesta comercial
                 </button>
+
                 <EnviarDocumentoButton
                   expedienteId={init?.id}
                   tipo="propuesta_comercial"
