@@ -319,6 +319,7 @@ function AmortizationEngine() {
 
   function handleReset() {
     setTea(""); setPlazo(""); setValor(""); setPeriodo(""); setSeguros("");
+    setFreshValor(""); setFreshCuotasStr("");
     setUvrInicial(""); setVarUvr("");
     setCalculated(false); setLastCalc(null);
   }
@@ -336,7 +337,9 @@ function AmortizationEngine() {
     const s: Scenario = {
       id: crypto.randomUUID(),
       nombre, ts: Date.now(),
-      modo, tea, plazo, valor, seguros, uvrInicial, varUvr, fechaDesembolso,
+      modo, tea, plazo, valor, seguros,
+      freshValor, freshCuotas: freshCuotasStr,
+      uvrInicial, varUvr, fechaDesembolso,
     };
     const next = [s, ...scenarios].slice(0, 10);
     persistScenarios(next);
@@ -344,7 +347,9 @@ function AmortizationEngine() {
   }
   function handleLoadScenario(s: Scenario) {
     setModo(s.modo); setTea(s.tea); setPlazo(s.plazo); setValor(s.valor);
-    setSeguros(s.seguros); setUvrInicial(s.uvrInicial); setVarUvr(s.varUvr);
+    setSeguros(s.seguros);
+    setFreshValor(s.freshValor || ""); setFreshCuotasStr(s.freshCuotas || "");
+    setUvrInicial(s.uvrInicial); setVarUvr(s.varUvr);
     setFechaDesembolso(s.fechaDesembolso || fechaDesembolso);
     setCalculated(false);
     toast.success(`Escenario "${s.nombre}" cargado — presiona Calcular`);
