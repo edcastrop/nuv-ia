@@ -453,8 +453,8 @@ function AmortizationEngine() {
     doc.setTextColor(0);
     autoTable(doc, {
       startY: 72,
-      head: [["#", "Fecha", "Saldo inicial", "Cuota", "Interés", "Capital", "Seguros", "Total", "Saldo final"]],
-      body: rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interes), fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
+      head: [["#", "Fecha", "Saldo inicial", "Cuota", "Interés base", "Fresh", "Capital", "Seguros", "Total", "Saldo final"]],
+      body: rows.map((r) => [r.periodo, fechaCuota(fechaDesembolso, r.periodo), fmtCOP(r.saldoInicial), fmtCOP(r.cuota), fmtCOP(r.interesBase), r.fresh > 0 ? fmtCOP(r.fresh) : "—", fmtCOP(r.capital), fmtCOP(r.seguros), fmtCOP(r.totalCuota), fmtCOP(r.saldoFinal)]),
       styles: { fontSize: 7 },
       headStyles: { fillColor: [15, 26, 51] },
     });
