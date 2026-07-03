@@ -1078,24 +1078,24 @@ export function FinancialCalculator() {
   const fab = (
     <button
       onClick={() => setMode("panel")}
-      title="Abrir calculadora (Ctrl/⌘ + K)"
+      title="Calculadora Financiera NUVIA (Ctrl/⌘ + K)"
+      aria-label="Abrir calculadora financiera"
       style={{
-        position: "fixed", right: 24, bottom: 96, zIndex: 9998,
-        height: 48, minWidth: 48, padding: "0 16px 0 12px",
-        borderRadius: 999,
+        position: "fixed", right: 24, bottom: 24, zIndex: 9998,
+        height: 56, width: 56, padding: 0,
+        borderRadius: "50%",
         border: "1px solid rgba(132,185,143,0.55)",
         background: `linear-gradient(135deg, ${N.azul}, ${N.verde})`,
         color: "#fff", cursor: "pointer",
-        animation: "feMiniPulse 3.4s ease-in-out infinite",
+        boxShadow: "0 10px 30px rgba(10,35,66,0.45), 0 0 0 4px rgba(132,185,143,0.12)",
         display: mode === "closed" || mode === "mini" ? "inline-flex" : "none",
-        alignItems: "center", gap: 8,
-        fontSize: 12, fontWeight: 800, letterSpacing: "0.06em",
+        alignItems: "center", justifyContent: "center",
       }}
     >
-      <Calculator size={18} />
-      <span>Calculadora</span>
+      <Calculator size={22} />
     </button>
   );
+
 
   // ---------- Header actions (pin / expand / min / close) ----------
   const headerActions = (
