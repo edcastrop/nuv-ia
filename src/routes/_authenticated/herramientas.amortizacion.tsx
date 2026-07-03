@@ -271,7 +271,9 @@ function AmortizationEngine() {
   const periodoNum = parseInt(periodo) || 0;
   const segurosNum = parseFloat(seguros) || 0;
   const freshValorNum = parseFloat(freshValor) || 0;
-  const freshCuotasNum = Math.min(parseInt(freshCuotasStr) || 0, FRESH_MAX_CUOTAS);
+  const plazoNumTmp = parseInt(plazo) || 0;
+  // Cuotas Fresh = plazo del crédito; si supera el máximo (84), Fresh no aplica.
+  const freshCuotasNum = plazoNumTmp > 0 && plazoNumTmp <= FRESH_MAX_CUOTAS ? plazoNumTmp : 0;
   const uvrInicialNum = parseFloat(uvrInicial) || 0;
   const varUvrNum = parseFloat(varUvr) / 100 || 0;
   const tasaMensual = teaNum > 0 ? tasaMensualFromTEA(teaNum) : 0;
