@@ -21,7 +21,7 @@ export const defaultDiscount: DiscountState = {
 export function normalizeDiscountState(value: unknown): DiscountState {
   const raw = value && typeof value === "object" ? (value as Partial<DiscountState>) : {};
   const type: DiscountType = raw.type === "fixed" ? "fixed" : "percent";
-  const vigencia = String(raw.vigencia ?? "").trim();
+  const vigencia = String(raw.vigencia ?? "");
 
   return {
     type,
