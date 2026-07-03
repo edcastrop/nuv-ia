@@ -59,7 +59,7 @@ export function SimuladorPage() {
   const [savingDraft, setSavingDraft] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveNombre, setSaveNombre] = useState("");
-  const [saveCedula, setSaveCedula] = useState("");
+
 
   // Carga del maestro existente (si llegó por URL desde Expediente Maestro).
   useEffect(() => {
