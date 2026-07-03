@@ -356,6 +356,8 @@ export const marcarAuditoriaCertificada = createServerFn({ method: "POST" })
 // 4. Bandeja del Director Financiero: listar y resolver
 // ─────────────────────────────────────────────────────────────
 
+type Json = string | number | boolean | null | { [k: string]: Json } | Json[];
+
 export type ConsultaTecnicaRow = {
   id: string;
   estado: string;
@@ -367,10 +369,10 @@ export type ConsultaTecnicaRow = {
   tipoCredito: string | null;
   moneda: string | null;
   notasAnalista: string | null;
-  hallazgos: unknown;
-  snapshot: unknown;
+  hallazgos: Json;
+  snapshot: Json;
   dictamenDirector: string | null;
-  ajustesSugeridos: unknown;
+  ajustesSugeridos: Json;
   directorId: string | null;
   resolvedAt: string | null;
   createdAt: string;
