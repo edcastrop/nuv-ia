@@ -1,5 +1,5 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useUserRole } from "@/hooks/useUserRole";
 
 const ALLOWED = ["super_admin", "admin", "gerencia", "licenciado", "asesor", "director_financiero_qa"];
@@ -16,24 +16,18 @@ export const Route = createFileRoute("/_authenticated/herramientas")({
 
 function HerramientasLayout() {
   // El gate de _authenticated.tsx ya validó sesión + MFA + estado_acceso.
-  // Aquí evitamos render intermedio ("Cargando…") porque causa parpadeo al navegar.
-  // Si los roles aún no llegan, renderizamos el Outlet (que tiene su propio fondo)
-  // y, si finalmente no está autorizado, redirigimos vía efecto. Esto evita
-  // el flicker de pantalla blanca/negra entre dos estados de loading.
+  // IMPORTANTE: esta pantalla NO debe expulsar al usuario cuando la consulta
+  // de roles llega tarde o vacía momentáneamente; eso ocultaba herramientas a
+  // analistas válidos después de unos segundos.
   const { roles, loading } = useUserRole();
   const navigate = useNavigate();
-  const [readyToRedirect, setReadyToRedirect] = useState(false);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setReadyToRedirect(true), 4500);
-    return () => window.clearTimeout(timeout);
-  }, []);
 
   useEffect(() => {
     if (loading) return;
+    if (roles.length === 0) return;
     const allowed = roles.some((r) => ALLOWED.includes(r));
-    if (!allowed && readyToRedirect) navigate({ to: "/inicio" });
-  }, [loading, roles, navigate, readyToRedirect]);
+    if (!allowed) navigate({ to: "/inicio" });
+  }, [loading, roles, navigate]);
 
   return <Outlet />;
 }
