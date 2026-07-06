@@ -279,22 +279,72 @@ export function exportAbonosPDF(ctx: AbonosExportCtx) {
   pdf.setFontSize(13);
   pdf.setTextColor(...NEGRO);
   pdf.text("Proyección con Abonos NUVIA", 10, 32);
+
+  // Detectar si hay reducción de cuota (destino=cuota)
+  const hayReduccionCuota = ctx.abonos.some((a) => a.destino === "cuota");
+  const cuotaInicial = ctx.optimizado.rows[0]?.cuota ?? 0;
+  const cuotaFinalBase =
+    ctx.optimizado.rows[ctx.optimizado.rows.length - 1]?.cuota ?? cuotaInicial;
+  const uvrRatio = (r: AbonoRow) =>
+    r.saldoInicialCOP && r.saldoInicial ? r.saldoInicialCOP / r.saldoInicial : 1;
+
+  if (hayReduccionCuota) {
+    pdf.setFillColor(240, 248, 240);
+    pdf.setDrawColor(...VERDE);
+    pdf.setLineWidth(0.3);
+    pdf.roundedRect(10, 36, 190, 12, 2, 2, "FD");
+    pdf.setTextColor(...NEGRO);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(9);
+    pdf.text("Estrategia: Reducir cuota", 13, 41);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    const cuotaIniCOP =
+      ctx.modo === "uvr" ? cuotaInicial * (ctx.optimizado.rows[0] ? uvrRatio(ctx.optimizado.rows[0]) : 1) : cuotaInicial;
+    const cuotaFinCOP =
+      ctx.modo === "uvr"
+        ? cuotaFinalBase * (ctx.optimizado.rows[ctx.optimizado.rows.length - 1] ? uvrRatio(ctx.optimizado.rows[ctx.optimizado.rows.length - 1]) : 1)
+        : cuotaFinalBase;
+    pdf.text(
+      `Cuota base inicial: ${formatCOP(cuotaIniCOP)}   →   Cuota base final: ${formatCOP(cuotaFinCOP)}   (delta: ${formatCOP(cuotaFinCOP - cuotaIniCOP)})`,
+      13,
+      46,
+    );
+  }
+
   autoTable(pdf, {
-    startY: 36,
-    head: [["#", "Saldo ini.", "Capital", "Interés", "Seguros", "Fresh", "Abono", "Cuota pag.", "Saldo fin."]],
-    headStyles: { fillColor: VERDE, textColor: 255, fontSize: 7.8 },
-    styles: { fontSize: 7, cellPadding: 1.2 },
-    body: ctx.optimizado.rows.map((r) => [
-      r.periodo,
-      formatCOP(r.saldoInicialCOP ?? r.saldoInicial),
-      formatCOP(r.capital * (r.saldoInicialCOP && r.saldoInicial ? r.saldoInicialCOP / r.saldoInicial : 1)),
-      formatCOP(r.interes * (r.saldoInicialCOP && r.saldoInicial ? r.saldoInicialCOP / r.saldoInicial : 1)),
-      formatCOP(r.seguros),
-      formatCOP(r.fresh),
-      r.abono > 0 ? `+ ${formatCOP(r.abonoCOP ?? r.abono)}` : "—",
-      formatCOP(r.cuotaPagada),
-      formatCOP(r.saldoFinalCOP ?? r.saldoFinal),
-    ]),
+    startY: hayReduccionCuota ? 52 : 36,
+    head: [["#", "Saldo ini.", "Cuota base", "Capital", "Interés", "Seguros", "Fresh", "Abono", "Cuota pag.", "Saldo fin."]],
+    headStyles: { fillColor: VERDE, textColor: 255, fontSize: 7.5 },
+    styles: { fontSize: 6.8, cellPadding: 1.1 },
+    body: ctx.optimizado.rows.map((r, idx) => {
+      const ratio = uvrRatio(r);
+      const cuotaBaseCOP = ctx.modo === "uvr" ? r.cuota * ratio : r.cuota;
+      const prev = ctx.optimizado.rows[idx - 1];
+      const prevCuota = prev ? (ctx.modo === "uvr" ? prev.cuota * uvrRatio(prev) : prev.cuota) : cuotaBaseCOP;
+      const cambio = Math.abs(cuotaBaseCOP - prevCuota) > 1;
+      return [
+        r.periodo,
+        formatCOP(r.saldoInicialCOP ?? r.saldoInicial),
+        cambio ? `${formatCOP(cuotaBaseCOP)} ↓` : formatCOP(cuotaBaseCOP),
+        formatCOP(r.capital * ratio),
+        formatCOP(r.interes * ratio),
+        formatCOP(r.seguros),
+        formatCOP(r.fresh),
+        r.abono > 0 ? `+ ${formatCOP(r.abonoCOP ?? r.abono)}` : "—",
+        formatCOP(r.cuotaPagada),
+        formatCOP(r.saldoFinalCOP ?? r.saldoFinal),
+      ];
+    }),
+    didParseCell: (data) => {
+      if (data.section === "body" && data.column.index === 2) {
+        const txt = String(data.cell.raw ?? "");
+        if (txt.includes("↓")) {
+          data.cell.styles.textColor = VERDE;
+          data.cell.styles.fontStyle = "bold";
+        }
+      }
+    },
   });
   footer(pdf);
 
