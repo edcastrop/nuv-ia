@@ -353,26 +353,56 @@ function EscalarDialog({
 }) {
   const [notas, setNotas] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploadedPath, setUploadedPath] = useState<string | null>(snapshot?.archivoPath ?? null);
+  const [uploadedName, setUploadedName] = useState<string | null>(snapshot?.archivoNombre ?? null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const escalar = useServerFn(escalarConsultaTecnica);
 
-  const payload = useMemo(
-    () => ({
-      snapshot: (snapshot ?? {}) as Record<string, unknown>,
-      banco: snapshot?.banco ?? null,
-      producto: snapshot?.producto ?? null,
-      tipoCredito: snapshot?.tipoCredito ?? null,
-      moneda: snapshot?.moneda ?? null,
-      hallazgos: hallazgos as unknown[],
-      archivoPath: snapshot?.archivoPath ?? null,
-      archivoNombre: snapshot?.archivoNombre ?? null,
-    }),
-    [snapshot, hallazgos],
-  );
+  const yaTieneExtracto = !!uploadedPath;
+
+  const handleFile = async (f: File) => {
+    setUploading(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) throw new Error("Sesión no disponible");
+      if (f.size > 20 * 1024 * 1024) throw new Error("El archivo supera 20 MB");
+      const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage
+        .from("extractos")
+        .upload(path, f, { cacheControl: "3600", upsert: false, contentType: f.type || "application/octet-stream" });
+      if (upErr) throw new Error(upErr.message);
+      setUploadedPath(path);
+      setUploadedName(f.name);
+      toast.success("Extracto adjuntado. Ya viaja con la simulación.");
+    } catch (e) {
+      toast.error(`No se pudo subir el extracto: ${e instanceof Error ? e.message : "error"}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleEnviar = async () => {
+    if (!yaTieneExtracto) {
+      toast.error("Adjunta el extracto original antes de enviar a auditoría.");
+      return;
+    }
     setSaving(true);
     try {
-      const r = await escalar({ data: { ...payload, notasParaAuditor: notas.trim() || undefined } });
+      const r = await escalar({
+        data: {
+          snapshot: (snapshot ?? {}) as Record<string, unknown>,
+          banco: snapshot?.banco ?? null,
+          producto: snapshot?.producto ?? null,
+          tipoCredito: snapshot?.tipoCredito ?? null,
+          moneda: snapshot?.moneda ?? null,
+          hallazgos: hallazgos as unknown[],
+          archivoPath: uploadedPath,
+          archivoNombre: uploadedName,
+          notasParaAuditor: notas.trim() || undefined,
+        },
+      });
       const codigo = (r as { codigo?: string | null }).codigo ?? null;
       toast.success("Simulación enviada a la Cola de Revisión NUVIA QA AI.", {
         description: codigo ? `Ref auditoría: ${codigo}` : `Ref: ${(r as { id: string }).id.slice(0, 8)}`,
