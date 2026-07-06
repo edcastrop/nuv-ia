@@ -256,7 +256,12 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
     const { createHash } = await import("crypto");
     const hashCalculo = createHash("sha256").update(hashPayload).digest("hex").slice(0, 32);
 
-    const certificable = criticos === 0 && dictamen === "aprobado";
+    // Certificable si no hay hallazgos críticos y el dictamen es aprobado
+    // (con o sin observaciones menores). Un score alto con hallazgos menores
+    // no debe bloquear la creación del caso: los hallazgos quedan trazados
+    // en la auditoría del expediente.
+    const certificable =
+      criticos === 0 && (dictamen === "aprobado" || dictamen === "aprobado_obs");
 
     let motivoBloqueo: string | undefined;
     if (!certificable) {
@@ -265,6 +270,7 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
       else if (dictamen === "requiere_revision") motivoBloqueo = "La auditoría requiere revisión antes de certificar.";
       else motivoBloqueo = "La auditoría requiere ajustes menores.";
     }
+
 
     return {
       score: result.score.score,
