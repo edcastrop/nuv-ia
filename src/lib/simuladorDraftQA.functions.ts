@@ -629,7 +629,7 @@ export const escalarConsultaTecnica = createServerFn({ method: "POST" })
         banco: bancoFinal,
         producto: productoFinal,
         moneda: monedaFinal,
-        datos: d as never,
+        datos: { ...d, adjuntosExtra: data.adjuntosExtra ?? [] } as never,
         scores: {} as never,
         confianza_global: 0.9,
         estado: "validada",
