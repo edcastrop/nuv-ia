@@ -1282,6 +1282,18 @@ function TimelineCard({
           >
             Documentos
           </Link>
+          <Link
+            to="/casos/$id" params={{ id: r.id }} search={{ tab: "financiero" } as never}
+            title="Ver información financiera del caso"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-8 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:brightness-125"
+            style={{
+              background: "linear-gradient(135deg, rgba(68,93,163,0.14), rgba(132,185,143,0.10))",
+              color: "#BFD3F5",
+              border: "1px solid rgba(68,93,163,0.40)",
+            }}
+          >
+            <Banknote size={10} /> Financiero
+          </Link>
           <button
             type="button" onClick={runAuditoria} disabled={auditando || !puedeAuditar}
             title={puedeAuditar ? "Ejecutar auditoría NUVIA" : "Ya auditado"}
