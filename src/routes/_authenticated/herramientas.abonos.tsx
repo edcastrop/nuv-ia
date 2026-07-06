@@ -338,6 +338,36 @@ function ExtraPayments() {
     abonos: abonos.map((a) => ({ cuota: a.cuota, monto: a.monto, destino: a.destino })),
     ahorroInteresCOP,
     cuotasAhorradas,
+    comparador:
+      simPlazo && simCuota && base
+        ? (() => {
+            const toCOP = (n: number) => (modo === "uvr" ? n * uvrInicial : n);
+            const fechaFinDe = (cuotas: number) => {
+              const d = new Date();
+              d.setMonth(d.getMonth() + cuotas);
+              return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
+            };
+            const plazo = {
+              cuotasUsadas: simPlazo.cuotasUsadas,
+              cuotaFinal: toCOP(simPlazo.cuotaFinal),
+              totalInteres: toCOP(simPlazo.totalInteres),
+              fechaFin: fechaFinDe(simPlazo.cuotasUsadas),
+              ahorroInteres: toCOP(base.totalInteres - simPlazo.totalInteres),
+              cuotasEliminadas: base.cuotasUsadas - simPlazo.cuotasUsadas,
+            };
+            const cuota = {
+              cuotasUsadas: simCuota.cuotasUsadas,
+              cuotaFinal: toCOP(simCuota.cuotaFinal),
+              totalInteres: toCOP(simCuota.totalInteres),
+              fechaFin: fechaFinDe(simCuota.cuotasUsadas),
+              ahorroInteres: toCOP(base.totalInteres - simCuota.totalInteres),
+              cuotasEliminadas: base.cuotasUsadas - simCuota.cuotasUsadas,
+            };
+            const recomendado: "plazo" | "cuota" =
+              plazo.ahorroInteres >= cuota.ahorroInteres ? "plazo" : "cuota";
+            return { plazo, cuota, recomendado };
+          })()
+        : undefined,
   });
 
   const handleExportPDF = () => {
