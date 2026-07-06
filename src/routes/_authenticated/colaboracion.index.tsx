@@ -515,18 +515,25 @@ function CaseHeader({ canal, priority, sla, etapa }: { canal: Canal; priority: "
         </div>
       </div>
       <div className="flex items-center gap-1.5">
-        <HeaderAction icon={FileText}   label="Expediente" />
-        <HeaderAction icon={Activity}   label="Extractos"  />
-        <HeaderAction icon={Clock}      label="Timeline"   />
-        <HeaderAction icon={Sparkles}   label="IA Analysis" accent />
+        <HeaderAction icon={FileText}   label="Expediente"  casoId={canal.caso_id} tab="resumen" />
+        <HeaderAction icon={Activity}   label="Extractos"   casoId={canal.caso_id} tab="financiero" />
+        <HeaderAction icon={Clock}      label="Timeline"    casoId={canal.caso_id} tab="historial" />
+        <HeaderAction icon={Sparkles}   label="IA Analysis" casoId={canal.caso_id} tab="auditoria" accent />
       </div>
     </div>
   );
 }
 
-function HeaderAction({ icon: Icon, label, accent }: { icon: typeof FileText; label: string; accent?: boolean }) {
+function HeaderAction({ icon: Icon, label, accent, casoId, tab }: { icon: typeof FileText; label: string; accent?: boolean; casoId: string | null; tab: string }) {
+  const navigate = useNavigate();
+  const disabled = !casoId;
   return (
-    <button className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition hover:scale-[1.02]"
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={() => { if (casoId) navigate({ to: "/casos/$id", params: { id: casoId }, search: { tab } as never }); }}
+      title={disabled ? "Este canal no está vinculado a un caso" : `Abrir ${label}`}
+      className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition hover:scale-[1.02] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
       style={accent
         ? { background: "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(16,185,129,0.15))", color: "white", border: "1px solid rgba(16,185,129,0.4)", boxShadow: "0 0 14px rgba(16,185,129,0.2)" }
         : { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.08)" }}>
@@ -534,6 +541,7 @@ function HeaderAction({ icon: Icon, label, accent }: { icon: typeof FileText; la
     </button>
   );
 }
+
 
 function EmptyMain({ onPickTeam }: { onPickTeam: (k: string) => void }) {
   return (
