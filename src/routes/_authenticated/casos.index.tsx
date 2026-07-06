@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from "@/lib/expedientes";
 import { formatCOP } from "@/lib/format";
 import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
@@ -1294,57 +1295,113 @@ function TimelineCard({
             {auditando ? "Auditando…" : "Auditar"}
           </button>
           {isSuperAdmin && (
-            <div className="relative w-full">
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setReasignOpen((v) => !v); }}
-                title="Reasignar analista (Super Admin)"
-                className="inline-flex items-center justify-center gap-1 rounded-lg px-3 h-8 text-[9.5px] font-bold uppercase tracking-wider transition hover:brightness-125 whitespace-nowrap w-full"
-                style={{
-                  background: "linear-gradient(135deg, rgba(68,93,163,0.16), rgba(132,185,143,0.10))",
-                  color: "#A5B5E0", border: "1px solid rgba(68,93,163,0.40)",
-                }}
-              >
-                <UserCog size={10} /> {reasignando ? "Reasignando…" : "Reasignar"}
-              </button>
-              {reasignOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setReasignOpen(false); }} />
-                  <div
-                    className="absolute right-0 mt-1 z-50 w-64 max-h-72 overflow-y-auto rounded-lg shadow-xl"
-                    style={{ background: "rgba(15,20,35,0.98)", border: "1px solid rgba(68,93,163,0.45)", backdropFilter: "blur(12px)" }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="px-3 py-2 text-[9px] font-bold uppercase tracking-wider" style={{ color: "#A5B5E0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                      Reasignar analista
-                    </div>
-                    {analistas.length === 0 && (
-                      <div className="px-3 py-3 text-[11px]" style={{ color: "#94A3B8" }}>Sin analistas disponibles</div>
-                    )}
-                    {analistas.map(([id, name]) => {
-                      const active = r.licenciado_id === id;
-                      return (
-                        <button
-                          key={id}
-                          type="button"
-                          disabled={reasignando || active}
-                          onClick={(e) => { e.stopPropagation(); void doReasignar(id); }}
-                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[11px] hover:bg-white/[0.05] disabled:opacity-60 disabled:cursor-not-allowed"
-                          style={{ color: "#E2E8F0" }}
-                        >
-                          <span className="truncate">{name}</span>
-                          {active && <Check size={12} style={{ color: "#84B98F" }} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
+            <ReasignarMenu
+              currentId={r.licenciado_id ?? null}
+              analistas={analistas}
+              busy={reasignando}
+              onPick={(id) => void doReasignar(id)}
+            />
           )}
         </div>
       </div>
     </div>
   );
 }
+
+function ReasignarMenu({
+  currentId, analistas, busy, onPick,
+}: {
+  currentId: string | null;
+  analistas: Array<[string, string]>;
+  busy: boolean;
+  onPick: (id: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(null);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+
+  const compute = () => {
+    const el = btnRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const width = Math.max(rect.width, 240);
+    const left = Math.min(rect.right - width, window.innerWidth - width - 8);
+    setPos({ top: rect.bottom + 6, left: Math.max(8, left), width });
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    compute();
+    const h = () => compute();
+    window.addEventListener("scroll", h, true);
+    window.addEventListener("resize", h);
+    return () => {
+      window.removeEventListener("scroll", h, true);
+      window.removeEventListener("resize", h);
+    };
+  }, [open]);
+
+  return (
+    <div className="w-full">
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        title="Reasignar analista (Super Admin)"
+        className="inline-flex items-center justify-center gap-1 rounded-lg px-3 h-8 text-[9.5px] font-bold uppercase tracking-wider transition hover:brightness-125 whitespace-nowrap w-full"
+        style={{
+          background: "linear-gradient(135deg, rgba(68,93,163,0.16), rgba(132,185,143,0.10))",
+          color: "#A5B5E0", border: "1px solid rgba(68,93,163,0.40)",
+        }}
+      >
+        <UserCog size={10} /> {busy ? "Reasignando…" : "Reasignar"}
+      </button>
+      {open && pos && typeof document !== "undefined" && createPortal(
+        <>
+          <div
+            className="fixed inset-0"
+            style={{ zIndex: 9998 }}
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className="fixed max-h-72 overflow-y-auto rounded-lg shadow-2xl"
+            style={{
+              top: pos.top, left: pos.left, width: pos.width, zIndex: 9999,
+              background: "rgba(15,20,35,0.98)",
+              border: "1px solid rgba(68,93,163,0.55)",
+              backdropFilter: "blur(12px)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-3 py-2 text-[9px] font-bold uppercase tracking-wider"
+              style={{ color: "#A5B5E0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              Reasignar analista
+            </div>
+            {analistas.length === 0 && (
+              <div className="px-3 py-3 text-[11px]" style={{ color: "#94A3B8" }}>Sin analistas disponibles</div>
+            )}
+            {analistas.map(([id, name]) => {
+              const active = currentId === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  disabled={busy || active}
+                  onClick={(e) => { e.stopPropagation(); onPick(id); setOpen(false); }}
+                  className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[11px] hover:bg-white/[0.06] disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{ color: "#E2E8F0" }}
+                >
+                  <span className="truncate">{name}</span>
+                  {active && <Check size={12} style={{ color: "#84B98F" }} />}
+                </button>
+              );
+            })}
+          </div>
+        </>,
+        document.body,
+      )}
+    </div>
+  );
+}
+
 
