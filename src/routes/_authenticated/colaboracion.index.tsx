@@ -135,6 +135,16 @@ function ColaboracionPage() {
   const canalesArea = canales.filter((c) => c.tipo === "area" || c.tipo === "custom");
   const canalesCaso = canales.filter((c) => c.tipo === "caso");
 
+  // Realtime: etapas actualizadas de los expedientes visibles en War Room
+  const casoIdsLive = useMemo(
+    () => Array.from(new Set(canalesCaso.map((c) => c.caso_id).filter((x): x is string => !!x))),
+    [canalesCaso],
+  );
+  const expLive = useExpedientesLive(casoIdsLive);
+
+  // Presencia en tiempo real
+  const online = usePresenciaOnline();
+
   // Ficha de crédito por canal (casos y auditorías QA)
   const [creditMap, setCreditMap] = useState<Record<string, CreditInfo>>({});
   useEffect(() => {
