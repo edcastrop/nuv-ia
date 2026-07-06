@@ -389,8 +389,10 @@ export const certificarSimulacionDraft = createServerFn({ method: "POST" })
     });
 
     const criticos = result.inconsistencias.filter((i) => i.severidad === "critica").length;
-    if (criticos > 0 || result.score.dictamen !== "aprobado") {
-      throw new Error("NUVIA no puede certificar esta simulación: la auditoría no está aprobada sin hallazgos críticos.");
+    const dictamen = result.score.dictamen;
+    const certificable = criticos === 0 && (dictamen === "aprobado" || dictamen === "aprobado_obs");
+    if (!certificable) {
+      throw new Error("NUVIA no puede certificar esta simulación: corrige los hallazgos críticos o escala a Dirección Financiera.");
     }
 
     const bancoFinal = String(d.banco ?? snap.banco ?? "") || "SIN_BANCO";
