@@ -16,9 +16,16 @@ import {
   Zap,
   Percent,
   Wand2,
+  User,
+  FileDown,
+  FileSpreadsheet,
+  Shield,
+  Gift,
 } from "lucide-react";
 import { NUVEX } from "@/components/nuvex/constants";
 import { toast } from "sonner";
+import { ProductoBancarioSelect } from "@/components/nuvex/ProductoBancarioSelect";
+import { exportAbonosPDF, exportAbonosExcel, type AbonoRow } from "@/lib/abonosExport";
 
 export const Route = createFileRoute("/_authenticated/herramientas/abonos")({
   head: () => ({
@@ -43,7 +50,7 @@ type Destino = "plazo" | "cuota";
 type Abono = {
   id: string;
   cuota: number;
-  monto: number; // en pesos o UVR según modo
+  monto: number;
   destino: Destino;
 };
 
@@ -55,7 +62,6 @@ type FilaSim = {
   capital: number;
   abono: number;
   saldoFinal: number;
-  // COP (solo UVR)
   saldoInicialCOP?: number;
   cuotaCOP?: number;
   abonoCOP?: number;
@@ -100,7 +106,7 @@ function simular(
         const monto = Math.min(a.monto, saldoDespuesCuota);
         saldoDespuesCuota -= monto;
         abonoTotal += monto;
-        destinoAplicado = a.destino; // último gana
+        destinoAplicado = a.destino;
       }
     }
 
@@ -118,12 +124,9 @@ function simular(
     saldo = saldoDespuesCuota;
     restantes -= 1;
 
-    // Recalcular si hubo abono y destino=cuota (mantener plazo)
     if (abonoTotal > 0 && destinoAplicado === "cuota" && saldo > 0 && restantes > 0) {
       cuota = cuotaFija(saldo, i, restantes);
     }
-    // destino=plazo → cuota se mantiene, plazo se acorta naturalmente
-
     periodo += 1;
   }
 
@@ -140,12 +143,24 @@ function simular(
 ============================================================================ */
 function ExtraPayments() {
   const [modo, setModo] = useState<Modo>("pesos");
-  // datos base
+
+  // ── Cliente / banco / producto
+  const [cliente, setCliente] = useState("");
+  const [banco, setBanco] = useState("");
+  const [producto, setProducto] = useState("");
+
+  // Datos base
   const [valorStr, setValorStr] = useState("");
   const [teaStr, setTeaStr] = useState("");
   const [plazoStr, setPlazoStr] = useState("");
+  const [segurosStr, setSegurosStr] = useState("");
   const [uvrInicialStr, setUvrInicialStr] = useState("");
   const [uvrVarEAStr, setUvrVarEAStr] = useState("6.5");
+
+  // Fresh
+  const [freshActivo, setFreshActivo] = useState(false);
+  const [freshValorStr, setFreshValorStr] = useState("");
+  const [freshCuotasStr, setFreshCuotasStr] = useState("");
 
   const [abonos, setAbonos] = useState<Abono[]>([]);
   const [showTable, setShowTable] = useState(false);
@@ -153,6 +168,9 @@ function ExtraPayments() {
   const valor = parseFloat(valorStr) || 0;
   const tea = (parseFloat(teaStr) || 0) / 100;
   const plazo = parseInt(plazoStr) || 0;
+  const seguros = parseFloat(segurosStr) || 0;
+  const freshValor = parseFloat(freshValorStr) || 0;
+  const freshCuotas = parseInt(freshCuotasStr) || 0;
   const uvrInicial = parseFloat(uvrInicialStr) || 0;
   const uvrVarEA = (parseFloat(uvrVarEAStr) || 0) / 100;
   const uvrVarMensual = Math.pow(1 + uvrVarEA, 1 / 12) - 1;
@@ -169,34 +187,38 @@ function ExtraPayments() {
     return simular(valor, tea, plazo, abonos);
   }, [valor, tea, plazo, abonos, puedeSimular]);
 
-  // conversión UVR → COP
-  const rowsBaseCOP = useMemo(() => {
-    if (!base || modo !== "uvr") return base?.rows ?? [];
-    return base.rows.map((r) => {
-      const uvrMes = uvrInicial * Math.pow(1 + uvrVarMensual, r.periodo - 1);
+  // Enriquecer filas con seguros + fresh + cuota pagada
+  const enrich = (rows: FilaSim[]): AbonoRow[] =>
+    rows.map((r) => {
+      const uvrMes = modo === "uvr" ? uvrInicial * Math.pow(1 + uvrVarMensual, r.periodo - 1) : 1;
+      const isUVR = modo === "uvr";
+      const cuotaBaseCOP = isUVR ? r.cuota * uvrMes : r.cuota;
+      const freshEn = freshActivo && r.periodo <= freshCuotas ? freshValor : 0;
+      const cuotaPagadaCOP = Math.max(0, cuotaBaseCOP + seguros - freshEn);
       return {
-        ...r,
-        saldoInicialCOP: r.saldoInicial * uvrMes,
-        cuotaCOP: r.cuota * uvrMes,
-        abonoCOP: r.abono * uvrMes,
-        saldoFinalCOP: r.saldoFinal * uvrMes,
+        periodo: r.periodo,
+        saldoInicial: r.saldoInicial,
+        cuota: r.cuota,
+        interes: r.interes,
+        capital: r.capital,
+        seguros,
+        fresh: freshEn,
+        cuotaPagada: cuotaPagadaCOP,
+        abono: r.abono,
+        saldoFinal: r.saldoFinal,
+        ...(isUVR
+          ? {
+              saldoInicialCOP: r.saldoInicial * uvrMes,
+              cuotaCOP: r.cuota * uvrMes,
+              abonoCOP: r.abono * uvrMes,
+              saldoFinalCOP: r.saldoFinal * uvrMes,
+            }
+          : {}),
       };
     });
-  }, [base, modo, uvrInicial, uvrVarMensual]);
 
-  const rowsAbonosCOP = useMemo(() => {
-    if (!conAbonos || modo !== "uvr") return conAbonos?.rows ?? [];
-    return conAbonos.rows.map((r) => {
-      const uvrMes = uvrInicial * Math.pow(1 + uvrVarMensual, r.periodo - 1);
-      return {
-        ...r,
-        saldoInicialCOP: r.saldoInicial * uvrMes,
-        cuotaCOP: r.cuota * uvrMes,
-        abonoCOP: r.abono * uvrMes,
-        saldoFinalCOP: r.saldoFinal * uvrMes,
-      };
-    });
-  }, [conAbonos, modo, uvrInicial, uvrVarMensual]);
+  const rowsBaseEnriched = useMemo(() => (base ? enrich(base.rows) : []), [base, seguros, freshActivo, freshValor, freshCuotas, modo, uvrInicial, uvrVarMensual]);
+  const rowsConEnriched = useMemo(() => (conAbonos ? enrich(conAbonos.rows) : []), [conAbonos, seguros, freshActivo, freshValor, freshCuotas, modo, uvrInicial, uvrVarMensual]);
 
   const ahorroInteres = base && conAbonos ? base.totalInteres - conAbonos.totalInteres : 0;
   const cuotasAhorradas = base && conAbonos ? base.cuotasUsadas - conAbonos.cuotasUsadas : 0;
@@ -216,14 +238,12 @@ function ExtraPayments() {
     return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
   }, [base]);
 
-  // formatters
   const fmtCOP = (n: number) =>
     new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
   const fmtUVR = (n: number) =>
     new Intl.NumberFormat("es-CO", { minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(n || 0);
   const fmt = (n: number) => (modo === "uvr" ? `${fmtUVR(n)} UVR` : fmtCOP(n));
 
-  // acciones
   const addAbono = () =>
     setAbonos((prev) => [
       ...prev,
@@ -255,18 +275,82 @@ function ExtraPayments() {
   };
 
   const resetAll = () => {
+    setCliente("");
+    setBanco("");
+    setProducto("");
     setValorStr("");
     setTeaStr("");
     setPlazoStr("");
+    setSegurosStr("");
     setUvrInicialStr("");
+    setFreshActivo(false);
+    setFreshValorStr("");
+    setFreshCuotasStr("");
     setAbonos([]);
     toast.info("Simulación reiniciada");
+  };
+
+  const buildCtx = () => ({
+    cliente,
+    banco,
+    producto,
+    modo,
+    valor,
+    tea: parseFloat(teaStr) || 0,
+    plazo,
+    seguros,
+    fresh: { activo: freshActivo, valorMensual: freshValor, cuotasPendientes: freshCuotas },
+    fechaGeneracion: new Date(),
+    base: {
+      cuotasUsadas: base?.cuotasUsadas ?? 0,
+      cuotaFinal: modo === "uvr" ? (base?.cuotaFinal ?? 0) * uvrInicial : base?.cuotaFinal ?? 0,
+      totalInteres: modo === "uvr" ? (base?.totalInteres ?? 0) * uvrInicial : base?.totalInteres ?? 0,
+      fechaFin: fechaBase,
+      rows: rowsBaseEnriched,
+    },
+    optimizado: {
+      cuotasUsadas: conAbonos?.cuotasUsadas ?? 0,
+      cuotaFinal: modo === "uvr" ? (conAbonos?.cuotaFinal ?? 0) * uvrInicial : conAbonos?.cuotaFinal ?? 0,
+      totalInteres: modo === "uvr" ? (conAbonos?.totalInteres ?? 0) * uvrInicial : conAbonos?.totalInteres ?? 0,
+      fechaFin: nuevaFecha,
+      rows: rowsConEnriched,
+    },
+    abonos: abonos.map((a) => ({ cuota: a.cuota, monto: a.monto, destino: a.destino })),
+    ahorroInteresCOP,
+    cuotasAhorradas,
+  });
+
+  const handleExportPDF = () => {
+    if (!puedeSimular) {
+      toast.error("Completa los datos base para generar el PDF");
+      return;
+    }
+    try {
+      exportAbonosPDF(buildCtx());
+      toast.success("PDF generado");
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el PDF");
+    }
+  };
+
+  const handleExportExcel = () => {
+    if (!puedeSimular) {
+      toast.error("Completa los datos base para descargar la proyección");
+      return;
+    }
+    try {
+      exportAbonosExcel(buildCtx());
+      toast.success("Proyección descargada");
+    } catch (e) {
+      console.error(e);
+      toast.error("No se pudo generar el archivo");
+    }
   };
 
   /* --------------------------------- UI --------------------------------- */
   return (
     <div className="relative min-h-screen bg-[#050816] text-white">
-      {/* background */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
@@ -276,7 +360,7 @@ function ExtraPayments() {
       />
 
       <div className="relative mx-auto w-full max-w-[1360px] px-6 py-8 space-y-6">
-        {/* ============== HEADER ============== */}
+        {/* HEADER */}
         <div className="flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <Link
@@ -306,7 +390,20 @@ function ExtraPayments() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={handleExportExcel}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#84B98F]/40 bg-[#84B98F]/10 px-3 py-2 text-xs font-semibold text-[#84B98F] hover:bg-[#84B98F]/20 transition"
+            >
+              <FileSpreadsheet className="h-4 w-4" /> Descargar proyecciones
+            </button>
+            <button
+              onClick={handleExportPDF}
+              className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2 text-xs font-semibold text-white hover:bg-white/[0.12] transition"
+              style={{ boxShadow: `0 12px 40px -20px ${NUVEX.azul}` }}
+            >
+              <FileDown className="h-4 w-4" /> Descargar PDF
+            </button>
             <button
               onClick={() => setModo(modo === "pesos" ? "uvr" : "pesos")}
               className="inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-[0.18em] transition"
@@ -328,15 +425,44 @@ function ExtraPayments() {
           </div>
         </div>
 
-        {/* ============== INPUT + KPIs ============== */}
+        {/* CLIENT + PRODUCT */}
+        <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] p-5 backdrop-blur-2xl space-y-4">
+          <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">
+            <User className="h-3.5 w-3.5 text-[#84B98F]" /> Identificación del caso
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs font-medium uppercase tracking-wide" style={{ color: "rgba(225,232,248,0.65)" }}>
+                Nombre del cliente
+              </span>
+              <input
+                value={cliente}
+                onChange={(e) => setCliente(e.target.value)}
+                placeholder="Ej. Juan Pérez"
+                className="nuvia-input"
+              />
+            </label>
+            <div className="md:col-span-2">
+              <ProductoBancarioSelect
+                banco={banco}
+                producto={producto}
+                filtrarPorModalidad={modo}
+                onChange={({ banco: b, producto: p }) => {
+                  setBanco(b);
+                  setProducto(p);
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* INPUT + KPIs */}
         <div className="grid gap-5 lg:grid-cols-[1fr_1.2fr]">
-          {/* CONSOLE */}
           <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] p-5 backdrop-blur-2xl space-y-5">
             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">
               <Wand2 className="h-3.5 w-3.5 text-[#84B98F]" /> Input Console
             </div>
 
-            {/* datos base */}
             <div className="grid grid-cols-2 gap-3">
               <Field
                 label={modo === "uvr" ? "Valor crédito (UVR)" : "Valor crédito (COP)"}
@@ -345,19 +471,14 @@ function ExtraPayments() {
                 onChange={setValorStr}
                 placeholder={modo === "uvr" ? "45000" : "180000000"}
               />
+              <Field label="Tasa EA (%)" Icon={Percent} value={teaStr} onChange={setTeaStr} placeholder="12.5" />
+              <Field label="Plazo (meses)" Icon={Clock} value={plazoStr} onChange={setPlazoStr} placeholder="180" />
               <Field
-                label="Tasa EA (%)"
-                Icon={Percent}
-                value={teaStr}
-                onChange={setTeaStr}
-                placeholder="12.5"
-              />
-              <Field
-                label="Plazo (meses)"
-                Icon={Clock}
-                value={plazoStr}
-                onChange={setPlazoStr}
-                placeholder="180"
+                label="Seguros (COP mensual)"
+                Icon={Shield}
+                value={segurosStr}
+                onChange={setSegurosStr}
+                placeholder="120000"
               />
               {modo === "uvr" && (
                 <>
@@ -376,6 +497,61 @@ function ExtraPayments() {
                     placeholder="6.5"
                   />
                 </>
+              )}
+            </div>
+
+            {/* FRESH */}
+            <div className="rounded-xl border border-white/10 bg-black/20 p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-white/70">
+                  <Gift className="h-3.5 w-3.5" style={{ color: NUVEX.verde }} /> Beneficio Fresh
+                </div>
+                <div className="inline-flex rounded-lg border border-white/10 bg-black/30 p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setFreshActivo(true)}
+                    className="rounded-md px-3 py-1 text-[11px] font-semibold transition"
+                    style={{
+                      background: freshActivo ? NUVEX.verde : "transparent",
+                      color: freshActivo ? "white" : "rgba(255,255,255,0.6)",
+                    }}
+                  >
+                    SI aplica
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFreshActivo(false);
+                      setFreshValorStr("");
+                      setFreshCuotasStr("");
+                    }}
+                    className="rounded-md px-3 py-1 text-[11px] font-semibold transition"
+                    style={{
+                      background: !freshActivo ? "rgba(255,255,255,0.12)" : "transparent",
+                      color: !freshActivo ? "white" : "rgba(255,255,255,0.6)",
+                    }}
+                  >
+                    NO
+                  </button>
+                </div>
+              </div>
+              {freshActivo && (
+                <div className="grid grid-cols-2 gap-3">
+                  <Field
+                    label="Valor Fresh mensual (COP)"
+                    Icon={DollarSign}
+                    value={freshValorStr}
+                    onChange={setFreshValorStr}
+                    placeholder="450000"
+                  />
+                  <Field
+                    label="Cuotas restantes Fresh"
+                    Icon={Clock}
+                    value={freshCuotasStr}
+                    onChange={setFreshCuotasStr}
+                    placeholder="48"
+                  />
+                </div>
               )}
             </div>
 
@@ -433,26 +609,20 @@ function ExtraPayments() {
                       <input
                         type="number"
                         value={a.cuota}
-                        onChange={(e) =>
-                          updateAbono(a.id, { cuota: parseInt(e.target.value) || 1 })
-                        }
+                        onChange={(e) => updateAbono(a.id, { cuota: parseInt(e.target.value) || 1 })}
                         className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[12px] text-white text-center focus:border-[#84B98F]/60 focus:outline-none"
                         placeholder="#"
                       />
                       <input
                         type="number"
                         value={a.monto || ""}
-                        onChange={(e) =>
-                          updateAbono(a.id, { monto: parseFloat(e.target.value) || 0 })
-                        }
+                        onChange={(e) => updateAbono(a.id, { monto: parseFloat(e.target.value) || 0 })}
                         className="h-8 rounded-md border border-white/10 bg-black/30 px-2 text-[12px] text-white focus:border-[#84B98F]/60 focus:outline-none"
                         placeholder={modo === "uvr" ? "UVR" : "COP"}
                       />
                       <select
                         value={a.destino}
-                        onChange={(e) =>
-                          updateAbono(a.id, { destino: e.target.value as Destino })
-                        }
+                        onChange={(e) => updateAbono(a.id, { destino: e.target.value as Destino })}
                         className="h-8 rounded-md border border-white/10 bg-black/40 px-1.5 text-[11px] text-white focus:border-[#84B98F]/60 focus:outline-none"
                       >
                         <option value="plazo">↓ Plazo</option>
@@ -493,8 +663,16 @@ function ExtraPayments() {
               <KPI
                 Icon={Target}
                 label="Nueva cuota (aprox.)"
-                value={conAbonos ? fmt(conAbonos.cuotaFinal) : "—"}
-                sub={base ? `Base: ${fmt(base.cuotaFinal)}` : ""}
+                value={
+                  conAbonos
+                    ? fmtCOP(
+                        (modo === "uvr" ? conAbonos.cuotaFinal * uvrInicial : conAbonos.cuotaFinal) +
+                          seguros -
+                          (freshActivo && freshCuotas > 0 ? freshValor : 0),
+                      )
+                    : "—"
+                }
+                sub={base ? `Base + seguros: ${fmtCOP((modo === "uvr" ? base.cuotaFinal * uvrInicial : base.cuotaFinal) + seguros)}` : ""}
                 color={NUVEX.azul}
               />
               <KPI
@@ -506,12 +684,10 @@ function ExtraPayments() {
               />
             </div>
 
-            {/* Insight bar */}
             <div
               className="rounded-2xl border border-white/[0.08] p-4 backdrop-blur-2xl"
               style={{
-                background:
-                  "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(68,93,163,0.06))",
+                background: "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(68,93,163,0.06))",
               }}
             >
               <div className="flex items-start gap-3">
@@ -520,10 +696,7 @@ function ExtraPayments() {
                   {puedeSimular && abonos.length > 0 ? (
                     <>
                       Con <b>{abonos.length}</b> abono(s) programado(s), el cliente ahorra{" "}
-                      <b style={{ color: NUVEX.verde }}>
-                        {modo === "uvr" ? fmtCOP(ahorroInteresCOP) : fmtCOP(ahorroInteres)}
-                      </b>{" "}
-                      en intereses y elimina{" "}
+                      <b style={{ color: NUVEX.verde }}>{fmtCOP(ahorroInteresCOP)}</b> en intereses y elimina{" "}
                       <b style={{ color: "#7B61FF" }}>{cuotasAhorradas}</b> cuotas del crédito.
                     </>
                   ) : puedeSimular ? (
@@ -540,7 +713,7 @@ function ExtraPayments() {
           </div>
         </div>
 
-        {/* ============== CHART ============== */}
+        {/* CHART */}
         {puedeSimular && base && conAbonos && (
           <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] p-5 backdrop-blur-2xl">
             <div className="flex items-center gap-2 mb-3">
@@ -553,7 +726,7 @@ function ExtraPayments() {
           </div>
         )}
 
-        {/* ============== TABLE ============== */}
+        {/* TABLE */}
         {puedeSimular && conAbonos && (
           <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] backdrop-blur-2xl overflow-hidden">
             <div className="flex items-center justify-between p-4 border-b border-white/10">
@@ -576,53 +749,38 @@ function ExtraPayments() {
                   <thead className="sticky top-0 bg-[rgba(10,16,34,0.95)] backdrop-blur-xl">
                     <tr className="text-left text-white/60">
                       <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>#</th>
-                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-                        Saldo inicial
-                      </th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Saldo inicial</th>
                       <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Cuota</th>
                       <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Interés</th>
                       <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Capital</th>
-                      <th
-                        className="px-3 py-2 font-semibold text-right"
-                        style={{ color: NUVEX.verde }}
-                      >
-                        Abono
-                      </th>
-                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-                        Saldo final
-                      </th>
-                      {modo === "uvr" && (
-                        <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>
-                          Cuota (COP)
-                        </th>
-                      )}
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Seguros</th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: NUVEX.verde }}>Fresh</th>
+                      <th className="px-3 py-2 font-semibold text-right" style={{ color: NUVEX.verde }}>Abono</th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.85)" }}>Cuota pagada</th>
+                      <th className="px-3 py-2 font-semibold" style={{ color: "rgba(255,255,255,0.7)" }}>Saldo final</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {(modo === "uvr" ? rowsAbonosCOP : conAbonos.rows).map((r) => {
+                    {rowsConEnriched.map((r) => {
                       const hasAbono = r.abono > 0;
                       return (
                         <tr
                           key={r.periodo}
                           className="border-t border-white/5"
-                          style={{
-                            background: hasAbono ? "rgba(132,185,143,0.08)" : "transparent",
-                          }}
+                          style={{ background: hasAbono ? "rgba(132,185,143,0.08)" : "transparent" }}
                         >
-                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>
-                            {r.periodo}
-                          </td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>{r.periodo}</td>
                           <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.75)" }}>
-                            {fmt(r.saldoInicial)}
+                            {fmtCOP(r.saldoInicialCOP ?? r.saldoInicial)}
                           </td>
-                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>
-                            {fmt(r.cuota)}
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>{fmt(r.cuota)}</td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.65)" }}>{fmt(r.interes)}</td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>{fmt(r.capital)}</td>
+                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.7)" }}>
+                            {r.seguros > 0 ? fmtCOP(r.seguros) : "—"}
                           </td>
-                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.65)" }}>
-                            {fmt(r.interes)}
-                          </td>
-                          <td className="px-3 py-1.5" style={{ color: "rgba(255,255,255,0.85)" }}>
-                            {fmt(r.capital)}
+                          <td className="px-3 py-1.5" style={{ color: r.fresh > 0 ? NUVEX.verde : "rgba(255,255,255,0.3)" }}>
+                            {r.fresh > 0 ? `- ${fmtCOP(r.fresh)}` : "—"}
                           </td>
                           <td
                             className="px-3 py-1.5 text-right font-semibold"
@@ -630,14 +788,12 @@ function ExtraPayments() {
                           >
                             {hasAbono ? `+ ${fmt(r.abono)}` : "—"}
                           </td>
+                          <td className="px-3 py-1.5 font-semibold" style={{ color: "white" }}>
+                            {fmtCOP(r.cuotaPagada)}
+                          </td>
                           <td className="px-3 py-1.5 font-medium" style={{ color: "rgba(255,255,255,0.85)" }}>
                             {fmt(r.saldoFinal)}
                           </td>
-                          {modo === "uvr" && (
-                            <td className="px-3 py-1.5" style={{ color: NUVEX.azul }}>
-                              {fmtCOP((r as FilaSim).cuotaCOP || 0)}
-                            </td>
-                          )}
                         </tr>
                       );
                     })}
@@ -759,9 +915,7 @@ function SaldoChart({
   const y = (v: number) => H - P - (v / maxSaldo) * (H - 2 * P);
 
   const path = (rows: FilaSim[]) =>
-    rows
-      .map((r, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(r.saldoInicial)}`)
-      .join(" ");
+    rows.map((r, i) => `${i === 0 ? "M" : "L"} ${x(i)} ${y(r.saldoInicial)}`).join(" ");
 
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-[240px]">
@@ -776,7 +930,6 @@ function SaldoChart({
         </linearGradient>
       </defs>
 
-      {/* grid */}
       {[0.25, 0.5, 0.75].map((f) => (
         <line
           key={f}
@@ -789,21 +942,18 @@ function SaldoChart({
         />
       ))}
 
-      {/* base area + line */}
       <path
         d={`${path(baseRows)} L ${x(baseRows.length - 1)} ${H - P} L ${x(0)} ${H - P} Z`}
         fill="url(#baseArea)"
       />
       <path d={path(baseRows)} fill="none" stroke={NUVEX.azul} strokeWidth={1.6} />
 
-      {/* con abonos area + line */}
       <path
         d={`${path(conAbonos)} L ${x(conAbonos.length - 1)} ${H - P} L ${x(0)} ${H - P} Z`}
         fill="url(#conArea)"
       />
       <path d={path(conAbonos)} fill="none" stroke={NUVEX.verde} strokeWidth={2} />
 
-      {/* markers de abonos */}
       {abonos.map((a) => {
         const idx = a.cuota - 1;
         if (idx < 0 || idx >= conAbonos.length) return null;
@@ -821,7 +971,6 @@ function SaldoChart({
         );
       })}
 
-      {/* legend */}
       <g transform={`translate(${P}, ${P - 12})`}>
         <circle cx={0} cy={0} r={3} fill={NUVEX.azul} />
         <text x={8} y={4} fill="rgba(255,255,255,0.7)" fontSize={10}>
