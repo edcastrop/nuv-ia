@@ -9,7 +9,6 @@ import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { NuviaDraftAuditCard } from "@/components/nuvex/NuviaDraftAuditCard";
 import type { DraftRawSnapshot } from "@/components/nuvex/NuviaDraftAuditCard";
 import {
-  certificarSimulacionDraft,
   ensureOperativeExpedienteForMaestro,
   getMaestro,
   maestroToExpediente,
@@ -26,7 +25,7 @@ import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
 import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
-import type { DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
+import { certificarSimulacionDraft, type DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -375,10 +374,6 @@ export function SimuladorPage() {
       {draftMode && (
         <NuviaDraftAuditCard
           mode={mode}
-          onCertificar={() => {
-            toast.error("Ejecuta la auditoría NUVIA primero.");
-          }}
-
           onCertificar={(payload) => {
             if (!mode) {
               toast.error("Selecciona Pesos o UVR primero.");

@@ -284,6 +284,199 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
     };
   });
 
+const certificarDraftSchema = z.object({
+  snapshot: draftInputSchema,
+});
+
+export const certificarSimulacionDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => certificarDraftSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    const snap = data.snapshot;
+    const d = (snap.datos ?? {}) as Record<string, unknown>;
+
+    const productoStr = String(d.producto ?? snap.producto ?? "").toUpperCase();
+    const modalidad: Modalidad = productoStr.includes("LEASING")
+      ? "leasing"
+      : d.saldoUVR || d.valorUVR
+        ? "uvr"
+        : "hipotecario";
+
+    const saldo = parseNum(d.saldoCapital) ?? 0;
+    const tasa = parseNum(d.tasaEA) ?? parseNum(d.teaCobrada) ?? 0;
+    const tasaPactada = parseNum(d.teaPactada);
+    let cuotasPend = parseNum(d.cuotasPendientes) ?? 0;
+    const cuotasPag = parseNum(d.cuotasPagadas) ?? 0;
+    const seguros = parseNum(d.seguros) ?? 0;
+    const frech = parseNum(d.tasaCobertura);
+    const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
+    const desemb = parseNum(d.valorDesembolsado);
+    const saldoUVR = parseNum(d.saldoUVR);
+    const valorUVR = parseNum(d.valorUVR);
+    const cuotaBaseSinSubsidio =
+      parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
+    const cuotaFinancieraSinSeguros =
+      parseNum(d.cuotaConInteresSinSeguros) ??
+      parseNum(d.cuotaSinSeguros) ??
+      (cuotaBaseSinSubsidio ? Math.max(0, cuotaBaseSinSubsidio - seguros) : undefined);
+
+    const bancoProducto = `${String(d.banco ?? snap.banco ?? "")} ${String(d.producto ?? snap.producto ?? "")}`;
+    if (/fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(bancoProducto)) {
+      const inferred = inferRemainingPayments(saldo, tasa, cuotaFinancieraSinSeguros ?? 0);
+      const plazoLeido = parseNum(d.plazoInicial) ?? 0;
+      if (inferred > 0 && cuotasPag > 0) {
+        const totalIncluyendoActual = cuotasPag + inferred - 1;
+        const plazoEstandar = nearestStandardTerm(totalIncluyendoActual);
+        const plazoCorregido =
+          Math.abs(plazoEstandar - totalIncluyendoActual) <= 2
+            ? plazoEstandar
+            : totalIncluyendoActual;
+        if (plazoLeido >= 300 && plazoLeido <= 366 && plazoCorregido < plazoLeido - 24) {
+          cuotasPend = inferred;
+        } else if (!cuotasPend || Math.abs(cuotasPend - inferred) > 12) {
+          cuotasPend = inferred;
+        }
+      }
+    }
+
+    const cuotaExt =
+      (frech && frech > 0) || (frechValorMensual && frechValorMensual > 0)
+        ? parseNum(d.cuotaPagadaCliente) ?? parseNum(d.valorAPagar) ?? parseNum(d.cuotaActual)
+        : parseNum(d.cuotaActual);
+
+    const FRECH_MAX = 84;
+    const tieneFrech = (frech && frech > 0) || (frechValorMensual && frechValorMensual > 0);
+    const frechCuotasRestantes = tieneFrech
+      ? Math.max(0, Math.min(cuotasPend, FRECH_MAX - cuotasPag))
+      : undefined;
+
+    const overrides = await cargarToleranciasActivas(supabase);
+    const tol: Tolerancias = { ...TOLERANCIAS_DEFAULT, ...overrides };
+    const result = auditar({
+      modalidad,
+      reconstruccion: {
+        modalidad,
+        saldoCapital: saldo,
+        tasaEa: tasa,
+        tasaEaPactada: tasaPactada,
+        cuotasPendientes: cuotasPend,
+        seguros,
+        coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
+        coberturaFrechCuotasRestantes: frechCuotasRestantes,
+        valorDesembolsado: desemb,
+        saldoUVR,
+        valorUVR,
+        cuotaBaseSinSubsidio,
+        cuotaFinancieraSinSeguros,
+      },
+      extracto: {
+        saldoCapital: saldo || undefined,
+        tasaEa: tasa || undefined,
+        cuota: cuotaExt,
+        seguros: seguros || undefined,
+        coberturaFrechPp: frech,
+        coberturaFrechValorMensual: frechValorMensual,
+      },
+      tolerancias: tol,
+    });
+
+    const criticos = result.inconsistencias.filter((i) => i.severidad === "critica").length;
+    if (criticos > 0 || result.score.dictamen !== "aprobado") {
+      throw new Error("NUVIA no puede certificar esta simulación: la auditoría no está aprobada sin hallazgos críticos.");
+    }
+
+    const bancoFinal = String(d.banco ?? snap.banco ?? "") || "SIN_BANCO";
+    const productoFinal = String(d.producto ?? snap.producto ?? "") || null;
+    const monedaFinal = String(d.moneda ?? snap.moneda ?? "") || null;
+    const clienteNombre =
+      (typeof d.cliente === "string" && d.cliente.trim())
+        ? d.cliente.trim()
+        : (typeof d.titular === "string" && d.titular.trim())
+          ? d.titular.trim()
+          : null;
+
+    const { data: extIns, error: errExt } = await supabase
+      .from("extractos_lecturas")
+      .insert({
+        expediente_id: null,
+        asesor_id: userId,
+        aprobado_por: userId,
+        banco: bancoFinal,
+        producto: productoFinal,
+        moneda: monedaFinal,
+        datos: d as never,
+        scores: {} as never,
+        confianza_global: 1,
+        estado: "certificada",
+        motor_version: "v1",
+      })
+      .select("id")
+      .single();
+    if (errExt) throw new Error(`No se pudo registrar el extracto certificado: ${errExt.message}`);
+
+    const extractoId = extIns!.id as string;
+    const inputsSnap = {
+      modalidad,
+      extractoLecturaId: extractoId,
+      expedienteId: null,
+      reconstruccion: { saldoCapital: saldo, tasaEa: tasa, tasaEaPactada: tasaPactada, cuotasPendientes: cuotasPend, cuotasPagadas: cuotasPag, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual, coberturaFrechCuotasRestantes: frechCuotasRestantes, valorDesembolsado: desemb, saldoUVR, valorUVR, cuotaBaseSinSubsidio, cuotaFinancieraSinSeguros },
+      extracto: { saldoCapital: saldo, tasaEa: tasa, cuota: cuotaExt, seguros, coberturaFrechPp: frech, coberturaFrechValorMensual: frechValorMensual },
+      origenCertificacion: "simulador_certificado",
+    };
+
+    const { data: aud, error: errAud } = await supabase
+      .from("qa_auditorias")
+      .insert({
+        expediente_id: null,
+        analista_id: userId,
+        extracto_id: extractoId,
+        modalidad,
+        motor_version: QA_MOTOR_VERSION,
+        qa_score: result.score.score,
+        categoria: result.score.categoria,
+        dictamen: result.score.dictamen,
+        auto_ejecutada: true,
+        inputs: JSON.parse(JSON.stringify(inputsSnap)),
+        outputs: JSON.parse(JSON.stringify({
+          cuotaTeorica: result.reconstruccion.cuotaTeorica,
+          cuotaConSubsidio: result.reconstruccion.cuotaConSubsidio,
+          cuotaTotalConSeguros: result.reconstruccion.cuotaTotalConSeguros,
+          beneficioMensualFrech: result.reconstruccion.beneficioMensualFrech,
+          costoTotal: result.reconstruccion.costoTotal,
+          vecesPagado: result.reconstruccion.vecesPagado,
+          totalIntereses: result.reconstruccion.totalIntereses,
+          totalCorreccionUvr: result.reconstruccion.totalCorreccionUvr,
+          iMv: result.reconstruccion.iMv,
+          primerasCuotas: result.reconstruccion.primerasCuotas,
+          ultimasCuotas: result.reconstruccion.ultimasCuotas,
+          todasCuotas: result.reconstruccion.todasCuotas,
+          veredicto: result.veredicto,
+        })),
+        diferencias: JSON.parse(JSON.stringify(result.inconsistencias)),
+        alertas: JSON.parse(JSON.stringify([])),
+        ejecutado_by: userId,
+        origen: "simulador_escalado",
+        banco: bancoFinal,
+        producto: productoFinal,
+        cliente_nombre: clienteNombre,
+        simulador_snapshot: JSON.parse(JSON.stringify(snap)),
+      } as never)
+      .select("id,codigo")
+      .single();
+    if (errAud) throw new Error(`No se pudo certificar la simulación: ${errAud.message}`);
+
+    await supabase.from("qa_auditoria_log").insert({
+      auditoria_id: aud!.id,
+      accion: "crear",
+      payload: { score: result.score.score, dictamen: result.score.dictamen, fuente: "simulador_certificado" } as never,
+      user_id: userId,
+    });
+
+    return { auditoriaId: aud!.id as string, codigo: (aud as { codigo: string | null }).codigo ?? null };
+  });
+
 // ─────────────────────────────────────────────────────────────
 // 2. Escalar simulación → Cola de Revisión NUVIA QA AI
 //    Crea una auditoría REAL en qa_auditorias (origen=simulador_escalado)
