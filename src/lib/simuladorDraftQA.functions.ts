@@ -506,6 +506,10 @@ const escalarInputSchema = z.object({
   notasParaAuditor: z.string().max(4000).optional(),
   archivoPath: z.string().nullable().optional(),
   archivoNombre: z.string().nullable().optional(),
+  adjuntosExtra: z
+    .array(z.object({ path: z.string(), nombre: z.string() }))
+    .max(20)
+    .optional(),
 });
 
 export const escalarConsultaTecnica = createServerFn({ method: "POST" })
