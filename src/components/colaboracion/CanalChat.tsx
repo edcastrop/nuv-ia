@@ -86,14 +86,16 @@ export function CanalChat({ canal }: { canal: Canal }) {
     const before = texto.slice(0, mentionState.start);
     const afterStart = mentionState.start + 1 + mentionState.query.length;
     const after = texto.slice(afterStart);
-    const token = `@[${persona.nombre}](${persona.user_id}) `;
-    const nuevo = before + token + after;
+    // Texto visible: solo "@Nombre " — el mapping label→uuid se guarda aparte.
+    const visible = `@${persona.nombre} `;
+    const nuevo = before + visible + after;
     setTexto(nuevo);
+    setPendingMentions((prev) => prev.some((m) => m.userId === persona.user_id) ? prev : [...prev, { userId: persona.user_id, nombre: persona.nombre }]);
     setMentionState(null);
     setTimeout(() => {
       const ta = taRef.current;
       if (!ta) return;
-      const pos = (before + token).length;
+      const pos = (before + visible).length;
       ta.focus();
       ta.setSelectionRange(pos, pos);
     }, 0);
@@ -103,9 +105,11 @@ export function CanalChat({ canal }: { canal: Canal }) {
     if (!texto.trim() && adjs.length === 0) return;
     setEnviando(true);
     try {
-      const menciones = extractMentionIds(texto);
+      // Solo consideramos menciones cuyo "@Nombre" siga presente en el texto final.
+      const activas = pendingMentions.filter((m) => texto.includes(`@${m.nombre}`));
+      const menciones = Array.from(new Set(activas.map((m) => m.userId)));
       await enviarMensaje(canal.id, texto.trim(), adjs, menciones);
-      setTexto(""); setAdjs([]); setMentionState(null);
+      setTexto(""); setAdjs([]); setMentionState(null); setPendingMentions([]);
     } catch (e) { alert((e as Error).message); }
     finally { setEnviando(false); }
   };
