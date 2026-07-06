@@ -9,7 +9,7 @@ import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
-import { UserCog, Check } from "lucide-react";
+import { UserCog, Check, Banknote } from "lucide-react";
 import { QABadge } from "@/components/qa-ai/QABadge";
 import {
   Search,
