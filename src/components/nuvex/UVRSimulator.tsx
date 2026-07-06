@@ -618,6 +618,70 @@ export function UVRSimulator({
     }
   };
 
+  // Modo manual (sin extracto): en /herramientas/simulador no hay expediente
+  // asociado. Si el analista diligencia a mano los datos UVR mínimos, emitimos
+  // el snapshot para que NUVIA pueda auditar y luego certificar el caso.
+  useEffect(() => {
+    if (init?.id) return;
+    const saldoUVRN = parseDecimal(saldoUVR);
+    const valorUVRN = parseDecimal(valorUVR);
+    const saldoPesosN = parseCurrency(saldoPesos);
+    const cuotaN = parseCurrency(cuotaActualPesos);
+    const teaN = parsePercentage(teaCobrada);
+    if (!(cuotaN > 0 && teaN > 0)) return;
+    if (!(saldoUVRN > 0 || saldoPesosN > 0)) return;
+    emitDraftRawReady({
+      banco: client.banco || null,
+      producto: client.tipoProducto || null,
+      moneda: "UVR",
+      tipoCredito: "uvr",
+      datos: {
+        banco: client.banco || "",
+        producto: client.tipoProducto || "",
+        numeroCredito: client.numeroCredito || "",
+        cliente: client.nombre || "",
+        titular: client.nombre || "",
+        saldoCapital: saldoPesosN || (saldoUVRN * valorUVRN) || 0,
+        saldoPesos: saldoPesosN || undefined,
+        saldoUVR: saldoUVRN || undefined,
+        valorUVR: valorUVRN || undefined,
+        cuotaActual: cuotaN,
+        cuotaActualPesos: cuotaN,
+        seguros: parseCurrency(seguros) || 0,
+        tasaEA: teaN,
+        teaCobrada: teaN,
+        valorDesembolsado: parseCurrency(valorDesembolsado) || undefined,
+        variacionUVR: parsePercentage(variacionUVR) || undefined,
+        plazoInicial,
+        cuotasPagadas,
+        cuotasPendientes,
+        tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
+        valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
+      },
+    });
+  }, [
+    init?.id,
+    client.banco,
+    client.tipoProducto,
+    client.numeroCredito,
+    client.nombre,
+    saldoPesos,
+    saldoUVR,
+    valorUVR,
+    cuotaActualPesos,
+    seguros,
+    teaCobrada,
+    variacionUVR,
+    valorDesembolsado,
+    plazoInicial,
+    cuotasPagadas,
+    cuotasPendientes,
+    cobertura.tasaCobertura,
+    cobertura.valorCobertura,
+  ]);
+
+
+
   return (
     <div className={`relative isolate overflow-hidden ${qaEmbedded ? "" : "min-h-screen"}`}>
       {!qaEmbedded && <div aria-hidden className="pointer-events-none absolute inset-0 z-0 overflow-hidden">

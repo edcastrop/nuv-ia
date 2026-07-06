@@ -495,6 +495,59 @@ export function PesosSimulator({
     }
   };
 
+  // Modo manual (sin extracto): en /herramientas/simulador no hay expediente
+  // asociado. Si el analista diligencia a mano saldo, cuota y tasa, emitimos
+  // el snapshot para que NUVIA pueda auditar y luego certificar el caso.
+  useEffect(() => {
+    if (init?.id) return;
+    const saldoN = parseCurrency(saldoCapital);
+    const cuotaN = parseCurrency(cuotaActual);
+    const teaN = parsePercentage(tea);
+    if (!(saldoN > 0 && cuotaN > 0 && teaN > 0)) return;
+    emitDraftRawReady({
+      banco: client.banco || null,
+      producto: client.tipoProducto || null,
+      moneda: "COP",
+      tipoCredito: "pesos",
+      datos: {
+        banco: client.banco || "",
+        producto: client.tipoProducto || "",
+        numeroCredito: client.numeroCredito || "",
+        cliente: client.nombre || "",
+        titular: client.nombre || "",
+        saldoCapital: saldoN,
+        cuotaActual: cuotaN,
+        seguros: parseCurrency(seguros) || 0,
+        tasaEA: teaN,
+        teaCobrada: teaN,
+        valorDesembolsado: parseCurrency(valorDesembolsado) || undefined,
+        plazoInicial,
+        cuotasPagadas,
+        cuotasPendientes,
+        tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
+        valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
+      },
+    });
+  }, [
+    init?.id,
+    client.banco,
+    client.tipoProducto,
+    client.numeroCredito,
+    client.nombre,
+    saldoCapital,
+    cuotaActual,
+    seguros,
+    tea,
+    valorDesembolsado,
+    plazoInicial,
+    cuotasPagadas,
+    cuotasPendientes,
+    cobertura.tasaCobertura,
+    cobertura.valorCobertura,
+  ]);
+
+
+
   return (
     <div className={`relative isolate overflow-hidden ${qaEmbedded ? "" : "min-h-screen"}`}>
       {/* Fondo animado NUVIA (estilo login) */}
