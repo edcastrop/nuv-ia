@@ -494,8 +494,8 @@ function EscalarDialog({
             e.stopPropagation();
             setDragOver(false);
             if (uploading || saving) return;
-            const f = e.dataTransfer.files?.[0];
-            if (f) void handleFile(f);
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) void handleFiles(files);
           }}
           className={`mt-4 rounded-lg border px-3 py-3 transition-colors ${
             dragOver
@@ -514,50 +514,73 @@ function EscalarDialog({
             <div className="min-w-0 flex-1">
               <div className="text-[12.5px] font-semibold text-white">
                 {dragOver
-                  ? "Suelta el archivo aquí"
+                  ? "Suelta los archivos aquí"
                   : yaTieneExtracto
-                    ? "Extracto adjunto"
+                    ? `${adjuntos.length} archivo(s) adjunto(s)`
                     : "Adjunta el extracto original"}
               </div>
               <div className="mt-0.5 text-[11.5px] text-white/60">
                 {yaTieneExtracto
-                  ? "Viajará junto con la simulación para que el auditor lo revise."
-                  : "Arrastra el archivo aquí o haz clic en el botón. Se acepta cualquier formato (PDF, imagen, Excel, Word, ZIP, etc.)."}
+                  ? `Viajarán junto con la simulación. Puedes agregar hasta ${MAX_FILES} archivos (${cuposDisponibles} disponibles).`
+                  : `Arrastra los archivos aquí o haz clic en el botón. Se aceptan hasta ${MAX_FILES} archivos, cualquier formato (PDF, imagen, Excel, Word, ZIP, etc.).`}
               </div>
-              {yaTieneExtracto && uploadedName && (
-                <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2 py-1 text-[11px] text-white/80">
-                  <Paperclip size={12} /> {uploadedName}
+              {adjuntos.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {adjuntos.map((a, idx) => (
+                    <div
+                      key={a.path}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2 py-1 text-[11px] text-white/80"
+                    >
+                      <Paperclip size={12} />
+                      <span className="max-w-[180px] truncate">{a.nombre}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeAdjunto(idx)}
+                        disabled={saving || uploading}
+                        className="ml-1 text-white/40 hover:text-red-300 disabled:opacity-40"
+                        aria-label="Quitar archivo"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input
                   ref={fileRef}
                   type="file"
+                  multiple
                   className="hidden"
                   onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void handleFile(f);
+                    const files = e.target.files;
+                    if (files && files.length > 0) void handleFiles(files);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  disabled={uploading || saving}
+                  disabled={uploading || saving || cuposDisponibles <= 0}
                   className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[11.5px] font-semibold text-white hover:bg-white/[0.1] disabled:opacity-50"
                 >
                   <Upload size={12} />
                   {uploading
                     ? "Subiendo…"
-                    : yaTieneExtracto
-                      ? "Reemplazar archivo"
-                      : "Subir extracto (cualquier formato)"}
+                    : cuposDisponibles <= 0
+                      ? "Límite alcanzado"
+                      : yaTieneExtracto
+                        ? "Agregar más archivos"
+                        : "Subir extracto (cualquier formato)"}
                 </button>
-                <span className="text-[10.5px] text-white/40">Máx. 20 MB · Drag &amp; drop habilitado</span>
+                <span className="text-[10.5px] text-white/40">
+                  Máx. {MAX_FILES} archivos · 20 MB c/u · Drag &amp; drop habilitado
+                </span>
               </div>
             </div>
           </div>
         </div>
+
 
 
         <label className="mt-4 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
