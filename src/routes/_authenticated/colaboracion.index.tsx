@@ -188,8 +188,8 @@ function ColaboracionPage() {
         const analystId = sourceExp?.asesor_id ?? audit?.analista_id ?? null;
         map[c.id] = {
           caso_id: sourceExp?.id ?? audit?.expediente_id ?? c.caso_id ?? undefined,
-          cliente: r.cliente_nombre || undefined,
-          banco: r.banco || undefined,
+          cliente: undefined,
+          banco: undefined,
           analista: analystId ? profMap[analystId] : undefined,
           asesor_id: analystId || undefined,
           numero_credito: textFrom(sourceExp?.numero_credito, snapDatos.numeroCredito, snapDatos.numero_credito, inputs.numeroCredito),
@@ -603,10 +603,30 @@ function prioTone(p: "alta" | "media" | "baja" | "todos") {
   return { bg: "rgba(255,255,255,0.06)", fg: "rgba(255,255,255,0.75)", border: "rgba(255,255,255,0.12)" };
 }
 
-function CaseHeader({ canal, priority, sla, etapa }: { canal: Canal; priority: "alta"|"media"|"baja"; sla: number; etapa: string }) {
+function CaseHeader({ canal, info, priority, sla, etapa }: { canal: Canal; info?: CreditInfo; priority: "alta"|"media"|"baja"; sla: number; etapa: string }) {
   const p = prioTone(priority);
-  const nombreLimpio = canal.nombre.replace(/^Caso\s*·\s*/i, "");
-  const isCase = canal.tipo === "caso";
+  const nombreLimpio = (info?.cliente || canal.nombre).replace(/^Caso\s*·\s*/i, "").replace(/^QA\s*·\s*/i, "");
+  const isCase = canal.tipo === "caso" || canal.tipo === "qa_auditoria";
+  const expedienteTarget = info?.caso_id
+    ? { kind: "case", casoId: info.caso_id, tab: "resumen" } satisfies HeaderTarget
+    : info?.auditoria_id
+      ? { kind: "audit", auditoriaId: info.auditoria_id } satisfies HeaderTarget
+      : null;
+  const financieroTarget = info?.caso_id
+    ? { kind: "case", casoId: info.caso_id, tab: "financiero" } satisfies HeaderTarget
+    : info?.auditoria_id
+      ? { kind: "audit", auditoriaId: info.auditoria_id } satisfies HeaderTarget
+      : null;
+  const timelineTarget = info?.caso_id
+    ? { kind: "case", casoId: info.caso_id, tab: "historial" } satisfies HeaderTarget
+    : info?.auditoria_id
+      ? { kind: "audit", auditoriaId: info.auditoria_id } satisfies HeaderTarget
+      : null;
+  const auditTarget = info?.auditoria_id
+    ? { kind: "audit", auditoriaId: info.auditoria_id } satisfies HeaderTarget
+    : info?.caso_id
+      ? { kind: "case", casoId: info.caso_id, tab: "auditoria" } satisfies HeaderTarget
+      : null;
   return (
     <div className="px-4 py-3 border-b flex items-center justify-between gap-3 flex-wrap" style={{ borderColor: "rgba(255,255,255,0.07)", background: "linear-gradient(180deg, rgba(59,130,246,0.06), transparent)" }}>
       <div className="min-w-0 flex items-center gap-3">
@@ -619,7 +639,7 @@ function CaseHeader({ canal, priority, sla, etapa }: { canal: Canal; priority: "
             {isCase && <span className="text-[9px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5" style={{ background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>{priority}</span>}
           </div>
           <div className="flex items-center gap-3 text-[11px] mt-0.5 flex-wrap" style={{ color: "rgba(255,255,255,0.55)" }}>
-            <span>{canal.descripcion || "Davivienda"}</span>
+            <span>{info?.banco || canal.descripcion || "Sin banco"}</span>
             {isCase && <span>·</span>}
             {isCase && <span style={{ color: "#C4B5FD" }}>ETAPA · {etapa.toUpperCase()}</span>}
             {isCase && <span>·</span>}
@@ -628,30 +648,95 @@ function CaseHeader({ canal, priority, sla, etapa }: { canal: Canal; priority: "
         </div>
       </div>
       <div className="flex items-center gap-1.5">
-        <HeaderAction icon={FileText}   label="Expediente"  casoId={canal.caso_id} tab="resumen" />
-        <HeaderAction icon={Activity}   label="Extractos"   casoId={canal.caso_id} tab="financiero" />
-        <HeaderAction icon={Clock}      label="Timeline"    casoId={canal.caso_id} tab="historial" />
-        <HeaderAction icon={Sparkles}   label="IA Analysis" casoId={canal.caso_id} tab="auditoria" accent />
+        <HeaderAction icon={FileText}   label="Expediente"  target={expedienteTarget} />
+        <HeaderAction icon={Activity}   label="Extractos"   target={financieroTarget} />
+        <HeaderAction icon={Clock}      label="Timeline"    target={timelineTarget} />
+        <HeaderAction icon={Sparkles}   label="IA Analysis" target={auditTarget} accent />
       </div>
     </div>
   );
 }
 
-function HeaderAction({ icon: Icon, label, accent, casoId, tab }: { icon: typeof FileText; label: string; accent?: boolean; casoId: string | null; tab: string }) {
+function HeaderAction({ icon: Icon, label, accent, target }: { icon: typeof FileText; label: string; accent?: boolean; target: HeaderTarget | null }) {
   const navigate = useNavigate();
-  const disabled = !casoId;
+  const disabled = !target;
   return (
     <button
       type="button"
       disabled={disabled}
-      onClick={() => { if (casoId) navigate({ to: "/casos/$id", params: { id: casoId }, search: { tab } as never }); }}
-      title={disabled ? "Este canal no está vinculado a un caso" : `Abrir ${label}`}
+      onClick={() => {
+        if (!target) return;
+        if (target.kind === "audit") {
+          navigate({ to: "/qa-ai/$id", params: { id: target.auditoriaId } });
+          return;
+        }
+        navigate({ to: "/casos/$id", params: { id: target.casoId }, search: { tab: target.tab } as never });
+      }}
+      title={disabled ? "Este canal no tiene destino disponible" : `Abrir ${label}`}
       className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[11px] font-semibold transition hover:scale-[1.02] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100"
       style={accent
         ? { background: "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(16,185,129,0.15))", color: "white", border: "1px solid rgba(16,185,129,0.4)", boxShadow: "0 0 14px rgba(16,185,129,0.2)" }
         : { background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.8)", border: "1px solid rgba(255,255,255,0.08)" }}>
       <Icon size={12} /> {label}
     </button>
+  );
+}
+
+function CreditSummaryCard({ canal, info }: { canal: Canal; info?: CreditInfo }) {
+  const navigate = useNavigate();
+  const auditId = info?.auditoria_id ?? canal.auditoria_id;
+  const caseId = info?.caso_id ?? canal.caso_id;
+  const score = info?.qa_score ?? null;
+  const scoreTone = score == null
+    ? { bg: "rgba(255,255,255,0.05)", fg: "rgba(255,255,255,0.72)", border: "rgba(255,255,255,0.10)" }
+    : score >= 85
+      ? { bg: "rgba(16,185,129,0.12)", fg: "#6EE7B7", border: "rgba(16,185,129,0.32)" }
+      : score >= 70
+        ? { bg: "rgba(245,158,11,0.12)", fg: "#FCD34D", border: "rgba(245,158,11,0.34)" }
+        : { bg: "rgba(239,68,68,0.11)", fg: "#FCA5A5", border: "rgba(239,68,68,0.32)" };
+
+  const openAudit = () => {
+    if (auditId) navigate({ to: "/qa-ai/$id", params: { id: auditId } });
+    else if (caseId) navigate({ to: "/casos/$id", params: { id: caseId }, search: { tab: "auditoria" } as never });
+  };
+
+  return (
+    <div className="border-b px-4 py-3" style={{ borderColor: "rgba(255,255,255,0.07)", background: "linear-gradient(135deg, rgba(68,93,163,0.13), rgba(16,185,129,0.055))" }}>
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: "#6EE7B7" }}>Ficha financiera del crédito</div>
+          <div className="mt-0.5 truncate text-[14px] font-bold" style={{ color: "rgba(255,255,255,0.96)" }}>{info?.cliente || canal.nombre.replace(/^QA\s*·\s*/i, "").replace(/^Caso\s*·\s*/i, "")}</div>
+        </div>
+        <button
+          type="button"
+          onClick={openAudit}
+          disabled={!auditId && !caseId}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[10.5px] font-bold transition hover:scale-[1.02] disabled:opacity-40 disabled:cursor-not-allowed"
+          style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.24), rgba(16,185,129,0.20))", color: "#FFFFFF", border: "1px solid rgba(16,185,129,0.42)", boxShadow: "0 0 14px rgba(16,185,129,0.16)" }}
+        >
+          <Sparkles size={12} /> Ver auditoría <ArrowUpRight size={11} />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
+        <CreditInfoTile icon={UserRound} label="Analista" value={info?.analista || "Sin asignar"} />
+        <CreditInfoTile icon={Gauge} label="Score auditoría" value={score == null ? "—" : `${Math.round(score)}/100`} tone={scoreTone} />
+        <CreditInfoTile icon={CalendarDays} label="Creación" value={formatShortDate(info?.created_at ?? canal.created_at)} />
+        <CreditInfoTile icon={Building2} label="Banco" value={info?.banco || "—"} />
+        <CreditInfoTile icon={CreditCard} label="N° crédito" value={info?.numero_credito || "—"} />
+        <CreditInfoTile icon={FileText} label="Producto" value={info?.producto || "—"} />
+      </div>
+    </div>
+  );
+}
+
+function CreditInfoTile({ icon: Icon, label, value, tone }: { icon: typeof FileText; label: string; value: string; tone?: { bg: string; fg: string; border: string } }) {
+  return (
+    <div className="min-w-0 rounded-lg px-2.5 py-2" style={{ background: tone?.bg ?? "rgba(255,255,255,0.035)", border: `1px solid ${tone?.border ?? "rgba(255,255,255,0.075)"}` }}>
+      <div className="mb-1 flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.12em]" style={{ color: tone?.fg ?? "rgba(255,255,255,0.44)" }}>
+        <Icon size={10} /> {label}
+      </div>
+      <div className="truncate text-[12px] font-semibold" title={value} style={{ color: tone?.fg ?? "rgba(255,255,255,0.90)" }}>{value}</div>
+    </div>
   );
 }
 
@@ -680,7 +765,7 @@ function EmptyMain({ onPickTeam }: { onPickTeam: (k: string) => void }) {
   );
 }
 
-function CaseIntelligence({ canal, sla, etapa }: { canal: Canal | null; sla: number; etapa: string }) {
+function CaseIntelligence({ canal, info, sla, etapa }: { canal: Canal | null; info?: CreditInfo; sla: number; etapa: string }) {
   if (!canal) {
     return (
       <div className="flex-1 flex items-center justify-center p-6 text-center">
@@ -698,6 +783,10 @@ function CaseIntelligence({ canal, sla, etapa }: { canal: Canal | null; sla: num
     <div className="flex-1 overflow-y-auto p-3 space-y-3">
       {/* KPI blocks */}
       <div className="grid grid-cols-2 gap-2">
+        <div className="col-span-2 rounded-lg p-2.5" style={{ background: "rgba(68,93,163,0.10)", border: "1px solid rgba(68,93,163,0.28)" }}>
+          <div className="text-[9px] font-bold tracking-wider" style={{ color: "#BFD3F5" }}>CRÉDITO</div>
+          <div className="text-[12px] font-bold mt-0.5 truncate" title={info?.numero_credito || undefined} style={{ color: "rgba(255,255,255,0.95)" }}>{info?.numero_credito || "—"}</div>
+        </div>
         <div className="rounded-lg p-2.5" style={{ background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)" }}>
           <div className="text-[9px] font-bold tracking-wider" style={{ color: "#93C5FD" }}>ETAPA</div>
           <div className="text-[13px] font-bold mt-0.5" style={{ color: "rgba(255,255,255,0.95)" }}>{etapa}</div>
