@@ -179,22 +179,45 @@ export function SimuladorPage() {
     }
   };
 
+  type DraftCaseSnapshot = {
+    client?: Record<string, unknown>;
+    valorDesembolsado?: unknown;
+    saldoCapital?: unknown;
+    saldoPesos?: unknown;
+    saldoUVR?: unknown;
+    valorUVR?: unknown;
+    cuotaActual?: unknown;
+    cuotaActualPesos?: unknown;
+    seguros?: unknown;
+    tea?: unknown;
+    teaCobrada?: unknown;
+    variacionUVR?: unknown;
+  };
+
+  const clean = (value: unknown) => String(value ?? "").trim();
+
+  const readDraftCase = (mo: "pesos" | "uvr"): DraftCaseSnapshot | null => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = sessionStorage.getItem(`nuvex.simulatorDraft.${mo}.standalone`);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw) as DraftCaseSnapshot;
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch {
+      return null;
+    }
+  };
+
   const readDraftClient = (mo: "pesos" | "uvr"): { nombre: string; cedula: string } => {
     if (typeof window === "undefined") return { nombre: "", cedula: "" };
     // Intentamos primero el modo actual y luego el opuesto: el analista puede haber
     // capturado nombre/cédula en un modo y cambiado al otro antes de certificar.
     const orden: Array<"pesos" | "uvr"> = mo === "pesos" ? ["pesos", "uvr"] : ["uvr", "pesos"];
     for (const key of orden) {
-      try {
-        const raw = sessionStorage.getItem(`nuvex.simulatorDraft.${key}.standalone`);
-        if (!raw) continue;
-        const parsed = JSON.parse(raw) as { client?: { nombre?: string; cedula?: string } };
-        const nombre = String(parsed?.client?.nombre ?? "").trim();
-        const cedula = String(parsed?.client?.cedula ?? "").trim();
-        if (nombre || cedula) return { nombre, cedula };
-      } catch {
-        /* seguir intentando con el otro modo */
-      }
+      const parsed = readDraftCase(key);
+      const nombre = clean(parsed?.client?.nombre);
+      const cedula = clean(parsed?.client?.cedula);
+      if (nombre || cedula) return { nombre, cedula };
     }
     return { nombre: "", cedula: "" };
   };
@@ -209,6 +232,45 @@ export function SimuladorPage() {
       setSaveOpen(true);
       return;
     }
+    const draft = readDraftCase(mode);
+    const draftClient = draft?.client ?? {};
+    const credito = {
+      ...emptyCredito(),
+      banco: clean(draftClient.banco),
+      numeroCredito: clean(draftClient.numeroCredito),
+      tipoProducto: clean(draftClient.tipoProducto),
+      fechaDesembolso: clean(draftClient.fechaDesembolso),
+      valorDesembolsado: clean(draft?.valorDesembolsado),
+      plazoOriginal: clean(draftClient.plazoInicial),
+      saldoCapital: clean(mode === "uvr" ? (draft?.saldoPesos || draft?.saldoCapital) : draft?.saldoCapital),
+      saldoPesos: clean(mode === "uvr" ? (draft?.saldoPesos || draft?.saldoCapital) : draft?.saldoCapital),
+      saldoUVR: clean(draft?.saldoUVR),
+      valorUVR: clean(draft?.valorUVR),
+      cuotaActual: clean(mode === "uvr" ? (draft?.cuotaActualPesos || draft?.cuotaActual) : draft?.cuotaActual),
+      cuotaActualPesos: clean(mode === "uvr" ? (draft?.cuotaActualPesos || draft?.cuotaActual) : draft?.cuotaActual),
+      seguros: clean(draft?.seguros),
+      tasa: clean(mode === "uvr" ? (draft?.teaCobrada || draft?.tea) : draft?.tea),
+      teaCobrada: clean(mode === "uvr" ? (draft?.teaCobrada || draft?.tea) : draft?.tea),
+      variacionUVR: clean(draft?.variacionUVR),
+      cuotasPagadas: clean(draftClient.cuotasPagadas),
+      cuotasPendientes: clean(draftClient.cuotasPendientes),
+    };
+    const faltantes = [
+      ["Cédula", cedula],
+      ["Banco", credito.banco],
+      ["Producto", credito.tipoProducto],
+      ["Número de crédito", credito.numeroCredito],
+      ["Saldo capital", credito.saldoCapital],
+      ["Cuota actual", credito.cuotaActual],
+      ["Tasa", credito.tasa || credito.teaCobrada],
+    ].filter(([, value]) => !clean(value));
+    if (faltantes.length > 0) {
+      const detalle = faltantes.map(([label]) => `• ${label}`).join("\n");
+      const mensaje = `No se puede crear el caso: faltan datos financieros mínimos del crédito.\n\n${detalle}\n\nCarga/aplica el extracto o completa Datos del crédito antes de certificar.`;
+      toast.error("No se creó el caso: faltan datos financieros mínimos del crédito.", { duration: 6500 });
+      if (typeof window !== "undefined") window.alert(mensaje);
+      return;
+    }
     setSavingDraft(true);
     try {
       const readKey = (mo: "pesos" | "uvr") => `nuvex.simulatorDraft.${mo}.standalone`;
@@ -216,11 +278,20 @@ export function SimuladorPage() {
       const pesosDraft = typeof window !== "undefined" ? sessionStorage.getItem(readKey("pesos")) : null;
       const uvrDraft = typeof window !== "undefined" ? sessionStorage.getItem(readKey("uvr")) : null;
 
-      const cliente = { ...emptyCliente(), nombre, cedula };
+      const cliente = {
+        ...emptyCliente(),
+        nombre,
+        cedula,
+        email: clean(draftClient.correo || draftClient.email),
+        telefono: clean(draftClient.celular || draftClient.telefono),
+        direccion: clean(draftClient.direccion),
+        ciudad: clean(draftClient.ciudad || draftClient.municipio),
+        departamento: clean(draftClient.departamento),
+      };
       const maestro = await upsertMaestro({
         cliente,
         cotitular: emptyCotitular(),
-        credito: emptyCredito(),
+        credito,
         fresh: emptyFresh(),
         asesor: emptyAsesor(),
         licenciado: emptyLicenciado(),
