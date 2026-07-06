@@ -282,7 +282,7 @@ function TextoConMenciones({ texto, meMencionan, mencionados }: { texto: string;
   );
 }
 
-function MensajeItem({ m, esMio, meMencionan, persona }: { m: Mensaje; esMio: boolean; meMencionan: boolean; persona?: { nombre: string; foto_url: string | null } }) {
+function MensajeItem({ m, esMio, meMencionan, persona, mencionados }: { m: Mensaje; esMio: boolean; meMencionan: boolean; persona?: { nombre: string; foto_url: string | null }; mencionados: MentionResolved[] }) {
   if (m.borrado) {
     return <div className="text-[11px] italic pl-12" style={{ color: "var(--nuvia-text-secondary)" }}>— mensaje eliminado —</div>;
   }
