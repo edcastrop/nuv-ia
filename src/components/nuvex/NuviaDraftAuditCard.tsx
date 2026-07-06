@@ -353,44 +353,73 @@ function EscalarDialog({
 }) {
   const [notas, setNotas] = useState("");
   const [saving, setSaving] = useState(false);
-  const [uploadedPath, setUploadedPath] = useState<string | null>(snapshot?.archivoPath ?? null);
-  const [uploadedName, setUploadedName] = useState<string | null>(snapshot?.archivoNombre ?? null);
+  type Adjunto = { path: string; nombre: string };
+  const initialAdjuntos: Adjunto[] = snapshot?.archivoPath
+    ? [{ path: snapshot.archivoPath, nombre: snapshot.archivoNombre ?? "extracto" }]
+    : [];
+  const [adjuntos, setAdjuntos] = useState<Adjunto[]>(initialAdjuntos);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const escalar = useServerFn(escalarConsultaTecnica);
 
-  const yaTieneExtracto = !!uploadedPath;
+  const MAX_FILES = 20;
+  const yaTieneExtracto = adjuntos.length > 0;
+  const cuposDisponibles = MAX_FILES - adjuntos.length;
 
-  const handleFile = async (f: File) => {
+  const uploadOne = async (f: File, uid: string): Promise<Adjunto> => {
+    if (f.size > 20 * 1024 * 1024) throw new Error(`"${f.name}" supera 20 MB`);
+    const path = `${uid}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await supabase.storage
+      .from("extractos")
+      .upload(path, f, { cacheControl: "3600", upsert: false, contentType: f.type || "application/octet-stream" });
+    if (upErr) throw new Error(`${f.name}: ${upErr.message}`);
+    return { path, nombre: f.name };
+  };
+
+  const handleFiles = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    if (adjuntos.length + files.length > MAX_FILES) {
+      toast.error(`Máximo ${MAX_FILES} archivos. Puedes subir ${cuposDisponibles} más.`);
+      return;
+    }
     setUploading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData?.user?.id;
       if (!uid) throw new Error("Sesión no disponible");
-      if (f.size > 20 * 1024 * 1024) throw new Error("El archivo supera 20 MB");
-      const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const { error: upErr } = await supabase.storage
-        .from("extractos")
-        .upload(path, f, { cacheControl: "3600", upsert: false, contentType: f.type || "application/octet-stream" });
-      if (upErr) throw new Error(upErr.message);
-      setUploadedPath(path);
-      setUploadedName(f.name);
-      toast.success("Extracto adjuntado. Ya viaja con la simulación.");
+      const nuevos: Adjunto[] = [];
+      for (const f of files) {
+        try {
+          nuevos.push(await uploadOne(f, uid));
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Error subiendo archivo");
+        }
+      }
+      if (nuevos.length > 0) {
+        setAdjuntos((prev) => [...prev, ...nuevos]);
+        toast.success(`${nuevos.length} archivo(s) adjuntado(s).`);
+      }
     } catch (e) {
-      toast.error(`No se pudo subir el extracto: ${e instanceof Error ? e.message : "error"}`);
+      toast.error(`No se pudo subir: ${e instanceof Error ? e.message : "error"}`);
     } finally {
       setUploading(false);
     }
   };
 
+  const removeAdjunto = (idx: number) => {
+    setAdjuntos((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleEnviar = async () => {
     if (!yaTieneExtracto) {
-      toast.error("Adjunta el extracto original antes de enviar a auditoría.");
+      toast.error("Adjunta al menos un extracto antes de enviar a auditoría.");
       return;
     }
     setSaving(true);
     try {
+      const [primary, ...extras] = adjuntos;
       const r = await escalar({
         data: {
           snapshot: (snapshot ?? {}) as Record<string, unknown>,
@@ -399,8 +428,9 @@ function EscalarDialog({
           tipoCredito: snapshot?.tipoCredito ?? null,
           moneda: snapshot?.moneda ?? null,
           hallazgos: hallazgos as unknown[],
-          archivoPath: uploadedPath,
-          archivoNombre: uploadedName,
+          archivoPath: primary.path,
+          archivoNombre: primary.nombre,
+          adjuntosExtra: extras,
           notasParaAuditor: notas.trim() || undefined,
         },
       });
@@ -416,6 +446,7 @@ function EscalarDialog({
       setSaving(false);
     }
   };
+
 
   return (
     <div
@@ -463,8 +494,8 @@ function EscalarDialog({
             e.stopPropagation();
             setDragOver(false);
             if (uploading || saving) return;
-            const f = e.dataTransfer.files?.[0];
-            if (f) void handleFile(f);
+            const files = e.dataTransfer.files;
+            if (files && files.length > 0) void handleFiles(files);
           }}
           className={`mt-4 rounded-lg border px-3 py-3 transition-colors ${
             dragOver
@@ -483,50 +514,73 @@ function EscalarDialog({
             <div className="min-w-0 flex-1">
               <div className="text-[12.5px] font-semibold text-white">
                 {dragOver
-                  ? "Suelta el archivo aquí"
+                  ? "Suelta los archivos aquí"
                   : yaTieneExtracto
-                    ? "Extracto adjunto"
+                    ? `${adjuntos.length} archivo(s) adjunto(s)`
                     : "Adjunta el extracto original"}
               </div>
               <div className="mt-0.5 text-[11.5px] text-white/60">
                 {yaTieneExtracto
-                  ? "Viajará junto con la simulación para que el auditor lo revise."
-                  : "Arrastra el archivo aquí o haz clic en el botón. Se acepta cualquier formato (PDF, imagen, Excel, Word, ZIP, etc.)."}
+                  ? `Viajarán junto con la simulación. Puedes agregar hasta ${MAX_FILES} archivos (${cuposDisponibles} disponibles).`
+                  : `Arrastra los archivos aquí o haz clic en el botón. Se aceptan hasta ${MAX_FILES} archivos, cualquier formato (PDF, imagen, Excel, Word, ZIP, etc.).`}
               </div>
-              {yaTieneExtracto && uploadedName && (
-                <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2 py-1 text-[11px] text-white/80">
-                  <Paperclip size={12} /> {uploadedName}
+              {adjuntos.length > 0 && (
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
+                  {adjuntos.map((a, idx) => (
+                    <div
+                      key={a.path}
+                      className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2 py-1 text-[11px] text-white/80"
+                    >
+                      <Paperclip size={12} />
+                      <span className="max-w-[180px] truncate">{a.nombre}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeAdjunto(idx)}
+                        disabled={saving || uploading}
+                        className="ml-1 text-white/40 hover:text-red-300 disabled:opacity-40"
+                        aria-label="Quitar archivo"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
                 </div>
               )}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <input
                   ref={fileRef}
                   type="file"
+                  multiple
                   className="hidden"
                   onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void handleFile(f);
+                    const files = e.target.files;
+                    if (files && files.length > 0) void handleFiles(files);
                     if (fileRef.current) fileRef.current.value = "";
                   }}
                 />
                 <button
                   type="button"
                   onClick={() => fileRef.current?.click()}
-                  disabled={uploading || saving}
+                  disabled={uploading || saving || cuposDisponibles <= 0}
                   className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[11.5px] font-semibold text-white hover:bg-white/[0.1] disabled:opacity-50"
                 >
                   <Upload size={12} />
                   {uploading
                     ? "Subiendo…"
-                    : yaTieneExtracto
-                      ? "Reemplazar archivo"
-                      : "Subir extracto (cualquier formato)"}
+                    : cuposDisponibles <= 0
+                      ? "Límite alcanzado"
+                      : yaTieneExtracto
+                        ? "Agregar más archivos"
+                        : "Subir extracto (cualquier formato)"}
                 </button>
-                <span className="text-[10.5px] text-white/40">Máx. 20 MB · Drag &amp; drop habilitado</span>
+                <span className="text-[10.5px] text-white/40">
+                  Máx. {MAX_FILES} archivos · 20 MB c/u · Drag &amp; drop habilitado
+                </span>
               </div>
             </div>
           </div>
         </div>
+
 
 
         <label className="mt-4 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">

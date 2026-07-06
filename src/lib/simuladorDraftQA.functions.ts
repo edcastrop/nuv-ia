@@ -506,6 +506,10 @@ const escalarInputSchema = z.object({
   notasParaAuditor: z.string().max(4000).optional(),
   archivoPath: z.string().nullable().optional(),
   archivoNombre: z.string().nullable().optional(),
+  adjuntosExtra: z
+    .array(z.object({ path: z.string(), nombre: z.string() }))
+    .max(20)
+    .optional(),
 });
 
 export const escalarConsultaTecnica = createServerFn({ method: "POST" })
@@ -625,7 +629,7 @@ export const escalarConsultaTecnica = createServerFn({ method: "POST" })
         banco: bancoFinal,
         producto: productoFinal,
         moneda: monedaFinal,
-        datos: d as never,
+        datos: { ...d, adjuntosExtra: data.adjuntosExtra ?? [] } as never,
         scores: {} as never,
         confianza_global: 0.9,
         estado: "validada",
