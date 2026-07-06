@@ -401,7 +401,25 @@ export function SimuladorPage() {
           }}
 
           onSalir={() => {
-            /* Link ya navega a /herramientas; nada más que hacer aquí. */
+            // Al salir de la herramienta borramos el borrador standalone para
+            // que el próximo ingreso a /herramientas/simulador empiece limpio
+            // (sin nombre, cédula ni datos del crédito residuales).
+            clearSimulatorDraft("pesos");
+            clearSimulatorDraft("uvr");
+          }}
+          onNuevaSimulacion={() => {
+            clearSimulatorDraft("pesos");
+            clearSimulatorDraft("uvr");
+            setMode(null);
+            setMaestroExp(null);
+            setSaveNombre("");
+            setPendingCertification(null);
+            navigate({ to: "/herramientas/simulador", search: {} });
+            // Reload duro para recrear los simuladores desde cero (los estados
+            // internos ya cargaron el draft anterior en su useState inicial).
+            if (typeof window !== "undefined") {
+              setTimeout(() => window.location.reload(), 50);
+            }
           }}
         />
       )}
