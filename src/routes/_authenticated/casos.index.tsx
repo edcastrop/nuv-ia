@@ -504,6 +504,9 @@ function CasosPage() {
                 licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
                 auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
                 onAudited={() => setReloadKey((k) => k + 1)}
+                isSuperAdmin={isSuperAdmin}
+                analistas={analistasList}
+                onReasignado={() => setReloadKey((k) => k + 1)}
               />
             ))}
           </>
