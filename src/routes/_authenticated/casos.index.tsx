@@ -9,7 +9,7 @@ import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId
 import { useAuth } from "@/hooks/useAuth";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "sonner";
-import { UserCog, Check } from "lucide-react";
+import { UserCog, Check, Banknote } from "lucide-react";
 import { QABadge } from "@/components/qa-ai/QABadge";
 import {
   Search,
@@ -1281,6 +1281,18 @@ function TimelineCard({
             style={{ background: "rgba(255,255,255,0.03)", color: "#CBD5E1", border: `1px solid ${BORDER}` }}
           >
             Documentos
+          </Link>
+          <Link
+            to="/casos/$id" params={{ id: r.id }} search={{ tab: "financiero" } as never}
+            title="Ver información financiera del caso"
+            className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 h-8 text-[9.5px] font-semibold uppercase tracking-wider transition whitespace-nowrap w-full hover:brightness-125"
+            style={{
+              background: "linear-gradient(135deg, rgba(68,93,163,0.14), rgba(132,185,143,0.10))",
+              color: "#BFD3F5",
+              border: "1px solid rgba(68,93,163,0.40)",
+            }}
+          >
+            <Banknote size={10} /> Financiero
           </Link>
           <button
             type="button" onClick={runAuditoria} disabled={auditando || !puedeAuditar}
