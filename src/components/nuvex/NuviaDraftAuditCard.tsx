@@ -356,6 +356,7 @@ function EscalarDialog({
   const [uploadedPath, setUploadedPath] = useState<string | null>(snapshot?.archivoPath ?? null);
   const [uploadedName, setUploadedName] = useState<string | null>(snapshot?.archivoNombre ?? null);
   const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const escalar = useServerFn(escalarConsultaTecnica);
 
