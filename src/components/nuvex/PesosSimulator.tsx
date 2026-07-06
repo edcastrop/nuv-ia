@@ -650,6 +650,8 @@ export function PesosSimulator({
                 moneda: p.raw.moneda ?? null,
                 tipoCredito: "pesos",
                 datos: (p.raw.datos ?? {}) as Record<string, unknown>,
+                archivoPath: p.archivoPath ?? extractoArchivoPath ?? null,
+                archivoNombre: p.archivoNombre ?? null,
               });
             }
           }}
