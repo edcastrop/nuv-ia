@@ -9,6 +9,7 @@ export interface Canal {
   tipo: CanalTipo;
   area: string | null;
   caso_id: string | null;
+  auditoria_id: string | null;
   privado: boolean;
   archivado: boolean;
   created_by: string | null;

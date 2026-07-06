@@ -4,6 +4,7 @@ import {
   Hash, Users, Bell, Plus, FolderKanban, MessagesSquare,
   Search, Filter, Shield, Briefcase, Building2, Scale, ClipboardCheck, Calculator,
   FileText, Activity, Clock, Sparkles, AlertTriangle, TrendingUp, Zap, ChevronRight, Radio,
+  UserRound, Gauge, CreditCard, CalendarDays, ArrowUpRight,
 } from "lucide-react";
 import { PageLayout } from "@/components/nuvia";
 import { CanalChat } from "@/components/colaboracion/CanalChat";
@@ -15,7 +16,25 @@ import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
-type CasoOwnerInfo = { cliente?: string; banco?: string; analista?: string; asesor_id?: string };
+type CreditInfo = {
+  caso_id?: string;
+  cliente?: string;
+  banco?: string;
+  analista?: string;
+  asesor_id?: string;
+  numero_credito?: string;
+  producto?: string;
+  created_at?: string;
+  qa_score?: number | null;
+  qa_auditoria_id?: string | null;
+  auditoria_id?: string | null;
+  auditoria_created_at?: string | null;
+  audit_code?: string | null;
+};
+
+type HeaderTarget =
+  | { kind: "case"; casoId: string; tab: string }
+  | { kind: "audit"; auditoriaId: string };
 
 export const Route = createFileRoute("/_authenticated/colaboracion/")({
   component: ColaboracionPage,
@@ -35,6 +54,34 @@ const TEAM_CHANNELS: { key: string; label: string; match: RegExp; icon: typeof H
   { key: "qa",           label: "QA",           match: /qa|calidad|auditor/i,         icon: ClipboardCheck, accent: "#10B981" },
   { key: "contabilidad", label: "Contabilidad", match: /contab|finanz|conta/i,        icon: Calculator,     accent: "#EC4899" },
 ];
+
+const asPlainObject = (value: unknown): Record<string, unknown> =>
+  value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+
+const textFrom = (...values: unknown[]): string | undefined => {
+  for (const value of values) {
+    if (value === null || value === undefined) continue;
+    const text = String(value).trim();
+    if (text) return text;
+  }
+  return undefined;
+};
+
+const numberFrom = (...values: unknown[]): number | null => {
+  for (const value of values) {
+    if (value === null || value === undefined || value === "") continue;
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+};
+
+const formatShortDate = (value?: string | null) => {
+  if (!value) return "—";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+};
 
 function ColaboracionPage() {
   const { user, loading: authLoading } = useAuth();
@@ -66,38 +113,101 @@ function ColaboracionPage() {
   const canalesArea = canales.filter((c) => c.tipo === "area" || c.tipo === "custom");
   const canalesCaso = canales.filter((c) => c.tipo === "caso");
 
-  // Owner info per caso (cliente, banco, analista) — resolved from expedientes + profiles
-  const [ownerMap, setOwnerMap] = useState<Record<string, CasoOwnerInfo>>({});
+  // Ficha de crédito por canal (casos y auditorías QA)
+  const [creditMap, setCreditMap] = useState<Record<string, CreditInfo>>({});
   useEffect(() => {
-    const casoIds = canalesCaso.map((c) => c.caso_id).filter((x): x is string => !!x);
-    if (casoIds.length === 0) { setOwnerMap({}); return; }
+    const casoIds = Array.from(new Set(canales.map((c) => c.caso_id).filter((x): x is string => !!x)));
+    const auditoriaIds = Array.from(new Set(canales.map((c) => c.auditoria_id).filter((x): x is string => !!x)));
+    if (casoIds.length === 0 && auditoriaIds.length === 0) { setCreditMap({}); return; }
     let active = true;
     (async () => {
-      const { data: exps } = await supabase
-        .from("expedientes")
-        .select("id, cliente_nombre, banco, asesor_id")
-        .in("id", casoIds);
-      const rows = (exps ?? []) as Array<{ id: string; cliente_nombre: string | null; banco: string | null; asesor_id: string | null }>;
-      const asesorIds = Array.from(new Set(rows.map((r) => r.asesor_id).filter((x): x is string => !!x)));
+      type ExpRow = {
+        id: string; cliente_nombre: string | null; banco: string | null; asesor_id: string | null;
+        numero_credito: string | null; producto: string | null; created_at: string | null;
+        qa_score: number | null; qa_auditoria_id: string | null;
+      };
+      type AuditRow = {
+        id: string; expediente_id: string | null; analista_id: string | null; qa_score: number | null;
+        cliente_nombre: string | null; banco: string | null; producto: string | null; codigo: string | null;
+        created_at: string | null; ejecutado_at: string | null; inputs: unknown; simulador_snapshot: unknown;
+      };
+
+      let expRows: ExpRow[] = [];
+      if (casoIds.length > 0) {
+        const { data: exps } = await supabase
+          .from("expedientes")
+          .select("id, cliente_nombre, banco, asesor_id, numero_credito, producto, created_at, qa_score, qa_auditoria_id")
+          .in("id", casoIds);
+        expRows = (exps ?? []) as unknown as ExpRow[];
+      }
+
+      let auditRows: AuditRow[] = [];
+      if (auditoriaIds.length > 0) {
+        const { data: auds } = await supabase
+          .from("qa_auditorias")
+          .select("id, expediente_id, analista_id, qa_score, cliente_nombre, banco, producto, codigo, created_at, ejecutado_at, inputs, simulador_snapshot")
+          .in("id", auditoriaIds);
+        auditRows = (auds ?? []) as unknown as AuditRow[];
+      }
+
+      const auditExpIds = auditRows.map((r) => r.expediente_id).filter((x): x is string => !!x);
+      const missingExpIds = auditExpIds.filter((id) => !expRows.some((r) => r.id === id));
+      if (missingExpIds.length > 0) {
+        const { data: extraExps } = await supabase
+          .from("expedientes")
+          .select("id, cliente_nombre, banco, asesor_id, numero_credito, producto, created_at, qa_score, qa_auditoria_id")
+          .in("id", missingExpIds);
+        expRows = [...expRows, ...((extraExps ?? []) as unknown as ExpRow[])];
+      }
+
+      const asesorIds = Array.from(new Set([
+        ...expRows.map((r) => r.asesor_id),
+        ...auditRows.map((r) => r.analista_id),
+      ].filter((x): x is string => !!x)));
       let profMap: Record<string, string> = {};
       if (asesorIds.length > 0) {
         const { data: profs } = await supabase.from("profiles").select("id, nombre").in("id", asesorIds);
         profMap = Object.fromEntries(((profs ?? []) as Array<{ id: string; nombre: string | null }>).map((p) => [p.id, p.nombre || ""]));
       }
       if (!active) return;
-      const map: Record<string, CasoOwnerInfo> = {};
-      for (const r of rows) {
-        map[r.id] = {
+      const expMap = new Map(expRows.map((r) => [r.id, r]));
+      const auditMap = new Map(auditRows.map((r) => [r.id, r]));
+      const map: Record<string, CreditInfo> = {};
+
+      for (const c of canales) {
+        const exp = c.caso_id ? expMap.get(c.caso_id) : null;
+        const audit = c.auditoria_id ? auditMap.get(c.auditoria_id) : null;
+        const auditExp = audit?.expediente_id ? expMap.get(audit.expediente_id) : null;
+        const snap = asPlainObject(audit?.simulador_snapshot);
+        const snapDatos = asPlainObject(snap.datos);
+        const inputs = asPlainObject(audit?.inputs);
+        const inputExtracto = asPlainObject(inputs.extracto);
+        const sourceExp = exp ?? auditExp;
+
+        if (!sourceExp && !audit) continue;
+        const analystId = sourceExp?.asesor_id ?? audit?.analista_id ?? null;
+        map[c.id] = {
+          caso_id: sourceExp?.id ?? audit?.expediente_id ?? c.caso_id ?? undefined,
           cliente: r.cliente_nombre || undefined,
           banco: r.banco || undefined,
-          analista: r.asesor_id ? profMap[r.asesor_id] : undefined,
-          asesor_id: r.asesor_id || undefined,
+          analista: analystId ? profMap[analystId] : undefined,
+          asesor_id: analystId || undefined,
+          numero_credito: textFrom(sourceExp?.numero_credito, snapDatos.numeroCredito, snapDatos.numero_credito, inputs.numeroCredito),
+          producto: textFrom(sourceExp?.producto, audit?.producto, snap.producto, snapDatos.producto, inputExtracto.producto),
+          created_at: sourceExp?.created_at ?? audit?.created_at ?? c.created_at,
+          qa_score: numberFrom(sourceExp?.qa_score, audit?.qa_score),
+          qa_auditoria_id: sourceExp?.qa_auditoria_id ?? audit?.id ?? c.auditoria_id ?? null,
+          auditoria_id: audit?.id ?? sourceExp?.qa_auditoria_id ?? c.auditoria_id ?? null,
+          auditoria_created_at: audit?.ejecutado_at ?? audit?.created_at ?? null,
+          audit_code: audit?.codigo ?? null,
         };
+        map[c.id].cliente = textFrom(sourceExp?.cliente_nombre, audit?.cliente_nombre, snapDatos.cliente, snapDatos.titular, c.nombre.replace(/^QA\s*·\s*/i, "").replace(/^Caso\s*·\s*/i, ""));
+        map[c.id].banco = textFrom(sourceExp?.banco, audit?.banco, snap.banco, snapDatos.banco, inputExtracto.banco, c.descripcion);
       }
-      setOwnerMap(map);
+      setCreditMap(map);
     })();
     return () => { active = false; };
-  }, [canalesCaso.map((c) => c.caso_id || "").join(",")]);
+  }, [canales.map((c) => `${c.id}:${c.caso_id || ""}:${c.auditoria_id || ""}`).join(",")]);
 
   const setCanal = (id: string) => navigate({ to: "/colaboracion", search: { canal: id, tab } });
   const setTabAndSync = (t: string) => { setTab(t); navigate({ to: "/colaboracion", search: { canal: search.canal, tab: t } }); };
@@ -260,7 +370,7 @@ function ColaboracionPage() {
                 const sla = slaOf(c.id);
                 const etapa = etapaOf(c.id);
                 const p = prioTone(prio);
-                const owner = (c.caso_id && ownerMap[c.caso_id]) || {};
+                const owner = creditMap[c.id] || {};
                 const cliente = owner.cliente || c.nombre.replace(/^Caso\s*·\s*/i, "");
                 const banco = owner.banco || c.descripcion || "Sin banco asignado";
                 const analistaName = owner.analista || "Sin asignar";
@@ -304,7 +414,10 @@ function ColaboracionPage() {
           <GlassPanel>
             {canalActivo ? (
               <>
-                <CaseHeader canal={canalActivo} priority={priorityOf(canalActivo.id)} sla={slaOf(canalActivo.id)} etapa={etapaOf(canalActivo.id)} />
+                <CaseHeader canal={canalActivo} info={creditMap[canalActivo.id]} priority={priorityOf(canalActivo.id)} sla={slaOf(canalActivo.id)} etapa={etapaOf(canalActivo.id)} />
+                {(canalActivo.tipo === "caso" || canalActivo.tipo === "qa_auditoria") && (
+                  <CreditSummaryCard canal={canalActivo} info={creditMap[canalActivo.id]} />
+                )}
                 <div className="flex-1 min-h-0">
                   <CanalChat canal={canalActivo} />
                 </div>
@@ -323,7 +436,7 @@ function ColaboracionPage() {
           {showRight && (
             <GlassPanel className="hidden xl:flex">
               <PanelHeader label="CASE INTELLIGENCE" accent="#10B981" right={<Sparkles size={12} style={{ color: "#6EE7B7" }} />} />
-              <CaseIntelligence canal={canalActivo} sla={canalActivo ? slaOf(canalActivo.id) : 0} etapa={canalActivo ? etapaOf(canalActivo.id) : ""} />
+              <CaseIntelligence canal={canalActivo} info={canalActivo ? creditMap[canalActivo.id] : undefined} sla={canalActivo ? slaOf(canalActivo.id) : 0} etapa={canalActivo ? etapaOf(canalActivo.id) : ""} />
             </GlassPanel>
           )}
         </div>
