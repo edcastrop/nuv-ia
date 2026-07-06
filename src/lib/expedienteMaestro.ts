@@ -375,6 +375,7 @@ export function maestroToExpediente(m: ExpedienteMaestro, expedienteId = "") {
  */
 export async function ensureOperativeExpedienteForMaestro(
   m: ExpedienteMaestro,
+  qaAuditoriaId?: string | null,
 ): Promise<Expediente> {
   const { data: existing, error: existingError } = await supabase
     .from("expedientes")
@@ -441,6 +442,7 @@ export async function ensureOperativeExpedienteForMaestro(
       honorarios_base: exp.honorarios_base,
       honorarios_final: exp.honorarios_final,
       descuento: exp.descuento,
+      qa_auditoria_id: qaAuditoriaId ?? null,
     } as never)
     .select("*")
     .single();

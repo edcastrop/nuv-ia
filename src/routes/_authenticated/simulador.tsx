@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate, useRouterState, useSearch, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
@@ -6,7 +7,9 @@ import { ModeSelector } from "@/components/nuvex/ModeSelector";
 import { PesosSimulator } from "@/components/nuvex/PesosSimulator";
 import { UVRSimulator } from "@/components/nuvex/UVRSimulator";
 import { NuviaDraftAuditCard } from "@/components/nuvex/NuviaDraftAuditCard";
+import type { DraftRawSnapshot } from "@/components/nuvex/NuviaDraftAuditCard";
 import {
+  certificarSimulacionDraft,
   ensureOperativeExpedienteForMaestro,
   getMaestro,
   maestroToExpediente,
@@ -23,6 +26,7 @@ import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
 import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
+import type { DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -59,6 +63,7 @@ export function SimuladorPage() {
   const [savingDraft, setSavingDraft] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveNombre, setSaveNombre] = useState("");
+  const certifyDraftAudit = useServerFn(certificarSimulacionDraft);
 
 
   // Carga del maestro existente (si llegó por URL desde Expediente Maestro).
@@ -222,7 +227,10 @@ export function SimuladorPage() {
     return { nombre: "", cedula: "" };
   };
 
-  const handleSaveAsCase = async (overrideNombre?: string) => {
+  const handleSaveAsCase = async (
+    overrideNombre?: string,
+    certification?: { snapshot: DraftRawSnapshot; result: DraftAuditResult },
+  ) => {
     if (!mode) return;
     const nombreDraft = readDraftClient(mode).nombre;
     const nombre = (overrideNombre ?? saveNombre ?? nombreDraft).trim() || nombreDraft;
@@ -271,6 +279,10 @@ export function SimuladorPage() {
       if (typeof window !== "undefined") window.alert(mensaje);
       return;
     }
+    if (!certification?.result.certificable) {
+      toast.error("No se creó el caso: primero debe existir una auditoría NUVIA aprobada.", { duration: 6500 });
+      return;
+    }
     setSavingDraft(true);
     try {
       const readKey = (mo: "pesos" | "uvr") => `nuvex.simulatorDraft.${mo}.standalone`;
@@ -288,6 +300,8 @@ export function SimuladorPage() {
         ciudad: clean(draftClient.ciudad || draftClient.municipio),
         departamento: clean(draftClient.departamento),
       };
+      const audit = await certifyDraftAudit({ data: { snapshot: certification.snapshot } });
+
       const maestro = await upsertMaestro({
         cliente,
         cotitular: emptyCotitular(),
@@ -299,10 +313,11 @@ export function SimuladorPage() {
       });
       let expId: string | null = null;
       try {
-        const exp = await ensureOperativeExpedienteForMaestro(maestro);
+        const exp = await ensureOperativeExpedienteForMaestro(maestro, audit.auditoriaId);
         expId = exp.id;
       } catch (e) {
-        console.warn("[simulador] operativo se creará más adelante:", e);
+        console.warn("[simulador] no se pudo crear operativo certificado:", e);
+        throw e;
       }
       if (expId && typeof window !== "undefined") {
         if (pesosDraft) sessionStorage.setItem(writeKey("pesos", expId), pesosDraft);
@@ -361,6 +376,10 @@ export function SimuladorPage() {
         <NuviaDraftAuditCard
           mode={mode}
           onCertificar={() => {
+            toast.error("Ejecuta la auditoría NUVIA primero.");
+          }}
+
+          onCertificar={(payload) => {
             if (!mode) {
               toast.error("Selecciona Pesos o UVR primero.");
               return;
@@ -369,7 +388,7 @@ export function SimuladorPage() {
             // creamos el caso directamente y saltamos el diálogo.
             const { nombre } = readDraftClient(mode);
             if (nombre) {
-              void handleSaveAsCase(nombre);
+              void handleSaveAsCase(nombre, payload);
             } else {
               setSaveOpen(true);
             }
