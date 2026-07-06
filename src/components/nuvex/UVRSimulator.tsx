@@ -638,6 +638,7 @@ export function UVRSimulator({
       datos: {
         banco: client.banco || "",
         producto: client.tipoProducto || "",
+        cedula: client.cedula || "",
         numeroCredito: client.numeroCredito || "",
         cliente: client.nombre || "",
         titular: client.nombre || "",
@@ -663,6 +664,7 @@ export function UVRSimulator({
     init?.id,
     client.banco,
     client.tipoProducto,
+    client.cedula,
     client.numeroCredito,
     client.nombre,
     saldoPesos,

@@ -203,6 +203,15 @@ export function SimuladorPage() {
   };
 
   const clean = (value: unknown) => String(value ?? "").trim();
+  const asRecord = (value: unknown): Record<string, unknown> =>
+    value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
+  const firstClean = (...values: unknown[]) => {
+    for (const value of values) {
+      const text = clean(value);
+      if (text) return text;
+    }
+    return "";
+  };
 
   const readDraftCase = (mo: "pesos" | "uvr"): DraftCaseSnapshot | null => {
     if (typeof window === "undefined") return null;
@@ -235,42 +244,84 @@ export function SimuladorPage() {
     certification?: { snapshot: DraftRawSnapshot; result: DraftAuditResult },
   ) => {
     if (!mode) return;
-    const nombreDraft = readDraftClient(mode).nombre;
+    const draft = readDraftCase(mode);
+    const draftClient = draft?.client ?? {};
+    const snapshotDatos = asRecord(certification?.snapshot?.datos);
+    const snapshotCliente = asRecord(snapshotDatos.cliente);
+    const draftIdentity = readDraftClient(mode);
+    const nombreSnapshot = firstClean(
+      snapshotCliente.nombre,
+      snapshotDatos.nombre,
+      snapshotDatos.nombreCliente,
+      snapshotDatos.titular,
+      typeof snapshotDatos.cliente === "string" ? snapshotDatos.cliente : undefined,
+    );
+    const nombreDraft = firstClean(draftIdentity.nombre, draftClient.nombre, nombreSnapshot);
     const nombre = (overrideNombre ?? saveNombre ?? nombreDraft).trim() || nombreDraft;
-    const cedula = readDraftClient(mode).cedula; // Puede ir vacía; se completa en el expediente.
+    // Identificación y número de crédito NO bloquean una simulación manual certificada:
+    // si no vienen del extracto o del formulario, se completan después en el expediente.
+    const cedula = firstClean(
+      draftIdentity.cedula,
+      draftClient.cedula,
+      snapshotCliente.cedula,
+      snapshotDatos.cedula,
+      snapshotDatos.documento,
+      snapshotDatos.identificacion,
+      snapshotDatos.numeroDocumento,
+    );
     if (!nombre) {
       // No hay nombre en la simulación → abrir diálogo para pedirlo.
       setSaveOpen(true);
       return;
     }
-    const draft = readDraftCase(mode);
-    const draftClient = draft?.client ?? {};
     const credito = {
       ...emptyCredito(),
-      banco: clean(draftClient.banco),
-      numeroCredito: clean(draftClient.numeroCredito),
-      tipoProducto: clean(draftClient.tipoProducto),
-      fechaDesembolso: clean(draftClient.fechaDesembolso),
-      valorDesembolsado: clean(draft?.valorDesembolsado),
-      plazoOriginal: clean(draftClient.plazoInicial),
-      saldoCapital: clean(mode === "uvr" ? (draft?.saldoPesos || draft?.saldoCapital) : draft?.saldoCapital),
-      saldoPesos: clean(mode === "uvr" ? (draft?.saldoPesos || draft?.saldoCapital) : draft?.saldoCapital),
-      saldoUVR: clean(draft?.saldoUVR),
-      valorUVR: clean(draft?.valorUVR),
-      cuotaActual: clean(mode === "uvr" ? (draft?.cuotaActualPesos || draft?.cuotaActual) : draft?.cuotaActual),
-      cuotaActualPesos: clean(mode === "uvr" ? (draft?.cuotaActualPesos || draft?.cuotaActual) : draft?.cuotaActual),
-      seguros: clean(draft?.seguros),
-      tasa: clean(mode === "uvr" ? (draft?.teaCobrada || draft?.tea) : draft?.tea),
-      teaCobrada: clean(mode === "uvr" ? (draft?.teaCobrada || draft?.tea) : draft?.tea),
-      variacionUVR: clean(draft?.variacionUVR),
-      cuotasPagadas: clean(draftClient.cuotasPagadas),
-      cuotasPendientes: clean(draftClient.cuotasPendientes),
+      banco: firstClean(draftClient.banco, snapshotDatos.banco, certification?.snapshot?.banco),
+      numeroCredito: firstClean(
+        draftClient.numeroCredito,
+        snapshotDatos.numeroCredito,
+        snapshotDatos.numero_credito,
+        snapshotDatos.credito,
+        snapshotDatos.obligacion,
+      ),
+      tipoProducto: firstClean(draftClient.tipoProducto, snapshotDatos.producto, certification?.snapshot?.producto),
+      fechaDesembolso: firstClean(draftClient.fechaDesembolso, snapshotDatos.fechaDesembolso),
+      valorDesembolsado: firstClean(draft?.valorDesembolsado, snapshotDatos.valorDesembolsado),
+      plazoOriginal: firstClean(draftClient.plazoInicial, snapshotDatos.plazoInicial, snapshotDatos.plazoOriginal),
+      saldoCapital: firstClean(
+        mode === "uvr" ? (draft?.saldoPesos || draft?.saldoCapital) : draft?.saldoCapital,
+        snapshotDatos.saldoCapital,
+        snapshotDatos.saldoPesos,
+      ),
+      saldoPesos: firstClean(
+        mode === "uvr" ? (draft?.saldoPesos || draft?.saldoCapital) : draft?.saldoCapital,
+        snapshotDatos.saldoPesos,
+        snapshotDatos.saldoCapital,
+      ),
+      saldoUVR: firstClean(draft?.saldoUVR, snapshotDatos.saldoUVR),
+      valorUVR: firstClean(draft?.valorUVR, snapshotDatos.valorUVR),
+      cuotaActual: firstClean(
+        mode === "uvr" ? (draft?.cuotaActualPesos || draft?.cuotaActual) : draft?.cuotaActual,
+        snapshotDatos.cuotaActual,
+        snapshotDatos.cuotaActualPesos,
+        snapshotDatos.cuota,
+      ),
+      cuotaActualPesos: firstClean(
+        mode === "uvr" ? (draft?.cuotaActualPesos || draft?.cuotaActual) : draft?.cuotaActual,
+        snapshotDatos.cuotaActualPesos,
+        snapshotDatos.cuotaActual,
+        snapshotDatos.cuota,
+      ),
+      seguros: firstClean(draft?.seguros, snapshotDatos.seguros),
+      tasa: firstClean(mode === "uvr" ? (draft?.teaCobrada || draft?.tea) : draft?.tea, snapshotDatos.tasaEA, snapshotDatos.teaCobrada, snapshotDatos.tea),
+      teaCobrada: firstClean(mode === "uvr" ? (draft?.teaCobrada || draft?.tea) : draft?.tea, snapshotDatos.teaCobrada, snapshotDatos.tasaEA, snapshotDatos.tea),
+      variacionUVR: firstClean(draft?.variacionUVR, snapshotDatos.variacionUVR),
+      cuotasPagadas: firstClean(draftClient.cuotasPagadas, snapshotDatos.cuotasPagadas),
+      cuotasPendientes: firstClean(draftClient.cuotasPendientes, snapshotDatos.cuotasPendientes),
     };
     const faltantes = [
-      ["Cédula", cedula],
       ["Banco", credito.banco],
       ["Producto", credito.tipoProducto],
-      ["Número de crédito", credito.numeroCredito],
       ["Saldo capital", credito.saldoCapital],
       ["Cuota actual", credito.cuotaActual],
       ["Tasa", credito.tasa || credito.teaCobrada],

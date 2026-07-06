@@ -512,6 +512,7 @@ export function PesosSimulator({
       datos: {
         banco: client.banco || "",
         producto: client.tipoProducto || "",
+        cedula: client.cedula || "",
         numeroCredito: client.numeroCredito || "",
         cliente: client.nombre || "",
         titular: client.nombre || "",
@@ -532,6 +533,7 @@ export function PesosSimulator({
     init?.id,
     client.banco,
     client.tipoProducto,
+    client.cedula,
     client.numeroCredito,
     client.nombre,
     saldoCapital,
