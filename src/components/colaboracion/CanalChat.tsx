@@ -23,6 +23,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
   const [miembros, setMiembros] = useState<DirectorioPersona[]>([]);
   const [mentionState, setMentionState] = useState<{ start: number; query: string } | null>(null);
   const [mentionIdx, setMentionIdx] = useState(0);
+  const [pendingMentions, setPendingMentions] = useState<MentionResolved[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
