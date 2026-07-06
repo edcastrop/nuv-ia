@@ -212,6 +212,14 @@ export function SimuladorPage() {
     }
     return "";
   };
+  const errorMessage = (error: unknown) => {
+    if (error instanceof Error && error.message) return error.message;
+    if (error && typeof error === "object") {
+      const record = error as Record<string, unknown>;
+      return clean(record.message) || clean(record.error_description) || clean(record.details) || clean(record.code) || "error";
+    }
+    return clean(error) || "error";
+  };
 
   const readDraftCase = (mo: "pesos" | "uvr"): DraftCaseSnapshot | null => {
     if (typeof window === "undefined") return null;
@@ -391,7 +399,7 @@ export function SimuladorPage() {
       });
 
     } catch (e) {
-      toast.error(`No se pudo crear el caso: ${e instanceof Error ? e.message : "error"}`);
+      toast.error(`No se pudo crear el caso: ${errorMessage(e)}`);
     } finally {
       setSavingDraft(false);
     }
