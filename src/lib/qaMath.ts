@@ -634,7 +634,14 @@ export function auditar(input: AuditarInput): AuditarOutput {
     ? compararSimulacion(rec, input.reconstruccion, input.simulacion, tol)
     : [];
   const faltantes = camposFaltantes(input);
-  const incs = [...incExt, ...incSim];
+  const incFaltantes: Inconsistencia[] = faltantes.map((campo) => ({
+    tipo: campo.includes("saldo") ? "saldo" : campo.includes("tasa") ? "tasa" : campo.includes("cuota") ? "cuota" : "plazo",
+    severidad: "critica",
+    campo,
+    mensaje: `Falta campo financiero crítico: ${campo}`,
+    sugerencia: "Complete este dato desde el extracto antes de aprobar o liberar la auditoría.",
+  }));
+  const incs = [...incExt, ...incSim, ...incFaltantes];
   const score = calcularScore(incs, faltantes.length, tol);
   const veredicto = construirVeredicto(input, rec, incs, score);
   return { motorVersion: QA_MOTOR_VERSION, reconstruccion: rec, inconsistencias: incs, score, faltantes, veredicto };
