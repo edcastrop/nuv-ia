@@ -326,37 +326,65 @@ function ColaboracionPage() {
           {/* --------- COLUMN 1: TEAM CHANNELS --------- */}
           <GlassPanel className="hidden lg:flex">
             <PanelHeader label="TEAM CHANNELS" accent="#22D3EE" right={<button onClick={() => setShowNew(true)} className="rounded-md p-1 transition hover:bg-white/10" style={{ color: "rgba(255,255,255,0.6)" }}><Plus size={13} /></button>} />
-            <div className="p-2 space-y-1 overflow-y-auto flex-1">
-              {TEAM_CHANNELS.map((t) => {
-                const canal = matchTeamChannel(t);
-                const active = canal && canalActivo?.id === canal.id;
-                const unread = hashOf(t.key) % 5; // pseudo unread demo
+            <div className="p-2 overflow-y-auto flex-1">
+              {(["ops", "direccion", "soporte"] as const).map((grp) => {
+                const items = TEAM_CHANNELS.filter((t) => t.group === grp);
+                if (!items.length) return null;
+                const label = grp === "ops" ? "OPERACIÓN" : grp === "direccion" ? "DIRECCIÓN" : "SOPORTE";
                 return (
-                  <button
-                    key={t.key}
-                    onClick={() => canal && setCanal(canal.id)}
-                    disabled={!canal}
-                    className="group w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all relative overflow-hidden"
-                    style={active
-                      ? { background: `linear-gradient(90deg, ${t.accent}22, transparent 80%)`, border: `1px solid ${t.accent}55` }
-                      : { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
-                  >
-                    {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full" style={{ background: t.accent, boxShadow: `0 0 10px ${t.accent}` }} />}
-                    <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition group-hover:scale-110" style={{ background: `${t.accent}18`, border: `1px solid ${t.accent}33`, color: t.accent }}>
-                      <t.icon size={14} />
+                  <div key={grp} className="mb-2">
+                    <div className="px-2 mb-1 text-[9px] font-bold tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.32)" }}>{label}</div>
+                    <div className="space-y-1">
+                      {items.map((t) => {
+                        const canal = matchTeamChannel(t);
+                        const active = canal && canalActivo?.id === canal.id;
+                        const unread = canal ? hashOf(t.key) % 5 : 0;
+                        return (
+                          <button
+                            key={t.key}
+                            onClick={() => canal && setCanal(canal.id)}
+                            disabled={!canal}
+                            className="group w-full flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-all relative overflow-hidden"
+                            style={active
+                              ? { background: `linear-gradient(90deg, ${t.accent}22, transparent 80%)`, border: `1px solid ${t.accent}55` }
+                              : { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+                          >
+                            {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full" style={{ background: t.accent, boxShadow: `0 0 10px ${t.accent}` }} />}
+                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition group-hover:scale-110" style={{ background: `${t.accent}18`, border: `1px solid ${t.accent}33`, color: t.accent }}>
+                              <t.icon size={14} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[12.5px] font-semibold truncate" style={{ color: canal ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.32)" }}>{t.label}</div>
+                              <div className="text-[9.5px] truncate" style={{ color: "rgba(255,255,255,0.38)" }}>{canal ? "#" + canal.nombre : "sin canal"}</div>
+                            </div>
+                            {unread > 0 && (
+                              <span className="ml-1 shrink-0 text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: t.accent, color: "#0B1220", boxShadow: `0 0 8px ${t.accent}88` }}>{unread}</span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] font-semibold truncate" style={{ color: canal ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.35)" }}>{t.label}</div>
-                      <div className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.42)" }}>{canal ? "#" + canal.nombre : "sin canal"}</div>
-                    </div>
-                    {unread > 0 && canal && (
-                      <span className="ml-1 shrink-0 text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: t.accent, color: "#0B1220", boxShadow: `0 0 8px ${t.accent}88` }}>{unread}</span>
-                    )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
-            <div className="p-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            {/* Presence footer */}
+            <div className="p-2 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[9px] font-bold tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.4)" }}>EN LÍNEA</span>
+                <span className="text-[10px] font-bold" style={{ color: "#6EE7B7" }}>{online.size}</span>
+              </div>
+              <div className="flex flex-wrap gap-1 px-1">
+                {dir.filter((p) => online.has(p.user_id)).slice(0, 12).map((p) => (
+                  <div key={p.user_id} className="relative" title={`${p.nombre} · en línea`}>
+                    <UserAvatar userId={p.user_id} url={p.foto_url} name={p.nombre} size="sm" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ background: "#10B981", boxShadow: "0 0 6px #10B981", border: "1.5px solid #0B1020" }} />
+                  </div>
+                ))}
+                {online.size === 0 && (
+                  <div className="text-[10px] italic" style={{ color: "rgba(255,255,255,0.35)" }}>Nadie conectado ahora</div>
+                )}
+              </div>
               <div className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.18)" }}>
                 <UserAvatar userId={user?.id || ""} size="sm" />
                 <div className="min-w-0">
