@@ -62,6 +62,10 @@ export function SimuladorPage() {
   const [savingDraft, setSavingDraft] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveNombre, setSaveNombre] = useState("");
+  const [pendingCertification, setPendingCertification] = useState<{
+    snapshot: DraftRawSnapshot;
+    result: DraftAuditResult;
+  } | null>(null);
   const certifyDraftAudit = useServerFn(certificarSimulacionDraft);
 
 
@@ -385,6 +389,7 @@ export function SimuladorPage() {
             if (nombre) {
               void handleSaveAsCase(nombre, payload);
             } else {
+              setPendingCertification(payload);
               setSaveOpen(true);
             }
           }}
@@ -427,8 +432,11 @@ export function SimuladorPage() {
         <SaveAsCaseDialog
           nombre={saveNombre}
           onNombre={setSaveNombre}
-          onCancel={() => setSaveOpen(false)}
-          onConfirm={() => void handleSaveAsCase()}
+          onCancel={() => {
+            setSaveOpen(false);
+            setPendingCertification(null);
+          }}
+          onConfirm={() => void handleSaveAsCase(undefined, pendingCertification ?? undefined)}
           saving={savingDraft}
         />
       )}
