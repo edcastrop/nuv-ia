@@ -4,7 +4,8 @@ import {
   Hash, Users, Bell, Plus, FolderKanban, MessagesSquare,
   Search, Filter, Shield, Briefcase, Building2, Scale, ClipboardCheck, Calculator,
   FileText, Activity, Clock, Sparkles, AlertTriangle, TrendingUp, Zap, ChevronRight, Radio,
-  UserRound, Gauge, CreditCard, CalendarDays, ArrowUpRight,
+  UserRound, Gauge, CreditCard, CalendarDays, ArrowUpRight, ChevronDown,
+  Landmark, HeartHandshake,
 } from "lucide-react";
 import { PageLayout } from "@/components/nuvia";
 import { CanalChat } from "@/components/colaboracion/CanalChat";
@@ -15,6 +16,9 @@ import {
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useExpedientesLive } from "@/hooks/useExpedientesLive";
+import { usePresenciaOnline } from "@/hooks/usePresenciaOnline";
+import { getEtapaById, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 
 type CreditInfo = {
   caso_id?: string;
