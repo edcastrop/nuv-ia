@@ -56,6 +56,7 @@ type Props = {
   mode: "pesos" | "uvr" | null;
   onCertificar: (payload: { snapshot: DraftRawSnapshot; result: DraftAuditResult }) => void;
   onSalir: () => void;
+  onNuevaSimulacion?: () => void;
 };
 
 export function NuviaDraftAuditCard({ mode, onCertificar, onSalir }: Props) {
