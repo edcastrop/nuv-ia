@@ -249,10 +249,8 @@ function camposFaltantesParaOperativo(m: ExpedienteMaestro): string[] {
   const credito = m.credito ?? emptyCredito();
   const missing: string[] = [];
   if (!hasText(m.cliente?.nombre || m.nombre_cliente)) missing.push("nombre del cliente");
-  if (!hasText(m.cliente?.cedula || m.cedula_cliente)) missing.push("cédula");
   if (!hasText(credito.banco)) missing.push("banco");
   if (!hasText(credito.tipoProducto)) missing.push("producto");
-  if (!hasText(credito.numeroCredito)) missing.push("número de crédito");
   if (!hasText(credito.saldoCapital || credito.saldoPesos)) missing.push("saldo capital");
   if (!hasText(credito.cuotaActual || credito.cuotaActualPesos)) missing.push("cuota actual");
   if (!hasText(credito.tasa || credito.teaCobrada)) missing.push("tasa");
