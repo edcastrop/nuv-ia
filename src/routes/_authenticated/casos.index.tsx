@@ -916,9 +916,47 @@ function GlassSelect({ value, onChange, placeholder, children }: { value: string
    ===================================================== */
 function TimelineCard({
   r, isDup = false, asesor, licenciado, auditCode, onAudited,
-}: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string; onAudited?: () => void }) {
+  isSuperAdmin = false, analistas = [], onReasignado,
+}: {
+  r: Expediente; isDup?: boolean;
+  asesor?: { nombre?: string | null; email?: string | null };
+  licenciado?: { nombre?: string | null; email?: string | null };
+  auditCode?: string; onAudited?: () => void;
+  isSuperAdmin?: boolean;
+  analistas?: Array<[string, string]>;
+  onReasignado?: () => void;
+}) {
   const [auditando, setAuditando] = useState(false);
+  const [reasignando, setReasignando] = useState(false);
+  const [reasignOpen, setReasignOpen] = useState(false);
   const puedeAuditar = !r.qa_auditoria_id;
+
+  const doReasignar = async (destinoId: string) => {
+    if (reasignando) return;
+    setReasignando(true);
+    try {
+      const anterior = r.licenciado_id ?? r.asesor_id;
+      const { error } = await supabase.from("expedientes")
+        .update({ licenciado_id: destinoId } as never)
+        .eq("id", r.id);
+      if (error) throw error;
+      const { data: auth } = await supabase.auth.getUser();
+      await supabase.from("auditoria_global").insert({
+        entidad: "expediente",
+        entidad_id: r.id,
+        accion: "reasignar_licenciado_ficha",
+        user_id: auth.user?.id ?? null,
+        valor_anterior: { licenciado_id: anterior } as never,
+        valor_nuevo: { licenciado_id: destinoId } as never,
+      } as never);
+      toast.success("Caso reasignado");
+      setReasignOpen(false);
+      onReasignado?.();
+    } catch (e) {
+      toast.error((e as Error).message || "No se pudo reasignar");
+    } finally { setReasignando(false); }
+  };
+
 
   const runAuditoria = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
