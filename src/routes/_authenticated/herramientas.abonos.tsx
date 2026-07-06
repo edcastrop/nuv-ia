@@ -733,6 +733,27 @@ function ExtraPayments() {
           </div>
         </div>
 
+        {/* COMPARADOR DE ESTRATEGIA */}
+        {puedeSimular && base && simPlazo && simCuota && (
+          <ComparadorEstrategia
+            open={showComparador}
+            onToggle={() => setShowComparador((v) => !v)}
+            modo={modo}
+            uvrInicial={uvrInicial}
+            base={base}
+            simPlazo={simPlazo}
+            simCuota={simCuota}
+            seguros={seguros}
+            fresh={{ activo: freshActivo, valor: freshValor }}
+            onAplicar={aplicarDestinoATodos}
+            actualDestino={
+              abonos.length > 0 && abonos.every((a) => a.destino === abonos[0].destino)
+                ? abonos[0].destino
+                : null
+            }
+          />
+        )}
+
         {/* CHART */}
         {puedeSimular && base && conAbonos && (
           <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] p-5 backdrop-blur-2xl">
