@@ -326,6 +326,11 @@ export function SimuladorPage() {
         if (pesosDraft) sessionStorage.setItem(writeKey("pesos", expId), pesosDraft);
         if (uvrDraft) sessionStorage.setItem(writeKey("uvr", expId), uvrDraft);
       }
+      // Limpieza crítica: eliminamos los drafts "standalone" para que la
+      // próxima vez que alguien entre a /herramientas/simulador NO vea
+      // datos residuales del cliente anterior (nombre, cédula, banco…).
+      clearSimulatorDraft("pesos");
+      clearSimulatorDraft("uvr");
       toast.success("Caso creado. Continúa completando el expediente.");
       setSaveOpen(false);
       navigate({
@@ -333,6 +338,7 @@ export function SimuladorPage() {
         search: { maestroId: maestro.id, modo: mode },
         replace: true,
       });
+
     } catch (e) {
       toast.error(`No se pudo crear el caso: ${e instanceof Error ? e.message : "error"}`);
     } finally {
