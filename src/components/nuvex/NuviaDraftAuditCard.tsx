@@ -443,10 +443,35 @@ function EscalarDialog({
 
         {/* Adjuntar extracto original — obligatorio para simulaciones manuales */}
         <div
-          className={`mt-4 rounded-lg border px-3 py-3 ${
-            yaTieneExtracto
-              ? "border-emerald-400/30 bg-emerald-400/[0.06]"
-              : "border-amber-400/40 bg-amber-400/[0.06]"
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!uploading && !saving) setDragOver(true);
+          }}
+          onDragEnter={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!uploading && !saving) setDragOver(true);
+          }}
+          onDragLeave={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDragOver(false);
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setDragOver(false);
+            if (uploading || saving) return;
+            const f = e.dataTransfer.files?.[0];
+            if (f) void handleFile(f);
+          }}
+          className={`mt-4 rounded-lg border px-3 py-3 transition-colors ${
+            dragOver
+              ? "border-sky-400/60 bg-sky-400/[0.1] ring-2 ring-sky-400/40"
+              : yaTieneExtracto
+                ? "border-emerald-400/30 bg-emerald-400/[0.06]"
+                : "border-amber-400/40 bg-amber-400/[0.06]"
           }`}
         >
           <div className="flex items-start gap-2">
@@ -457,12 +482,16 @@ function EscalarDialog({
             )}
             <div className="min-w-0 flex-1">
               <div className="text-[12.5px] font-semibold text-white">
-                {yaTieneExtracto ? "Extracto adjunto" : "Adjunta el extracto original"}
+                {dragOver
+                  ? "Suelta el archivo aquí"
+                  : yaTieneExtracto
+                    ? "Extracto adjunto"
+                    : "Adjunta el extracto original"}
               </div>
               <div className="mt-0.5 text-[11.5px] text-white/60">
                 {yaTieneExtracto
                   ? "Viajará junto con la simulación para que el auditor lo revise."
-                  : "El auditor necesita el PDF/imagen del extracto del banco para validar los datos capturados manualmente."}
+                  : "Arrastra el archivo aquí o haz clic en el botón. Se acepta cualquier formato (PDF, imagen, Excel, Word, ZIP, etc.)."}
               </div>
               {yaTieneExtracto && uploadedName && (
                 <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2 py-1 text-[11px] text-white/80">
@@ -473,7 +502,6 @@ function EscalarDialog({
                 <input
                   ref={fileRef}
                   type="file"
-                  accept="application/pdf,image/*"
                   className="hidden"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
@@ -492,13 +520,14 @@ function EscalarDialog({
                     ? "Subiendo…"
                     : yaTieneExtracto
                       ? "Reemplazar archivo"
-                      : "Subir extracto (PDF / imagen)"}
+                      : "Subir extracto (cualquier formato)"}
                 </button>
-                <span className="text-[10.5px] text-white/40">Máx. 20 MB</span>
+                <span className="text-[10.5px] text-white/40">Máx. 20 MB · Drag &amp; drop habilitado</span>
               </div>
             </div>
           </div>
         </div>
+
 
         <label className="mt-4 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
           Comentarios para el auditor (comunicación con el cliente, contexto extra)
