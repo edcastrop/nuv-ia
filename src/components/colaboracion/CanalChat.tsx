@@ -11,7 +11,7 @@ import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon, 
 import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
 import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
-import { detectMentionTrigger, extractMentionIds, normalizeForSearch, parseMentions } from "@/lib/mentions";
+import { detectMentionTrigger, normalizeForSearch, parseMentions, type MentionResolved } from "@/lib/mentions";
 
 export function CanalChat({ canal }: { canal: Canal }) {
   const { user } = useAuth();
