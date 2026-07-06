@@ -326,6 +326,11 @@ export function SimuladorPage() {
         if (pesosDraft) sessionStorage.setItem(writeKey("pesos", expId), pesosDraft);
         if (uvrDraft) sessionStorage.setItem(writeKey("uvr", expId), uvrDraft);
       }
+      // Limpieza crítica: eliminamos los drafts "standalone" para que la
+      // próxima vez que alguien entre a /herramientas/simulador NO vea
+      // datos residuales del cliente anterior (nombre, cédula, banco…).
+      clearSimulatorDraft("pesos");
+      clearSimulatorDraft("uvr");
       toast.success("Caso creado. Continúa completando el expediente.");
       setSaveOpen(false);
       navigate({
@@ -333,6 +338,7 @@ export function SimuladorPage() {
         search: { maestroId: maestro.id, modo: mode },
         replace: true,
       });
+
     } catch (e) {
       toast.error(`No se pudo crear el caso: ${e instanceof Error ? e.message : "error"}`);
     } finally {
@@ -395,7 +401,25 @@ export function SimuladorPage() {
           }}
 
           onSalir={() => {
-            /* Link ya navega a /herramientas; nada más que hacer aquí. */
+            // Al salir de la herramienta borramos el borrador standalone para
+            // que el próximo ingreso a /herramientas/simulador empiece limpio
+            // (sin nombre, cédula ni datos del crédito residuales).
+            clearSimulatorDraft("pesos");
+            clearSimulatorDraft("uvr");
+          }}
+          onNuevaSimulacion={() => {
+            clearSimulatorDraft("pesos");
+            clearSimulatorDraft("uvr");
+            setMode(null);
+            setMaestroExp(null);
+            setSaveNombre("");
+            setPendingCertification(null);
+            navigate({ to: "/herramientas/simulador", search: {} });
+            // Reload duro para recrear los simuladores desde cero (los estados
+            // internos ya cargaron el draft anterior en su useState inicial).
+            if (typeof window !== "undefined") {
+              setTimeout(() => window.location.reload(), 50);
+            }
           }}
         />
       )}

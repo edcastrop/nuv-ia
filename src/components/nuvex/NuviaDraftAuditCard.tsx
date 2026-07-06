@@ -56,9 +56,10 @@ type Props = {
   mode: "pesos" | "uvr" | null;
   onCertificar: (payload: { snapshot: DraftRawSnapshot; result: DraftAuditResult }) => void;
   onSalir: () => void;
+  onNuevaSimulacion?: () => void;
 };
 
-export function NuviaDraftAuditCard({ mode, onCertificar, onSalir }: Props) {
+export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion }: Props) {
   const [state, setState] = useState<PanelState>({ kind: mode ? "waiting" : "idle" });
   const [showHallazgos, setShowHallazgos] = useState(false);
   const [escalarOpen, setEscalarOpen] = useState(false);
@@ -147,6 +148,16 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir }: Props) {
               Herramientas · Simulador · Nada se guarda en el ERP
             </span>
             <div className="ml-auto flex items-center gap-2">
+              {onNuevaSimulacion && (
+                <button
+                  type="button"
+                  onClick={onNuevaSimulacion}
+                  title="Descarta la simulación actual y empieza limpio (borra nombre, cédula y datos del crédito de esta pantalla)."
+                  className="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-slate-300 hover:bg-white/[0.06]"
+                >
+                  Nueva simulación
+                </button>
+              )}
               <Link
                 to="/herramientas"
                 onClick={onSalir}
