@@ -256,6 +256,9 @@ function ColaboracionPage() {
   const priorityOf = (id: string): "alta" | "media" | "baja" => (["alta", "media", "baja"] as const)[hashOf(id) % 3];
   const slaOf = (id: string) => (hashOf(id) % 7) + 1;
   const etapaOf = (id: string) => ["Radicado", "Análisis", "En Revisión", "Aprobado", "En Firma", "En Trámite"][hashOf(id) % 6];
+  // Fallback determinista cuando el expediente aún no ha llegado por realtime.
+  const FALLBACK_ETAPAS: EtapaPipelineId[] = ["extracto", "proyeccion", "contratacion", "radicacion", "banco", "resultado_banco", "informe"];
+  const getEtapaByStableHash = (id: string) => getEtapaById(FALLBACK_ETAPAS[hashOf(id) % FALLBACK_ETAPAS.length]);
 
   const casesFiltered = useMemo(() => {
     const q = caseQuery.trim().toLowerCase();
