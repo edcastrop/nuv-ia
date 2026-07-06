@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { zodValidator, fallback } from "@tanstack/zod-adapter";
 import { z } from "zod";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from "@/lib/expedientes";
 import { formatCOP } from "@/lib/format";
 import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
