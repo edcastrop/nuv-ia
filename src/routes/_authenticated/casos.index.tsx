@@ -120,6 +120,7 @@ function CasosPage() {
   const urlSearch = Route.useSearch();
   const navigate = useNavigate({ from: "/casos/" });
   const { user } = useAuth();
+  const { isSuperAdmin } = useUserRole();
   const { q: search, estado, etapa, mios } = urlSearch;
   const [qLocal, setQLocal] = useState(search);
   const [rows, setRows] = useState<Expediente[]>([]);
