@@ -307,7 +307,7 @@ function MensajeItem({ m, esMio, meMencionan, persona, mencionados }: { m: Mensa
             </button>
           )}
         </div>
-        {m.texto && <TextoConMenciones texto={m.texto} meMencionan={meMencionan} />}
+        {m.texto && <TextoConMenciones texto={m.texto} meMencionan={meMencionan} mencionados={mencionados} />}
         {m.adjuntos?.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-2">
             {m.adjuntos.map((a, i) => (
