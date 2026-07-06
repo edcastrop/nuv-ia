@@ -361,6 +361,8 @@ function EscalarDialog({
       tipoCredito: snapshot?.tipoCredito ?? null,
       moneda: snapshot?.moneda ?? null,
       hallazgos: hallazgos as unknown[],
+      archivoPath: snapshot?.archivoPath ?? null,
+      archivoNombre: snapshot?.archivoNombre ?? null,
     }),
     [snapshot, hallazgos],
   );
