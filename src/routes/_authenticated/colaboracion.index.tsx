@@ -50,14 +50,32 @@ export const Route = createFileRoute("/_authenticated/colaboracion/")({
 });
 
 // ---------- Team channel definitions (branded) ----------
-const TEAM_CHANNELS: { key: string; label: string; match: RegExp; icon: typeof Hash; accent: string }[] = [
-  { key: "comercial",    label: "Comercial",    match: /comercial/i,                  icon: Briefcase,      accent: "#3B82F6" },
-  { key: "juridica",     label: "Jurídica",     match: /jur[ií]dic|legal/i,           icon: Scale,          accent: "#8B5CF6" },
-  { key: "operaciones",  label: "Operaciones",  match: /operacion|ops/i,              icon: Building2,      accent: "#22D3EE" },
-  { key: "gerencia",     label: "Gerencia",     match: /gerencia|direccion|ceo/i,     icon: Shield,         accent: "#F59E0B" },
-  { key: "qa",           label: "QA",           match: /qa|calidad|auditor/i,         icon: ClipboardCheck, accent: "#10B981" },
-  { key: "contabilidad", label: "Contabilidad", match: /contab|finanz|conta/i,        icon: Calculator,     accent: "#EC4899" },
+const TEAM_CHANNELS: { key: string; label: string; match: RegExp; icon: typeof Hash; accent: string; group: "ops" | "direccion" | "soporte" }[] = [
+  { key: "comercial",          label: "Comercial",           match: /comercial/i,                       icon: Briefcase,      accent: "#3B82F6", group: "ops" },
+  { key: "juridica",           label: "Jurídica",            match: /jur[ií]dic(?!.*direcci)|^legal/i,  icon: Scale,          accent: "#8B5CF6", group: "ops" },
+  { key: "operaciones",        label: "Operaciones",         match: /operacion|^ops/i,                  icon: Building2,      accent: "#22D3EE", group: "ops" },
+  { key: "qa",                 label: "QA",                  match: /qa|calidad|auditor/i,              icon: ClipboardCheck, accent: "#10B981", group: "ops" },
+  { key: "contabilidad",       label: "Contabilidad",        match: /contab|conta(?!.*direcci)/i,       icon: Calculator,     accent: "#EC4899", group: "ops" },
+  { key: "gerencia",           label: "Gerencia",            match: /gerencia|ceo/i,                    icon: Shield,         accent: "#F59E0B", group: "direccion" },
+  { key: "direccion_fin",      label: "Dirección Financiera",match: /direcci[oó]n.*(financ|conta)/i,    icon: Landmark,       accent: "#38BDF8", group: "direccion" },
+  { key: "direccion_jur",      label: "Dirección Jurídica",  match: /direcci[oó]n.*jur[ií]dic/i,        icon: Scale,          accent: "#A78BFA", group: "direccion" },
+  { key: "talento",            label: "Talento Humano",      match: /talento|rrhh|humanos|people/i,     icon: HeartHandshake, accent: "#F472B6", group: "soporte" },
 ];
+
+// Macro-etapas visibles en el War Room (agrupan las 15 etapas del pipeline).
+type MacroEtapa = "SIMULADO" | "QA" | "RADICADO" | "APROBADO" | "FIRMA" | "FINALIZADO";
+const MACRO_ETAPAS: { id: MacroEtapa; label: string; accent: string; matches: EtapaPipelineId[] }[] = [
+  { id: "SIMULADO",   label: "Simulado",  accent: "#3B82F6", matches: ["lead", "extracto", "proyeccion", "presentacion", "cierre"] },
+  { id: "QA",         label: "QA",        accent: "#10B981", matches: ["contratacion"] },
+  { id: "RADICADO",   label: "Radicado",  accent: "#22D3EE", matches: ["radicacion", "banco"] },
+  { id: "APROBADO",   label: "Aprobado",  accent: "#A78BFA", matches: ["resultado_banco", "aceptacion_cliente", "informe"] },
+  { id: "FIRMA",      label: "Firma",     accent: "#F59E0B", matches: ["cuenta", "pago", "comision", "paz_salvo"] },
+  { id: "FINALIZADO", label: "Finalizado",accent: "#6EE7B7", matches: ["finalizado"] },
+];
+const macroFromEtapa = (etapa?: EtapaPipelineId | null): MacroEtapa => {
+  if (!etapa) return "SIMULADO";
+  return MACRO_ETAPAS.find((m) => m.matches.includes(etapa))?.id ?? "SIMULADO";
+};
 
 const asPlainObject = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
