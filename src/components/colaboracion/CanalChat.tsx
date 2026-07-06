@@ -169,6 +169,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
             esMio={m.user_id === user?.id}
             meMencionan={!!user?.id && (m.menciones ?? []).includes(user.id)}
             persona={personasPorId[m.user_id]}
+            mencionados={(m.menciones ?? []).map((uid) => ({ userId: uid, nombre: personasPorId[uid]?.nombre ?? "" })).filter((x) => x.nombre)}
           />
         ))}
         <div ref={endRef} />
