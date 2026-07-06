@@ -630,6 +630,8 @@ export const escalarConsultaTecnica = createServerFn({ method: "POST" })
         confianza_global: 0.9,
         estado: "validada",
         motor_version: "v1",
+        archivo_path: data.archivoPath ?? (typeof d.archivoPath === "string" ? d.archivoPath : null) ?? null,
+        archivo_nombre: data.archivoNombre ?? (typeof d.archivoNombre === "string" ? d.archivoNombre : null) ?? null,
       })
       .select("id")
       .single();
