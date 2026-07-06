@@ -6,6 +6,9 @@ import { listExpedientes, ESTADOS, type EstadoExpediente, type Expediente } from
 import { formatCOP } from "@/lib/format";
 import { computeEtapaActual, getEtapaById, ETAPAS_PIPELINE, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 import { useAuth } from "@/hooks/useAuth";
+import { useUserRole } from "@/hooks/useUserRole";
+import { toast } from "sonner";
+import { UserCog, Check } from "lucide-react";
 import { QABadge } from "@/components/qa-ai/QABadge";
 import {
   Search,
@@ -117,6 +120,7 @@ function CasosPage() {
   const urlSearch = Route.useSearch();
   const navigate = useNavigate({ from: "/casos/" });
   const { user } = useAuth();
+  const { isSuperAdmin } = useUserRole();
   const { q: search, estado, etapa, mios } = urlSearch;
   const [qLocal, setQLocal] = useState(search);
   const [rows, setRows] = useState<Expediente[]>([]);
@@ -501,6 +505,9 @@ function CasosPage() {
                 licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
                 auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
                 onAudited={() => setReloadKey((k) => k + 1)}
+                isSuperAdmin={isSuperAdmin}
+                analistas={analistasList}
+                onReasignado={() => setReloadKey((k) => k + 1)}
               />
             ))}
           </>
@@ -909,9 +916,47 @@ function GlassSelect({ value, onChange, placeholder, children }: { value: string
    ===================================================== */
 function TimelineCard({
   r, isDup = false, asesor, licenciado, auditCode, onAudited,
-}: { r: Expediente; isDup?: boolean; asesor?: { nombre?: string | null; email?: string | null }; licenciado?: { nombre?: string | null; email?: string | null }; auditCode?: string; onAudited?: () => void }) {
+  isSuperAdmin = false, analistas = [], onReasignado,
+}: {
+  r: Expediente; isDup?: boolean;
+  asesor?: { nombre?: string | null; email?: string | null };
+  licenciado?: { nombre?: string | null; email?: string | null };
+  auditCode?: string; onAudited?: () => void;
+  isSuperAdmin?: boolean;
+  analistas?: Array<[string, string]>;
+  onReasignado?: () => void;
+}) {
   const [auditando, setAuditando] = useState(false);
+  const [reasignando, setReasignando] = useState(false);
+  const [reasignOpen, setReasignOpen] = useState(false);
   const puedeAuditar = !r.qa_auditoria_id;
+
+  const doReasignar = async (destinoId: string) => {
+    if (reasignando) return;
+    setReasignando(true);
+    try {
+      const anterior = r.licenciado_id ?? r.asesor_id;
+      const { error } = await supabase.from("expedientes")
+        .update({ licenciado_id: destinoId } as never)
+        .eq("id", r.id);
+      if (error) throw error;
+      const { data: auth } = await supabase.auth.getUser();
+      await supabase.from("auditoria_global").insert({
+        entidad: "expediente",
+        entidad_id: r.id,
+        accion: "reasignar_licenciado_ficha",
+        user_id: auth.user?.id ?? null,
+        valor_anterior: { licenciado_id: anterior } as never,
+        valor_nuevo: { licenciado_id: destinoId } as never,
+      } as never);
+      toast.success("Caso reasignado");
+      setReasignOpen(false);
+      onReasignado?.();
+    } catch (e) {
+      toast.error((e as Error).message || "No se pudo reasignar");
+    } finally { setReasignando(false); }
+  };
+
 
   const runAuditoria = async (e: React.MouseEvent) => {
     e.preventDefault(); e.stopPropagation();
@@ -1248,6 +1293,55 @@ function TimelineCard({
             {auditando ? <Loader2 size={10} className="animate-spin" /> : <ShieldCheck size={10} />}
             {auditando ? "Auditando…" : "Auditar"}
           </button>
+          {isSuperAdmin && (
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setReasignOpen((v) => !v); }}
+                title="Reasignar analista (Super Admin)"
+                className="inline-flex items-center justify-center gap-1 rounded-lg px-3 h-8 text-[9.5px] font-bold uppercase tracking-wider transition hover:brightness-125 whitespace-nowrap w-full"
+                style={{
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.16), rgba(132,185,143,0.10))",
+                  color: "#A5B5E0", border: "1px solid rgba(68,93,163,0.40)",
+                }}
+              >
+                <UserCog size={10} /> {reasignando ? "Reasignando…" : "Reasignar"}
+              </button>
+              {reasignOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setReasignOpen(false); }} />
+                  <div
+                    className="absolute right-0 mt-1 z-50 w-64 max-h-72 overflow-y-auto rounded-lg shadow-xl"
+                    style={{ background: "rgba(15,20,35,0.98)", border: "1px solid rgba(68,93,163,0.45)", backdropFilter: "blur(12px)" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="px-3 py-2 text-[9px] font-bold uppercase tracking-wider" style={{ color: "#A5B5E0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      Reasignar analista
+                    </div>
+                    {analistas.length === 0 && (
+                      <div className="px-3 py-3 text-[11px]" style={{ color: "#94A3B8" }}>Sin analistas disponibles</div>
+                    )}
+                    {analistas.map(([id, name]) => {
+                      const active = r.licenciado_id === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          disabled={reasignando || active}
+                          onClick={(e) => { e.stopPropagation(); void doReasignar(id); }}
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[11px] hover:bg-white/[0.05] disabled:opacity-60 disabled:cursor-not-allowed"
+                          style={{ color: "#E2E8F0" }}
+                        >
+                          <span className="truncate">{name}</span>
+                          {active && <Check size={12} style={{ color: "#84B98F" }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
