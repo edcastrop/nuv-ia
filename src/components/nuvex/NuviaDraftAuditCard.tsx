@@ -18,6 +18,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
+import { Paperclip, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   auditarSimulacionDraft,
   escalarConsultaTecnica,
@@ -351,26 +353,56 @@ function EscalarDialog({
 }) {
   const [notas, setNotas] = useState("");
   const [saving, setSaving] = useState(false);
+  const [uploadedPath, setUploadedPath] = useState<string | null>(snapshot?.archivoPath ?? null);
+  const [uploadedName, setUploadedName] = useState<string | null>(snapshot?.archivoNombre ?? null);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
   const escalar = useServerFn(escalarConsultaTecnica);
 
-  const payload = useMemo(
-    () => ({
-      snapshot: (snapshot ?? {}) as Record<string, unknown>,
-      banco: snapshot?.banco ?? null,
-      producto: snapshot?.producto ?? null,
-      tipoCredito: snapshot?.tipoCredito ?? null,
-      moneda: snapshot?.moneda ?? null,
-      hallazgos: hallazgos as unknown[],
-      archivoPath: snapshot?.archivoPath ?? null,
-      archivoNombre: snapshot?.archivoNombre ?? null,
-    }),
-    [snapshot, hallazgos],
-  );
+  const yaTieneExtracto = !!uploadedPath;
+
+  const handleFile = async (f: File) => {
+    setUploading(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const uid = userData?.user?.id;
+      if (!uid) throw new Error("Sesión no disponible");
+      if (f.size > 20 * 1024 * 1024) throw new Error("El archivo supera 20 MB");
+      const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+      const { error: upErr } = await supabase.storage
+        .from("extractos")
+        .upload(path, f, { cacheControl: "3600", upsert: false, contentType: f.type || "application/octet-stream" });
+      if (upErr) throw new Error(upErr.message);
+      setUploadedPath(path);
+      setUploadedName(f.name);
+      toast.success("Extracto adjuntado. Ya viaja con la simulación.");
+    } catch (e) {
+      toast.error(`No se pudo subir el extracto: ${e instanceof Error ? e.message : "error"}`);
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleEnviar = async () => {
+    if (!yaTieneExtracto) {
+      toast.error("Adjunta el extracto original antes de enviar a auditoría.");
+      return;
+    }
     setSaving(true);
     try {
-      const r = await escalar({ data: { ...payload, notasParaAuditor: notas.trim() || undefined } });
+      const r = await escalar({
+        data: {
+          snapshot: (snapshot ?? {}) as Record<string, unknown>,
+          banco: snapshot?.banco ?? null,
+          producto: snapshot?.producto ?? null,
+          tipoCredito: snapshot?.tipoCredito ?? null,
+          moneda: snapshot?.moneda ?? null,
+          hallazgos: hallazgos as unknown[],
+          archivoPath: uploadedPath,
+          archivoNombre: uploadedName,
+          notasParaAuditor: notas.trim() || undefined,
+        },
+      });
       const codigo = (r as { codigo?: string | null }).codigo ?? null;
       toast.success("Simulación enviada a la Cola de Revisión NUVIA QA AI.", {
         description: codigo ? `Ref auditoría: ${codigo}` : `Ref: ${(r as { id: string }).id.slice(0, 8)}`,
@@ -408,10 +440,68 @@ function EscalarDialog({
           </div>
         </div>
 
+        {/* Adjuntar extracto original — obligatorio para simulaciones manuales */}
+        <div
+          className={`mt-4 rounded-lg border px-3 py-3 ${
+            yaTieneExtracto
+              ? "border-emerald-400/30 bg-emerald-400/[0.06]"
+              : "border-amber-400/40 bg-amber-400/[0.06]"
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            {yaTieneExtracto ? (
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0 text-emerald-300" />
+            ) : (
+              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-300" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="text-[12.5px] font-semibold text-white">
+                {yaTieneExtracto ? "Extracto adjunto" : "Adjunta el extracto original"}
+              </div>
+              <div className="mt-0.5 text-[11.5px] text-white/60">
+                {yaTieneExtracto
+                  ? "Viajará junto con la simulación para que el auditor lo revise."
+                  : "El auditor necesita el PDF/imagen del extracto del banco para validar los datos capturados manualmente."}
+              </div>
+              {yaTieneExtracto && uploadedName && (
+                <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-md bg-white/[0.05] px-2 py-1 text-[11px] text-white/80">
+                  <Paperclip size={12} /> {uploadedName}
+                </div>
+              )}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="application/pdf,image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void handleFile(f);
+                    if (fileRef.current) fileRef.current.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading || saving}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-white/15 bg-white/[0.06] px-3 py-1.5 text-[11.5px] font-semibold text-white hover:bg-white/[0.1] disabled:opacity-50"
+                >
+                  <Upload size={12} />
+                  {uploading
+                    ? "Subiendo…"
+                    : yaTieneExtracto
+                      ? "Reemplazar archivo"
+                      : "Subir extracto (PDF / imagen)"}
+                </button>
+                <span className="text-[10.5px] text-white/40">Máx. 20 MB</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <label className="mt-4 block text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
           Comentarios para el auditor (comunicación con el cliente, contexto extra)
           <textarea
-            autoFocus
             value={notas}
             onChange={(e) => setNotas(e.target.value)}
             rows={4}
@@ -435,7 +525,8 @@ function EscalarDialog({
           <button
             type="button"
             onClick={handleEnviar}
-            disabled={saving}
+            disabled={saving || uploading || !yaTieneExtracto}
+            title={!yaTieneExtracto ? "Adjunta el extracto original para continuar" : undefined}
             className="rounded-lg border border-amber-400/40 bg-amber-400/20 px-4 py-2 text-[12.5px] font-semibold text-amber-100 shadow-[0_10px_30px_-15px_rgba(251,191,36,0.6)] hover:bg-amber-400/30 disabled:cursor-not-allowed disabled:opacity-40"
           >
             {saving ? "Enviando…" : "Enviar a NUVIA QA AI"}
