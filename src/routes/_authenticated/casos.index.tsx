@@ -1293,6 +1293,55 @@ function TimelineCard({
             {auditando ? <Loader2 size={10} className="animate-spin" /> : <ShieldCheck size={10} />}
             {auditando ? "Auditando…" : "Auditar"}
           </button>
+          {isSuperAdmin && (
+            <div className="relative w-full">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setReasignOpen((v) => !v); }}
+                title="Reasignar analista (Super Admin)"
+                className="inline-flex items-center justify-center gap-1 rounded-lg px-3 h-8 text-[9.5px] font-bold uppercase tracking-wider transition hover:brightness-125 whitespace-nowrap w-full"
+                style={{
+                  background: "linear-gradient(135deg, rgba(68,93,163,0.16), rgba(132,185,143,0.10))",
+                  color: "#A5B5E0", border: "1px solid rgba(68,93,163,0.40)",
+                }}
+              >
+                <UserCog size={10} /> {reasignando ? "Reasignando…" : "Reasignar"}
+              </button>
+              {reasignOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setReasignOpen(false); }} />
+                  <div
+                    className="absolute right-0 mt-1 z-50 w-64 max-h-72 overflow-y-auto rounded-lg shadow-xl"
+                    style={{ background: "rgba(15,20,35,0.98)", border: "1px solid rgba(68,93,163,0.45)", backdropFilter: "blur(12px)" }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="px-3 py-2 text-[9px] font-bold uppercase tracking-wider" style={{ color: "#A5B5E0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                      Reasignar analista
+                    </div>
+                    {analistas.length === 0 && (
+                      <div className="px-3 py-3 text-[11px]" style={{ color: "#94A3B8" }}>Sin analistas disponibles</div>
+                    )}
+                    {analistas.map(([id, name]) => {
+                      const active = r.licenciado_id === id;
+                      return (
+                        <button
+                          key={id}
+                          type="button"
+                          disabled={reasignando || active}
+                          onClick={(e) => { e.stopPropagation(); void doReasignar(id); }}
+                          className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[11px] hover:bg-white/[0.05] disabled:opacity-60 disabled:cursor-not-allowed"
+                          style={{ color: "#E2E8F0" }}
+                        >
+                          <span className="truncate">{name}</span>
+                          {active && <Check size={12} style={{ color: "#84B98F" }} />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
