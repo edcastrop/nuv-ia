@@ -434,10 +434,12 @@ function ColaboracionPage() {
 
           {/* --------- COLUMN 4: CASE INTELLIGENCE --------- */}
           {showRight && (
-            <GlassPanel className="hidden 2xl:flex">
-              <PanelHeader label="CASE INTELLIGENCE" accent="#10B981" right={<Sparkles size={12} style={{ color: "#6EE7B7" }} />} />
-              <CaseIntelligence canal={canalActivo} info={canalActivo ? creditMap[canalActivo.id] : undefined} sla={canalActivo ? slaOf(canalActivo.id) : 0} etapa={canalActivo ? etapaOf(canalActivo.id) : ""} />
-            </GlassPanel>
+            <div className="hidden 2xl:flex min-h-0">
+              <GlassPanel className="flex-1">
+                <PanelHeader label="CASE INTELLIGENCE" accent="#10B981" right={<Sparkles size={12} style={{ color: "#6EE7B7" }} />} />
+                <CaseIntelligence canal={canalActivo} info={canalActivo ? creditMap[canalActivo.id] : undefined} sla={canalActivo ? slaOf(canalActivo.id) : 0} etapa={canalActivo ? etapaOf(canalActivo.id) : ""} />
+              </GlassPanel>
+            </div>
           )}
         </div>
       )}
