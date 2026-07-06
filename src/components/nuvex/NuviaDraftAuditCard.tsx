@@ -59,7 +59,7 @@ type Props = {
   onNuevaSimulacion?: () => void;
 };
 
-export function NuviaDraftAuditCard({ mode, onCertificar, onSalir }: Props) {
+export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion }: Props) {
   const [state, setState] = useState<PanelState>({ kind: mode ? "waiting" : "idle" });
   const [showHallazgos, setShowHallazgos] = useState(false);
   const [escalarOpen, setEscalarOpen] = useState(false);
