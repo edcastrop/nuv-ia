@@ -243,6 +243,30 @@ export function modoFromMaestro(m: ExpedienteMaestro): "pesos" | "uvr" {
   return /uvr/.test(t) ? "uvr" : "pesos";
 }
 
+const hasText = (value: unknown) => String(value ?? "").trim().length > 0;
+
+function camposFaltantesParaOperativo(m: ExpedienteMaestro): string[] {
+  const credito = m.credito ?? emptyCredito();
+  const missing: string[] = [];
+  if (!hasText(m.cliente?.nombre || m.nombre_cliente)) missing.push("nombre del cliente");
+  if (!hasText(m.cliente?.cedula || m.cedula_cliente)) missing.push("cédula");
+  if (!hasText(credito.banco)) missing.push("banco");
+  if (!hasText(credito.tipoProducto)) missing.push("producto");
+  if (!hasText(credito.numeroCredito)) missing.push("número de crédito");
+  if (!hasText(credito.saldoCapital || credito.saldoPesos)) missing.push("saldo capital");
+  if (!hasText(credito.cuotaActual || credito.cuotaActualPesos)) missing.push("cuota actual");
+  if (!hasText(credito.tasa || credito.teaCobrada)) missing.push("tasa");
+  return missing;
+}
+
+function mergeMeaningful<T extends Record<string, unknown>>(base: T, incoming: Record<string, unknown>): T {
+  const next = { ...base } as Record<string, unknown>;
+  for (const [key, value] of Object.entries(incoming)) {
+    if (hasText(value) || typeof value === "number" || typeof value === "boolean") next[key] = value;
+  }
+  return next as T;
+}
+
 /**
  * Construye un `Expediente` parcial (in-memory, sin id) consumible por los simuladores
  * vía la prop `initialExpediente`. NO persiste, NO altera cálculos ni diseño —
@@ -358,7 +382,33 @@ export async function ensureOperativeExpedienteForMaestro(
     .eq("id", m.id)
     .maybeSingle();
   if (existingError) throw existingError;
-  if (existing) return existing as unknown as Expediente;
+
+  const exp = maestroToExpediente(m, m.id) as unknown as Expediente;
+  if (existing) {
+    const patch = {
+      cliente_nombre: exp.cliente_nombre && exp.cliente_nombre !== "Sin nombre" ? exp.cliente_nombre : existing.cliente_nombre,
+      cedula: exp.cedula || existing.cedula,
+      banco: exp.banco || existing.banco,
+      numero_credito: exp.numero_credito || existing.numero_credito,
+      producto: exp.producto || existing.producto,
+      cliente_data: mergeMeaningful(
+        ((existing.cliente_data ?? {}) as Record<string, unknown>),
+        exp.cliente_data as unknown as Record<string, unknown>,
+      ) as never,
+      credito_data: mergeMeaningful(
+        ((existing.credito_data ?? {}) as Record<string, unknown>),
+        exp.credito_data as unknown as Record<string, unknown>,
+      ) as never,
+    };
+    const { data: updated, error: updateError } = await supabase
+      .from("expedientes")
+      .update(patch as never)
+      .eq("id", m.id)
+      .select("*")
+      .maybeSingle();
+    if (updateError) return existing as unknown as Expediente;
+    return (updated ?? existing) as unknown as Expediente;
+  }
 
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("No autenticado");
@@ -368,7 +418,11 @@ export async function ensureOperativeExpedienteForMaestro(
     throw new Error("El expediente operativo se creará cuando completes el nombre del cliente.");
   }
 
-  const exp = maestroToExpediente(m, m.id) as unknown as Expediente;
+  const faltantes = camposFaltantesParaOperativo(m);
+  if (faltantes.length > 0) {
+    throw new Error(`El expediente operativo se creará cuando completes: ${faltantes.join(", ")}.`);
+  }
+
   const { data, error } = await supabase
     .from("expedientes")
     .insert({
