@@ -774,6 +774,8 @@ export function UVRSimulator({
                 moneda: p.raw.moneda ?? "UVR",
                 tipoCredito: "uvr",
                 datos: (p.raw.datos ?? {}) as Record<string, unknown>,
+                archivoPath: p.archivoPath ?? extractoArchivoPath ?? null,
+                archivoNombre: p.raw.archivoNombre ?? null,
               });
             }
           }}
