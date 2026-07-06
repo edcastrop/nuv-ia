@@ -1,36 +1,28 @@
 // Utilidades para @menciones en el chat de colaboración.
-// Formato del token dentro del texto guardado: @[Nombre Visible](uuid)
+// El texto guardado en BD es LEGIBLE: contiene "@Nombre" sin sintaxis extra.
+// La lista de IDs mencionados va en la columna `menciones uuid[]`.
 
-export const MENTION_TOKEN_RE = /@\[([^\]]+)\]\(([0-9a-fA-F-]{36})\)/g;
+export interface MentionResolved { userId: string; nombre: string }
 
-export function extractMentionIds(texto: string): string[] {
-  const ids = new Set<string>();
-  const re = new RegExp(MENTION_TOKEN_RE.source, "g");
-  let match: RegExpExecArray | null;
-  while ((match = re.exec(texto)) !== null) {
-    ids.add(match[2]);
-  }
-  return Array.from(ids);
-}
-
-export interface MentionSegment {
-  kind: "text" | "mention";
-  value: string;
-  userId?: string;
-}
-
-export function parseMentions(texto: string): MentionSegment[] {
-  const segments: MentionSegment[] = [];
-  const re = new RegExp(MENTION_TOKEN_RE.source, "g");
+/** Reconstruye segmentos {text|mention} a partir del texto + los nombres de mencionados. */
+export function parseMentions(texto: string, mencionados: MentionResolved[]) {
+  if (!texto) return [] as Array<{ kind: "text" | "mention"; value: string; userId?: string }>;
+  if (!mencionados.length) return [{ kind: "text" as const, value: texto }];
+  // Ordenar por nombre más largo primero para no cortar mal (Juan vs Juan Pablo).
+  const sorted = [...mencionados].sort((a, b) => b.nombre.length - a.nombre.length);
+  const escaped = sorted.map((m) => escapeRegExp(m.nombre)).join("|");
+  const re = new RegExp(`@(${escaped})`, "g");
+  const segs: Array<{ kind: "text" | "mention"; value: string; userId?: string }> = [];
   let last = 0;
   let match: RegExpExecArray | null;
   while ((match = re.exec(texto)) !== null) {
-    if (match.index > last) segments.push({ kind: "text", value: texto.slice(last, match.index) });
-    segments.push({ kind: "mention", value: match[1], userId: match[2] });
+    if (match.index > last) segs.push({ kind: "text", value: texto.slice(last, match.index) });
+    const persona = sorted.find((m) => m.nombre === match![1]);
+    segs.push({ kind: "mention", value: match[1], userId: persona?.userId });
     last = match.index + match[0].length;
   }
-  if (last < texto.length) segments.push({ kind: "text", value: texto.slice(last) });
-  return segments;
+  if (last < texto.length) segs.push({ kind: "text", value: texto.slice(last) });
+  return segs;
 }
 
 /** Detecta si el caret está justo después de un `@query` (sin espacios) y devuelve el rango + query. */
@@ -38,7 +30,6 @@ export function detectMentionTrigger(texto: string, caret: number): { start: num
   const before = texto.slice(0, caret);
   const at = before.lastIndexOf("@");
   if (at < 0) return null;
-  // Debe estar al inicio o precedido por espacio/salto de línea
   if (at > 0 && !/\s/.test(before[at - 1])) return null;
   const query = before.slice(at + 1);
   if (/[\s\n]/.test(query)) return null;
@@ -46,7 +37,10 @@ export function detectMentionTrigger(texto: string, caret: number): { start: num
   return { start: at, query };
 }
 
-/** Normaliza texto para búsqueda (sin tildes, minúsculas). */
 export function normalizeForSearch(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function escapeRegExp(s: string) {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

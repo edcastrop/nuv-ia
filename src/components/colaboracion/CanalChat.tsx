@@ -11,7 +11,7 @@ import { Paperclip, Send, Trash2, Download, UserPlus, Hash, Users as UsersIcon, 
 import { EmojiPickerPopover } from "@/components/colaboracion/EmojiPicker";
 import { VoiceRecorder } from "@/components/colaboracion/VoiceRecorder";
 import { VoiceNotePlayer } from "@/components/colaboracion/VoiceNotePlayer";
-import { detectMentionTrigger, extractMentionIds, normalizeForSearch, parseMentions } from "@/lib/mentions";
+import { detectMentionTrigger, normalizeForSearch, parseMentions, type MentionResolved } from "@/lib/mentions";
 
 export function CanalChat({ canal }: { canal: Canal }) {
   const { user } = useAuth();
@@ -23,6 +23,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
   const [miembros, setMiembros] = useState<DirectorioPersona[]>([]);
   const [mentionState, setMentionState] = useState<{ start: number; query: string } | null>(null);
   const [mentionIdx, setMentionIdx] = useState(0);
+  const [pendingMentions, setPendingMentions] = useState<MentionResolved[]>([]);
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
@@ -85,14 +86,16 @@ export function CanalChat({ canal }: { canal: Canal }) {
     const before = texto.slice(0, mentionState.start);
     const afterStart = mentionState.start + 1 + mentionState.query.length;
     const after = texto.slice(afterStart);
-    const token = `@[${persona.nombre}](${persona.user_id}) `;
-    const nuevo = before + token + after;
+    // Texto visible: solo "@Nombre " — el mapping label→uuid se guarda aparte.
+    const visible = `@${persona.nombre} `;
+    const nuevo = before + visible + after;
     setTexto(nuevo);
+    setPendingMentions((prev) => prev.some((m) => m.userId === persona.user_id) ? prev : [...prev, { userId: persona.user_id, nombre: persona.nombre }]);
     setMentionState(null);
     setTimeout(() => {
       const ta = taRef.current;
       if (!ta) return;
-      const pos = (before + token).length;
+      const pos = (before + visible).length;
       ta.focus();
       ta.setSelectionRange(pos, pos);
     }, 0);
@@ -102,9 +105,11 @@ export function CanalChat({ canal }: { canal: Canal }) {
     if (!texto.trim() && adjs.length === 0) return;
     setEnviando(true);
     try {
-      const menciones = extractMentionIds(texto);
+      // Solo consideramos menciones cuyo "@Nombre" siga presente en el texto final.
+      const activas = pendingMentions.filter((m) => texto.includes(`@${m.nombre}`));
+      const menciones = Array.from(new Set(activas.map((m) => m.userId)));
       await enviarMensaje(canal.id, texto.trim(), adjs, menciones);
-      setTexto(""); setAdjs([]); setMentionState(null);
+      setTexto(""); setAdjs([]); setMentionState(null); setPendingMentions([]);
     } catch (e) { alert((e as Error).message); }
     finally { setEnviando(false); }
   };
@@ -164,6 +169,7 @@ export function CanalChat({ canal }: { canal: Canal }) {
             esMio={m.user_id === user?.id}
             meMencionan={!!user?.id && (m.menciones ?? []).includes(user.id)}
             persona={personasPorId[m.user_id]}
+            mencionados={(m.menciones ?? []).map((uid) => ({ userId: uid, nombre: personasPorId[uid]?.nombre ?? "" })).filter((x) => x.nombre)}
           />
         ))}
         <div ref={endRef} />
@@ -253,8 +259,8 @@ export function CanalChat({ canal }: { canal: Canal }) {
   );
 }
 
-function TextoConMenciones({ texto, meMencionan }: { texto: string; meMencionan: boolean }) {
-  const segs = parseMentions(texto);
+function TextoConMenciones({ texto, meMencionan, mencionados }: { texto: string; meMencionan: boolean; mencionados: MentionResolved[] }) {
+  const segs = parseMentions(texto, mencionados);
   return (
     <div className="text-sm whitespace-pre-wrap break-words" style={{ color: "var(--nuvia-text-primary)" }}>
       {segs.map((s, i) => s.kind === "text" ? (
@@ -276,7 +282,7 @@ function TextoConMenciones({ texto, meMencionan }: { texto: string; meMencionan:
   );
 }
 
-function MensajeItem({ m, esMio, meMencionan, persona }: { m: Mensaje; esMio: boolean; meMencionan: boolean; persona?: { nombre: string; foto_url: string | null } }) {
+function MensajeItem({ m, esMio, meMencionan, persona, mencionados }: { m: Mensaje; esMio: boolean; meMencionan: boolean; persona?: { nombre: string; foto_url: string | null }; mencionados: MentionResolved[] }) {
   if (m.borrado) {
     return <div className="text-[11px] italic pl-12" style={{ color: "var(--nuvia-text-secondary)" }}>— mensaje eliminado —</div>;
   }
@@ -301,7 +307,7 @@ function MensajeItem({ m, esMio, meMencionan, persona }: { m: Mensaje; esMio: bo
             </button>
           )}
         </div>
-        {m.texto && <TextoConMenciones texto={m.texto} meMencionan={meMencionan} />}
+        {m.texto && <TextoConMenciones texto={m.texto} meMencionan={meMencionan} mencionados={mencionados} />}
         {m.adjuntos?.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-2">
             {m.adjuntos.map((a, i) => (
