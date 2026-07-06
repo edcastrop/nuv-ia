@@ -288,7 +288,7 @@ function ColaboracionPage() {
 
       {tab === "war" && (
         <div
-          className={`grid gap-3 grid-cols-1 md:[grid-template-columns:260px_minmax(0,1fr)] lg:[grid-template-columns:220px_280px_minmax(0,1fr)] ${showRight ? "xl:[grid-template-columns:220px_300px_minmax(0,1fr)_300px]" : "xl:[grid-template-columns:220px_300px_minmax(0,1fr)]"}`}
+          className={`grid gap-3 grid-cols-1 md:[grid-template-columns:260px_minmax(0,1fr)] lg:[grid-template-columns:220px_280px_minmax(0,1fr)] ${showRight ? "2xl:[grid-template-columns:220px_300px_minmax(0,1fr)_300px]" : "2xl:[grid-template-columns:220px_300px_minmax(0,1fr)]"}`}
           style={{ height: "calc(100dvh - 190px)" }}
         >
           {/* --------- COLUMN 1: TEAM CHANNELS --------- */}
@@ -434,7 +434,7 @@ function ColaboracionPage() {
 
           {/* --------- COLUMN 4: CASE INTELLIGENCE --------- */}
           {showRight && (
-            <GlassPanel className="hidden xl:flex">
+            <GlassPanel className="hidden 2xl:flex">
               <PanelHeader label="CASE INTELLIGENCE" accent="#10B981" right={<Sparkles size={12} style={{ color: "#6EE7B7" }} />} />
               <CaseIntelligence canal={canalActivo} info={canalActivo ? creditMap[canalActivo.id] : undefined} sla={canalActivo ? slaOf(canalActivo.id) : 0} etapa={canalActivo ? etapaOf(canalActivo.id) : ""} />
             </GlassPanel>
