@@ -1037,6 +1037,12 @@ function TimelineCard({
             <div className="text-[10px] mt-0.5 truncate font-mono" style={{ color: TEXT2 }}>
               Nº {r.numero_credito || r.cedula || "—"}
             </div>
+            <div className="text-[10px] mt-0.5 truncate" style={{ color: TEXT2 }} title={`Creado: ${new Date(r.created_at).toLocaleString("es-CO")}`}>
+              <span className="uppercase tracking-wide opacity-70">Creado</span>{" "}
+              <span className="font-semibold" style={{ color: "#CBD5E1" }}>
+                {new Date(r.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" })}
+              </span>
+            </div>
 
             {/* Badges compactos */}
             <div className="flex items-center gap-1 mt-2 flex-wrap">
