@@ -24,6 +24,8 @@ export interface AbonoRow {
   fresh: number;
   cuotaPagada: number;
   abono: number;
+  abonoMensual?: number;
+  abonoMensualCOP?: number;
   saldoFinal: number;
   cuotaCOP?: number;
   saldoInicialCOP?: number;
@@ -33,12 +35,15 @@ export interface AbonoRow {
 
 export interface EstrategiaResumen {
   cuotasUsadas: number;
-  cuotaFinal: number; // en COP
+  cuotaFinal: number; // en COP (cuota base amortización)
   totalInteres: number; // en COP
   fechaFin: string;
   ahorroInteres: number; // vs base
   cuotasEliminadas: number;
+  extraMensualProm?: number; // solo distribuido: extra promedio agregado al mes
 }
+
+export type EstrategiaKey = "plazo" | "cuota" | "distribuido";
 
 export interface AbonosExportCtx {
   cliente: string;
@@ -66,17 +71,20 @@ export interface AbonosExportCtx {
     fechaFin: string;
     rows: AbonoRow[];
   };
-  abonos: Array<{ cuota: number; monto: number; destino: "plazo" | "cuota" }>;
+  abonos: Array<{ cuota: number; monto: number; destino: EstrategiaKey }>;
   ahorroInteresCOP: number;
   cuotasAhorradas: number;
 
-  // Comparativo — siempre presente cuando hay abonos
+  // Comparativo — siempre presente cuando hay abonos (3 estrategias)
   comparador?: {
     plazo: EstrategiaResumen;
     cuota: EstrategiaResumen;
-    recomendado: "plazo" | "cuota";
+    distribuido: EstrategiaResumen;
+    totalAbono: number;
+    recomendado: EstrategiaKey;
   };
 }
+
 
 function drawHeader(pdf: jsPDF, ctx: AbonosExportCtx) {
   pdf.setFillColor(...NEGRO);
@@ -292,7 +300,7 @@ export function exportAbonosPDF(ctx: AbonosExportCtx) {
     });
   }
 
-  /* ==================== PÁGINA 2 — Comparativo de Estrategias ==================== */
+  /* ==================== PÁGINA 2 — Comparativo de Estrategias (3 escenarios) ==================== */
   if (ctx.comparador && ctx.abonos.length > 0) {
     pdf.addPage();
     drawHeader(pdf, ctx);
@@ -301,109 +309,86 @@ export function exportAbonosPDF(ctx: AbonosExportCtx) {
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(14);
     pdf.setTextColor(...NEGRO);
-    pdf.text("Comparativo de Estrategias", 10, 32);
+    pdf.text("Comparativo de Estrategias NUVIA", 10, 32);
     pdf.setFont("helvetica", "normal");
     pdf.setFontSize(9);
     pdf.setTextColor(110, 110, 120);
     pdf.text(
-      "Simulación de los mismos abonos aplicados con dos objetivos financieros distintos.",
+      `Los mismos abonos (total ${formatCOP(ctx.comparador.totalAbono)}) aplicados con 3 objetivos financieros distintos.`,
       10,
       38,
     );
 
     const rec = ctx.comparador.recomendado;
-    const cardW = 92;
-    const cardH = 82;
+    const cardW = 62;
+    const cardH = 90;
     const yCard = 44;
+    const gap = 2;
 
-    // ------- Tarjeta A: Reducir plazo -------
-    const xA = 10;
-    pdf.setFillColor(...GRIS_BG);
-    pdf.roundedRect(xA, yCard, cardW, cardH, 3, 3, "F");
-    if (rec === "plazo") {
-      pdf.setDrawColor(...VERDE);
-      pdf.setLineWidth(0.9);
-      pdf.roundedRect(xA, yCard, cardW, cardH, 3, 3, "S");
-      pdf.setFillColor(...VERDE);
-      pdf.roundedRect(xA + cardW - 42, yCard - 3, 42, 6, 1, 1, "F");
-      pdf.setTextColor(255, 255, 255);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(7);
-      pdf.text("RECOMENDADO NUVIA", xA + cardW - 21, yCard + 1, { align: "center" });
-    }
-    pdf.setTextColor(...AZUL);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8);
-    pdf.text("ESTRATEGIA A", xA + 4, yCard + 8);
-    pdf.setTextColor(...NEGRO);
-    pdf.setFontSize(12);
-    pdf.text("Reducir plazo", xA + 4, yCard + 14);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
-    pdf.setTextColor(110, 110, 120);
-    pdf.text("Mantiene la cuota, acorta el crédito.", xA + 4, yCard + 19);
-
-    const rowsA: Array<[string, string]> = [
-      ["Ahorro en intereses", formatCOP(ctx.comparador.plazo.ahorroInteres)],
-      ["Cuotas eliminadas", `${ctx.comparador.plazo.cuotasEliminadas}`],
-      ["Nueva cuota base", formatCOP(ctx.comparador.plazo.cuotaFinal)],
-      ["Fin del crédito", ctx.comparador.plazo.fechaFin],
+    type CardData = {
+      key: EstrategiaKey;
+      tag: string;
+      title: string;
+      subtitle: string;
+      accent: [number, number, number];
+      resumen: EstrategiaResumen;
+    };
+    const cards: CardData[] = [
+      { key: "plazo", tag: "ESTRATEGIA A", title: "Reducir plazo", subtitle: "Mantiene la cuota, acorta el credito.", accent: AZUL, resumen: ctx.comparador.plazo },
+      { key: "cuota", tag: "ESTRATEGIA B", title: "Reducir cuota", subtitle: "Mantiene el plazo, baja la mensualidad.", accent: VERDE, resumen: ctx.comparador.cuota },
+      { key: "distribuido", tag: "ESTRATEGIA C", title: "Distribuir mensual", subtitle: "Sin desembolso: sube la cuota, acorta el plazo.", accent: [224, 164, 88], resumen: ctx.comparador.distribuido },
     ];
-    rowsA.forEach((r, i) => {
-      const yy = yCard + 28 + i * 12;
-      pdf.setFontSize(7.5);
-      pdf.setTextColor(120, 120, 130);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(r[0].toUpperCase(), xA + 4, yy);
-      pdf.setTextColor(...NEGRO);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(10);
-      pdf.text(r[1], xA + 4, yy + 5);
-    });
 
-    // ------- Tarjeta B: Reducir cuota -------
-    const xB = 108;
-    pdf.setFillColor(...GRIS_BG);
-    pdf.roundedRect(xB, yCard, cardW, cardH, 3, 3, "F");
-    if (rec === "cuota") {
-      pdf.setDrawColor(...VERDE);
-      pdf.setLineWidth(0.9);
-      pdf.roundedRect(xB, yCard, cardW, cardH, 3, 3, "S");
-      pdf.setFillColor(...VERDE);
-      pdf.roundedRect(xB + cardW - 42, yCard - 3, 42, 6, 1, 1, "F");
-      pdf.setTextColor(255, 255, 255);
+    cards.forEach((c, idx) => {
+      const x = 10 + idx * (cardW + gap);
+      pdf.setFillColor(...GRIS_BG);
+      pdf.roundedRect(x, yCard, cardW, cardH, 3, 3, "F");
+      if (rec === c.key) {
+        pdf.setDrawColor(...VERDE);
+        pdf.setLineWidth(0.9);
+        pdf.roundedRect(x, yCard, cardW, cardH, 3, 3, "S");
+        pdf.setFillColor(...VERDE);
+        pdf.roundedRect(x, yCard - 3, cardW, 6, 1, 1, "F");
+        pdf.setTextColor(255, 255, 255);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(7);
+        pdf.text("RECOMENDADO NUVIA", x + cardW / 2, yCard + 1, { align: "center" });
+      }
+      pdf.setTextColor(...c.accent);
       pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7.5);
+      pdf.text(c.tag, x + 4, yCard + 8);
+      pdf.setTextColor(...NEGRO);
+      pdf.setFontSize(11);
+      pdf.text(c.title, x + 4, yCard + 14);
+      pdf.setFont("helvetica", "normal");
       pdf.setFontSize(7);
-      pdf.text("RECOMENDADO NUVIA", xB + cardW - 21, yCard + 1, { align: "center" });
-    }
-    pdf.setTextColor(...AZUL);
-    pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8);
-    pdf.text("ESTRATEGIA B", xB + 4, yCard + 8);
-    pdf.setTextColor(...NEGRO);
-    pdf.setFontSize(12);
-    pdf.text("Reducir cuota", xB + 4, yCard + 14);
-    pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(8);
-    pdf.setTextColor(110, 110, 120);
-    pdf.text("Mantiene el plazo, baja la mensualidad.", xB + 4, yCard + 19);
+      pdf.setTextColor(110, 110, 120);
+      const subLines = pdf.splitTextToSize(c.subtitle, cardW - 8) as string[];
+      pdf.text(subLines, x + 4, yCard + 19);
 
-    const rowsB: Array<[string, string]> = [
-      ["Ahorro en intereses", formatCOP(ctx.comparador.cuota.ahorroInteres)],
-      ["Cuotas eliminadas", `${ctx.comparador.cuota.cuotasEliminadas}`],
-      ["Nueva cuota base", formatCOP(ctx.comparador.cuota.cuotaFinal)],
-      ["Fin del crédito", ctx.comparador.cuota.fechaFin],
-    ];
-    rowsB.forEach((r, i) => {
-      const yy = yCard + 28 + i * 12;
-      pdf.setFontSize(7.5);
-      pdf.setTextColor(120, 120, 130);
-      pdf.setFont("helvetica", "normal");
-      pdf.text(r[0].toUpperCase(), xB + 4, yy);
-      pdf.setTextColor(...NEGRO);
-      pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(10);
-      pdf.text(r[1], xB + 4, yy + 5);
+      const rows: Array<[string, string]> = [
+        ["Ahorro en intereses", formatCOP(c.resumen.ahorroInteres)],
+        ["Cuotas eliminadas", `${c.resumen.cuotasEliminadas}`],
+        [
+          c.key === "distribuido" ? "Aumento mensual" : "Nueva cuota base",
+          c.key === "distribuido"
+            ? `+ ${formatCOP(c.resumen.extraMensualProm ?? 0)}`
+            : formatCOP(c.resumen.cuotaFinal),
+        ],
+        ["Fin del credito", c.resumen.fechaFin],
+      ];
+      rows.forEach((r, i) => {
+        const yy = yCard + 32 + i * 13;
+        pdf.setFontSize(6.8);
+        pdf.setTextColor(120, 120, 130);
+        pdf.setFont("helvetica", "normal");
+        pdf.text(r[0].toUpperCase(), x + 4, yy);
+        pdf.setTextColor(...NEGRO);
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(9);
+        pdf.text(r[1], x + 4, yy + 5);
+      });
     });
 
     // ------- Recomendación argumentada -------
@@ -411,57 +396,70 @@ export function exportAbonosPDF(ctx: AbonosExportCtx) {
     pdf.setFillColor(240, 248, 240);
     pdf.setDrawColor(...VERDE);
     pdf.setLineWidth(0.4);
-    pdf.roundedRect(10, yRec, 190, 62, 3, 3, "FD");
+    pdf.roundedRect(10, yRec, 190, 74, 3, 3, "FD");
 
     pdf.setFillColor(...VERDE);
-    pdf.roundedRect(10, yRec, 4, 62, 0, 0, "F");
+    pdf.roundedRect(10, yRec, 4, 74, 0, 0, "F");
 
     pdf.setTextColor(...VERDE);
     pdf.setFont("helvetica", "bold");
     pdf.setFontSize(9);
-    pdf.text("RECOMENDACIÓN NUVIA", 18, yRec + 6);
+    pdf.text("RECOMENDACION NUVIA", 18, yRec + 6);
 
+    const titRec =
+      rec === "plazo"
+        ? "Aplicar los abonos a REDUCIR PLAZO"
+        : rec === "cuota"
+        ? "Aplicar los abonos a REDUCIR CUOTA"
+        : "DISTRIBUIR el abono en el plazo restante";
     pdf.setTextColor(...NEGRO);
     pdf.setFontSize(13);
-    pdf.text(
-      rec === "plazo" ? "Aplicar los abonos a REDUCIR PLAZO" : "Aplicar los abonos a REDUCIR CUOTA",
-      18,
-      yRec + 13,
-    );
+    pdf.text(titRec, 18, yRec + 13);
 
-    const gan = rec === "plazo" ? ctx.comparador.plazo : ctx.comparador.cuota;
-    const alt = rec === "plazo" ? ctx.comparador.cuota : ctx.comparador.plazo;
-    const diferencia = Math.abs(gan.ahorroInteres - alt.ahorroInteres);
+    const opciones = [
+      { key: "plazo" as EstrategiaKey, r: ctx.comparador.plazo },
+      { key: "cuota" as EstrategiaKey, r: ctx.comparador.cuota },
+      { key: "distribuido" as EstrategiaKey, r: ctx.comparador.distribuido },
+    ].sort((a, b) => b.r.ahorroInteres - a.r.ahorroInteres);
+    const gan = opciones[0].r;
+    const seg = opciones[1].r;
+    const diferencia = Math.max(0, gan.ahorroInteres - seg.ahorroInteres);
 
     let argumento = "";
     if (rec === "plazo") {
       argumento =
-        `Reducir plazo maximiza el ahorro financiero: ${formatCOP(gan.ahorroInteres)} en intereses ` +
-        `y ${gan.cuotasEliminadas} cuotas eliminadas (${(gan.cuotasEliminadas / 12).toFixed(1)} años menos de crédito), ` +
-        `finalizando en ${gan.fechaFin}. Frente a reducir cuota, ganas ${formatCOP(diferencia)} adicionales ` +
-        `en ahorro sin comprometer el flujo mensual, ya que la cuota se mantiene igual. ` +
-        `Recomendado para clientes con estabilidad de ingresos que buscan liberarse del crédito lo antes posible.`;
-    } else {
+        `Reducir plazo maximiza el ahorro: ${formatCOP(gan.ahorroInteres)} en intereses y ${gan.cuotasEliminadas} cuotas eliminadas ` +
+        `(${(gan.cuotasEliminadas / 12).toFixed(1)} anos menos), finalizando en ${gan.fechaFin}. Frente a la 2da mejor opcion ` +
+        `gana ${formatCOP(diferencia)} adicionales sin subir la cuota mensual. Ideal si el cliente ya tiene los ` +
+        `${formatCOP(ctx.comparador.totalAbono)} disponibles y quiere liberarse del credito lo antes posible.`;
+    } else if (rec === "cuota") {
       const cuotaBaseCOP = ctx.base.cuotaFinal;
       const alivio = cuotaBaseCOP - gan.cuotaFinal;
       argumento =
-        `Reducir cuota ofrece el mejor balance para este perfil: baja la mensualidad de ${formatCOP(cuotaBaseCOP)} ` +
-        `a ${formatCOP(gan.cuotaFinal)} (alivio mensual de ${formatCOP(alivio)}) y aún así genera ` +
-        `${formatCOP(gan.ahorroInteres)} de ahorro en intereses. Es la opción ideal cuando se prioriza liberar ` +
-        `flujo de caja mensual para otras metas (inversión, ahorro, emergencias) sin renunciar al ahorro financiero.`;
+        `Reducir cuota ofrece el mejor balance: baja la mensualidad de ${formatCOP(cuotaBaseCOP)} a ${formatCOP(gan.cuotaFinal)} ` +
+        `(alivio mensual de ${formatCOP(alivio)}) y aun asi genera ${formatCOP(gan.ahorroInteres)} de ahorro en intereses. ` +
+        `Ideal cuando se prioriza liberar flujo de caja mensual sin renunciar al ahorro financiero.`;
+    } else {
+      argumento =
+        `Distribuir mensual es la mejor opcion cuando el cliente NO tiene los ${formatCOP(ctx.comparador.totalAbono)} liquidos ` +
+        `pero si puede sumar aproximadamente ${formatCOP(ctx.comparador.distribuido.extraMensualProm ?? 0)} extra cada mes a su cuota. ` +
+        `Ahorra ${formatCOP(gan.ahorroInteres)} en intereses y elimina ${gan.cuotasEliminadas} cuotas, sin necesidad de un desembolso grande.`;
     }
     drawParagraph(pdf, argumento, 18, yRec + 20, 178, 9, NEGRO);
 
-    // Nota complementaria de la alternativa
+    // Nota complementaria: resumen de las otras 2 opciones
     pdf.setTextColor(110, 110, 120);
     pdf.setFont("helvetica", "italic");
     pdf.setFontSize(8);
-    const nota =
-      rec === "plazo"
-        ? `Alternativa: reducir cuota ahorraría ${formatCOP(alt.ahorroInteres)} y bajaría la mensualidad a ${formatCOP(alt.cuotaFinal)}.`
-        : `Alternativa: reducir plazo ahorraría ${formatCOP(alt.ahorroInteres)} y eliminaría ${alt.cuotasEliminadas} cuotas.`;
-    drawParagraph(pdf, nota, 18, yRec + 55, 178, 8, [110, 110, 120]);
+    const nombreDe = (k: EstrategiaKey) =>
+      k === "plazo" ? "Reducir plazo" : k === "cuota" ? "Reducir cuota" : "Distribuir mensual";
+    const notas = opciones
+      .slice(1)
+      .map((o) => `${nombreDe(o.key)}: ${formatCOP(o.r.ahorroInteres)} de ahorro / ${o.r.cuotasEliminadas} cuotas eliminadas`)
+      .join("   ·   ");
+    drawParagraph(pdf, `Alternativas — ${notas}`, 18, yRec + 62, 178, 8, [110, 110, 120]);
   }
+
 
   /* ==================== PÁGINA — Proyección Base ==================== */
   pdf.addPage();

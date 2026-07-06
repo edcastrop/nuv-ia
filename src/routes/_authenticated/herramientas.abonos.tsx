@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/herramientas/abonos")({
    MATH
 ============================================================================ */
 type Modo = "pesos" | "uvr";
-type Destino = "plazo" | "cuota";
+type Destino = "plazo" | "cuota" | "distribuido";
 
 type Abono = {
   id: string;
@@ -61,10 +61,12 @@ type FilaSim = {
   interes: number;
   capital: number;
   abono: number;
+  abonoMensual: number;
   saldoFinal: number;
   saldoInicialCOP?: number;
   cuotaCOP?: number;
   abonoCOP?: number;
+  abonoMensualCOP?: number;
   saldoFinalCOP?: number;
 };
 
@@ -86,10 +88,20 @@ function simular(
   let totalInteres = 0;
   let periodo = 1;
 
-  const map = new Map<number, Abono[]>();
+  // Split: abonos lump (plazo/cuota) por periodo + distribuidos como extras mensuales
+  const lumpMap = new Map<number, Abono[]>();
+  const extrasByPeriod = new Map<number, number>();
   for (const a of abonos) {
-    if (!map.has(a.cuota)) map.set(a.cuota, []);
-    map.get(a.cuota)!.push(a);
+    if (a.destino === "distribuido") {
+      const meses = Math.max(1, n - a.cuota + 1);
+      const extra = a.monto / meses;
+      for (let p = a.cuota; p <= n; p++) {
+        extrasByPeriod.set(p, (extrasByPeriod.get(p) ?? 0) + extra);
+      }
+    } else {
+      if (!lumpMap.has(a.cuota)) lumpMap.set(a.cuota, []);
+      lumpMap.get(a.cuota)!.push(a);
+    }
   }
 
   while (saldo > 0.01 && periodo <= n + 12) {
@@ -100,7 +112,7 @@ function simular(
     let abonoTotal = 0;
     let destinoAplicado: Destino | null = null;
 
-    const abonosPeriodo = map.get(periodo);
+    const abonosPeriodo = lumpMap.get(periodo);
     if (abonosPeriodo) {
       for (const a of abonosPeriodo) {
         const monto = Math.min(a.monto, saldoDespuesCuota);
@@ -110,6 +122,10 @@ function simular(
       }
     }
 
+    const extraProg = extrasByPeriod.get(periodo) ?? 0;
+    const abonoMensual = Math.min(extraProg, saldoDespuesCuota);
+    saldoDespuesCuota -= abonoMensual;
+
     totalInteres += interes;
     rows.push({
       periodo,
@@ -118,6 +134,7 @@ function simular(
       interes,
       capital,
       abono: abonoTotal,
+      abonoMensual,
       saldoFinal: saldoDespuesCuota,
     });
 
@@ -196,6 +213,10 @@ function ExtraPayments() {
     if (!puedeSimular || abonos.length === 0) return null;
     return simular(valor, tea, plazo, abonos.map((a) => ({ ...a, destino: "cuota" as Destino })));
   }, [valor, tea, plazo, abonos, puedeSimular]);
+  const simDistribuido = useMemo(() => {
+    if (!puedeSimular || abonos.length === 0) return null;
+    return simular(valor, tea, plazo, abonos.map((a) => ({ ...a, destino: "distribuido" as Destino })));
+  }, [valor, tea, plazo, abonos, puedeSimular]);
 
   const [showComparador, setShowComparador] = useState(true);
   const aplicarDestinoATodos = (destino: Destino) => {
@@ -203,18 +224,22 @@ function ExtraPayments() {
     toast.success(
       destino === "plazo"
         ? "Todos los abonos se aplicarán para reducir plazo"
-        : "Todos los abonos se aplicarán para reducir cuota",
+        : destino === "cuota"
+        ? "Todos los abonos se aplicarán para reducir cuota"
+        : "Todos los abonos se distribuirán mensualmente en el plazo restante",
     );
   };
 
-  // Enriquecer filas con seguros + fresh + cuota pagada
+
+  // Enriquecer filas con seguros + fresh + cuota pagada (incluye abono mensual distribuido)
   const enrich = (rows: FilaSim[]): AbonoRow[] =>
     rows.map((r) => {
       const uvrMes = modo === "uvr" ? uvrInicial * Math.pow(1 + uvrVarMensual, r.periodo - 1) : 1;
       const isUVR = modo === "uvr";
       const cuotaBaseCOP = isUVR ? r.cuota * uvrMes : r.cuota;
+      const abonoMensualCOP = isUVR ? r.abonoMensual * uvrMes : r.abonoMensual;
       const freshEn = freshActivo && r.periodo <= freshCuotas ? freshValor : 0;
-      const cuotaPagadaCOP = Math.max(0, cuotaBaseCOP + seguros - freshEn);
+      const cuotaPagadaCOP = Math.max(0, cuotaBaseCOP + seguros + abonoMensualCOP - freshEn);
       return {
         periodo: r.periodo,
         saldoInicial: r.saldoInicial,
@@ -225,6 +250,8 @@ function ExtraPayments() {
         fresh: freshEn,
         cuotaPagada: cuotaPagadaCOP,
         abono: r.abono,
+        abonoMensual: r.abonoMensual,
+        abonoMensualCOP,
         saldoFinal: r.saldoFinal,
         ...(isUVR
           ? {
@@ -236,6 +263,7 @@ function ExtraPayments() {
           : {}),
       };
     });
+
 
   const rowsBaseEnriched = useMemo(() => (base ? enrich(base.rows) : []), [base, seguros, freshActivo, freshValor, freshCuotas, modo, uvrInicial, uvrVarMensual]);
   const rowsConEnriched = useMemo(() => (conAbonos ? enrich(conAbonos.rows) : []), [conAbonos, seguros, freshActivo, freshValor, freshCuotas, modo, uvrInicial, uvrVarMensual]);
@@ -339,7 +367,7 @@ function ExtraPayments() {
     ahorroInteresCOP,
     cuotasAhorradas,
     comparador:
-      simPlazo && simCuota && base
+      simPlazo && simCuota && simDistribuido && base
         ? (() => {
             const toCOP = (n: number) => (modo === "uvr" ? n * uvrInicial : n);
             const fechaFinDe = (cuotas: number) => {
@@ -347,28 +375,42 @@ function ExtraPayments() {
               d.setMonth(d.getMonth() + cuotas);
               return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
             };
-            const plazo = {
-              cuotasUsadas: simPlazo.cuotasUsadas,
-              cuotaFinal: toCOP(simPlazo.cuotaFinal),
-              totalInteres: toCOP(simPlazo.totalInteres),
-              fechaFin: fechaFinDe(simPlazo.cuotasUsadas),
-              ahorroInteres: toCOP(base.totalInteres - simPlazo.totalInteres),
-              cuotasEliminadas: base.cuotasUsadas - simPlazo.cuotasUsadas,
+            const mkResumen = (sim: NonNullable<typeof simPlazo>, extraMensualProm = 0) => ({
+              cuotasUsadas: sim.cuotasUsadas,
+              cuotaFinal: toCOP(sim.cuotaFinal),
+              totalInteres: toCOP(sim.totalInteres),
+              fechaFin: fechaFinDe(sim.cuotasUsadas),
+              ahorroInteres: toCOP(base.totalInteres - sim.totalInteres),
+              cuotasEliminadas: base.cuotasUsadas - sim.cuotasUsadas,
+              extraMensualProm,
+            });
+            const totalAbono = abonos.reduce((s, a) => s + a.monto, 0);
+            // Promedio de aumento mensual si todo se distribuye
+            const promMes =
+              abonos.reduce(
+                (s, a) => s + a.monto / Math.max(1, plazo - a.cuota + 1),
+                0,
+              );
+            const plazoR = mkResumen(simPlazo);
+            const cuotaR = mkResumen(simCuota);
+            const distribuidoR = mkResumen(simDistribuido, toCOP(promMes));
+            const opciones: Array<{ key: "plazo" | "cuota" | "distribuido"; ahorro: number }> = [
+              { key: "plazo", ahorro: plazoR.ahorroInteres },
+              { key: "cuota", ahorro: cuotaR.ahorroInteres },
+              { key: "distribuido", ahorro: distribuidoR.ahorroInteres },
+            ];
+            const recomendado = opciones.sort((a, b) => b.ahorro - a.ahorro)[0].key;
+            return {
+              plazo: plazoR,
+              cuota: cuotaR,
+              distribuido: distribuidoR,
+              totalAbono: toCOP(totalAbono),
+              recomendado,
             };
-            const cuota = {
-              cuotasUsadas: simCuota.cuotasUsadas,
-              cuotaFinal: toCOP(simCuota.cuotaFinal),
-              totalInteres: toCOP(simCuota.totalInteres),
-              fechaFin: fechaFinDe(simCuota.cuotasUsadas),
-              ahorroInteres: toCOP(base.totalInteres - simCuota.totalInteres),
-              cuotasEliminadas: base.cuotasUsadas - simCuota.cuotasUsadas,
-            };
-            const recomendado: "plazo" | "cuota" =
-              plazo.ahorroInteres >= cuota.ahorroInteres ? "plazo" : "cuota";
-            return { plazo, cuota, recomendado };
           })()
         : undefined,
   });
+
 
   const handleExportPDF = () => {
     if (!puedeSimular) {
@@ -628,8 +670,24 @@ function ExtraPayments() {
                   }}
                   label="Abono único (cuota 24)"
                 />
+                <Preset
+                  onClick={() => {
+                    if (!plazo) return toast.error("Ingresa primero el plazo");
+                    setAbonos((prev) => [
+                      ...prev,
+                      {
+                        id: crypto.randomUUID(),
+                        cuota: 1,
+                        monto: modo === "uvr" ? 15000 : 50_000_000,
+                        destino: "distribuido",
+                      },
+                    ]);
+                  }}
+                  label="Distribuir mensual"
+                />
               </div>
             </div>
+
 
             {/* Tabla de abonos */}
             <div>
@@ -677,6 +735,8 @@ function ExtraPayments() {
                       >
                         <option value="plazo">↓ Plazo</option>
                         <option value="cuota">↓ Cuota</option>
+                        <option value="distribuido">≡ Mensual</option>
+
                       </select>
                       <button
                         onClick={() => removeAbono(a.id)}
@@ -764,7 +824,7 @@ function ExtraPayments() {
         </div>
 
         {/* COMPARADOR DE ESTRATEGIA */}
-        {puedeSimular && base && simPlazo && simCuota && (
+        {puedeSimular && base && simPlazo && simCuota && simDistribuido && (
           <ComparadorEstrategia
             open={showComparador}
             onToggle={() => setShowComparador((v) => !v)}
@@ -773,6 +833,9 @@ function ExtraPayments() {
             base={base}
             simPlazo={simPlazo}
             simCuota={simCuota}
+            simDistribuido={simDistribuido}
+            plazoOriginal={plazo}
+            abonos={abonos}
             seguros={seguros}
             fresh={{ activo: freshActivo, valor: freshValor }}
             onAplicar={aplicarDestinoATodos}
@@ -783,6 +846,7 @@ function ExtraPayments() {
             }
           />
         )}
+
 
         {/* CHART */}
         {puedeSimular && base && conAbonos && (
@@ -1057,7 +1121,7 @@ function SaldoChart({
 }
 
 /* ============================================================================
-   COMPARADOR ESTRATEGIA (Reducir Plazo vs Reducir Cuota)
+   COMPARADOR ESTRATEGIA (3 escenarios: Plazo / Cuota / Distribuido)
 ============================================================================ */
 function ComparadorEstrategia({
   open,
@@ -1067,6 +1131,9 @@ function ComparadorEstrategia({
   base,
   simPlazo,
   simCuota,
+  simDistribuido,
+  plazoOriginal,
+  abonos,
   seguros,
   fresh,
   onAplicar,
@@ -1079,6 +1146,9 @@ function ComparadorEstrategia({
   base: { totalInteres: number; cuotasUsadas: number; cuotaFinal: number };
   simPlazo: { totalInteres: number; cuotasUsadas: number; cuotaFinal: number };
   simCuota: { totalInteres: number; cuotasUsadas: number; cuotaFinal: number };
+  simDistribuido: { totalInteres: number; cuotasUsadas: number; cuotaFinal: number };
+  plazoOriginal: number;
+  abonos: Abono[];
   seguros: number;
   fresh: { activo: boolean; valor: number };
   onAplicar: (destino: Destino) => void;
@@ -1092,11 +1162,19 @@ function ComparadorEstrategia({
 
   const plazoAhorro = toCOP(base.totalInteres - simPlazo.totalInteres);
   const cuotaAhorro = toCOP(base.totalInteres - simCuota.totalInteres);
+  const distAhorro = toCOP(base.totalInteres - simDistribuido.totalInteres);
   const plazoCuotasElim = base.cuotasUsadas - simPlazo.cuotasUsadas;
   const cuotaCuotasElim = base.cuotasUsadas - simCuota.cuotasUsadas;
-  const cuotaFinalPlazoCOP = toCOP(simPlazo.cuotaFinal) + seguros - (fresh.activo ? fresh.valor : 0);
+  const distCuotasElim = base.cuotasUsadas - simDistribuido.cuotasUsadas;
   const cuotaFinalCuotaCOP = toCOP(simCuota.cuotaFinal) + seguros - (fresh.activo ? fresh.valor : 0);
   const deltaCuota = cuotaFinalCuotaCOP - cuotaBaseCOP;
+
+  // Aumento mensual promedio si TODOS los abonos se distribuyen
+  const extraMensualCOP = toCOP(
+    abonos.reduce((s, a) => s + a.monto / Math.max(1, plazoOriginal - a.cuota + 1), 0),
+  );
+  const totalAbonoCOP = toCOP(abonos.reduce((s, a) => s + a.monto, 0));
+  const nuevaCuotaDistCOP = cuotaBaseCOP + extraMensualCOP;
 
   const fechaFin = (cuotas: number) => {
     const d = new Date();
@@ -1104,9 +1182,46 @@ function ComparadorEstrategia({
     return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
   };
 
-  // Recomendación: quien ahorre más intereses gana. Si están empatados, cuota (alivio).
-  const recomendado: Destino = plazoAhorro >= cuotaAhorro ? "plazo" : "cuota";
-  const diferenciaAhorro = Math.abs(plazoAhorro - cuotaAhorro);
+  // Recomendación por mayor ahorro absoluto (empate → plazo)
+  const opciones: Array<{ key: Destino; ahorro: number }> = [
+    { key: "plazo", ahorro: plazoAhorro },
+    { key: "cuota", ahorro: cuotaAhorro },
+    { key: "distribuido", ahorro: distAhorro },
+  ];
+  const sorted = [...opciones].sort((a, b) => b.ahorro - a.ahorro);
+  const recomendado = sorted[0].key;
+  const segundo = sorted[1];
+  const diferenciaAhorro = sorted[0].ahorro - segundo.ahorro;
+
+  const labelDe = (k: Destino) =>
+    k === "plazo" ? "Reducir plazo" : k === "cuota" ? "Reducir cuota" : "Distribuir mensual";
+
+  let argumento: React.ReactNode = null;
+  if (recomendado === "plazo") {
+    argumento = (
+      <>
+        <b>Reducir plazo</b> ahorra <b style={{ color: NUVEX.verde }}>{fmtCOP(plazoAhorro)}</b> en intereses
+        (<b>{fmtCOP(diferenciaAhorro)}</b> más que {labelDe(segundo.key).toLowerCase()}) sin subir la cuota mensual.
+        Ideal si el cliente ya tiene los <b>{fmtCOP(totalAbonoCOP)}</b> disponibles y busca acortar el crédito lo máximo.
+      </>
+    );
+  } else if (recomendado === "cuota") {
+    argumento = (
+      <>
+        <b>Reducir cuota</b> ahorra <b style={{ color: NUVEX.verde }}>{fmtCOP(cuotaAhorro)}</b> y baja la mensualidad
+        en <b>{fmtCOP(Math.abs(deltaCuota))}</b>. Ideal cuando el cliente necesita liberar flujo mensual
+        (nueva mensualidad: <b>{fmtCOP(cuotaFinalCuotaCOP)}</b>).
+      </>
+    );
+  } else {
+    argumento = (
+      <>
+        <b>Distribuir mensual</b> es la mejor opción cuando el cliente <b>no tiene los {fmtCOP(totalAbonoCOP)} líquidos</b>{" "}
+        pero sí puede sumar <b style={{ color: NUVEX.verde }}>{fmtCOP(extraMensualCOP)}</b> extra cada mes a su cuota.
+        Ahorra <b>{fmtCOP(distAhorro)}</b> en intereses y elimina <b>{distCuotasElim}</b> cuotas, sin necesidad de un desembolso grande.
+      </>
+    );
+  }
 
   return (
     <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] backdrop-blur-2xl overflow-hidden">
@@ -1122,9 +1237,11 @@ function ComparadorEstrategia({
             <Sparkles className="h-4 w-4 text-[#84B98F]" />
           </div>
           <div className="text-left">
-            <div className="text-[13px] font-semibold text-white">Comparador NUVIA · Reducir plazo vs Reducir cuota</div>
+            <div className="text-[13px] font-semibold text-white">
+              Comparador NUVIA · 3 estrategias
+            </div>
             <div className="text-[11px] text-white/50">
-              Ambos escenarios simulados con los mismos abonos. Recomendación dinámica según ahorro.
+              Los mismos abonos ({fmtCOP(totalAbonoCOP)} total) simulados en 3 escenarios. Recomendación dinámica según ahorro.
             </div>
           </div>
         </div>
@@ -1136,15 +1253,15 @@ function ComparadorEstrategia({
           <div className="pointer-events-none absolute inset-0 -z-0" style={{
             background: "radial-gradient(60% 50% at 20% 10%, rgba(68,93,163,0.12), transparent 60%), radial-gradient(60% 50% at 85% 90%, rgba(132,185,143,0.10), transparent 60%)",
           }} />
-          <div className="relative flex flex-col md:flex-row gap-5 items-stretch">
+          <div className="relative grid gap-4 md:grid-cols-3 items-stretch">
             {/* PLAZO */}
             <StrategyCard
               tag="Estrategia A"
               title="Reducir Plazo"
-              subtitle="Máximo Ahorro"
+              subtitle="Abono único"
               accent={NUVEX.azul}
               recommended={recomendado === "plazo"}
-              explanation="Los abonos se aplican directo al capital y eliminan las cuotas finales. Ahorras el 100% de los intereses de esos meses. La cuota mensual se mantiene igual."
+              explanation={`Aplica ${fmtCOP(totalAbonoCOP)} al capital y elimina las cuotas finales. La cuota mensual se mantiene igual.`}
               kpis={[
                 { label: "Ahorro Intereses", value: fmtCOP(plazoAhorro), highlight: true },
                 { label: "Tiempo Eliminado", value: `${plazoCuotasElim} meses` },
@@ -1152,28 +1269,20 @@ function ComparadorEstrategia({
                 { label: "Fin del Crédito", value: fechaFin(simPlazo.cuotasUsadas) },
               ]}
               cta={{
-                label: actualDestino === "plazo" ? "Ya aplicado ✓" : "Aplicar a todos los abonos",
+                label: actualDestino === "plazo" ? "Ya aplicado ✓" : "Aplicar a todos",
                 disabled: actualDestino === "plazo",
                 onClick: () => onAplicar("plazo"),
               }}
             />
 
-            {/* VS */}
-            <div className="hidden lg:flex flex-col items-center justify-center -mx-2 z-10">
-              <div className="w-11 h-11 rounded-full bg-[#050816] border-2 border-white/10 flex items-center justify-center text-[11px] font-bold text-white/50 mb-2">
-                VS
-              </div>
-              <div className="h-40 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
-            </div>
-
             {/* CUOTA */}
             <StrategyCard
               tag="Estrategia B"
               title="Reducir Cuota"
-              subtitle="Alivio Mensual"
+              subtitle="Alivio mensual"
               accent={NUVEX.verde}
               recommended={recomendado === "cuota"}
-              explanation="Los abonos recalculan la cuota mensual restante. Mantienes el plazo original pero liberas flujo de caja mes a mes desde el próximo abono."
+              explanation={`Aplica ${fmtCOP(totalAbonoCOP)} y recalcula la cuota. Mantiene el plazo pero baja la mensualidad.`}
               kpis={[
                 { label: "Ahorro Intereses", value: fmtCOP(cuotaAhorro), highlight: true },
                 { label: "Tiempo Eliminado", value: `${cuotaCuotasElim} meses`, muted: cuotaCuotasElim === 0 },
@@ -1186,9 +1295,35 @@ function ComparadorEstrategia({
                 { label: "Fin del Crédito", value: fechaFin(simCuota.cuotasUsadas) },
               ]}
               cta={{
-                label: actualDestino === "cuota" ? "Ya aplicado ✓" : "Aplicar a todos los abonos",
+                label: actualDestino === "cuota" ? "Ya aplicado ✓" : "Aplicar a todos",
                 disabled: actualDestino === "cuota",
                 onClick: () => onAplicar("cuota"),
+              }}
+            />
+
+            {/* DISTRIBUIDO */}
+            <StrategyCard
+              tag="Estrategia C"
+              title="Distribuir Mensual"
+              subtitle="Sin desembolso grande"
+              accent="#e0a458"
+              recommended={recomendado === "distribuido"}
+              explanation={`Divide ${fmtCOP(totalAbonoCOP)} en el plazo restante: el cliente suma ~${fmtCOP(extraMensualCOP)} extra cada mes a su cuota.`}
+              kpis={[
+                { label: "Ahorro Intereses", value: fmtCOP(distAhorro), highlight: true },
+                { label: "Tiempo Eliminado", value: `${distCuotasElim} meses`, muted: distCuotasElim === 0 },
+                {
+                  label: "Nueva Cuota",
+                  value: fmtCOP(nuevaCuotaDistCOP),
+                  sub: `+ ${fmtCOP(extraMensualCOP)} /mes`,
+                  accent: true,
+                },
+                { label: "Fin del Crédito", value: fechaFin(simDistribuido.cuotasUsadas) },
+              ]}
+              cta={{
+                label: actualDestino === "distribuido" ? "Ya aplicado ✓" : "Aplicar a todos",
+                disabled: actualDestino === "distribuido",
+                onClick: () => onAplicar("distribuido"),
               }}
             />
           </div>
@@ -1203,17 +1338,7 @@ function ComparadorEstrategia({
           >
             <Sparkles className="h-5 w-5 text-[#84B98F] shrink-0 mt-0.5" />
             <div className="text-[13px] leading-relaxed text-white/85">
-              <b style={{ color: NUVEX.verde }}>Recomendación NUVIA:</b>{" "}
-              {recomendado === "plazo" ? (
-                <>
-                  <b>Reducir plazo</b> genera <b style={{ color: NUVEX.verde }}>{fmtCOP(diferenciaAhorro)}</b> más de ahorro en intereses que reducir cuota, sin comprometer flujo de caja adicional (la cuota mensual no sube).
-                </>
-              ) : (
-                <>
-                  <b>Reducir cuota</b> es la mejor opción para este perfil: además de ahorrar intereses, baja la mensualidad en{" "}
-                  <b style={{ color: NUVEX.verde }}>{fmtCOP(Math.abs(deltaCuota))}</b> desde el próximo abono, mejorando la capacidad de pago del cliente.
-                </>
-              )}
+              <b style={{ color: NUVEX.verde }}>Recomendación NUVIA:</b> {argumento}
             </div>
           </div>
         </div>
@@ -1221,6 +1346,7 @@ function ComparadorEstrategia({
     </div>
   );
 }
+
 
 function StrategyCard({
   tag,
