@@ -420,51 +420,75 @@ function ColaboracionPage() {
                 ))}
               </div>
             </div>
-            <div className="p-2 space-y-2 overflow-y-auto flex-1">
+            <div className="p-2 space-y-3 overflow-y-auto flex-1">
               {casesFiltered.length === 0 && (
                 <div className="text-center text-[11px] py-8" style={{ color: "rgba(255,255,255,0.4)" }}>Sin casos activos.</div>
               )}
-              {casesFiltered.map((c) => {
-                const active = canalActivo?.id === c.id;
-                const prio = priorityOf(c.id);
-                const sla = slaOf(c.id);
-                const etapa = etapaOf(c.id);
-                const p = prioTone(prio);
-                const owner = creditMap[c.id] || {};
-                const cliente = owner.cliente || c.nombre.replace(/^Caso\s*·\s*/i, "");
-                const banco = owner.banco || c.descripcion || "Sin banco asignado";
-                const analistaName = owner.analista || "Sin asignar";
+              {MACRO_ETAPAS.map((macro) => {
+                const items = casesFiltered.filter((c) => {
+                  const live = c.caso_id ? expLive[c.caso_id] : undefined;
+                  const etapaLive = live?.etapa ?? getEtapaByStableHash(c.id).id;
+                  return macroFromEtapa(etapaLive) === macro.id;
+                });
+                if (!items.length) return null;
                 return (
-                  <button key={c.id} onClick={() => setCanal(c.id)}
-                    className="w-full text-left rounded-lg p-2.5 transition-all relative overflow-hidden group"
-                    style={active
-                      ? { background: "linear-gradient(135deg, rgba(59,130,246,0.14), rgba(16,185,129,0.06))", border: "1px solid rgba(59,130,246,0.45)", boxShadow: "0 0 20px rgba(59,130,246,0.15)" }
-                      : { background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="flex items-start justify-between gap-2 mb-0.5">
-                      <div className="text-[12px] font-bold truncate flex-1 uppercase tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
-                        {cliente}
-                      </div>
-                      <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5" style={{ background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>{prio}</span>
+                  <div key={macro.id}>
+                    <div className="mb-1.5 flex items-center gap-2 px-1">
+                      <span className="w-1 h-3 rounded-full" style={{ background: macro.accent, boxShadow: `0 0 8px ${macro.accent}` }} />
+                      <span className="text-[9.5px] font-bold tracking-[0.16em]" style={{ color: macro.accent }}>{macro.label.toUpperCase()}</span>
+                      <span className="text-[9.5px] font-bold px-1.5 rounded" style={{ background: `${macro.accent}18`, color: macro.accent }}>{items.length}</span>
+                      <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${macro.accent}30, transparent)` }} />
                     </div>
-                    <div className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{banco}</div>
-
-                    {/* Analista owner */}
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <OwnerAvatar name={analistaName} priority={prio} />
-                      <span className="text-[10.5px] font-medium truncate" style={{ color: owner.analista ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
-                        {analistaName}
-                      </span>
+                    <div className="space-y-1.5">
+                      {items.map((c) => {
+                        const active = canalActivo?.id === c.id;
+                        const prio = priorityOf(c.id);
+                        const sla = slaOf(c.id);
+                        const live = c.caso_id ? expLive[c.caso_id] : undefined;
+                        const etapaId = live?.etapa ?? getEtapaByStableHash(c.id).id;
+                        const etapaLabel = getEtapaById(etapaId).titulo;
+                        const p = prioTone(prio);
+                        const owner = creditMap[c.id] || {};
+                        const cliente = owner.cliente || c.nombre.replace(/^Caso\s*·\s*/i, "");
+                        const banco = owner.banco || c.descripcion || "Sin banco asignado";
+                        const analistaName = owner.analista || "Sin asignar";
+                        // barra de progreso: etapa/15
+                        const numero = getEtapaById(etapaId).numero;
+                        const pct = Math.min(100, Math.round((numero / 15) * 100));
+                        return (
+                          <button key={c.id} onClick={() => setCanal(c.id)}
+                            className="w-full text-left rounded-lg p-2 transition-all relative overflow-hidden group hover:-translate-y-[1px]"
+                            style={active
+                              ? { background: `linear-gradient(135deg, ${macro.accent}22, rgba(16,185,129,0.05))`, border: `1px solid ${macro.accent}66`, boxShadow: `0 0 20px ${macro.accent}22` }
+                              : { background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                            <div className="flex items-start justify-between gap-2 mb-0.5">
+                              <div className="text-[11.5px] font-bold truncate flex-1 uppercase tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
+                                {cliente}
+                              </div>
+                              <span className="shrink-0 text-[8.5px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5" style={{ background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>{prio}</span>
+                            </div>
+                            <div className="text-[9.5px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{banco}</div>
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                              <OwnerAvatar name={analistaName} priority={prio} />
+                              <span className="text-[10px] font-medium truncate flex-1" style={{ color: owner.analista ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
+                                {analistaName}
+                              </span>
+                              <span className="inline-flex items-center gap-0.5 text-[9.5px]" style={{ color: sla <= 2 ? "#FCA5A5" : "rgba(255,255,255,0.55)" }}>
+                                <Clock size={9} className={sla <= 2 ? "animate-pulse" : ""} /> {sla}d
+                              </span>
+                            </div>
+                            {/* mini progress */}
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                              <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                                <div className="h-full transition-all" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${macro.accent}, ${macro.accent}88)`, boxShadow: `0 0 6px ${macro.accent}88` }} />
+                              </div>
+                              <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.5)" }} title={etapaLabel}>{numero}/15</span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-
-                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
-                      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5" style={{ background: "rgba(139,92,246,0.12)", color: "#C4B5FD", border: "1px solid rgba(139,92,246,0.25)" }}>
-                        <Activity size={9} /> {etapa}
-                      </span>
-                      <span className="inline-flex items-center gap-1" style={{ color: sla <= 2 ? "#FCA5A5" : "rgba(255,255,255,0.6)" }}>
-                        <Clock size={9} className={sla <= 2 ? "animate-pulse" : ""} /> SLA {sla}d
-                      </span>
-                    </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
