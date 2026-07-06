@@ -353,44 +353,73 @@ function EscalarDialog({
 }) {
   const [notas, setNotas] = useState("");
   const [saving, setSaving] = useState(false);
-  const [uploadedPath, setUploadedPath] = useState<string | null>(snapshot?.archivoPath ?? null);
-  const [uploadedName, setUploadedName] = useState<string | null>(snapshot?.archivoNombre ?? null);
+  type Adjunto = { path: string; nombre: string };
+  const initialAdjuntos: Adjunto[] = snapshot?.archivoPath
+    ? [{ path: snapshot.archivoPath, nombre: snapshot.archivoNombre ?? "extracto" }]
+    : [];
+  const [adjuntos, setAdjuntos] = useState<Adjunto[]>(initialAdjuntos);
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const escalar = useServerFn(escalarConsultaTecnica);
 
-  const yaTieneExtracto = !!uploadedPath;
+  const MAX_FILES = 20;
+  const yaTieneExtracto = adjuntos.length > 0;
+  const cuposDisponibles = MAX_FILES - adjuntos.length;
 
-  const handleFile = async (f: File) => {
+  const uploadOne = async (f: File, uid: string): Promise<Adjunto> => {
+    if (f.size > 20 * 1024 * 1024) throw new Error(`"${f.name}" supera 20 MB`);
+    const path = `${uid}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const { error: upErr } = await supabase.storage
+      .from("extractos")
+      .upload(path, f, { cacheControl: "3600", upsert: false, contentType: f.type || "application/octet-stream" });
+    if (upErr) throw new Error(`${f.name}: ${upErr.message}`);
+    return { path, nombre: f.name };
+  };
+
+  const handleFiles = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    if (adjuntos.length + files.length > MAX_FILES) {
+      toast.error(`Máximo ${MAX_FILES} archivos. Puedes subir ${cuposDisponibles} más.`);
+      return;
+    }
     setUploading(true);
     try {
       const { data: userData } = await supabase.auth.getUser();
       const uid = userData?.user?.id;
       if (!uid) throw new Error("Sesión no disponible");
-      if (f.size > 20 * 1024 * 1024) throw new Error("El archivo supera 20 MB");
-      const path = `${uid}/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
-      const { error: upErr } = await supabase.storage
-        .from("extractos")
-        .upload(path, f, { cacheControl: "3600", upsert: false, contentType: f.type || "application/octet-stream" });
-      if (upErr) throw new Error(upErr.message);
-      setUploadedPath(path);
-      setUploadedName(f.name);
-      toast.success("Extracto adjuntado. Ya viaja con la simulación.");
+      const nuevos: Adjunto[] = [];
+      for (const f of files) {
+        try {
+          nuevos.push(await uploadOne(f, uid));
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : "Error subiendo archivo");
+        }
+      }
+      if (nuevos.length > 0) {
+        setAdjuntos((prev) => [...prev, ...nuevos]);
+        toast.success(`${nuevos.length} archivo(s) adjuntado(s).`);
+      }
     } catch (e) {
-      toast.error(`No se pudo subir el extracto: ${e instanceof Error ? e.message : "error"}`);
+      toast.error(`No se pudo subir: ${e instanceof Error ? e.message : "error"}`);
     } finally {
       setUploading(false);
     }
   };
 
+  const removeAdjunto = (idx: number) => {
+    setAdjuntos((prev) => prev.filter((_, i) => i !== idx));
+  };
+
   const handleEnviar = async () => {
     if (!yaTieneExtracto) {
-      toast.error("Adjunta el extracto original antes de enviar a auditoría.");
+      toast.error("Adjunta al menos un extracto antes de enviar a auditoría.");
       return;
     }
     setSaving(true);
     try {
+      const [primary, ...extras] = adjuntos;
       const r = await escalar({
         data: {
           snapshot: (snapshot ?? {}) as Record<string, unknown>,
@@ -399,8 +428,9 @@ function EscalarDialog({
           tipoCredito: snapshot?.tipoCredito ?? null,
           moneda: snapshot?.moneda ?? null,
           hallazgos: hallazgos as unknown[],
-          archivoPath: uploadedPath,
-          archivoNombre: uploadedName,
+          archivoPath: primary.path,
+          archivoNombre: primary.nombre,
+          adjuntosExtra: extras,
           notasParaAuditor: notas.trim() || undefined,
         },
       });
@@ -416,6 +446,7 @@ function EscalarDialog({
       setSaving(false);
     }
   };
+
 
   return (
     <div
