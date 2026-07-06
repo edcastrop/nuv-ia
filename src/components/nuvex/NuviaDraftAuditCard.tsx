@@ -54,7 +54,7 @@ type PanelState =
 
 type Props = {
   mode: "pesos" | "uvr" | null;
-  onCertificar: () => void;
+  onCertificar: (payload: { snapshot: DraftRawSnapshot; result: DraftAuditResult }) => void;
   onSalir: () => void;
 };
 
@@ -177,7 +177,10 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir }: Props) {
 
               <button
                 type="button"
-                onClick={onCertificar}
+                onClick={() => {
+                  if (!done || !snapshotRef.current) return;
+                  onCertificar({ snapshot: snapshotRef.current, result: done });
+                }}
                 disabled={!canCertificar}
                 title={
                   canCertificar
