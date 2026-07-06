@@ -258,8 +258,8 @@ export function CanalChat({ canal }: { canal: Canal }) {
   );
 }
 
-function TextoConMenciones({ texto, meMencionan }: { texto: string; meMencionan: boolean }) {
-  const segs = parseMentions(texto);
+function TextoConMenciones({ texto, meMencionan, mencionados }: { texto: string; meMencionan: boolean; mencionados: MentionResolved[] }) {
+  const segs = parseMentions(texto, mencionados);
   return (
     <div className="text-sm whitespace-pre-wrap break-words" style={{ color: "var(--nuvia-text-primary)" }}>
       {segs.map((s, i) => s.kind === "text" ? (
