@@ -1,56 +1,70 @@
-## Alcance
-Enriquecer el **Input Console** del NUVIA Amortization Engine con: Fecha de desembolso, Conversor de tasa (con "Tasa fresh"), Activación completa de campos UVR, Importar desde expediente (opcional), Guardar escenarios (últimos 10), y KPI de Punto de equilibrio. Exportar PDF/Excel ya existe — solo se pule para incluir los nuevos campos.
 
-## Cambios en `herramientas.amortizacion.tsx`
+# War Room NUVIA · Rediseño Colaboración
 
-### 1. Fecha de desembolso
-- Nuevo state `fechaDesembolso` (input tipo `month`, default: mes actual).
-- En cada `Row` se calcula `fechaCuota = fechaDesembolso + periodo meses`.
-- Se agrega columna **Fecha** (mm/aaaa) en la tabla, PDF y Excel.
+Alcance 100% **visual + realtime**. No se tocan: rutas, tablas, permisos, RLS, edge functions, eventos ni contratos de `src/lib/colaboracion.ts`. Todo el trabajo se concentra en `src/routes/_authenticated/colaboracion.index.tsx` y, si aplica, un pequeño hook realtime nuevo.
 
-### 2. Conversor de tasa (con Tasa Fresh)
-Nuevo bloque colapsable "Convertidor de tasa" arriba del input TEA:
-- **Tasa Fresh**: campo libre donde el analista pega cualquier tasa (ej. la que ve en el extracto).
-- Selector de tipo origen: `EA`, `NMV`, `NAMV`, `NASV`, `MV` (mensual vencida directa).
-- Muestra en vivo la conversión a las otras 4 tasas.
-- Botón **"Usar como TEA"** que copia el valor convertido al campo TEA principal.
+## Objetivo
 
-Fórmulas (agregadas al bloque MATH):
-- NMV → EA: `(1 + nmv)^12 − 1`
-- NAMV → EA: `(1 + nam/12)^12 − 1`
-- NASV → EA: `(1 + nas/2)^2 − 1`
-- MV → EA: `(1 + mv)^12 − 1`
+Convertir la pantalla en un centro de operaciones estilo Palantir / Bloomberg / Linear, con densidad útil, realtime auténtico y microinteracciones sobrias.
 
-### 3. Activar campos UVR
-Ya existen `uvrInicial` y `varUvr`. Se agrega:
-- **Variación UVR anual esperada** con presets rápidos (chips): `Conservador 3%`, `Base 5%`, `DANE histórico 6.2%`.
-- Chip informativo con el valor UVR del día (placeholder editable — futura integración con tabla `nuvia_uvr_mensual`).
-- Validación visual: si `modo === "uvr"` y falta `uvrInicial`, el botón Calcular queda deshabilitado con tooltip.
+## Cambios por zona
 
-### 4. Importar desde expediente (opcional)
-Botón "Importar caso NUV_…" arriba del Input Console:
-- Abre modal con búsqueda por código de expediente (query a `expedientes` filtrando por `codigo ilike`).
-- Al seleccionar: hidrata TEA, plazo, valor, seguros, banco, cliente desde `cliente_data` / `extracto_data`.
-- Si no hay caso o el analista lo cierra, la herramienta sigue funcionando standalone.
+### 1. Sidebar global (izq)
+Sin cambios. Se conserva tal cual.
 
-### 5. Guardar escenarios (últimos 10)
-- `localStorage` key: `nuvia_amort_scenarios`.
-- Cada escenario guarda: `{ nombre, modo, tea, plazo, valor, seguros, fechaDesembolso, uvrInicial, varUvr, ts }`.
-- Nuevo Panel "Escenarios guardados" con lista + botón "Cargar" y "Eliminar".
-- Botón **"Guardar escenario"** en el footer del Input Console pide nombre (prompt) y guarda.
+### 2. Team Channels (col 1, ~220-260px)
+- Reorganización visual: separadores por bloque (Áreas · Dirección · Privados).
+- Se añaden los canales que faltan del brief: **Dirección Financiera, Dirección Jurídica, Talento Humano** (matcher por nombre; si no existe canal, quedan deshabilitados con hint "sin canal").
+- Bloque inferior "Personas conectadas" con avatares + dot verde (usando `usePresenciaOnline` que ya existe).
+- Hover con glow del accent, estado activo con barra lateral.
 
-### 6. KPI: Punto de equilibrio
-Nueva tarjeta en la sección de resultados:
-- Muestra el número de cuota donde `capital ≥ interés` (ya existe `findBreakEven`).
-- Sub-línea: fecha estimada (usando `fechaDesembolso + breakEven meses`) y % del plazo transcurrido.
-- Visualmente: card gradiente NUVIA con ícono `Target`, número grande, y micro-copy "En la cuota X pagas más capital que intereses".
+### 3. Casos activos (col 2, ~300px) — **Bloque QA dinámico**
+Este es el mayor cambio funcional-visual:
+- Tarjetas **agrupadas por etapa**: `SIMULADO → QA → RADICADO → APROBADO → FIRMA → FINALIZADO` con contadores por columna colapsable.
+- Tarjetas más compactas (mostrar 8-10 visibles), con: iniciales cliente, banco, N° crédito, analista (avatar), SLA, prioridad, badges (📎 archivos, 💬 mensajes, 🤖 IA, ✅ QA), barra de progreso mini, dot "en edición" cuando otro user está activo.
+- **Realtime**: suscripción a `postgres_changes` sobre `expedientes` (campos etapa/estado/qa_score) → la tarjeta cambia de grupo con animación slide+fade sin recargar. Hook nuevo `useExpedientesLive.ts`.
+- Filtros existentes (search, prioridad) se mantienen; se agrega chip "solo míos".
 
-### 7. Exportar (ajuste)
-- PDF y Excel agregan la columna **Fecha**.
-- Header del PDF/Excel incluye fecha de desembolso y punto de equilibrio.
+### 4. Panel central — **Command Center**
+- Header actual se conserva y se refina (más denso, chips SLA/prioridad/etapa con pulso solo si `sla<=2`).
+- Se agregan **tabs internos** sobre el chat: `Conversación · Expediente · Extractos · Timeline · IA Analysis · Notas · Checklist`.
+  - `Conversación` = `CanalChat` actual.
+  - `Expediente / Extractos / Timeline / IA Analysis` = embed liviano (iframe/link con botón "abrir en módulo"). Como no se puede duplicar lógica, cada tab muestra un resumen + CTA al módulo real (mantiene lo que ya hacían los HeaderAction, pero ahora inline).
+  - `Notas / Checklist` = placeholders visuales con CTA "próximamente" (para no crear tablas).
+- Chat: separadores de fecha, agrupación por autor consecutivo, indicador "escribiendo…" (Realtime Presence en el canal — ya hay infra en `presencia.ts`).
 
-## Notas técnicas
-- Sin cambios de esquema DB (los escenarios son locales; el import solo lee `expedientes`).
-- Sin nuevas dependencias.
-- Se preserva 100% el look actual (glass + tokens NUVIA dark).
-- Los abonos extraordinarios (#3) se construyen **después**, como herramienta independiente (aprobado por el usuario).
+### 5. Case Intelligence (col 4)
+- Se refina: semáforo de salud, mini sparkline de actividad (últimos 7 días de mensajes del canal), probabilidad de éxito derivada de qa_score, chip "riesgo IA".
+- Los eventos ahora son reales: últimos N mensajes del canal (ya suscritos) + últimas transiciones de expediente (si hay tabla `expediente_eventos`, si no se dejan los pseudo actuales).
+
+## Realtime
+- Nuevo hook `src/hooks/useExpedientesLive.ts`: suscribe a `postgres_changes` de `expedientes` (event `*`) y devuelve un map `{casoId: {etapa, qa_score, updated_at}}`.
+- Se combina con `creditMap` existente para reubicar tarjetas por etapa.
+- Animaciones: `framer-motion` (ya en package.json si existe; si no, CSS transitions `translate3d + opacity`).
+
+## Microinteracciones
+- Transiciones 200ms cubic-bezier(.2,.8,.2,1).
+- Pulso verde en dot Live sólo cuando hay actividad en últimos 60s.
+- Border glow accent en hover, sombra profunda en active.
+- No spinners: skeletons oscuros glass.
+
+## Fuera de alcance (explícito)
+- Nuevas tablas / migraciones.
+- Cambios en `colaboracion.ts`, `presencia.ts`, permisos, notifTriggers.
+- Nuevas rutas TanStack.
+- Reescritura de `CanalChat` (solo se le añade date-separator vía prop opcional si es trivial; si no, se deja igual).
+
+## Archivos a tocar
+- `src/routes/_authenticated/colaboracion.index.tsx` (refactor visual y agrupación por etapa).
+- `src/hooks/useExpedientesLive.ts` (nuevo, ~40 líneas).
+- Opcional: pequeño ajuste en `CanalChat.tsx` para separadores de fecha.
+
+## Riesgos y mitigación
+- El realtime sobre `expedientes` requiere que la tabla esté en `supabase_realtime` publication. Si no lo está, el hook cae en fallback silencioso (polling 30s) y no rompe nada.
+- Los tabs internos del panel central no duplican lógica de otros módulos; sólo muestran resumen + CTA. Así no rompemos ningún permiso.
+
+## Validación
+- Typecheck completo.
+- Verificar en preview con Playwright: cambio de canal, navegación de HeaderActions, agrupación por etapa visible, hover states, responsive md/lg/2xl.
+
+¿Apruebas este alcance? Si prefieres que sea aún más agresivo (por ejemplo, reescribir `CanalChat` completo o crear tabla `expediente_eventos` para timeline real), dímelo antes de que arranque.

@@ -4,7 +4,8 @@ import {
   Hash, Users, Bell, Plus, FolderKanban, MessagesSquare,
   Search, Filter, Shield, Briefcase, Building2, Scale, ClipboardCheck, Calculator,
   FileText, Activity, Clock, Sparkles, AlertTriangle, TrendingUp, Zap, ChevronRight, Radio,
-  UserRound, Gauge, CreditCard, CalendarDays, ArrowUpRight,
+  UserRound, Gauge, CreditCard, CalendarDays, ArrowUpRight, ChevronDown,
+  Landmark, HeartHandshake,
 } from "lucide-react";
 import { PageLayout } from "@/components/nuvia";
 import { CanalChat } from "@/components/colaboracion/CanalChat";
@@ -15,6 +16,9 @@ import {
 import { UserAvatar } from "@/components/nuvex/UserAvatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { useExpedientesLive } from "@/hooks/useExpedientesLive";
+import { usePresenciaOnline } from "@/hooks/usePresenciaOnline";
+import { getEtapaById, type EtapaPipelineId } from "@/lib/pipelineEtapas";
 
 type CreditInfo = {
   caso_id?: string;
@@ -46,14 +50,32 @@ export const Route = createFileRoute("/_authenticated/colaboracion/")({
 });
 
 // ---------- Team channel definitions (branded) ----------
-const TEAM_CHANNELS: { key: string; label: string; match: RegExp; icon: typeof Hash; accent: string }[] = [
-  { key: "comercial",    label: "Comercial",    match: /comercial/i,                  icon: Briefcase,      accent: "#3B82F6" },
-  { key: "juridica",     label: "Jurídica",     match: /jur[ií]dic|legal/i,           icon: Scale,          accent: "#8B5CF6" },
-  { key: "operaciones",  label: "Operaciones",  match: /operacion|ops/i,              icon: Building2,      accent: "#22D3EE" },
-  { key: "gerencia",     label: "Gerencia",     match: /gerencia|direccion|ceo/i,     icon: Shield,         accent: "#F59E0B" },
-  { key: "qa",           label: "QA",           match: /qa|calidad|auditor/i,         icon: ClipboardCheck, accent: "#10B981" },
-  { key: "contabilidad", label: "Contabilidad", match: /contab|finanz|conta/i,        icon: Calculator,     accent: "#EC4899" },
+const TEAM_CHANNELS: { key: string; label: string; match: RegExp; icon: typeof Hash; accent: string; group: "ops" | "direccion" | "soporte" }[] = [
+  { key: "comercial",          label: "Comercial",           match: /comercial/i,                       icon: Briefcase,      accent: "#3B82F6", group: "ops" },
+  { key: "juridica",           label: "Jurídica",            match: /jur[ií]dic(?!.*direcci)|^legal/i,  icon: Scale,          accent: "#8B5CF6", group: "ops" },
+  { key: "operaciones",        label: "Operaciones",         match: /operacion|^ops/i,                  icon: Building2,      accent: "#22D3EE", group: "ops" },
+  { key: "qa",                 label: "QA",                  match: /qa|calidad|auditor/i,              icon: ClipboardCheck, accent: "#10B981", group: "ops" },
+  { key: "contabilidad",       label: "Contabilidad",        match: /contab|conta(?!.*direcci)/i,       icon: Calculator,     accent: "#EC4899", group: "ops" },
+  { key: "gerencia",           label: "Gerencia",            match: /gerencia|ceo/i,                    icon: Shield,         accent: "#F59E0B", group: "direccion" },
+  { key: "direccion_fin",      label: "Dirección Financiera",match: /direcci[oó]n.*(financ|conta)/i,    icon: Landmark,       accent: "#38BDF8", group: "direccion" },
+  { key: "direccion_jur",      label: "Dirección Jurídica",  match: /direcci[oó]n.*jur[ií]dic/i,        icon: Scale,          accent: "#A78BFA", group: "direccion" },
+  { key: "talento",            label: "Talento Humano",      match: /talento|rrhh|humanos|people/i,     icon: HeartHandshake, accent: "#F472B6", group: "soporte" },
 ];
+
+// Macro-etapas visibles en el War Room (agrupan las 15 etapas del pipeline).
+type MacroEtapa = "SIMULADO" | "QA" | "RADICADO" | "APROBADO" | "FIRMA" | "FINALIZADO";
+const MACRO_ETAPAS: { id: MacroEtapa; label: string; accent: string; matches: EtapaPipelineId[] }[] = [
+  { id: "SIMULADO",   label: "Simulado",  accent: "#3B82F6", matches: ["lead", "extracto", "proyeccion", "presentacion", "cierre"] },
+  { id: "QA",         label: "QA",        accent: "#10B981", matches: ["contratacion"] },
+  { id: "RADICADO",   label: "Radicado",  accent: "#22D3EE", matches: ["radicacion", "banco"] },
+  { id: "APROBADO",   label: "Aprobado",  accent: "#A78BFA", matches: ["resultado_banco", "aceptacion_cliente", "informe"] },
+  { id: "FIRMA",      label: "Firma",     accent: "#F59E0B", matches: ["cuenta", "pago", "comision", "paz_salvo"] },
+  { id: "FINALIZADO", label: "Finalizado",accent: "#6EE7B7", matches: ["finalizado"] },
+];
+const macroFromEtapa = (etapa?: EtapaPipelineId | null): MacroEtapa => {
+  if (!etapa) return "SIMULADO";
+  return MACRO_ETAPAS.find((m) => m.matches.includes(etapa))?.id ?? "SIMULADO";
+};
 
 const asPlainObject = (value: unknown): Record<string, unknown> =>
   value && typeof value === "object" && !Array.isArray(value) ? (value as Record<string, unknown>) : {};
@@ -112,6 +134,16 @@ function ColaboracionPage() {
 
   const canalesArea = canales.filter((c) => c.tipo === "area" || c.tipo === "custom");
   const canalesCaso = canales.filter((c) => c.tipo === "caso");
+
+  // Realtime: etapas actualizadas de los expedientes visibles en War Room
+  const casoIdsLive = useMemo(
+    () => Array.from(new Set(canalesCaso.map((c) => c.caso_id).filter((x): x is string => !!x))),
+    [canalesCaso],
+  );
+  const expLive = useExpedientesLive(casoIdsLive);
+
+  // Presencia en tiempo real
+  const online = usePresenciaOnline();
 
   // Ficha de crédito por canal (casos y auditorías QA)
   const [creditMap, setCreditMap] = useState<Record<string, CreditInfo>>({});
@@ -224,6 +256,9 @@ function ColaboracionPage() {
   const priorityOf = (id: string): "alta" | "media" | "baja" => (["alta", "media", "baja"] as const)[hashOf(id) % 3];
   const slaOf = (id: string) => (hashOf(id) % 7) + 1;
   const etapaOf = (id: string) => ["Radicado", "Análisis", "En Revisión", "Aprobado", "En Firma", "En Trámite"][hashOf(id) % 6];
+  // Fallback determinista cuando el expediente aún no ha llegado por realtime.
+  const FALLBACK_ETAPAS: EtapaPipelineId[] = ["extracto", "proyeccion", "contratacion", "radicacion", "banco", "resultado_banco", "informe"];
+  const getEtapaByStableHash = (id: string) => getEtapaById(FALLBACK_ETAPAS[hashOf(id) % FALLBACK_ETAPAS.length]);
 
   const casesFiltered = useMemo(() => {
     const q = caseQuery.trim().toLowerCase();
@@ -294,37 +329,65 @@ function ColaboracionPage() {
           {/* --------- COLUMN 1: TEAM CHANNELS --------- */}
           <GlassPanel className="hidden lg:flex">
             <PanelHeader label="TEAM CHANNELS" accent="#22D3EE" right={<button onClick={() => setShowNew(true)} className="rounded-md p-1 transition hover:bg-white/10" style={{ color: "rgba(255,255,255,0.6)" }}><Plus size={13} /></button>} />
-            <div className="p-2 space-y-1 overflow-y-auto flex-1">
-              {TEAM_CHANNELS.map((t) => {
-                const canal = matchTeamChannel(t);
-                const active = canal && canalActivo?.id === canal.id;
-                const unread = hashOf(t.key) % 5; // pseudo unread demo
+            <div className="p-2 overflow-y-auto flex-1">
+              {(["ops", "direccion", "soporte"] as const).map((grp) => {
+                const items = TEAM_CHANNELS.filter((t) => t.group === grp);
+                if (!items.length) return null;
+                const label = grp === "ops" ? "OPERACIÓN" : grp === "direccion" ? "DIRECCIÓN" : "SOPORTE";
                 return (
-                  <button
-                    key={t.key}
-                    onClick={() => canal && setCanal(canal.id)}
-                    disabled={!canal}
-                    className="group w-full flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-left transition-all relative overflow-hidden"
-                    style={active
-                      ? { background: `linear-gradient(90deg, ${t.accent}22, transparent 80%)`, border: `1px solid ${t.accent}55` }
-                      : { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
-                  >
-                    {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full" style={{ background: t.accent, boxShadow: `0 0 10px ${t.accent}` }} />}
-                    <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition group-hover:scale-110" style={{ background: `${t.accent}18`, border: `1px solid ${t.accent}33`, color: t.accent }}>
-                      <t.icon size={14} />
+                  <div key={grp} className="mb-2">
+                    <div className="px-2 mb-1 text-[9px] font-bold tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.32)" }}>{label}</div>
+                    <div className="space-y-1">
+                      {items.map((t) => {
+                        const canal = matchTeamChannel(t);
+                        const active = canal && canalActivo?.id === canal.id;
+                        const unread = canal ? hashOf(t.key) % 5 : 0;
+                        return (
+                          <button
+                            key={t.key}
+                            onClick={() => canal && setCanal(canal.id)}
+                            disabled={!canal}
+                            className="group w-full flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-left transition-all relative overflow-hidden"
+                            style={active
+                              ? { background: `linear-gradient(90deg, ${t.accent}22, transparent 80%)`, border: `1px solid ${t.accent}55` }
+                              : { background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+                          >
+                            {active && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-r-full" style={{ background: t.accent, boxShadow: `0 0 10px ${t.accent}` }} />}
+                            <div className="w-7 h-7 rounded-md flex items-center justify-center shrink-0 transition group-hover:scale-110" style={{ background: `${t.accent}18`, border: `1px solid ${t.accent}33`, color: t.accent }}>
+                              <t.icon size={14} />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <div className="text-[12.5px] font-semibold truncate" style={{ color: canal ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.32)" }}>{t.label}</div>
+                              <div className="text-[9.5px] truncate" style={{ color: "rgba(255,255,255,0.38)" }}>{canal ? "#" + canal.nombre : "sin canal"}</div>
+                            </div>
+                            {unread > 0 && (
+                              <span className="ml-1 shrink-0 text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: t.accent, color: "#0B1220", boxShadow: `0 0 8px ${t.accent}88` }}>{unread}</span>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="text-[13px] font-semibold truncate" style={{ color: canal ? "rgba(255,255,255,0.92)" : "rgba(255,255,255,0.35)" }}>{t.label}</div>
-                      <div className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.42)" }}>{canal ? "#" + canal.nombre : "sin canal"}</div>
-                    </div>
-                    {unread > 0 && canal && (
-                      <span className="ml-1 shrink-0 text-[10px] font-bold rounded-full px-1.5 py-0.5" style={{ background: t.accent, color: "#0B1220", boxShadow: `0 0 8px ${t.accent}88` }}>{unread}</span>
-                    )}
-                  </button>
+                  </div>
                 );
               })}
             </div>
-            <div className="p-2 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+            {/* Presence footer */}
+            <div className="p-2 border-t space-y-2" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[9px] font-bold tracking-[0.18em]" style={{ color: "rgba(255,255,255,0.4)" }}>EN LÍNEA</span>
+                <span className="text-[10px] font-bold" style={{ color: "#6EE7B7" }}>{online.size}</span>
+              </div>
+              <div className="flex flex-wrap gap-1 px-1">
+                {dir.filter((p) => online.has(p.user_id)).slice(0, 12).map((p) => (
+                  <div key={p.user_id} className="relative" title={`${p.nombre} · en línea`}>
+                    <UserAvatar userId={p.user_id} url={p.foto_url} name={p.nombre} size="sm" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ background: "#10B981", boxShadow: "0 0 6px #10B981", border: "1.5px solid #0B1020" }} />
+                  </div>
+                ))}
+                {online.size === 0 && (
+                  <div className="text-[10px] italic" style={{ color: "rgba(255,255,255,0.35)" }}>Nadie conectado ahora</div>
+                )}
+              </div>
               <div className="rounded-lg px-2.5 py-2 flex items-center gap-2" style={{ background: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.18)" }}>
                 <UserAvatar userId={user?.id || ""} size="sm" />
                 <div className="min-w-0">
@@ -360,51 +423,75 @@ function ColaboracionPage() {
                 ))}
               </div>
             </div>
-            <div className="p-2 space-y-2 overflow-y-auto flex-1">
+            <div className="p-2 space-y-3 overflow-y-auto flex-1">
               {casesFiltered.length === 0 && (
                 <div className="text-center text-[11px] py-8" style={{ color: "rgba(255,255,255,0.4)" }}>Sin casos activos.</div>
               )}
-              {casesFiltered.map((c) => {
-                const active = canalActivo?.id === c.id;
-                const prio = priorityOf(c.id);
-                const sla = slaOf(c.id);
-                const etapa = etapaOf(c.id);
-                const p = prioTone(prio);
-                const owner = creditMap[c.id] || {};
-                const cliente = owner.cliente || c.nombre.replace(/^Caso\s*·\s*/i, "");
-                const banco = owner.banco || c.descripcion || "Sin banco asignado";
-                const analistaName = owner.analista || "Sin asignar";
+              {MACRO_ETAPAS.map((macro) => {
+                const items = casesFiltered.filter((c) => {
+                  const live = c.caso_id ? expLive[c.caso_id] : undefined;
+                  const etapaLive = live?.etapa ?? getEtapaByStableHash(c.id).id;
+                  return macroFromEtapa(etapaLive) === macro.id;
+                });
+                if (!items.length) return null;
                 return (
-                  <button key={c.id} onClick={() => setCanal(c.id)}
-                    className="w-full text-left rounded-lg p-2.5 transition-all relative overflow-hidden group"
-                    style={active
-                      ? { background: "linear-gradient(135deg, rgba(59,130,246,0.14), rgba(16,185,129,0.06))", border: "1px solid rgba(59,130,246,0.45)", boxShadow: "0 0 20px rgba(59,130,246,0.15)" }
-                      : { background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div className="flex items-start justify-between gap-2 mb-0.5">
-                      <div className="text-[12px] font-bold truncate flex-1 uppercase tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
-                        {cliente}
-                      </div>
-                      <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5" style={{ background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>{prio}</span>
+                  <div key={macro.id}>
+                    <div className="mb-1.5 flex items-center gap-2 px-1">
+                      <span className="w-1 h-3 rounded-full" style={{ background: macro.accent, boxShadow: `0 0 8px ${macro.accent}` }} />
+                      <span className="text-[9.5px] font-bold tracking-[0.16em]" style={{ color: macro.accent }}>{macro.label.toUpperCase()}</span>
+                      <span className="text-[9.5px] font-bold px-1.5 rounded" style={{ background: `${macro.accent}18`, color: macro.accent }}>{items.length}</span>
+                      <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, ${macro.accent}30, transparent)` }} />
                     </div>
-                    <div className="text-[10px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{banco}</div>
-
-                    {/* Analista owner */}
-                    <div className="mt-1.5 flex items-center gap-1.5">
-                      <OwnerAvatar name={analistaName} priority={prio} />
-                      <span className="text-[10.5px] font-medium truncate" style={{ color: owner.analista ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
-                        {analistaName}
-                      </span>
+                    <div className="space-y-1.5">
+                      {items.map((c) => {
+                        const active = canalActivo?.id === c.id;
+                        const prio = priorityOf(c.id);
+                        const sla = slaOf(c.id);
+                        const live = c.caso_id ? expLive[c.caso_id] : undefined;
+                        const etapaId = live?.etapa ?? getEtapaByStableHash(c.id).id;
+                        const etapaLabel = getEtapaById(etapaId).titulo;
+                        const p = prioTone(prio);
+                        const owner = creditMap[c.id] || {};
+                        const cliente = owner.cliente || c.nombre.replace(/^Caso\s*·\s*/i, "");
+                        const banco = owner.banco || c.descripcion || "Sin banco asignado";
+                        const analistaName = owner.analista || "Sin asignar";
+                        // barra de progreso: etapa/15
+                        const numero = getEtapaById(etapaId).numero;
+                        const pct = Math.min(100, Math.round((numero / 15) * 100));
+                        return (
+                          <button key={c.id} onClick={() => setCanal(c.id)}
+                            className="w-full text-left rounded-lg p-2 transition-all relative overflow-hidden group hover:-translate-y-[1px]"
+                            style={active
+                              ? { background: `linear-gradient(135deg, ${macro.accent}22, rgba(16,185,129,0.05))`, border: `1px solid ${macro.accent}66`, boxShadow: `0 0 20px ${macro.accent}22` }
+                              : { background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                            <div className="flex items-start justify-between gap-2 mb-0.5">
+                              <div className="text-[11.5px] font-bold truncate flex-1 uppercase tracking-tight" style={{ color: "rgba(255,255,255,0.95)" }}>
+                                {cliente}
+                              </div>
+                              <span className="shrink-0 text-[8.5px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5" style={{ background: p.bg, color: p.fg, border: `1px solid ${p.border}` }}>{prio}</span>
+                            </div>
+                            <div className="text-[9.5px] truncate" style={{ color: "rgba(255,255,255,0.55)" }}>{banco}</div>
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                              <OwnerAvatar name={analistaName} priority={prio} />
+                              <span className="text-[10px] font-medium truncate flex-1" style={{ color: owner.analista ? "rgba(255,255,255,0.82)" : "rgba(255,255,255,0.4)" }}>
+                                {analistaName}
+                              </span>
+                              <span className="inline-flex items-center gap-0.5 text-[9.5px]" style={{ color: sla <= 2 ? "#FCA5A5" : "rgba(255,255,255,0.55)" }}>
+                                <Clock size={9} className={sla <= 2 ? "animate-pulse" : ""} /> {sla}d
+                              </span>
+                            </div>
+                            {/* mini progress */}
+                            <div className="mt-1.5 flex items-center gap-1.5">
+                              <div className="flex-1 h-[3px] rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+                                <div className="h-full transition-all" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${macro.accent}, ${macro.accent}88)`, boxShadow: `0 0 6px ${macro.accent}88` }} />
+                              </div>
+                              <span className="text-[9px]" style={{ color: "rgba(255,255,255,0.5)" }} title={etapaLabel}>{numero}/15</span>
+                            </div>
+                          </button>
+                        );
+                      })}
                     </div>
-
-                    <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
-                      <span className="inline-flex items-center gap-1 rounded px-1.5 py-0.5" style={{ background: "rgba(139,92,246,0.12)", color: "#C4B5FD", border: "1px solid rgba(139,92,246,0.25)" }}>
-                        <Activity size={9} /> {etapa}
-                      </span>
-                      <span className="inline-flex items-center gap-1" style={{ color: sla <= 2 ? "#FCA5A5" : "rgba(255,255,255,0.6)" }}>
-                        <Clock size={9} className={sla <= 2 ? "animate-pulse" : ""} /> SLA {sla}d
-                      </span>
-                    </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
