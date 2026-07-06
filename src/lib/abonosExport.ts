@@ -623,6 +623,7 @@ export function exportAbonosExcel(ctx: AbonosExportCtx) {
         "Ahorro intereses": ctx.comparador.plazo.ahorroInteres,
         "Cuotas eliminadas": ctx.comparador.plazo.cuotasEliminadas,
         "Cuota final": ctx.comparador.plazo.cuotaFinal,
+        "Aumento mensual": 0,
         "Fin del crédito": ctx.comparador.plazo.fechaFin,
         Recomendado: ctx.comparador.recomendado === "plazo" ? "Sí" : "No",
       },
@@ -631,12 +632,23 @@ export function exportAbonosExcel(ctx: AbonosExportCtx) {
         "Ahorro intereses": ctx.comparador.cuota.ahorroInteres,
         "Cuotas eliminadas": ctx.comparador.cuota.cuotasEliminadas,
         "Cuota final": ctx.comparador.cuota.cuotaFinal,
+        "Aumento mensual": 0,
         "Fin del crédito": ctx.comparador.cuota.fechaFin,
         Recomendado: ctx.comparador.recomendado === "cuota" ? "Sí" : "No",
+      },
+      {
+        Estrategia: "Distribuir mensual",
+        "Ahorro intereses": ctx.comparador.distribuido.ahorroInteres,
+        "Cuotas eliminadas": ctx.comparador.distribuido.cuotasEliminadas,
+        "Cuota final": ctx.comparador.distribuido.cuotaFinal,
+        "Aumento mensual": ctx.comparador.distribuido.extraMensualProm ?? 0,
+        "Fin del crédito": ctx.comparador.distribuido.fechaFin,
+        Recomendado: ctx.comparador.recomendado === "distribuido" ? "Sí" : "No",
       },
     ]);
     XLSX.utils.book_append_sheet(wb, wsComp, "Comparativo");
   }
+
 
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(toRows(ctx.base.rows), { header: cols }), "Base");
   XLSX.utils.book_append_sheet(
