@@ -187,6 +187,26 @@ function ExtraPayments() {
     return simular(valor, tea, plazo, abonos);
   }, [valor, tea, plazo, abonos, puedeSimular]);
 
+  // Comparador global: ambas estrategias con los MISMOS abonos.
+  const simPlazo = useMemo(() => {
+    if (!puedeSimular || abonos.length === 0) return null;
+    return simular(valor, tea, plazo, abonos.map((a) => ({ ...a, destino: "plazo" as Destino })));
+  }, [valor, tea, plazo, abonos, puedeSimular]);
+  const simCuota = useMemo(() => {
+    if (!puedeSimular || abonos.length === 0) return null;
+    return simular(valor, tea, plazo, abonos.map((a) => ({ ...a, destino: "cuota" as Destino })));
+  }, [valor, tea, plazo, abonos, puedeSimular]);
+
+  const [showComparador, setShowComparador] = useState(true);
+  const aplicarDestinoATodos = (destino: Destino) => {
+    setAbonos((prev) => prev.map((a) => ({ ...a, destino })));
+    toast.success(
+      destino === "plazo"
+        ? "Todos los abonos se aplicarán para reducir plazo"
+        : "Todos los abonos se aplicarán para reducir cuota",
+    );
+  };
+
   // Enriquecer filas con seguros + fresh + cuota pagada
   const enrich = (rows: FilaSim[]): AbonoRow[] =>
     rows.map((r) => {
