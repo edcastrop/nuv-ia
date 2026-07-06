@@ -187,6 +187,26 @@ function ExtraPayments() {
     return simular(valor, tea, plazo, abonos);
   }, [valor, tea, plazo, abonos, puedeSimular]);
 
+  // Comparador global: ambas estrategias con los MISMOS abonos.
+  const simPlazo = useMemo(() => {
+    if (!puedeSimular || abonos.length === 0) return null;
+    return simular(valor, tea, plazo, abonos.map((a) => ({ ...a, destino: "plazo" as Destino })));
+  }, [valor, tea, plazo, abonos, puedeSimular]);
+  const simCuota = useMemo(() => {
+    if (!puedeSimular || abonos.length === 0) return null;
+    return simular(valor, tea, plazo, abonos.map((a) => ({ ...a, destino: "cuota" as Destino })));
+  }, [valor, tea, plazo, abonos, puedeSimular]);
+
+  const [showComparador, setShowComparador] = useState(true);
+  const aplicarDestinoATodos = (destino: Destino) => {
+    setAbonos((prev) => prev.map((a) => ({ ...a, destino })));
+    toast.success(
+      destino === "plazo"
+        ? "Todos los abonos se aplicarán para reducir plazo"
+        : "Todos los abonos se aplicarán para reducir cuota",
+    );
+  };
+
   // Enriquecer filas con seguros + fresh + cuota pagada
   const enrich = (rows: FilaSim[]): AbonoRow[] =>
     rows.map((r) => {
@@ -713,6 +733,27 @@ function ExtraPayments() {
           </div>
         </div>
 
+        {/* COMPARADOR DE ESTRATEGIA */}
+        {puedeSimular && base && simPlazo && simCuota && (
+          <ComparadorEstrategia
+            open={showComparador}
+            onToggle={() => setShowComparador((v) => !v)}
+            modo={modo}
+            uvrInicial={uvrInicial}
+            base={base}
+            simPlazo={simPlazo}
+            simCuota={simCuota}
+            seguros={seguros}
+            fresh={{ activo: freshActivo, valor: freshValor }}
+            onAplicar={aplicarDestinoATodos}
+            actualDestino={
+              abonos.length > 0 && abonos.every((a) => a.destino === abonos[0].destino)
+                ? abonos[0].destino
+                : null
+            }
+          />
+        )}
+
         {/* CHART */}
         {puedeSimular && base && conAbonos && (
           <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] p-5 backdrop-blur-2xl">
@@ -982,5 +1023,281 @@ function SaldoChart({
         </text>
       </g>
     </svg>
+  );
+}
+
+/* ============================================================================
+   COMPARADOR ESTRATEGIA (Reducir Plazo vs Reducir Cuota)
+============================================================================ */
+function ComparadorEstrategia({
+  open,
+  onToggle,
+  modo,
+  uvrInicial,
+  base,
+  simPlazo,
+  simCuota,
+  seguros,
+  fresh,
+  onAplicar,
+  actualDestino,
+}: {
+  open: boolean;
+  onToggle: () => void;
+  modo: Modo;
+  uvrInicial: number;
+  base: { totalInteres: number; cuotasUsadas: number; cuotaFinal: number };
+  simPlazo: { totalInteres: number; cuotasUsadas: number; cuotaFinal: number };
+  simCuota: { totalInteres: number; cuotasUsadas: number; cuotaFinal: number };
+  seguros: number;
+  fresh: { activo: boolean; valor: number };
+  onAplicar: (destino: Destino) => void;
+  actualDestino: Destino | null;
+}) {
+  const fmtCOP = (n: number) =>
+    new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(n || 0);
+
+  const toCOP = (v: number) => (modo === "uvr" ? v * uvrInicial : v);
+  const cuotaBaseCOP = toCOP(base.cuotaFinal) + seguros - (fresh.activo ? fresh.valor : 0);
+
+  const plazoAhorro = toCOP(base.totalInteres - simPlazo.totalInteres);
+  const cuotaAhorro = toCOP(base.totalInteres - simCuota.totalInteres);
+  const plazoCuotasElim = base.cuotasUsadas - simPlazo.cuotasUsadas;
+  const cuotaCuotasElim = base.cuotasUsadas - simCuota.cuotasUsadas;
+  const cuotaFinalPlazoCOP = toCOP(simPlazo.cuotaFinal) + seguros - (fresh.activo ? fresh.valor : 0);
+  const cuotaFinalCuotaCOP = toCOP(simCuota.cuotaFinal) + seguros - (fresh.activo ? fresh.valor : 0);
+  const deltaCuota = cuotaFinalCuotaCOP - cuotaBaseCOP;
+
+  const fechaFin = (cuotas: number) => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + cuotas);
+    return d.toLocaleDateString("es-CO", { month: "short", year: "numeric" });
+  };
+
+  // Recomendación: quien ahorre más intereses gana. Si están empatados, cuota (alivio).
+  const recomendado: Destino = plazoAhorro >= cuotaAhorro ? "plazo" : "cuota";
+  const diferenciaAhorro = Math.abs(plazoAhorro - cuotaAhorro);
+
+  return (
+    <div className="rounded-2xl border border-white/[0.08] bg-[rgba(10,16,34,0.55)] backdrop-blur-2xl overflow-hidden">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 p-4 border-b border-white/10 hover:bg-white/[0.02] transition"
+      >
+        <div className="flex items-center gap-2">
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-lg"
+            style={{ background: `linear-gradient(135deg, ${NUVEX.verde}33, ${NUVEX.azul}33)` }}
+          >
+            <Sparkles className="h-4 w-4 text-[#84B98F]" />
+          </div>
+          <div className="text-left">
+            <div className="text-[13px] font-semibold text-white">Comparador NUVIA · Reducir plazo vs Reducir cuota</div>
+            <div className="text-[11px] text-white/50">
+              Ambos escenarios simulados con los mismos abonos. Recomendación dinámica según ahorro.
+            </div>
+          </div>
+        </div>
+        <div className="text-[11px] font-semibold text-[#84B98F]">{open ? "Ocultar" : "Mostrar"}</div>
+      </button>
+
+      {open && (
+        <div className="relative p-6">
+          <div className="pointer-events-none absolute inset-0 -z-0" style={{
+            background: "radial-gradient(60% 50% at 20% 10%, rgba(68,93,163,0.12), transparent 60%), radial-gradient(60% 50% at 85% 90%, rgba(132,185,143,0.10), transparent 60%)",
+          }} />
+          <div className="relative flex flex-col md:flex-row gap-5 items-stretch">
+            {/* PLAZO */}
+            <StrategyCard
+              tag="Estrategia A"
+              title="Reducir Plazo"
+              subtitle="Máximo Ahorro"
+              accent={NUVEX.azul}
+              recommended={recomendado === "plazo"}
+              explanation="Los abonos se aplican directo al capital y eliminan las cuotas finales. Ahorras el 100% de los intereses de esos meses. La cuota mensual se mantiene igual."
+              kpis={[
+                { label: "Ahorro Intereses", value: fmtCOP(plazoAhorro), highlight: true },
+                { label: "Tiempo Eliminado", value: `${plazoCuotasElim} meses` },
+                { label: "Nueva Cuota", value: "Sin cambios", muted: true },
+                { label: "Fin del Crédito", value: fechaFin(simPlazo.cuotasUsadas) },
+              ]}
+              cta={{
+                label: actualDestino === "plazo" ? "Ya aplicado ✓" : "Aplicar a todos los abonos",
+                disabled: actualDestino === "plazo",
+                onClick: () => onAplicar("plazo"),
+              }}
+            />
+
+            {/* VS */}
+            <div className="hidden lg:flex flex-col items-center justify-center -mx-2 z-10">
+              <div className="w-11 h-11 rounded-full bg-[#050816] border-2 border-white/10 flex items-center justify-center text-[11px] font-bold text-white/50 mb-2">
+                VS
+              </div>
+              <div className="h-40 w-px bg-gradient-to-b from-transparent via-white/10 to-transparent" />
+            </div>
+
+            {/* CUOTA */}
+            <StrategyCard
+              tag="Estrategia B"
+              title="Reducir Cuota"
+              subtitle="Alivio Mensual"
+              accent={NUVEX.verde}
+              recommended={recomendado === "cuota"}
+              explanation="Los abonos recalculan la cuota mensual restante. Mantienes el plazo original pero liberas flujo de caja mes a mes desde el próximo abono."
+              kpis={[
+                { label: "Ahorro Intereses", value: fmtCOP(cuotaAhorro), highlight: true },
+                { label: "Tiempo Eliminado", value: `${cuotaCuotasElim} meses`, muted: cuotaCuotasElim === 0 },
+                {
+                  label: "Nueva Cuota",
+                  value: fmtCOP(cuotaFinalCuotaCOP),
+                  sub: deltaCuota < 0 ? `(${fmtCOP(deltaCuota)})` : "sin cambio",
+                  accent: true,
+                },
+                { label: "Fin del Crédito", value: fechaFin(simCuota.cuotasUsadas) },
+              ]}
+              cta={{
+                label: actualDestino === "cuota" ? "Ya aplicado ✓" : "Aplicar a todos los abonos",
+                disabled: actualDestino === "cuota",
+                onClick: () => onAplicar("cuota"),
+              }}
+            />
+          </div>
+
+          {/* Recomendación */}
+          <div
+            className="relative mt-6 rounded-xl border p-4 flex items-start gap-3"
+            style={{
+              borderColor: `${NUVEX.verde}55`,
+              background: "linear-gradient(135deg, rgba(132,185,143,0.10), rgba(10,16,34,0.4))",
+            }}
+          >
+            <Sparkles className="h-5 w-5 text-[#84B98F] shrink-0 mt-0.5" />
+            <div className="text-[13px] leading-relaxed text-white/85">
+              <b style={{ color: NUVEX.verde }}>Recomendación NUVIA:</b>{" "}
+              {recomendado === "plazo" ? (
+                <>
+                  <b>Reducir plazo</b> genera <b style={{ color: NUVEX.verde }}>{fmtCOP(diferenciaAhorro)}</b> más de ahorro en intereses que reducir cuota, sin comprometer flujo de caja adicional (la cuota mensual no sube).
+                </>
+              ) : (
+                <>
+                  <b>Reducir cuota</b> es la mejor opción para este perfil: además de ahorrar intereses, baja la mensualidad en{" "}
+                  <b style={{ color: NUVEX.verde }}>{fmtCOP(Math.abs(deltaCuota))}</b> desde el próximo abono, mejorando la capacidad de pago del cliente.
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function StrategyCard({
+  tag,
+  title,
+  subtitle,
+  accent,
+  recommended,
+  explanation,
+  kpis,
+  cta,
+}: {
+  tag: string;
+  title: string;
+  subtitle: string;
+  accent: string;
+  recommended: boolean;
+  explanation: string;
+  kpis: Array<{ label: string; value: string; sub?: string; highlight?: boolean; muted?: boolean; accent?: boolean }>;
+  cta: { label: string; disabled?: boolean; onClick: () => void };
+}) {
+  return (
+    <div
+      className="flex-1 relative rounded-3xl p-6 flex flex-col backdrop-blur-xl transition-all"
+      style={{
+        background: "rgba(10,16,34,0.55)",
+        border: `${recommended ? "2px" : "1px"} solid ${recommended ? accent : `${accent}55`}`,
+        boxShadow: recommended ? `0 0 40px -12px ${accent}` : `0 8px 32px -20px ${accent}`,
+      }}
+    >
+      {recommended && (
+        <div
+          className="absolute top-0 right-0 px-4 py-1 rounded-bl-2xl text-[10px] font-bold uppercase tracking-wider"
+          style={{ background: accent, color: "#050816" }}
+        >
+          Recomendación NUVIA
+        </div>
+      )}
+
+      <div className="flex justify-between items-start mb-4 gap-3">
+        <div>
+          <span
+            className="text-[10.5px] font-bold uppercase tracking-widest"
+            style={{ color: accent }}
+          >
+            {tag}
+          </span>
+          <h3 className="text-xl font-semibold mt-1 text-white">{title}</h3>
+        </div>
+        <div
+          className="px-3 py-1 rounded-full border text-[10px] font-semibold"
+          style={{
+            borderColor: `${accent}55`,
+            background: `${accent}18`,
+            color: accent,
+          }}
+        >
+          {subtitle}
+        </div>
+      </div>
+
+      <p className="text-[12.5px] leading-relaxed text-white/60 mb-5">{explanation}</p>
+
+      <div className="grid grid-cols-2 gap-3 mb-5">
+        {kpis.map((k) => (
+          <div
+            key={k.label}
+            className="rounded-xl p-3 border"
+            style={{
+              background: k.accent ? `${accent}12` : "rgba(255,255,255,0.03)",
+              borderColor: k.accent ? `${accent}33` : "rgba(255,255,255,0.06)",
+            }}
+          >
+            <p
+              className="text-[9.5px] uppercase font-bold mb-1 tracking-wider"
+              style={{ color: k.accent ? accent : "rgba(255,255,255,0.4)" }}
+            >
+              {k.label}
+            </p>
+            <p
+              className="text-[15px] font-bold leading-tight"
+              style={{
+                color: k.muted ? "rgba(255,255,255,0.45)" : k.highlight ? accent : "white",
+              }}
+            >
+              {k.value}
+            </p>
+            {k.sub && (
+              <p className="text-[10.5px] mt-0.5" style={{ color: accent }}>
+                {k.sub}
+              </p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={cta.onClick}
+        disabled={cta.disabled}
+        className="mt-auto w-full py-3 rounded-xl font-semibold text-[12.5px] transition-all disabled:opacity-60 disabled:cursor-default"
+        style={{
+          background: recommended && !cta.disabled ? accent : "transparent",
+          color: recommended && !cta.disabled ? "#050816" : accent,
+          border: `1px solid ${accent}`,
+        }}
+      >
+        {cta.label}
+      </button>
+    </div>
   );
 }
