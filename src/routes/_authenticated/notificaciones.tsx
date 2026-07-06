@@ -654,10 +654,11 @@ function NotificacionesPage() {
         )}
       </div>
 
-      {/* ============ STICKY BOTTOM — NUVIA RECOVERY INTELLIGENCE ============ */}
+      {/* ============ BOTTOM — NUVIA RECOVERY INTELLIGENCE (no sticky para no tapar contenido al hacer scroll) ============ */}
       <div style={{
-        position: "sticky", bottom: 12, marginTop: 12, zIndex: 20,
+        position: "relative", marginTop: 16, marginBottom: 8, zIndex: 1,
       }}>
+
         <div className="nvx-glass" style={{
           borderRadius: 16, padding: "12px 16px", position: "relative", overflow: "hidden",
           background: `radial-gradient(600px 200px at 10% 0%, rgba(68,93,163,.28), transparent 60%),
