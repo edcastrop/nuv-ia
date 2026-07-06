@@ -88,6 +88,34 @@ export function SaveExpedienteButton({
       return;
     }
 
+    // 🛑 Bloqueo duro: sin datos mínimos del crédito el caso queda huérfano
+    // en el tablero (sin banco, sin producto, sin número). NUVIA no acepta
+    // guardar simulaciones incompletas: rompen QA, honorarios y auditoría.
+    const banco = (payload.cliente?.banco ?? "").trim();
+    const producto = (payload.cliente?.tipoProducto ?? "").trim();
+    const numeroCredito = (payload.cliente?.numeroCredito ?? "").trim();
+    const cedula = (payload.cliente?.cedula ?? "").trim();
+    const faltantes: string[] = [];
+    if (!banco) faltantes.push("Banco");
+    if (!producto) faltantes.push("Tipo de producto");
+    if (!numeroCredito) faltantes.push("Número de crédito");
+    if (!cedula) faltantes.push("Cédula");
+    if (faltantes.length > 0) {
+      const lista = faltantes.map((f) => `  • ${f}`).join("\n");
+      setMsg(`❌ No se puede guardar: faltan datos del expediente (${faltantes.join(", ")}).`);
+      if (typeof window !== "undefined") {
+        window.alert(
+          "No se puede guardar este caso: faltan datos mínimos del crédito.\n\n" +
+            lista +
+            "\n\nCompleta la ficha del cliente y del crédito antes de guardar. " +
+            "NUVIA ya no acepta expedientes sin banco, producto, cédula o número de crédito " +
+            "porque quedan huérfanos en el tablero de Casos y bloquean la auditoría QA y honorarios.",
+        );
+      }
+      return;
+    }
+
+
     setSaving(true);
     setMsg(null);
     try {
