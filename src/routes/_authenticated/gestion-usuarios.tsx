@@ -8,13 +8,14 @@ import {
   KpiCard,
   InsightCard,
   NCard,
+  NSelect,
   SectionHeader,
   EmptyState,
 } from "@/components/nuvia";
 import { NUVEX } from "@/components/nuvex/constants";
 import { useUserRole } from "@/hooks/useUserRole";
 import { roleLabel } from "@/lib/roleLabels";
-import { Users, ArrowRightLeft, X, AlertTriangle, UserCheck, UserMinus } from "lucide-react";
+import { Users, ArrowRightLeft, X, AlertTriangle, UserCheck, UserMinus, Search, CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/gestion-usuarios")({
   component: GestionUsuariosPage,
@@ -29,6 +30,20 @@ interface UsuarioRow {
   roles: string[];
   casosActivos: number;
   casosTotales: number;
+}
+
+interface CasoSearchRow {
+  id: string;
+  codigo: string | null;
+  cliente_nombre: string;
+  cedula: string | null;
+  numero_credito: string | null;
+  banco: string | null;
+  producto: string | null;
+  estado_caso: string | null;
+  asesor_id: string | null;
+  licenciado_id: string | null;
+  updated_at: string | null;
 }
 
 const ESTADOS_ACTIVOS = ["caso_finalizado", "proceso_cerrado", "negado_banco"];
@@ -117,6 +132,8 @@ function GestionUsuariosPage() {
 
       <InsightCard scope="productividad" />
 
+      <CasoReasignacionSearch usuarios={rows} onDone={refresh} />
+
       <NCard padding="md">
         <SectionHeader title="Carga por colaborador" description="Ordenado por casos activos descendente." />
         {loading && <div className="py-8 text-center text-sm" style={{ color: "var(--nuvia-text-secondary)" }}>Cargando usuarios…</div>}
@@ -130,10 +147,10 @@ function GestionUsuariosPage() {
               <thead>
                 <tr>
                   <th className="text-left py-2 pr-4">Usuario</th>
-                  <th className="text-left py-2 pr-4">Roles</th>
-                  <th className="py-2 pr-4 text-right">Casos activos</th>
-                  <th className="py-2 pr-4 text-right">Casos totales</th>
-                  <th className="py-2 pr-2"></th>
+                  <th className="text-left py-2 pr-4" style={{ color: "var(--nuvia-text-secondary)" }}>Roles</th>
+                  <th className="py-2 pr-4 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Casos activos</th>
+                  <th className="py-2 pr-4 text-right" style={{ color: "var(--nuvia-text-secondary)" }}>Casos totales</th>
+                  <th className="py-2 pr-2" style={{ color: "var(--nuvia-text-secondary)" }}></th>
                 </tr>
               </thead>
               <tbody>
@@ -206,6 +223,16 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const tipoOptions = [
+    { value: "asesor", label: "Asesor / responsable comercial" },
+    { value: "licenciado", label: "Analista Financiero Comercial" },
+  ];
+
+  const usuarioOptions = [
+    { value: "", label: "— Selecciona destinatario —" },
+    ...usuarios.map((u) => ({ value: u.id, label: `${u.nombre || u.email || "Usuario"} (${u.casosActivos} activos)` })),
+  ];
+
   useEffect(() => {
     setSeleccion(new Set());
     (async () => {
@@ -263,19 +290,11 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
         <div className="p-5 space-y-3">
           <div>
             <label className="nuvia-label block mb-1">Reasignar como</label>
-            <select value={tipo} onChange={(e) => setTipo(e.target.value as "asesor" | "licenciado")} className="nuvia-input">
-              <option value="asesor">Asesor del caso</option>
-              <option value="licenciado">Analista Financiero Comercial del caso</option>
-            </select>
+            <NSelect value={tipo} onValueChange={(v) => setTipo(v as "asesor" | "licenciado")} options={tipoOptions} />
           </div>
           <div>
             <label className="nuvia-label block mb-1">Reasignar a</label>
-            <select value={destino} onChange={(e) => setDestino(e.target.value)} className="nuvia-input">
-              <option value="">— Selecciona destinatario —</option>
-              {usuarios.map((u) => (
-                <option key={u.id} value={u.id}>{u.nombre || u.email} ({u.casosActivos} activos)</option>
-              ))}
-            </select>
+            <NSelect value={destino} onValueChange={setDestino} options={usuarioOptions} placeholder="Selecciona destinatario" />
           </div>
 
           <div className="flex items-center justify-between">
@@ -308,5 +327,187 @@ function ReasignarModal({ origen, usuarios, onClose, onDone }: {
         </div>
       </div>
     </div>
+  );
+}
+
+function CasoReasignacionSearch({ usuarios, onDone }: { usuarios: UsuarioRow[]; onDone: () => void | Promise<void> }) {
+  const [q, setQ] = useState("");
+  const [casos, setCasos] = useState<CasoSearchRow[]>([]);
+  const [selectedId, setSelectedId] = useState("");
+  const [tipo, setTipo] = useState<"asesor" | "licenciado">("asesor");
+  const [destino, setDestino] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState<string | null>(null);
+
+  const selected = casos.find((c) => c.id === selectedId) ?? null;
+  const userById = useMemo(() => new Map(usuarios.map((u) => [u.id, u])), [usuarios]);
+
+  const usuarioOptions = useMemo(() => [
+    { value: "", label: "— Selecciona analista —" },
+    ...usuarios.map((u) => ({ value: u.id, label: `${u.nombre || u.email || "Usuario"} · ${u.casosActivos} activos` })),
+  ], [usuarios]);
+
+  const tipoOptions = [
+    { value: "asesor", label: "Reasignar responsable comercial" },
+    { value: "licenciado", label: "Reasignar analista financiero" },
+  ];
+
+  const cleanTerm = (value: string) => value.trim().replace(/[%,]/g, " ").replace(/\s+/g, " ");
+
+  const buscar = async () => {
+    const term = cleanTerm(q);
+    setOk(null);
+    setSelectedId("");
+    setCasos([]);
+    if (term.length < 2) {
+      setError("Escribe al menos 2 caracteres del cliente, cédula, crédito o código.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const like = `%${term}%`;
+      const { data, error: e } = await supabase
+        .from("expedientes")
+        .select("id,codigo,cliente_nombre,cedula,numero_credito,banco,producto,estado_caso,asesor_id,licenciado_id,updated_at")
+        .or(`cliente_nombre.ilike.${like},cedula.ilike.${like},numero_credito.ilike.${like},codigo.ilike.${like},banco.ilike.${like}`)
+        .order("updated_at", { ascending: false })
+        .limit(25);
+      if (e) throw e;
+      const next = (data ?? []) as CasoSearchRow[];
+      setCasos(next);
+      if (next.length === 1) setSelectedId(next[0].id);
+      if (next.length === 0) setError("No encontré casos con ese criterio.");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo buscar el caso.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reasignarCaso = async () => {
+    if (!selected || !destino) {
+      setError("Selecciona un caso y un analista destino.");
+      return;
+    }
+    const col = tipo === "asesor" ? "asesor_id" : "licenciado_id";
+    const anterior = tipo === "asesor" ? selected.asesor_id : selected.licenciado_id;
+    setSaving(true);
+    setError(null);
+    setOk(null);
+    try {
+      const { error: upErr } = await supabase.from("expedientes").update({ [col]: destino } as never).eq("id", selected.id);
+      if (upErr) throw upErr;
+      const { data: auth } = await supabase.auth.getUser();
+      await supabase.from("auditoria_global").insert({
+        entidad: "expediente",
+        entidad_id: selected.id,
+        accion: tipo === "asesor" ? "reasignar_asesor_busqueda" : "reasignar_licenciado_busqueda",
+        user_id: auth.user?.id ?? null,
+        valor_anterior: { [col]: anterior } as never,
+        valor_nuevo: { [col]: destino } as never,
+      } as never);
+      const destinoNombre = userById.get(destino)?.nombre || userById.get(destino)?.email || "destino";
+      setOk(`${selected.cliente_nombre} reasignado a ${destinoNombre}.`);
+      setCasos((prev) => prev.map((c) => c.id === selected.id ? { ...c, [col]: destino } : c));
+      await onDone();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo reasignar el caso.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <NCard padding="md">
+      <SectionHeader
+        title="Buscar cliente y reasignar caso"
+        description="Busca por nombre, cédula, número de crédito, código del caso o banco."
+        icon={<Search size={14} />}
+      />
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(280px,1fr)_auto]">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") void buscar(); }}
+          className="nuvia-input"
+          placeholder="Ej: Daniel, Manuel Santos, NUV_2026, cédula o crédito…"
+        />
+        <button
+          type="button"
+          onClick={() => void buscar()}
+          disabled={loading}
+          className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          style={{ background: NUVEX.azul }}
+        >
+          <Search size={14} /> {loading ? "Buscando…" : "Buscar caso"}
+        </button>
+      </div>
+
+      {casos.length > 0 && (
+        <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(360px,1.2fr)_minmax(300px,0.8fr)]">
+          <div className="max-h-80 overflow-y-auto rounded-lg" style={{ border: "1px solid var(--nuvia-border)" }}>
+            {casos.map((c) => {
+              const active = selectedId === c.id;
+              const asesor = c.asesor_id ? userById.get(c.asesor_id) : null;
+              const licenciado = c.licenciado_id ? userById.get(c.licenciado_id) : null;
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setSelectedId(c.id)}
+                  className="block w-full px-3 py-3 text-left transition-colors"
+                  style={{
+                    borderBottom: "1px solid var(--nuvia-border)",
+                    background: active ? "rgba(68,93,163,0.18)" : "transparent",
+                    color: "var(--nuvia-text-primary)",
+                  }}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{c.cliente_nombre}</div>
+                    <div className="text-[10px]" style={{ color: "var(--nuvia-text-secondary)" }}>{c.codigo ?? c.estado_caso ?? "—"}</div>
+                  </div>
+                  <div className="mt-1 text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                    {c.banco ?? "Sin banco"} · {c.numero_credito ?? "Sin crédito"} · {c.cedula ?? "Sin cédula"}
+                  </div>
+                  <div className="mt-1 text-[10px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+                    Responsable: {asesor?.nombre || asesor?.email || "Sin asignar"} · Analista: {licenciado?.nombre || licenciado?.email || "Sin asignar"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="rounded-lg p-4 space-y-3" style={{ border: "1px solid var(--nuvia-border)", background: "rgba(255,255,255,0.03)" }}>
+            <div className="text-[12px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+              {selected ? `Reasignar: ${selected.cliente_nombre}` : "Selecciona un caso"}
+            </div>
+            <div>
+              <label className="nuvia-label block mb-1">Qué reasignar</label>
+              <NSelect value={tipo} onValueChange={(v) => setTipo(v as "asesor" | "licenciado")} options={tipoOptions} />
+            </div>
+            <div>
+              <label className="nuvia-label block mb-1">Analista destino</label>
+              <NSelect value={destino} onValueChange={setDestino} options={usuarioOptions} placeholder="Selecciona analista" />
+            </div>
+            <button
+              type="button"
+              onClick={() => void reasignarCaso()}
+              disabled={saving || !selected || !destino}
+              className="inline-flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              style={{ background: NUVEX.verde }}
+            >
+              <ArrowRightLeft size={14} /> {saving ? "Reasignando…" : "Reasignar caso seleccionado"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {error && <div className="mt-3 text-[12px]" style={{ color: "var(--nuvia-danger)" }}>{error}</div>}
+      {ok && <div className="mt-3 inline-flex items-center gap-2 text-[12px]" style={{ color: "var(--nuvia-accent-green)" }}><CheckCircle2 size={13} /> {ok}</div>}
+    </NCard>
   );
 }
