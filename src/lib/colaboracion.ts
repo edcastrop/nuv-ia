@@ -493,3 +493,16 @@ export function suscribirNotifColab(userId: string, cb: () => void) {
     .subscribe();
   return () => { supabase.removeChannel(ch); };
 }
+
+// Miembros de un canal (para autocompletar @menciones).
+// Si no hay miembros explícitos (canales de área o públicos), devuelve el directorio completo.
+export async function listMiembrosCanal(canalId: string): Promise<DirectorioPersona[]> {
+  const dir = await listDirectorioFull();
+  const { data } = await T("colab_miembros")
+    .select("user_id")
+    .eq("canal_id", canalId);
+  const ids = new Set(((data ?? []) as any[]).map((r) => r.user_id));
+  if (!ids.size) return dir;
+  const filtrados = dir.filter((p) => ids.has(p.user_id));
+  return filtrados.length ? filtrados : dir;
+}
