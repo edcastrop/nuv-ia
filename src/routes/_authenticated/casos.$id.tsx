@@ -42,19 +42,31 @@ import { EquipoCasoCard } from "@/components/expediente/EquipoCasoCard";
 import { ControlOperativoPanel } from "@/components/expediente/ControlOperativoPanel";
 import { ETAPA_A_DESTINO, type EtapaGuiadaId, type TabId } from "@/lib/expedienteGuiado";
 
+const TAB_IDS: TabId[] = ["resumen", "tareas", "documentos", "comunicaciones", "financiero", "juridico", "auditoria", "historial"];
+
 export const Route = createFileRoute("/_authenticated/casos/$id")({
   component: CasoDetail,
   head: () => ({ meta: [{ title: "Expediente · NUVEX" }] }),
+  validateSearch: (search: Record<string, unknown>): { tab?: TabId } => {
+    const t = search.tab;
+    return typeof t === "string" && (TAB_IDS as string[]).includes(t) ? { tab: t as TabId } : {};
+  },
 });
 
 function CasoDetail() {
   const { id } = Route.useParams();
+  const { tab: tabSearch } = Route.useSearch();
   const navigate = useNavigate();
   const { canValidarProyeccion, isManager } = useUserRole();
   const [exp, setExp] = useState<Expediente | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
-  const [tab, setTab] = useState<TabId>("resumen");
+  const [tab, setTab] = useState<TabId>(tabSearch ?? "resumen");
+
+  useEffect(() => {
+    if (tabSearch && tabSearch !== tab) setTab(tabSearch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tabSearch]);
 
   const reload = () => {
     setLoading(true);
