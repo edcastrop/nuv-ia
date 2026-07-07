@@ -137,7 +137,7 @@ export function NuviaValidacionAuditorBlock({
 
   const subio = result ? result.delta > 0 : false;
   const score = result ? scoreMostrado : scoreActual;
-  const dColor = result ? dictamenColor(result.dictamen) : "var(--nuvia-accent)";
+  const dColor = result ? dictamenColor(result.dictamen) : "var(--nuvia-accent-green)";
 
   return (
     <div

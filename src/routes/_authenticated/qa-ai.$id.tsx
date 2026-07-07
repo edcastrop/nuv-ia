@@ -293,7 +293,7 @@ function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: Extra
   return (
     <Accordion
       title={titulo}
-      icon={<FileText size={15} style={{ color: "var(--nuvia-accent)" }} />}
+      icon={<FileText size={15} style={{ color: "var(--nuvia-accent-green)" }} />}
       count={count}
       defaultOpen={false}
     >
@@ -346,9 +346,9 @@ function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: Extra
                 disabled={!extracto.archivo_path || opening}
                 className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md text-[12.5px] font-semibold"
                 style={{
-                  background: extracto.archivo_path ? "var(--nuvia-accent)" : "rgba(255,255,255,0.06)",
+                  background: extracto.archivo_path ? "var(--nuvia-accent-green)" : "rgba(255,255,255,0.06)",
                   color: extracto.archivo_path ? "#03121b" : "var(--nuvia-text-secondary)",
-                  border: extracto.archivo_path ? "1px solid var(--nuvia-accent)" : "1px solid var(--nuvia-border)",
+                  border: extracto.archivo_path ? "1px solid var(--nuvia-accent-green)" : "1px solid var(--nuvia-border)",
                   cursor: extracto.archivo_path && !opening ? "pointer" : "not-allowed",
                   boxShadow: extracto.archivo_path ? "0 4px 14px -6px rgba(56,189,248,0.55)" : "none",
                 }}
@@ -378,7 +378,7 @@ function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: Extra
                   style={{ background: "rgba(255,255,255,0.03)", border: "1px solid var(--nuvia-border)", color: "var(--nuvia-text-primary)" }}
                 >
                   <span className="flex items-center gap-2 truncate">
-                    <Paperclip size={12} style={{ color: "var(--nuvia-accent)" }} />
+                    <Paperclip size={12} style={{ color: "var(--nuvia-accent-green)" }} />
                     <span className="truncate">{s.archivo_nombre ?? s.archivo_path}</span>
                   </span>
                   <span className="text-[11px]" style={{ color: "var(--nuvia-text-muted)" }}>
