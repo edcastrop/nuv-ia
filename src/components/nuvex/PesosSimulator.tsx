@@ -795,6 +795,17 @@ export function PesosSimulator({
           </div>
         </Card>
 
+        {client.modalidadProducto === "leasing_habitacional" && (
+          <LeasingHabitacionalPanel
+            client={client}
+            onChange={setClient}
+            saldoCapital={saldoCapital}
+            seguros={seguros}
+            tea={tea}
+            canonActual={cuotaActual}
+          />
+        )}
+
         <FreshBlock data={cobertura} onChange={setCobertura} />
 
         {datosCompletos && (
