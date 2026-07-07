@@ -160,8 +160,8 @@ export function VeredictoBlock({ veredicto }: { veredicto: Veredicto | null | un
                       </p>
                       <p className="text-[12.5px] mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{h.detalle}</p>
                       <p className="text-[12.5px] mt-1.5 flex gap-1.5" style={{ color: "var(--nuvia-text-primary)" }}>
-                        <Lightbulb size={12} style={{ color: "var(--nuvia-accent)", marginTop: 3, flexShrink: 0 }} />
-                        <span><strong style={{ color: "var(--nuvia-accent)" }}>Pista:</strong> {h.pista}</span>
+                        <Lightbulb size={12} style={{ color: "var(--nuvia-accent-green)", marginTop: 3, flexShrink: 0 }} />
+                        <span><strong style={{ color: "var(--nuvia-accent-green)" }}>Pista:</strong> {h.pista}</span>
                       </p>
                     </div>
                   </div>
@@ -206,7 +206,7 @@ export function VeredictoBlock({ veredicto }: { veredicto: Veredicto | null | un
           <ul className="mt-1 space-y-1.5">
             {veredicto.recomendaciones.map((r, i) => (
               <li key={i} className="text-sm flex gap-2" style={{ color: "var(--nuvia-text-primary)" }}>
-                <span style={{ color: "var(--nuvia-accent)" }}>→</span>
+                <span style={{ color: "var(--nuvia-accent-green)" }}>→</span>
                 <span>{r}</span>
               </li>
             ))}

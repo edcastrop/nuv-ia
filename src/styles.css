@@ -89,6 +89,7 @@
   /* Color — acentos */
   --nuvia-accent-blue:  #445DA3;
   --nuvia-accent-green: #84B98F;
+  --nuvia-accent:       var(--nuvia-accent-green);
 
   /* Color — feedback */
   --nuvia-success: #84B98F;
