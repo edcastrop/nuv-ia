@@ -71,6 +71,12 @@ export type ExtractoApplyPayload = {
     cuotaBaseSimulacion?: string;
     requiereVerificacion?: boolean;
   };
+  /** Datos específicos de leasing habitacional (solo cuando el producto es leasing). */
+  leasing?: {
+    valorOpcionCompra?: string;
+    sistemaAmortizacion?: string;
+    fechaCorte?: string;
+  };
   /**
    * Valores mensuales adicionales detectados en el extracto (OCR).
    * Cadenas vacías significan "no detectado por OCR" → la UI debe mostrar
