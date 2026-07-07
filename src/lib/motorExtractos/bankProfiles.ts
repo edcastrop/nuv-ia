@@ -559,4 +559,7 @@ export const CAMPO_LABEL: Record<CampoMotor, string> = {
   tasaCobertura: "Tasa de cobertura (%)",
   cuotaSinSubsidio: "Cuota sin subsidio",
   cuotaConSubsidio: "Cuota con subsidio",
+  valorOpcionCompra: "Valor opción de compra (leasing)",
+  fechaCorte: "Fecha de corte",
 };
+
