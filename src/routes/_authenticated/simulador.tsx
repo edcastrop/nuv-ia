@@ -349,10 +349,12 @@ export function SimuladorPage() {
       const mensaje = `No se puede crear el caso: faltan datos financieros mínimos del crédito.\n\n${detalle}\n\nCarga/aplica el extracto o completa Datos del crédito antes de certificar.`;
       toast.error("No se creó el caso: faltan datos financieros mínimos del crédito.", { duration: 6500 });
       if (typeof window !== "undefined") window.alert(mensaje);
+      savingRef.current = false;
       return;
     }
     if (!certification?.result.certificable) {
       toast.error("No se creó el caso: primero debe existir una auditoría NUVIA aprobada.", { duration: 6500 });
+      savingRef.current = false;
       return;
     }
     setSavingDraft(true);
