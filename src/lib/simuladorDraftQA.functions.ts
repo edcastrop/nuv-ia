@@ -771,7 +771,7 @@ export const escalarConsultaTecnica = createServerFn({ method: "POST" })
         .select("user_id")
         .in("role", ["director_financiero_qa", "super_admin"]);
       const uniqIds = Array.from(
-        new Set((directores ?? []).map((r) => r.user_id as string).filter(Boolean).filter((u) => u !== userId)),
+        new Set((directores ?? []).map((r) => r.user_id as string).filter(Boolean)),
       );
       if (uniqIds.length > 0) {
         const { data: analista } = await supabase

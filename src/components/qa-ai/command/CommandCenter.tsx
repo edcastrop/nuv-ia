@@ -1228,7 +1228,7 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
   };
 
   type DateBucket = "hoy" | "7d" | "30d" | "todo" | "custom";
-  const [dateBucket, setDateBucket] = useState<DateBucket>("hoy");
+  const [dateBucket, setDateBucket] = useState<DateBucket>("30d");
   const [customDate, setCustomDate] = useState<string>("");
 
   const dateFiltered = useMemo(() => {
@@ -1345,7 +1345,7 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
           <input
             type="date"
             value={customDate}
-            onChange={(e) => { setCustomDate(e.target.value); setDateBucket(e.target.value ? "custom" : "hoy"); }}
+            onChange={(e) => { setCustomDate(e.target.value); setDateBucket(e.target.value ? "custom" : "30d"); }}
             style={{
               padding: "5px 10px", borderRadius: 8, fontSize: 11, fontWeight: 600,
               background: dateBucket === "custom" ? "rgba(91,140,255,0.14)" : "rgba(255,255,255,0.03)",
