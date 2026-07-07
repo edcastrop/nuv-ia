@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import type { ClientData } from "./ClientFields";
 import {
@@ -453,16 +453,15 @@ function TablaAmortizacion({ cuotas }: { cuotas: CuotaLeasing[] }) {
         </thead>
         <tbody>
           {preview.map((c, idx) => (
-            <>
+            <Fragment key={c.numero}>
               {showEllipsis && idx === 12 && (
-                <tr key="ellipsis">
+                <tr>
                   <td colSpan={9} style={{ padding: "6px 10px", textAlign: "center", color: "#9BB0CC" }}>
                     … {cuotas.length - 24} cánones ocultos …
                   </td>
                 </tr>
               )}
               <tr
-                key={c.numero}
                 style={{
                   background: c.esOpcionCompra ? "rgba(132,185,143,0.15)" : "transparent",
                   borderTop: "1px solid rgba(255,255,255,0.06)",
@@ -478,9 +477,10 @@ function TablaAmortizacion({ cuotas }: { cuotas: CuotaLeasing[] }) {
                 <td style={{ padding: "6px 10px", textAlign: "right", color: "#E6F0FF", fontWeight: 600 }}>{formatCOP(c.canonTotal)}</td>
                 <td style={{ padding: "6px 10px", textAlign: "right", color: "#E6F0FF" }}>{formatCOP(c.saldoFinal)}</td>
               </tr>
-            </>
+            </Fragment>
           ))}
         </tbody>
+
       </table>
     </div>
   );

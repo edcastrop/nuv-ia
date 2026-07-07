@@ -1219,6 +1219,9 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   const handleConfirm = async () => {
     if (!parsed) return;
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
+    // Alias: algunos parsers emiten `titular` en lugar de `cliente` (formato AI/LLM
+    // y perfiles nuevos). Preferimos `cliente` (heredado) y caemos a `titular`.
+    const getCliente = () => get("cliente") || get("titular");
     // Validación dura: cuotasPagadas no puede ser 0 si hay número de cuota
     const _ip = (k: string) => {
       const v = parsed[k];
@@ -1363,7 +1366,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     const primaryArchivoPath = archivoPath ?? uploadedOriginalsRef.current[0]?.path ?? null;
     const payload: ExtractoApplyPayload = {
       cliente: {
-        nombre: get("cliente"),
+        nombre: getCliente(),
         cedula: cedulaLimpia,
         numeroCredito: get("numeroCredito"),
         banco: bancoCanon,
