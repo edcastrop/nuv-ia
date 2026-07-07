@@ -169,19 +169,30 @@ export function LeasingHabitacionalPanel({
         />
       </div>
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <label className="flex items-center gap-2 text-[13px]">
+      <div
+        className="mt-4 flex flex-wrap items-center gap-3 rounded-lg px-3 py-2"
+        style={{
+          background: "rgba(132,185,143,0.08)",
+          border: "1px solid rgba(132,185,143,0.25)",
+        }}
+      >
+        <label
+          className="flex items-center gap-2 text-[13px]"
+          style={{ color: "#E6F0FF", fontWeight: 500 }}
+        >
           <input
             type="checkbox"
             checked={!!client.incluirOpcionCompra}
             onChange={(e) => set("incluirOpcionCompra", e.target.checked)}
+            style={{ accentColor: "#84B98F" }}
           />
           Incluir opción de compra dentro de la proyección de pago final
         </label>
-        <span className="text-[11px] opacity-70">
+        <span className="text-[11px]" style={{ color: "#9FB4D8" }}>
           Si está desactivado, el residual se mantiene como saldo final del leasing.
         </span>
       </div>
+
 
       {qaAlerts.length > 0 && (
         <div className="mt-4 space-y-2">
