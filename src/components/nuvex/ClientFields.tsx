@@ -48,6 +48,17 @@ export interface ClientData {
     esEmprendedor?: boolean;
   };
   /** Perfil de ingresos capturado en vivo durante la llamada — alimenta la validación de capacidad 30%/40%. */
+  // --- LEASING HABITACIONAL (opcional; aditivo, no afecta hipotecario) ---
+  /** Modalidad del producto financiero. Por defecto 'hipotecario' para no alterar flujos existentes. */
+  modalidadProducto?: "hipotecario" | "leasing_habitacional";
+  /** Valor de la opción de compra (residual) en pesos. Solo aplica en leasing habitacional. */
+  valorOpcionCompra?: string;
+  /** Si es true, la proyección incluye el pago de la opción de compra como cuota final. */
+  incluirOpcionCompra?: boolean;
+  /** Sistema de amortización reportado por el banco (p.ej. "PESOS - C. FIJA"). */
+  sistemaAmortizacion?: string;
+  /** Fecha de corte del extracto (yyyy-mm-dd). */
+  fechaCorte?: string;
   ingresos?: IngresosCliente;
 }
 
@@ -426,6 +437,11 @@ export const defaultClient: ClientData = {
   cuotasPagadas: "",
   cuotasPendientes: "",
   porcentajeHonorarios: "6",
+  modalidadProducto: "hipotecario",
+  valorOpcionCompra: "",
+  incluirOpcionCompra: false,
+  sistemaAmortizacion: "",
+  fechaCorte: "",
   correo: "",
   celular: "",
   fechaDesembolso: "",

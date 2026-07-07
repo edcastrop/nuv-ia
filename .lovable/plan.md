@@ -1,70 +1,97 @@
-
-# War Room NUVIA · Rediseño Colaboración
-
-Alcance 100% **visual + realtime**. No se tocan: rutas, tablas, permisos, RLS, edge functions, eventos ni contratos de `src/lib/colaboracion.ts`. Todo el trabajo se concentra en `src/routes/_authenticated/colaboracion.index.tsx` y, si aplica, un pequeño hook realtime nuevo.
-
 ## Objetivo
 
-Convertir la pantalla en un centro de operaciones estilo Palantir / Bloomberg / Linear, con densidad útil, realtime auténtico y microinteracciones sobrias.
+Agregar soporte para **Leasing Habitacional en pesos con opción de compra** dentro del simulador en pesos actual, conservando 100% intacta la lógica de crédito hipotecario. Un solo simulador, dos motores matemáticos según el tipo de producto.
 
-## Cambios por zona
+## Alcance (qué SÍ / qué NO)
 
-### 1. Sidebar global (izq)
-Sin cambios. Se conserva tal cual.
+**SÍ:**
+- Selector "Tipo de producto" (Crédito hipotecario | Leasing habitacional) en el simulador en pesos.
+- Nuevo motor `proyectarLeasing` con Sistema Francés + valor residual (opción de compra).
+- Campos adicionales visibles solo en modo leasing: número de leasing, valor del leasing, canon actual, valor opción de compra, sistema de amortización, fecha de corte, cánones pagados/pendientes.
+- Extracción automática desde extracto PDF (Banco de Bogotá primero, arquitectura extensible).
+- Escenarios de optimización con canon extra (50k / 100k / 150k / 200k / manual).
+- Switch "¿Incluir opción de compra en la proyección de pago final?" (no / sí).
+- Alertas QA específicas de leasing.
+- Persistencia (`expediente_maestro`, `proyecciones_financieras`) con flag `tipo_producto` y `valor_residual`.
 
-### 2. Team Channels (col 1, ~220-260px)
-- Reorganización visual: separadores por bloque (Áreas · Dirección · Privados).
-- Se añaden los canales que faltan del brief: **Dirección Financiera, Dirección Jurídica, Talento Humano** (matcher por nombre; si no existe canal, quedan deshabilitados con hint "sin canal").
-- Bloque inferior "Personas conectadas" con avatares + dot verde (usando `usePresenciaOnline` que ya existe).
-- Hover con glow del accent, estado activo con barra lateral.
+**NO:**
+- No se toca la ruta ni el motor UVR.
+- No se modifica ningún cálculo actual de hipotecario en pesos (`proyectarPesos` queda igual).
+- No se rediseña la UI: se reutiliza estilo NUVIA existente (NCard, tone dark según memoria).
+- No se crea página nueva; todo vive dentro de `PesosSimulator.tsx`.
 
-### 3. Casos activos (col 2, ~300px) — **Bloque QA dinámico**
-Este es el mayor cambio funcional-visual:
-- Tarjetas **agrupadas por etapa**: `SIMULADO → QA → RADICADO → APROBADO → FIRMA → FINALIZADO` con contadores por columna colapsable.
-- Tarjetas más compactas (mostrar 8-10 visibles), con: iniciales cliente, banco, N° crédito, analista (avatar), SLA, prioridad, badges (📎 archivos, 💬 mensajes, 🤖 IA, ✅ QA), barra de progreso mini, dot "en edición" cuando otro user está activo.
-- **Realtime**: suscripción a `postgres_changes` sobre `expedientes` (campos etapa/estado/qa_score) → la tarjeta cambia de grupo con animación slide+fade sin recargar. Hook nuevo `useExpedientesLive.ts`.
-- Filtros existentes (search, prioridad) se mantienen; se agrega chip "solo míos".
+## Cambios técnicos
 
-### 4. Panel central — **Command Center**
-- Header actual se conserva y se refina (más denso, chips SLA/prioridad/etapa con pulso solo si `sla<=2`).
-- Se agregan **tabs internos** sobre el chat: `Conversación · Expediente · Extractos · Timeline · IA Analysis · Notas · Checklist`.
-  - `Conversación` = `CanalChat` actual.
-  - `Expediente / Extractos / Timeline / IA Analysis` = embed liviano (iframe/link con botón "abrir en módulo"). Como no se puede duplicar lógica, cada tab muestra un resumen + CTA al módulo real (mantiene lo que ya hacían los HeaderAction, pero ahora inline).
-  - `Notas / Checklist` = placeholders visuales con CTA "próximamente" (para no crear tablas).
-- Chat: separadores de fecha, agrupación por autor consecutivo, indicador "escribiendo…" (Realtime Presence en el canal — ya hay infra en `presencia.ts`).
+### 1. Motor matemático — `src/lib/proyeccion.ts`
+Se agrega, sin modificar `proyectarPesos`:
 
-### 5. Case Intelligence (col 4)
-- Se refina: semáforo de salud, mini sparkline de actividad (últimos 7 días de mensajes del canal), probabilidad de éxito derivada de qa_score, chip "riesgo IA".
-- Los eventos ahora son reales: últimos N mensajes del canal (ya suscritos) + últimas transiciones de expediente (si hay tabla `expediente_eventos`, si no se dejan los pseudo actuales).
+```ts
+export interface LeasingInput extends ProyeccionInputBase {
+  valorResidual: number;              // opción de compra
+  incluirOpcionCompra: boolean;       // switch UI
+  sistemaAmortizacion?: "frances" | "aleman" | "cuota_fija";
+}
 
-## Realtime
-- Nuevo hook `src/hooks/useExpedientesLive.ts`: suscribe a `postgres_changes` de `expedientes` (event `*`) y devuelve un map `{casoId: {etapa, qa_score, updated_at}}`.
-- Se combina con `creditMap` existente para reubicar tarjetas por etapa.
-- Animaciones: `framer-motion` (ya en package.json si existe; si no, CSS transitions `translate3d + opacity`).
+export function proyectarLeasing(input: LeasingInput): ProyeccionResultado & {
+  valorResidual: number;
+  saldoFinalConvergeAlResidual: boolean;
+};
+```
 
-## Microinteracciones
-- Transiciones 200ms cubic-bezier(.2,.8,.2,1).
-- Pulso verde en dot Live sólo cuando hay actividad en últimos 60s.
-- Border glow accent en hover, sombra profunda en active.
-- No spinners: skeletons oscuros glass.
+Fórmula del canon financiero (Francés con FV):
+```
+PMT = (PV − FV / (1+i)^n) · i / (1 − (1+i)^-n)
+```
+- Cada mes: interés = saldo·i; capital = PMT − interés; saldoFinal = saldo − capital.
+- Se detiene cuando `saldo ≤ valorResidual + tolerancia` (no llega a 0).
+- Si `incluirOpcionCompra=true`, agrega una cuota final = valorResidual y saldo llega a 0.
 
-## Fuera de alcance (explícito)
-- Nuevas tablas / migraciones.
-- Cambios en `colaboracion.ts`, `presencia.ts`, permisos, notifTriggers.
-- Nuevas rutas TanStack.
-- Reescritura de `CanalChat` (solo se le añade date-separator vía prop opcional si es trivial; si no, se deja igual).
+### 2. Persistencia
+Migración: agregar a `expediente_maestro` y `proyecciones_financieras`
+- `tipo_producto text default 'hipotecario'` (`'hipotecario' | 'leasing_habitacional'`)
+- `valor_residual numeric`
+- `incluir_opcion_compra boolean default false`
+- `sistema_amortizacion text`
 
-## Archivos a tocar
-- `src/routes/_authenticated/colaboracion.index.tsx` (refactor visual y agrupación por etapa).
-- `src/hooks/useExpedientesLive.ts` (nuevo, ~40 líneas).
-- Opcional: pequeño ajuste en `CanalChat.tsx` para separadores de fecha.
+RLS existente se preserva (columnas nuevas heredan policies).
 
-## Riesgos y mitigación
-- El realtime sobre `expedientes` requiere que la tabla esté en `supabase_realtime` publication. Si no lo está, el hook cae en fallback silencioso (polling 30s) y no rompe nada.
-- Los tabs internos del panel central no duplican lógica de otros módulos; sólo muestran resumen + CTA. Así no rompemos ningún permiso.
+### 3. UI — `PesosSimulator.tsx`
+- Nuevo `ModalidadProducto` (radio o segment) arriba del bloque "Datos del crédito".
+- Cuando es leasing: renombrar labels ("Cuota" → "Canon", "Cuotas pendientes" → "Cánones pendientes"), mostrar campos "Valor opción de compra", "Sistema de amortización", "Fecha de corte".
+- Switch avanzado dentro del bloque de optimización.
+- Botones de canon extra: 50k / 100k / 150k / 200k / manual (reutiliza el patrón actual de "aporte extra").
+- KPIs adicionales: valor residual, opción de compra, costo total, intereses totales, veces pagado.
 
-## Validación
-- Typecheck completo.
-- Verificar en preview con Playwright: cambio de canal, navegación de HeaderActions, agrupación por etapa visible, hover states, responsive md/lg/2xl.
+### 4. Parser de extractos — `src/lib/motorExtractos/`
+- Nuevo `bancoBogotaLeasingParser.ts` (basado en el hipotecario existente) que detecta encabezado "LEASING HABITACIONAL" y extrae: valor del leasing, plazo inicial, cánones pagados/pendientes, canon actual, seguros, TEA, valor opción de compra, sistema, fecha de corte.
+- Registrar en `bankProfiles.ts` como producto adicional del Banco de Bogotá.
 
-¿Apruebas este alcance? Si prefieres que sea aún más agresivo (por ejemplo, reescribir `CanalChat` completo o crear tabla `expediente_eventos` para timeline real), dímelo antes de que arranque.
+### 5. QA — extensión de `simuladorAutoQA.ts`
+Nuevas reglas activas solo cuando `tipo_producto === 'leasing_habitacional'`:
+- Canon banco vs canon reconstruido (Δ > 1%).
+- Saldo final no converge al residual (Δ > 0.5%).
+- Opción de compra fuera del rango esperado (7–15% del valor del leasing) — alerta soft.
+- Capital 0 en cuota donde debería existir amortización.
+- TEA pactada vs cobrada.
+- Seguros mezclados en canon financiero.
+
+## Diseño
+
+- Mismo estilo NUVIA (dark tokens, NCard, NSelect según memoria).
+- Los nuevos campos aparecen inline en los bloques existentes; no se crean pestañas ni pantallas nuevas.
+- Copys en español consistentes con el resto ("Canon", "Opción de compra", "Valor residual").
+
+## Entregables
+
+1. Motor `proyectarLeasing` + tests unitarios rápidos (script node en /tmp para validar contra el ejemplo Banco de Bogotá: PV=325.990.284, residual=32.599.028, n=224, TEA=10.29%, seguros=82.802).
+2. Migración de columnas nuevas + regeneración de tipos.
+3. `PesosSimulator.tsx` con selector, campos condicionales, KPIs, escenarios y switch.
+4. Parser leasing Banco de Bogotá + registro en `bankProfiles`.
+5. Reglas QA leasing.
+6. Verificación: cargar el ejemplo del Banco de Bogotá, comprobar que el canon reconstruido ≈ 3.150.355 y saldo final ≈ 32.599.028.
+
+## Confirmaciones antes de implementar
+
+1. ¿La opción de compra debe quedar registrada como **saldo residual proyectado** dentro de `proyecciones_financieras` o como campo separado en `expediente_maestro` (o ambos)?
+2. Para el parser: además de Banco de Bogotá, ¿hay otros bancos con leasing habitacional que quieras dejar preparados en este mismo cambio (Davivienda, Bancolombia), o los agregamos después?
+3. ¿El módulo de **honorarios** debe reconocer leasing habitacional como producto y calcular sobre "cánones eliminados + intereses evitados", o mantiene la lógica actual sin cambios en esta iteración?
