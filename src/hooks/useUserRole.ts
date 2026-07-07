@@ -75,8 +75,14 @@ export function isLicenciado(roles: AppRole[]): boolean {
 }
 
 export function isDirectorQA(roles: AppRole[]): boolean {
-  return roles.includes("director_financiero_qa") || roles.includes("super_admin");
+  return (
+    roles.includes("director_financiero_qa") ||
+    roles.includes("super_admin") ||
+    roles.includes("admin") ||
+    roles.includes("gerencia")
+  );
 }
+
 
 export function isDirectorJuridico(roles: AppRole[]): boolean {
   return roles.includes("director_juridico") || roles.includes("super_admin");
