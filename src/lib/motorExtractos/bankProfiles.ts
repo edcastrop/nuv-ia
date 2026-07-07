@@ -346,12 +346,63 @@ OTROS CAMPOS:
     id: "banco_bogota_leasing",
     banco: "Banco de Bogotá",
     productos: ["LEASING_HABITACIONAL"],
-    matchAny: [/banco\s+de\s+bogot.*leasing/i, /leasing.*bogot/i],
-    hints: `BANCO DE BOGOTÁ LEASING:
-- "Valor del leasing" → valorDesembolsado.
-- "Canon" → cuotaActual. "Cánones pendientes" → cuotasPendientes.
-- Plazo en meses.`,
+    matchAny: [
+      /banco\s+de\s+bogot.*leasing/i,
+      /leasing.*bogot/i,
+      /extracto.*leasing\s+habitacional/i,
+      /c[aá]nones\s+pendientes/i,
+      /valor\s+opci[oó]n\s+de\s+compra/i,
+    ],
+    hints: `BANCO DE BOGOTÁ LEASING HABITACIONAL — Extracto "Leasing Habitacional"
+(encabezado con "LEASING HABITACIONAL", bloque "DATOS GENERALES DEL LEASING" y
+tabla de valores del canon).
+
+→ banco="Banco de Bogotá", producto="LEASING_HABITACIONAL", moneda="PESOS".
+
+DATOS GENERALES DEL LEASING:
+- "VALOR DEL LEASING" / "Valor total del leasing" → valorDesembolsado (ej "325,990,284").
+- "PLAZO INICIAL" en meses → plazoInicial (ej 240).
+- "CÁNONES PAGADOS" / "Cánones cancelados" → cuotasPagadas (ej 13).
+- "CÁNONES PENDIENTES" → cuotasPendientes (ej 224).
+- "CANON ACTUAL" / "VALOR CANON" → cuotaActual (ej "3,150,355"). Es el canon TOTAL con seguros.
+- "SISTEMA DE AMORTIZACIÓN" → sistemaAmortizacion (ej "PESOS - C. FIJA").
+- "VALOR OPCIÓN DE COMPRA" / "Opción de compra" → valorOpcionCompra (ej "32,599,028").
+  Este valor es CRÍTICO en leasing: NO es cuota, es el valor residual al final del contrato.
+
+TASAS:
+- "TASA COBRADA E.A." / "TEA" → tasaEA (ej 10.29). ES LA QUE MANDA.
+- "TASA PACTADA E.A." → teaPactada si difiere.
+
+SEGUROS:
+- Suma "+ SEGURO DE VIDA" + "+ SEGURO INCENDIO Y TERREMOTO" + otros seguros → seguros
+  (ej 82,802).
+- Los seguros están SEPARADOS del canon financiero; el canon financiero se
+  reconstruye con PMT = (PV − FV/(1+i)^n)·i/(1−(1+i)^-n).
+
+SALDO:
+- "SALDO CAPITAL" / "SALDO ACTUAL DEL LEASING" → saldoCapital.
+- Si no aparece un saldo posterior al pago, saldoCapital ≈ valorDesembolsado
+  cuando cuotasPagadas=0.
+
+FECHA:
+- "FECHA DE CORTE" → fechaCorte en formato YYYY-MM-DD.
+
+TITULAR / DOCUMENTO:
+- Nombre del locatario en mayúsculas → titular.
+- "IDENTIFICACIÓN" / "CÉDULA" → cedula.
+- "NÚMERO DE LEASING" / "No. CONTRATO" → numeroCredito.
+
+BENEFICIO / COBERTURA:
+- El leasing habitacional normalmente NO tiene FRECH.
+- Si no hay valor > 0 en "Cobertura" o "Subsidio", deja beneficioActivo="no".
+
+VALIDACIÓN OBLIGATORIA:
+- cuotasPagadas + cuotasPendientes ≈ plazoInicial (±2).
+- Reconstrucción canon: con PV=saldoCapital, FV=valorOpcionCompra, n=cuotasPendientes,
+  i=tasaEA mensual → PMT + seguros ≈ cuotaActual (±1%).
+  Si no coincide, RE-LEE tasaEA, seguros y valor opción de compra.`,
   },
+
   {
     id: "fna",
     banco: "FNA",
