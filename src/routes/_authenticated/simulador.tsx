@@ -287,6 +287,8 @@ export function SimuladorPage() {
     );
     if (!nombre) {
       // No hay nombre en la simulación → abrir diálogo para pedirlo.
+      // Liberamos el lock: no se creó nada y el usuario debe reintentar.
+      savingRef.current = false;
       setSaveOpen(true);
       return;
     }
