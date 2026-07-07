@@ -189,17 +189,28 @@ function CasosPage() {
     });
   }, [rows, mios, user?.id, banco, modalidad, analistaId]);
 
-  const dupCedulas = useMemo(() => {
+  const duplicateCaseKeys = useMemo(() => {
     const counts = new Map<string, number>();
     rows.forEach((r) => {
-      const c = (r.cedula ?? "").trim();
-      if (!c) return;
-      counts.set(c, (counts.get(c) ?? 0) + 1);
+      const cedula = (r.cedula ?? "").replace(/\D/g, "");
+      const banco = (r.banco ?? "").trim().toLowerCase();
+      const credito = (r.numero_credito ?? "").replace(/\D/g, "");
+      if (!r.asesor_id || !cedula || !banco || !credito) return;
+      const key = `${r.asesor_id}|${cedula}|${banco}|${credito}`;
+      counts.set(key, (counts.get(key) ?? 0) + 1);
     });
     const s = new Set<string>();
-    counts.forEach((n, c) => { if (n > 1) s.add(c); });
+    counts.forEach((n, key) => { if (n > 1) s.add(key); });
     return s;
   }, [rows]);
+
+  const caseDuplicateKey = (r: Expediente) => {
+    const cedula = (r.cedula ?? "").replace(/\D/g, "");
+    const banco = (r.banco ?? "").trim().toLowerCase();
+    const credito = (r.numero_credito ?? "").replace(/\D/g, "");
+    if (!r.asesor_id || !cedula || !banco || !credito) return "";
+    return `${r.asesor_id}|${cedula}|${banco}|${credito}`;
+  };
 
   const bancos = useMemo(() => Array.from(new Set(rows.map((r) => r.banco).filter(Boolean))) as string[], [rows]);
   const analistasList = useMemo(() => {
@@ -501,7 +512,7 @@ function CasosPage() {
               <TimelineCard
                 key={r.id}
                 r={r}
-                isDup={!!r.cedula && dupCedulas.has(r.cedula.trim())}
+                isDup={duplicateCaseKeys.has(caseDuplicateKey(r))}
                 asesor={asesores.get(r.asesor_id)}
                 licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
                 auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
