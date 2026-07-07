@@ -1220,13 +1220,34 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       const n = parseInt(v.replace(/[^\d]/g, ""), 10);
       return Number.isFinite(n) ? n : 0;
     };
-    const tieneMinimoParaSimular =
-      parseMontoExtracto(get("saldoCapital")) > 0 &&
-      parseMontoExtracto(get("cuotaBaseSimulacion") || get("cuotaMensual")) > 0;
-    if (!tieneMinimoParaSimular && _ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
+    const faltantesMinimos: string[] = [];
+    if (parseMontoExtracto(get("saldoCapital")) <= 0) faltantesMinimos.push("Saldo capital");
+    if (parseMontoExtracto(get("cuotaBaseSimulacion") || get("cuotaMensual")) <= 0) {
+      faltantesMinimos.push("Cuota base de simulación o cuota mensual");
+    }
+    if (faltantesMinimos.length > 0) {
+      setErrorMsg(
+        `Para aplicar el extracto al simulador falta completar: ${faltantesMinimos.join(", ")}. Corrige el dato detectado o escríbelo manualmente en esta pantalla y vuelve a aplicar.`,
+      );
+      setStage("review");
+      if (faltantesMinimos.some((f) => f.includes("Cuota"))) {
+        setTimeout(() => cuotaBaseInputRef.current?.focus(), 0);
+      }
       return;
     }
-    if (!tieneMinimoParaSimular && (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0)) {
+
+    if (_ip("cuotasPagadas") <= 0 && _ip("cuotaActualNumero") > 0) {
+      setErrorMsg(
+        "El extracto trae número de cuota, pero no cuotas pagadas. Corrige cuotas pagadas o cuotas pendientes antes de aplicar.",
+      );
+      setStage("review");
+      return;
+    }
+    if (_ip("plazoInicial") <= 0 || _ip("cuotasPagadas") <= 0) {
+      setErrorMsg(
+        "Para aplicar con trazabilidad faltan plazo inicial o cuotas pagadas. Corrige esos campos antes de continuar.",
+      );
+      setStage("review");
       return;
     }
 
@@ -1486,12 +1507,15 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   const hayErrores = erroresValidacion.length > 0;
   const cuotaBaseLista = parseMontoExtracto((parsed?.cuotaBaseSimulacion as string) ?? "") > 0;
 
-  const tieneMinimoSimulacion =
-    parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 &&
-    parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0;
-  const confirmDisabled =
-    (tieneBeneficio && !cuotaBaseLista) ||
-    !tieneMinimoSimulacion;
+  const faltantesSimulacion = parsed
+    ? [
+        parseMontoExtracto((parsed?.saldoCapital as string) ?? "") > 0 ? null : "Saldo capital",
+        parseMontoExtracto(((parsed?.cuotaBaseSimulacion as string) || (parsed?.cuotaMensual as string) || "")) > 0
+          ? null
+          : "Cuota base o cuota mensual",
+        tieneBeneficio && !cuotaBaseLista ? "Cuota base de simulación" : null,
+      ].filter(Boolean) as string[]
+    : [];
 
   const fmtCO = (raw: string) => {
     const n = parseMontoExtracto(raw);
@@ -2038,6 +2062,21 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                     </div>
                   )}
 
+                  {faltantesSimulacion.length > 0 && (
+                    <div
+                      className="mb-4 flex items-start gap-2 rounded-xl px-4 py-3"
+                      style={{
+                        background: "rgba(244,162,97,0.10)",
+                        border: "1px solid rgba(244,162,97,0.36)",
+                      }}
+                    >
+                      <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#F4A261]" />
+                      <div className="text-xs leading-relaxed text-white/85">
+                        Falta información mínima para prellenar el simulador: <b>{faltantesSimulacion.join(", ")}</b>. Puedes corregir los campos detectados abajo; NUVIA no bloqueará el botón sin explicar el motivo.
+                      </div>
+                    </div>
+                  )}
+
                   {/* Resumen de tasas */}
                   {(teaCobrada || teaPactada || teaUsada) && (
                     <div
@@ -2366,8 +2405,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                   </button>
                   <button
                     onClick={handleConfirm}
-                    disabled={confirmDisabled}
-                    className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-45 disabled:hover:scale-100"
+                    className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
                     style={{
                       background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))",
                       boxShadow: "0 10px 28px -14px rgba(132,185,143,0.42)",
