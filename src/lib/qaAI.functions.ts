@@ -1750,13 +1750,31 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
 
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
-      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,auditor_aprobado_at")
+      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,categoria,auditor_aprobado_at")
       .eq("id", data.auditoriaId)
       .maybeSingle();
     if (errAud) throw new Error(errAud.message);
     if (!aud) throw new Error("Auditoría no encontrada");
 
     const yaAprobada = !!aud.auditor_aprobado_at;
+
+    // ── Guardarraíl NUVIA: un auditor NO puede certificar casos por debajo del
+    // umbral operativo. Score < 85, dictamen "rechazado" o "requiere_revision"
+    // exigen que el analista corrija el caso y vuelva a auditar antes de liberar.
+    if (!yaAprobada) {
+      const scoreAud = Number(aud.qa_score ?? 0);
+      const dictamenAud = String(aud.dictamen ?? "");
+      const categoriaAud = String((aud as { categoria?: string | null }).categoria ?? "");
+      const bloqueaDictamen = dictamenAud === "rechazado" || dictamenAud === "requiere_revision";
+      const bloqueaCategoria = categoriaAud === "rechazado" || categoriaAud === "revisar";
+      if (scoreAud < 85 || bloqueaDictamen || bloqueaCategoria) {
+        throw new Error(
+          `No se puede aprobar: la certificación es ${Math.round(scoreAud)}/100 (${dictamenAud || categoriaAud || "no apta"}). ` +
+          `Se requiere score ≥ 85 y dictamen APROBADO o APROBADO CON OBSERVACIONES. ` +
+          `Devuelva el caso al analista, corrija los hallazgos y reejecute la auditoría.`,
+        );
+      }
+    }
 
     const { error: errUpd } = await supabase
       .from("qa_auditorias")
