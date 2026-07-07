@@ -256,6 +256,10 @@ export function SimuladorPage() {
     certification?: { snapshot: DraftRawSnapshot; result: DraftAuditResult },
   ) => {
     if (!mode) return;
+    // Lock atómico: evita que un doble clic o un doble disparo del
+    // certificador cree dos expedientes maestros para el mismo cliente.
+    if (savingRef.current) return;
+    savingRef.current = true;
     const draft = readDraftCase(mode);
     const draftClient = draft?.client ?? {};
     const snapshotDatos = asRecord(certification?.snapshot?.datos);
