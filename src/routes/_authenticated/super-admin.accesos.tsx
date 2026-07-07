@@ -734,7 +734,7 @@ function AccesosPage() {
           )}
 
           {/* Checklist de requisitos en vivo */}
-          {modoDesvinc === "sin_traslado" && (
+          {modoDesvinc === "sin_traslado" && !isSuperAdmin && (
             <ul className="mt-4 space-y-1 text-[11px]">
               <li style={{ color: sinTrasladoMotivo.trim().length >= 10 ? "#1F6D3D" : "#B42318" }}>
                 {sinTrasladoMotivo.trim().length >= 10 ? "✓" : "○"} Motivo con al menos 10 caracteres ({sinTrasladoMotivo.trim().length}/10)
