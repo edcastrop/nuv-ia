@@ -331,12 +331,44 @@ export function LeasingHabitacionalPanel({
             )}
           </div>
 
-          <div className="mt-6">
-            <SectionTitle sub="Amortización cuota a cuota — sistema francés con valor residual">
-              Tabla de amortización
-            </SectionTitle>
-            <TablaAmortizacion cuotas={escenarioActual.cuotas} />
-          </div>
+          <details
+            className="mt-6 group rounded-xl overflow-hidden"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(132,185,143,0.28)",
+            }}
+          >
+            <summary
+              className="flex items-center justify-between cursor-pointer select-none px-4 py-3"
+              style={{ color: "#E6F0FF" }}
+            >
+              <div className="flex flex-col">
+                <span
+                  className="text-[11px] uppercase tracking-[0.14em]"
+                  style={{ color: "#84B98F", fontWeight: 600 }}
+                >
+                  Tabla de amortización
+                </span>
+                <span className="text-[12px]" style={{ color: "#9FB4D8" }}>
+                  {escenarioActual.cuotas.length} cánones · sistema francés con valor residual
+                </span>
+              </div>
+              <span
+                className="text-[11px] rounded-md px-2 py-1 transition-transform group-open:rotate-180"
+                style={{
+                  background: "rgba(132,185,143,0.15)",
+                  border: "1px solid rgba(132,185,143,0.4)",
+                  color: "#E6F0FF",
+                }}
+              >
+                ▾
+              </span>
+            </summary>
+            <div className="px-4 pb-4">
+              <TablaAmortizacion cuotas={escenarioActual.cuotas} />
+            </div>
+          </details>
+
         </>
       )}
 
@@ -353,19 +385,38 @@ export function LeasingHabitacionalPanel({
 function Kpi({ label, value }: { label: string; value: string }) {
   return (
     <div
-      className="rounded-xl px-3 py-2"
+      className="rounded-xl px-3 py-2.5 relative overflow-hidden"
       style={{
-        background: "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.10)",
+        background:
+          "linear-gradient(135deg, rgba(132,185,143,0.06), rgba(255,255,255,0.03))",
+        border: "1px solid rgba(132,185,143,0.22)",
+        boxShadow: "0 2px 10px -4px rgba(10,20,40,0.35)",
       }}
     >
-      <div className="text-[11px] opacity-70">{label}</div>
-      <div className="text-[15px] font-semibold" style={{ color: "#E6F0FF" }}>
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: 3,
+          background: "linear-gradient(180deg, #84B98F, rgba(132,185,143,0.2))",
+        }}
+      />
+      <div
+        className="text-[10px] uppercase tracking-[0.12em]"
+        style={{ color: "#9FB4D8", fontWeight: 600 }}
+      >
+        {label}
+      </div>
+      <div className="text-[16px] font-semibold mt-0.5" style={{ color: "#F0F7FF" }}>
         {value}
       </div>
     </div>
   );
 }
+
 
 function TablaAmortizacion({ cuotas }: { cuotas: CuotaLeasing[] }) {
   const preview = cuotas.length > 24 ? [...cuotas.slice(0, 12), ...cuotas.slice(-12)] : cuotas;
