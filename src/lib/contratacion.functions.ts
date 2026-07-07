@@ -26,9 +26,6 @@ const InputSchema = z.object({
 // en formato PDF con el branding NUVEX (mismo PDF que descarga el botón azul).
 // Las versiones .docx quedan deprecadas para el envío a contratación.
 
-
-const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
-
 export const enviarContratacion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
@@ -206,6 +203,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     }
 
     // Llamar a Resend
+    const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
     const resp = await fetch(`${RESEND_GATEWAY}/emails`, {
       method: "POST",
       headers: {
