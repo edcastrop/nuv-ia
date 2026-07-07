@@ -967,35 +967,51 @@ function ResultadoQaAi() {
                 </Link>
               ) : null}
 
+              {(() => {
+                const scoreInsuficiente = Number(score ?? 0) < 85;
+                const dictamenBloquea = dictamenEfectivo === "rechazado" || dictamenEfectivo === "requiere_revision";
+                const categoriaBloquea = categoriaEfectiva === "rechazado" || categoriaEfectiva === "revisar";
+                const noCertificable = scoreInsuficiente || dictamenBloquea || categoriaBloquea;
+                const bloqueado = uvrPendienteVariables || noCertificable;
+                const razonNoCertificable = noCertificable
+                  ? `Certificación ${Math.round(Number(score ?? 0))}/100 (${categoriaEfectiva || dictamenEfectivo}). NUVIA exige score ≥ 85 y dictamen APROBADO / APROBADO CON OBSERVACIONES. Devuelva al analista para corregir y reauditar.`
+                  : null;
+                return (
               <button
                 onClick={handleAprobar}
-                disabled={aprobando || yaAprobadaAuditor || uvrPendienteVariables}
+                disabled={aprobando || yaAprobadaAuditor || bloqueado}
                 title={
                   uvrPendienteVariables
                     ? "NUVIA no puede liberar: falta Variación UVR EA en la reconstrucción del analista (> 0%)."
+                    : razonNoCertificable
+                    ? razonNoCertificable
                     : yaAprobadaAuditor
                     ? "Esta auditoría ya fue aprobada por el auditor"
                     : "Aprobar la auditoría y notificar al analista para que continúe"
                 }
                 className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
                 style={{
-                  background: uvrPendienteVariables
+                  background: bloqueado
                     ? "rgba(148,163,184,0.25)"
                     : yaAprobadaAuditor ? "rgba(132,185,143,0.18)" : "var(--nuvia-success)",
-                  color: uvrPendienteVariables
+                  color: bloqueado
                     ? "var(--nuvia-text-secondary)"
                     : yaAprobadaAuditor ? "var(--nuvia-success)" : "#0B1220",
-                  border: `1px solid ${uvrPendienteVariables ? "rgba(148,163,184,0.4)" : yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
-                  cursor: (aprobando || yaAprobadaAuditor || uvrPendienteVariables) ? "not-allowed" : "pointer",
+                  border: `1px solid ${bloqueado ? "rgba(148,163,184,0.4)" : yaAprobadaAuditor ? "rgba(132,185,143,0.5)" : "transparent"}`,
+                  cursor: (aprobando || yaAprobadaAuditor || bloqueado) ? "not-allowed" : "pointer",
                   opacity: aprobando ? 0.6 : 1,
-                  boxShadow: (yaAprobadaAuditor || uvrPendienteVariables) ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
+                  boxShadow: (yaAprobadaAuditor || bloqueado) ? "none" : "0 8px 20px -10px rgba(132,185,143,0.6)",
                 }}
               >
                 <CheckCircle2 size={14} />
                 {uvrPendienteVariables
                   ? "⏸ Pendiente variables UVR"
+                  : noCertificable
+                  ? `🚫 No certificable (${Math.round(Number(score ?? 0))}/100)`
                   : yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
               </button>
+                );
+              })()}
 
 
 
