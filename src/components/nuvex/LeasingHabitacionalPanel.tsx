@@ -240,23 +240,35 @@ export function LeasingHabitacionalPanel({
               Escenarios de optimización
             </SectionTitle>
             <div className="flex flex-wrap items-center gap-2">
-              {CANON_EXTRA_PRESETS.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  onClick={() => {
-                    setCanonExtra(v);
-                    setCanonExtraManual("");
-                  }}
-                  className="rounded-lg px-3 py-1.5 text-[12px]"
-                  style={{
-                    background: canonExtra === v ? "rgba(132,185,143,0.20)" : "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.15)",
-                  }}
-                >
-                  + {formatCOP(v)}
-                </button>
-              ))}
+              {CANON_EXTRA_PRESETS.map((v) => {
+                const activo = canonExtra === v;
+                return (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => {
+                      setCanonExtra(v);
+                      setCanonExtraManual("");
+                    }}
+                    className="rounded-lg px-3 py-1.5 text-[12px] transition-colors"
+                    style={{
+                      background: activo
+                        ? "linear-gradient(135deg, rgba(132,185,143,0.28), rgba(132,185,143,0.10))"
+                        : "rgba(255,255,255,0.04)",
+                      border: activo
+                        ? "1px solid rgba(132,185,143,0.65)"
+                        : "1px solid rgba(255,255,255,0.14)",
+                      color: activo ? "#F0F7FF" : "#CDE0FF",
+                      fontWeight: activo ? 600 : 500,
+                      boxShadow: activo
+                        ? "0 4px 14px -6px rgba(132,185,143,0.45)"
+                        : "none",
+                    }}
+                  >
+                    + {formatCOP(v)}
+                  </button>
+                );
+              })}
               <div className="flex items-center gap-2">
                 <input
                   type="text"
@@ -277,13 +289,19 @@ export function LeasingHabitacionalPanel({
                       setCanonExtra(0);
                       setCanonExtraManual("");
                     }}
-                    className="text-[12px] underline opacity-80"
+                    className="text-[12px] rounded-md px-2 py-1"
+                    style={{
+                      color: "#9FB4D8",
+                      background: "rgba(255,255,255,0.04)",
+                      border: "1px solid rgba(255,255,255,0.14)",
+                    }}
                   >
                     Limpiar
                   </button>
                 )}
               </div>
             </div>
+
 
             {escenarioOptimizado && (
               <div className="mt-4 grid gap-3 md:grid-cols-4">
