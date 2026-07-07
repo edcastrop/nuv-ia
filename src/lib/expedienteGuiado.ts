@@ -723,10 +723,26 @@ function proyeccionListaParaEnviar(exp: Expediente, ec: string): boolean {
     qa.qa_categoria === "aprobado" ||
     Number(qa.qa_score ?? 0) >= 80 ||
     Boolean(qa.aprobado_data);
+  // Ya pasó la etapa de contratación en el pipeline nuevo: no debe reofrecerse "enviar".
+  const yaAvanzoEnPipeline = [
+    "pendiente_contratacion","enviado_contratacion","contrato_generado","contrato_enviado",
+    "contrato_firmado","poder_generado","poder_firmado","documentacion_completa",
+    "radicacion_pendiente","radicacion_preparada","radicado_banco","en_estudio_banco",
+    "docs_complementarios_banco","aprobado","aprobado_banco","condiciones_aplicadas",
+    "aplicado_banco","resultado_final_generado","cuenta_cobro_generada","cuenta_cobro_enviada",
+    "honorarios_pendientes","honorarios_pagados","paz_y_salvo_generado","caso_finalizado",
+    "proceso_cerrado",
+  ].includes(ec);
+  if (yaAvanzoEnPipeline) return false;
 
   if (estadoListoPorPipeline) return true;
-  return estadoConSimulacionRealizada && (tienePropuesta(exp) || qaAprobada || estadoLegacy === "SIMULADO");
+  if (estadoConSimulacionRealizada && (tienePropuesta(exp) || qaAprobada || estadoLegacy === "SIMULADO")) return true;
+  // Fallback para expedientes con inconsistencia estado_caso vs estado (legacy):
+  // si hay propuesta guardada o aprobación NUVIA/QA y el pipeline aún no arrancó,
+  // debe poder enviarse a Contratación en lugar de "Completa la simulación".
+  return (tienePropuesta(exp) || qaAprobada) && (estadoLegacy === "SIMULADO" || estadoLegacy === "APROBADO" || Boolean(qa.aprobado_data));
 }
+
 
 function ordenEstado(ec: string): number {
   const ORD: Record<string, number> = {
