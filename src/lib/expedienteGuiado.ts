@@ -101,10 +101,7 @@ const ESTADO_A_ETAPA: Partial<Record<CasoEstado, EtapaGuiadaId>> = {
   prejuridico: "respuesta_banco",
 };
 
-export function etapaActualGuiada(exp: Expediente): EtapaGuiadaId {
-  const ec = (exp as unknown as { estado_caso?: string }).estado_caso as CasoEstado | undefined;
-  if (ec && ESTADO_A_ETAPA[ec]) return ESTADO_A_ETAPA[ec]!;
-  // Fallback por estado legacy
+function etapaDesdeLegacy(exp: Expediente): EtapaGuiadaId {
   switch (exp.estado) {
     case "SIMULADO": return "proyeccion";
     case "ENVIADO_CONTRATACION":
@@ -116,6 +113,17 @@ export function etapaActualGuiada(exp: Expediente): EtapaGuiadaId {
     case "PAGADO": return "pago";
     default: return "lead";
   }
+}
+
+export function etapaActualGuiada(exp: Expediente): EtapaGuiadaId {
+  const ec = (exp as unknown as { estado_caso?: string }).estado_caso as CasoEstado | undefined;
+  const desdeEc = ec && ESTADO_A_ETAPA[ec] ? ESTADO_A_ETAPA[ec]! : null;
+  const desdeLegacy = etapaDesdeLegacy(exp);
+  // Si estado_caso y estado (legacy) divergen, gana la etapa más avanzada.
+  // Evita que un expediente con estado=APROBADO pero estado_caso=lead_creado
+  // (inconsistencia histórica) se muestre como "captura de lead".
+  if (!desdeEc) return desdeLegacy;
+  return indexEtapaGuiada(desdeLegacy) > indexEtapaGuiada(desdeEc) ? desdeLegacy : desdeEc;
 }
 
 export function indexEtapaGuiada(id: EtapaGuiadaId): number {
