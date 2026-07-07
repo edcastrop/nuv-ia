@@ -60,6 +60,10 @@ export function SimuladorPage() {
   const [creating, setCreating] = useState<boolean>(false);
   const [maestroErr, setMaestroErr] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  // Guarda síncrona contra doble clic / doble disparo del certificador.
+  // `setSavingDraft` es async y no evita que un segundo click entre a
+  // `handleSaveAsCase` antes de que React re-renderice → dos maestros creados.
+  const savingRef = useRef(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveNombre, setSaveNombre] = useState("");
   const [pendingCertification, setPendingCertification] = useState<{
