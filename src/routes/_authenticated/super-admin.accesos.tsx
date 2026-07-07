@@ -790,12 +790,17 @@ function AccesosPage() {
               <button
                 onClick={async () => {
                   setDesvincularError(null);
-                  if (sinTrasladoMotivo.trim().length < 10) { setDesvincularError("El motivo debe tener al menos 10 caracteres."); return; }
-                  if (!sinTrasladoAck) { setDesvincularError("Debes marcar el reconocimiento de riesgo."); return; }
-                  if (confirmText.trim().toUpperCase() !== "DESVINCULAR SIN TRASLADO") { setDesvincularError('Escribe exactamente "DESVINCULAR SIN TRASLADO" para confirmar.'); return; }
+                  const motivoFinal = sinTrasladoMotivo.trim().length >= 10
+                    ? sinTrasladoMotivo.trim()
+                    : (isSuperAdmin ? `Eliminación directa por Super Admin (${new Date().toISOString().slice(0,10)})` : "");
+                  if (!isSuperAdmin) {
+                    if (sinTrasladoMotivo.trim().length < 10) { setDesvincularError("El motivo debe tener al menos 10 caracteres."); return; }
+                    if (!sinTrasladoAck) { setDesvincularError("Debes marcar el reconocimiento de riesgo."); return; }
+                    if (confirmText.trim().toUpperCase() !== "DESVINCULAR SIN TRASLADO") { setDesvincularError('Escribe exactamente "DESVINCULAR SIN TRASLADO" para confirmar.'); return; }
+                  }
                   setDesvinculando(true);
                   try {
-                    await desvincularUsuarioSinTraslado(seleccionado.id, sinTrasladoMotivo.trim());
+                    await desvincularUsuarioSinTraslado(seleccionado.id, motivoFinal);
                     setShowDesvincular(false);
                     setSeleccionado(null);
                     reload();
