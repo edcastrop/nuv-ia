@@ -43,7 +43,14 @@ export function LeasingHabitacionalPanel({
     onChange({ ...client, [k]: v });
 
   const saldoNum = parseCurrency(saldoCapital);
-  const residualNum = parseCurrency(client.valorOpcionCompra || "");
+  const valorLeasingNum = parseCurrency(client.valorLeasing || "");
+  const opcionPctNum = parsePercentage(client.opcionCompraPct || "");
+  // Base para el % de opción de compra: valor del leasing si existe, si no el saldo actual.
+  const baseResidual = valorLeasingNum > 0 ? valorLeasingNum : saldoNum;
+  const residualCalculado = opcionPctNum > 0 ? Math.round(baseResidual * (opcionPctNum / 100)) : 0;
+  // Fallback: si aún llega valorOpcionCompra manual del parser y no hay %, usarlo.
+  const residualManual = parseCurrency(client.valorOpcionCompra || "");
+  const residualNum = residualCalculado > 0 ? residualCalculado : residualManual;
   const teaNum = parsePercentage(tea);
   const segurosNum = parseCurrency(seguros);
   const canonBancoNum = parseCurrency(canonActual);
@@ -51,6 +58,7 @@ export function LeasingHabitacionalPanel({
 
   const inputValido =
     saldoNum > 0 && residualNum > 0 && teaNum > 0 && cuotasPendientesNum > 0;
+
 
   const escenarioActual: ResultadoLeasing | null = useMemo(() => {
     if (!inputValido) return null;
@@ -141,19 +149,21 @@ export function LeasingHabitacionalPanel({
       <div className="grid gap-4 md:grid-cols-4">
         <TextField
           label="Valor del leasing"
-          value={client.valorOpcionCompra ? "" : ""}
-          // El "valor total del leasing" no altera la simulación; se toma
-          // el saldo actual como PV. Este campo queda a título informativo.
-          onChange={() => undefined}
-          placeholder="325.990.284"
-          hint="Se toma el saldo actual como valor presente."
-          readOnly
+          value={client.valorLeasing || ""}
+          onChange={(v) => set("valorLeasing", v)}
+          placeholder="300.000.000"
+          hint="Valor total pactado. Base para la opción de compra %."
         />
         <TextField
-          label="Valor opción de compra (residual)"
-          value={client.valorOpcionCompra || ""}
-          onChange={(v) => set("valorOpcionCompra", v)}
-          placeholder="32.599.028"
+          label="Opción de compra (%)"
+          value={client.opcionCompraPct || ""}
+          onChange={(v) => set("opcionCompraPct", v)}
+          placeholder="1"
+          hint={
+            residualCalculado > 0
+              ? `≈ ${formatCOP(residualCalculado)} sobre ${formatCOP(baseResidual)}`
+              : "Ej. 1% del valor del leasing"
+          }
         />
         <TextField
           label="Sistema de amortización"
@@ -168,6 +178,7 @@ export function LeasingHabitacionalPanel({
           placeholder="AAAA-MM-DD"
         />
       </div>
+
 
       <div
         className="mt-4 flex flex-wrap items-center gap-3 rounded-lg px-3 py-2"

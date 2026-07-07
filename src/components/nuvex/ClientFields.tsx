@@ -51,8 +51,13 @@ export interface ClientData {
   // --- LEASING HABITACIONAL (opcional; aditivo, no afecta hipotecario) ---
   /** Modalidad del producto financiero. Por defecto 'hipotecario' para no alterar flujos existentes. */
   modalidadProducto?: "hipotecario" | "leasing_habitacional";
-  /** Valor de la opción de compra (residual) en pesos. Solo aplica en leasing habitacional. */
+  /** Valor total del leasing en pesos (base para calcular la opción de compra %). */
+  valorLeasing?: string;
+  /** Porcentaje pactado de la opción de compra (ej. "1" = 1% del valor del leasing). */
+  opcionCompraPct?: string;
+  /** Valor de la opción de compra (residual) en pesos — derivado de valorLeasing * opcionCompraPct/100. */
   valorOpcionCompra?: string;
+
   /** Si es true, la proyección incluye el pago de la opción de compra como cuota final. */
   incluirOpcionCompra?: boolean;
   /** Sistema de amortización reportado por el banco (p.ej. "PESOS - C. FIJA"). */
@@ -438,7 +443,10 @@ export const defaultClient: ClientData = {
   cuotasPendientes: "",
   porcentajeHonorarios: "6",
   modalidadProducto: "hipotecario",
+  valorLeasing: "",
+  opcionCompraPct: "1",
   valorOpcionCompra: "",
+
   incluirOpcionCompra: false,
   sistemaAmortizacion: "",
   fechaCorte: "",
