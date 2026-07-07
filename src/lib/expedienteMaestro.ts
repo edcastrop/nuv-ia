@@ -232,7 +232,7 @@ export async function upsertMaestro(p: UpsertMaestro): Promise<ExpedienteMaestro
   // navegación que remonta el componente antes de que la primera respuesta
   // vuelva, etc.). El lock del cliente ya evita el 99% en un solo tab.
   try {
-    const credito = (p.credito ?? {}) as Record<string, unknown>;
+    const credito = (p.credito ?? {}) as unknown as Record<string, unknown>;
     const cedula = String(p.cliente?.cedula ?? "").trim();
     const numeroCredito = String((credito.numeroCredito as string | undefined) ?? "").trim();
     const banco = String((credito.banco as string | undefined) ?? "").trim();
