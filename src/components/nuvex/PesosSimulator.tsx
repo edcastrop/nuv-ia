@@ -4,6 +4,7 @@ import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
 import { ClientFields, defaultClient, type ClientData } from "./ClientFields";
 import { CreditoMetaFields } from "./CreditoMetaFields";
+import { LeasingHabitacionalPanel } from "./LeasingHabitacionalPanel";
 
 import {
   parseCurrency,
