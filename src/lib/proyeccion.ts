@@ -284,3 +284,172 @@ export function formatFechaLarga(d: Date | null): string {
   if (!d) return "—";
   return d.toLocaleDateString("es-CO", { year: "numeric", month: "long", day: "numeric" });
 }
+
+// ============================================================================
+// LEASING HABITACIONAL — Sistema Francés con Valor Residual (opción de compra)
+// ----------------------------------------------------------------------------
+// A diferencia del hipotecario, el saldo NO llega a cero: converge al valor
+// de la opción de compra. La fórmula del canon financiero incluye el valor
+// futuro (FV = residual):
+//
+//   PMT = (PV − FV / (1+i)^n) · i / (1 − (1+i)^-n)
+//
+// NOTA: Este motor es aditivo. NO modifica `proyectarPesos` ni `proyectarUVR`.
+// ============================================================================
+
+export interface LeasingInput {
+  saldoInicial: number;         // PV — saldo actual del leasing
+  valorResidual: number;        // FV — opción de compra
+  cuotasPendientes: number;     // n
+  teaPct: number;               // tasa efectiva anual
+  seguros: number;              // seguros mensuales (fuera del canon financiero)
+  fechaInicio: Date;
+  aporteMensualExtra?: number;  // canon extra opcional
+  abonoExtraordinario?: number; // aplicado al saldo antes de proyectar
+  incluirOpcionCompra?: boolean;// si true, agrega cuota final = residual
+  canonBancoReportado?: number; // solo para métricas / QA
+}
+
+export interface CuotaLeasing {
+  numero: number;
+  fecha: Date;
+  saldoInicial: number;
+  interes: number;
+  capital: number;
+  seguros: number;
+  canonFinanciero: number;
+  canonTotal: number;
+  saldoFinal: number;
+  esOpcionCompra?: boolean;
+}
+
+export interface ResultadoLeasing {
+  cuotas: CuotaLeasing[];
+  canonFinancieroBase: number;
+  canonTotalBase: number;
+  totalIntereses: number;
+  totalCapital: number;
+  totalSeguros: number;
+  totalPagado: number;
+  saldoFinalProyectado: number;
+  valorResidual: number;
+  fechaFinalizacion: Date | null;
+  saldoConvergeAlResidual: boolean;
+  vecesPagado: number;
+  qa: {
+    canonReconstruidoDifPct: number | null;
+    saldoResidualDifPct: number;
+    residualComoPctDelSaldo: number;
+    capitalCero: boolean;
+  };
+}
+
+/** Canon financiero periódico usando Sistema Francés con Valor Futuro. */
+export function calcularCanonLeasing(pv: number, fv: number, i: number, n: number): number {
+  if (n <= 0 || pv <= 0) return 0;
+  if (Math.abs(i) < 1e-12) return (pv - fv) / n;
+  const factor = Math.pow(1 + i, -n);
+  return ((pv - fv * factor) * i) / (1 - factor);
+}
+
+export function proyectarLeasing(input: LeasingInput): ResultadoLeasing {
+  const tasaMensual = input.teaPct > 0 ? Math.pow(1 + input.teaPct / 100, 1 / 12) - 1 : 0;
+  const n = Math.max(1, Math.round(input.cuotasPendientes));
+  const abono = Math.max(0, input.abonoExtraordinario ?? 0);
+  const extra = Math.max(0, input.aporteMensualExtra ?? 0);
+  const saldoIni = Math.max(0, input.saldoInicial - abono);
+  const residual = Math.max(0, input.valorResidual);
+  const canonFin = calcularCanonLeasing(saldoIni, residual, tasaMensual, n);
+
+  const cuotas: CuotaLeasing[] = [];
+  let saldo = saldoIni;
+  let totalIntereses = 0;
+  let totalCapital = 0;
+  let totalSeguros = 0;
+  let totalPagado = 0;
+  let capitalCero = false;
+
+  const maxIter = n + 24;
+  let i = 0;
+  while (i < maxIter) {
+    if (saldo <= residual + 0.5) break;
+    const interes = saldo * tasaMensual;
+    let capital = canonFin - interes + extra;
+    if (capital <= 0) { capitalCero = true; break; }
+    if (saldo - capital < residual && extra === 0) capital = saldo - residual;
+    if (capital > saldo) capital = saldo;
+
+    const saldoFinal = Math.max(0, saldo - capital);
+    const canonTotal = canonFin + input.seguros + extra;
+
+    cuotas.push({
+      numero: i + 1,
+      fecha: addMonths(input.fechaInicio, i),
+      saldoInicial: saldo,
+      interes,
+      capital,
+      seguros: input.seguros,
+      canonFinanciero: canonFin,
+      canonTotal,
+      saldoFinal,
+    });
+
+    totalIntereses += interes;
+    totalCapital += capital;
+    totalSeguros += input.seguros;
+    totalPagado += canonTotal;
+    saldo = saldoFinal;
+    i++;
+  }
+
+  let saldoFinalProyectado = saldo;
+
+  if (input.incluirOpcionCompra && residual > 0 && saldo > 0) {
+    const ultimaFecha = cuotas.length > 0 ? cuotas[cuotas.length - 1].fecha : input.fechaInicio;
+    cuotas.push({
+      numero: cuotas.length + 1,
+      fecha: addMonths(ultimaFecha, 1),
+      saldoInicial: saldo,
+      interes: 0,
+      capital: saldo,
+      seguros: 0,
+      canonFinanciero: 0,
+      canonTotal: saldo,
+      saldoFinal: 0,
+      esOpcionCompra: true,
+    });
+    totalCapital += saldo;
+    totalPagado += saldo;
+    saldoFinalProyectado = 0;
+  }
+
+  const saldoObjetivo = input.incluirOpcionCompra ? 0 : residual;
+  const saldoResidualDif = Math.abs(saldoFinalProyectado - saldoObjetivo);
+  const saldoResidualDifPct = residual > 0 ? (saldoResidualDif / residual) * 100 : 0;
+  const canonReconstruidoDifPct =
+    input.canonBancoReportado && input.canonBancoReportado > 0
+      ? ((canonFin + input.seguros - input.canonBancoReportado) / input.canonBancoReportado) * 100
+      : null;
+
+  return {
+    cuotas,
+    canonFinancieroBase: canonFin,
+    canonTotalBase: canonFin + input.seguros,
+    totalIntereses,
+    totalCapital,
+    totalSeguros,
+    totalPagado,
+    saldoFinalProyectado,
+    valorResidual: residual,
+    fechaFinalizacion: cuotas.length > 0 ? cuotas[cuotas.length - 1].fecha : null,
+    saldoConvergeAlResidual: saldoResidualDifPct < 0.5,
+    vecesPagado: saldoIni > 0 ? totalPagado / saldoIni : 0,
+    qa: {
+      canonReconstruidoDifPct,
+      saldoResidualDifPct,
+      residualComoPctDelSaldo: input.saldoInicial > 0 ? (residual / input.saldoInicial) * 100 : 0,
+      capitalCero,
+    },
+  };
+}
+
