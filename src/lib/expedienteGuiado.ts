@@ -119,11 +119,10 @@ export function etapaActualGuiada(exp: Expediente): EtapaGuiadaId {
   const ec = (exp as unknown as { estado_caso?: string }).estado_caso as CasoEstado | undefined;
   const desdeEc = ec && ESTADO_A_ETAPA[ec] ? ESTADO_A_ETAPA[ec]! : null;
   const desdeLegacy = etapaDesdeLegacy(exp);
-  // Si estado_caso y estado (legacy) divergen, gana la etapa más avanzada.
-  // Evita que un expediente con estado=APROBADO pero estado_caso=lead_creado
-  // (inconsistencia histórica) se muestre como "captura de lead".
-  if (!desdeEc) return desdeLegacy;
-  return indexEtapaGuiada(desdeLegacy) > indexEtapaGuiada(desdeEc) ? desdeLegacy : desdeEc;
+  // Prioriza el estado_caso (pipeline nuevo). El legacy sólo se usa como fallback,
+  // NUNCA para adelantar la etapa: hay expedientes con estado=APROBADO cuyo pipeline
+  // real sigue en "proyección/lead" (el APROBADO viene de la simulación, no del banco).
+  return desdeEc ?? desdeLegacy;
 }
 
 export function indexEtapaGuiada(id: EtapaGuiadaId): number {
