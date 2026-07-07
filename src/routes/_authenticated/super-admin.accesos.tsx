@@ -678,38 +678,50 @@ function AccesosPage() {
 
                   <div>
                     <label className="block">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Motivo de la desvinculación sin traslado (obligatorio)</span>
+                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">
+                        Motivo de la desvinculación sin traslado {isSuperAdmin ? "(opcional para Super Admin)" : "(obligatorio)"}
+                      </span>
                       <textarea
                         value={sinTrasladoMotivo}
                         onChange={(e) => setSinTrasladoMotivo(e.target.value)}
                         rows={3}
                         className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#B42318]"
-                        placeholder="Explica por qué se procede sin reasignar responsable (mínimo 10 caracteres)…"
+                        placeholder={isSuperAdmin ? "Ej. Perfil duplicado — eliminación directa por Super Admin" : "Explica por qué se procede sin reasignar responsable (mínimo 10 caracteres)…"}
                       />
                     </label>
                   </div>
 
-                  <label className="flex items-start gap-2 cursor-pointer text-xs">
-                    <input
-                      type="checkbox"
-                      checked={sinTrasladoAck}
-                      onChange={(e) => setSinTrasladoAck(e.target.checked)}
-                      className="mt-0.5"
-                    />
-                    <span><b>Entiendo el riesgo y deseo continuar sin traslado.</b></span>
-                  </label>
+                  {!isSuperAdmin && (
+                    <>
+                      <label className="flex items-start gap-2 cursor-pointer text-xs">
+                        <input
+                          type="checkbox"
+                          checked={sinTrasladoAck}
+                          onChange={(e) => setSinTrasladoAck(e.target.checked)}
+                          className="mt-0.5"
+                        />
+                        <span><b>Entiendo el riesgo y deseo continuar sin traslado.</b></span>
+                      </label>
 
-                  <div>
-                    <label className="block">
-                      <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Escribe DESVINCULAR SIN TRASLADO para confirmar</span>
-                      <input
-                        value={confirmText}
-                        onChange={(e) => setConfirmText(e.target.value)}
-                        className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#B42318]"
-                        placeholder="DESVINCULAR SIN TRASLADO"
-                      />
-                    </label>
-                  </div>
+                      <div>
+                        <label className="block">
+                          <span className="text-[11px] font-semibold uppercase tracking-wider text-[var(--nuvia-text-primary)]/65">Escribe DESVINCULAR SIN TRASLADO para confirmar</span>
+                          <input
+                            value={confirmText}
+                            onChange={(e) => setConfirmText(e.target.value)}
+                            className="mt-1.5 w-full rounded-[10px] border border-[#E1E5EE] bg-[#FAFBFD] px-3 py-2.5 text-sm outline-none focus:border-[#B42318]"
+                            placeholder="DESVINCULAR SIN TRASLADO"
+                          />
+                        </label>
+                      </div>
+                    </>
+                  )}
+
+                  {isSuperAdmin && (
+                    <div className="rounded-lg border border-[#C7D2FE] bg-[#EEF2FF] px-3 py-2 text-[11px] text-[#3730A3]">
+                      <b>Modo Super Admin:</b> puedes eliminar directamente sin confirmaciones adicionales. La acción queda registrada en auditoría.
+                    </div>
+                  )}
                 </>
               )}
 
@@ -722,7 +734,7 @@ function AccesosPage() {
           )}
 
           {/* Checklist de requisitos en vivo */}
-          {modoDesvinc === "sin_traslado" && (
+          {modoDesvinc === "sin_traslado" && !isSuperAdmin && (
             <ul className="mt-4 space-y-1 text-[11px]">
               <li style={{ color: sinTrasladoMotivo.trim().length >= 10 ? "#1F6D3D" : "#B42318" }}>
                 {sinTrasladoMotivo.trim().length >= 10 ? "✓" : "○"} Motivo con al menos 10 caracteres ({sinTrasladoMotivo.trim().length}/10)
@@ -778,12 +790,17 @@ function AccesosPage() {
               <button
                 onClick={async () => {
                   setDesvincularError(null);
-                  if (sinTrasladoMotivo.trim().length < 10) { setDesvincularError("El motivo debe tener al menos 10 caracteres."); return; }
-                  if (!sinTrasladoAck) { setDesvincularError("Debes marcar el reconocimiento de riesgo."); return; }
-                  if (confirmText.trim().toUpperCase() !== "DESVINCULAR SIN TRASLADO") { setDesvincularError('Escribe exactamente "DESVINCULAR SIN TRASLADO" para confirmar.'); return; }
+                  const motivoFinal = sinTrasladoMotivo.trim().length >= 10
+                    ? sinTrasladoMotivo.trim()
+                    : (isSuperAdmin ? `Eliminación directa por Super Admin (${new Date().toISOString().slice(0,10)})` : "");
+                  if (!isSuperAdmin) {
+                    if (sinTrasladoMotivo.trim().length < 10) { setDesvincularError("El motivo debe tener al menos 10 caracteres."); return; }
+                    if (!sinTrasladoAck) { setDesvincularError("Debes marcar el reconocimiento de riesgo."); return; }
+                    if (confirmText.trim().toUpperCase() !== "DESVINCULAR SIN TRASLADO") { setDesvincularError('Escribe exactamente "DESVINCULAR SIN TRASLADO" para confirmar.'); return; }
+                  }
                   setDesvinculando(true);
                   try {
-                    await desvincularUsuarioSinTraslado(seleccionado.id, sinTrasladoMotivo.trim());
+                    await desvincularUsuarioSinTraslado(seleccionado.id, motivoFinal);
                     setShowDesvincular(false);
                     setSeleccionado(null);
                     reload();
