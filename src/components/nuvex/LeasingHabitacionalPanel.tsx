@@ -186,7 +186,7 @@ export function LeasingHabitacionalPanel({
       {qaAlerts.length > 0 && (
         <div className="mt-4 space-y-2">
           {qaAlerts.map((a, i) => (
-            <Alert key={i} tone={a.tipo === "error" ? "error" : "warning"}>
+            <Alert key={i} tone={a.tipo === "error" ? "error" : "warn"}>
               {a.msg}
             </Alert>
           ))}
