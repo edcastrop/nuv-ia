@@ -1116,6 +1116,148 @@ export const auditarLecturaAutomatica = createServerFn({ method: "POST" })
       productoStr.includes("LEASING") ? "leasing"
       : (d.saldoUVR || d.valorUVR) ? "uvr" : "hipotecario";
 
+    // ─────────────────────────────────────────────────────────────
+    // Ruta LEASING HABITACIONAL — motor determinístico dedicado.
+    // No mezcla con qaMath (hipotecario/UVR) para no distorsionar tolerancias.
+    // ─────────────────────────────────────────────────────────────
+    if (modalidad === "leasing") {
+      const saldoL = parseNum(d.saldoCapital) ?? 0;
+      const residualL = parseNum(d.valorOpcionCompra) ?? 0;
+      const valorLeasingL = parseNum(d.valorLeasing);
+      const opcionPctL = parseNum(d.opcionCompraPct);
+      const teaCobradaL = parseNum(d.teaCobrada) ?? parseNum(d.tea) ?? parseNum(d.tasaEA) ?? 0;
+      const teaPactadaL = parseNum(d.teaPactada);
+      const segurosL = parseNum(d.seguros) ?? 0;
+      const canonBancoL = parseNum(d.cuotaActual) ?? parseNum(d.canonActual) ?? parseNum(d.cuotaPagadaCliente);
+      const cuotasPendL = parseNum(d.cuotasPendientes) ?? 0;
+      const cuotasPagL = parseNum(d.cuotasPagadas) ?? 0;
+      const sistemaAmL = typeof d.sistemaAmortizacion === "string" ? d.sistemaAmortizacion : undefined;
+      const incluirOCL = d.incluirOpcionCompra === true;
+
+      const resL = auditarLeasing({
+        saldoCapital: saldoL,
+        valorResidual: residualL,
+        valorLeasing: valorLeasingL,
+        opcionCompraPct: opcionPctL,
+        cuotasPendientes: cuotasPendL,
+        cuotasPagadas: cuotasPagL,
+        teaCobradaPct: teaCobradaL,
+        teaPactadaPct: teaPactadaL,
+        seguros: segurosL,
+        canonBancoReportado: canonBancoL,
+        sistemaAmortizacion: sistemaAmL,
+        incluirOpcionCompra: incluirOCL,
+        fechaCorte: typeof d.fechaCorte === "string" ? d.fechaCorte : undefined,
+      });
+
+      const inputsSnapL = {
+        modalidad,
+        extractoLecturaId: ext.id,
+        expedienteId: ext.expediente_id,
+        leasing: {
+          saldoCapital: saldoL,
+          valorResidual: residualL,
+          valorLeasing: valorLeasingL ?? null,
+          opcionCompraPct: opcionPctL ?? null,
+          cuotasPendientes: cuotasPendL,
+          cuotasPagadas: cuotasPagL,
+          teaCobradaPct: teaCobradaL,
+          teaPactadaPct: teaPactadaL ?? null,
+          seguros: segurosL,
+          canonBancoReportado: canonBancoL ?? null,
+          sistemaAmortizacion: sistemaAmL ?? null,
+          incluirOpcionCompra: incluirOCL,
+        },
+      };
+
+      const analistaRealIdL = await resolverAnalistaRealQA(supabase as unknown as QaSupabase, {
+        expedienteId: ext.expediente_id ?? null,
+        extractoAsesorId: typeof ext.asesor_id === "string" ? ext.asesor_id : null,
+        fallbackUserId: userId,
+      });
+
+      const { data: audL, error: errAudL } = await supabase
+        .from("qa_auditorias")
+        .insert({
+          expediente_id: ext.expediente_id,
+          analista_id: analistaRealIdL,
+          extracto_id: ext.id,
+          modalidad,
+          motor_version: QA_LEASING_MOTOR_VERSION,
+          qa_score: resL.score.score,
+          categoria: resL.score.categoria,
+          dictamen: resL.score.dictamen,
+          auto_ejecutada: true,
+          inputs: JSON.parse(JSON.stringify(inputsSnapL)),
+          outputs: JSON.parse(JSON.stringify({
+            reconstruccion: resL.reconstruccion,
+            veredicto: resL.veredicto,
+            faltantes: resL.faltantes,
+          })),
+          diferencias: JSON.parse(JSON.stringify(resL.inconsistencias)),
+          alertas: JSON.parse(JSON.stringify(resL.inconsistencias.filter((i) => i.severidad === "critica"))),
+          ejecutado_by: userId,
+        })
+        .select("id")
+        .single();
+      if (errAudL) throw new Error(errAudL.message);
+      const auditoriaIdL = audL!.id;
+
+      if (resL.inconsistencias.length) {
+        await supabase.from("qa_inconsistencias").insert(
+          resL.inconsistencias.map((i) => ({
+            auditoria_id: auditoriaIdL,
+            tipo: i.tipo,
+            severidad: i.severidad,
+            campo: i.campo ?? null,
+            valor_extracto: i.valorExtracto ?? null,
+            valor_calculado: i.valorCalculado ?? null,
+            diferencia: i.diferencia ?? null,
+            mensaje: i.mensaje,
+            sugerencia: i.sugerencia ?? null,
+          })),
+        );
+        const criticasL = resL.inconsistencias.filter((i) => i.severidad === "critica");
+        if (criticasL.length) {
+          await supabase.from("qa_alertas").insert(
+            criticasL.map((i) => ({
+              auditoria_id: auditoriaIdL,
+              expediente_id: ext.expediente_id,
+              tipo: i.tipo,
+              severidad: i.severidad,
+              mensaje: i.mensaje,
+            })),
+          );
+        }
+      }
+
+      await supabase.from("qa_auditoria_log").insert({
+        auditoria_id: auditoriaIdL,
+        accion: "crear",
+        payload: { score: resL.score.score, dictamen: resL.score.dictamen, fuente: "lector_extractos", modalidad: "leasing" },
+        user_id: userId,
+      });
+
+      await notificarQASolicitadaServer(supabase as never, {
+        expedienteId: ext.expediente_id ?? null,
+        analistaId: analistaRealIdL,
+        auditoriaId: auditoriaIdL,
+        dictamen: String(resL.score.dictamen),
+        score: Number(resL.score.score) || 0,
+      });
+
+      return {
+        auditoriaId: auditoriaIdL,
+        score: resL.score.score,
+        categoria: resL.score.categoria,
+        dictamen: resL.score.dictamen,
+        hallazgos: resL.inconsistencias.length,
+        criticos: resL.inconsistencias.filter((i) => i.severidad === "critica").length,
+      };
+    }
+
+
+
     const saldo = parseNum(d.saldoCapital) ?? 0;
     const tasa = parseNum(d.tasaEA) ?? parseNum(d.teaCobrada) ?? 0;
     const tasaPactada = parseNum(d.teaPactada);
