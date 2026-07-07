@@ -1428,6 +1428,14 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         requiereVerificacion: get("requiereVerificacionBeneficio").toLowerCase() === "si",
       };
     }
+    // Bloque leasing habitacional: se llena solo si el producto detectado es leasing.
+    if (/leasing/i.test(producto)) {
+      payload.leasing = {
+        valorOpcionCompra: get("valorOpcionCompra"),
+        sistemaAmortizacion: get("sistemaAmortizacion"),
+        fechaCorte: get("fechaCorte"),
+      };
+    }
     const applied = await onApply(payload);
     if (applied === false) return;
     setStage("applied");
