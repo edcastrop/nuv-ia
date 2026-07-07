@@ -3,6 +3,7 @@
 // y registra entrada en `expediente_historial`.
 
 import { createServerFn } from "@tanstack/react-start";
+import { Buffer } from "buffer";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { wrapNuvexEmail } from "@/lib/emailBrand.server";
