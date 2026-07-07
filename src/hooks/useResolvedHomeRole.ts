@@ -69,7 +69,7 @@ export function useResolvedHomeRole() {
   const analystRole = roles.includes("asesor")
     ? "asesor"
     : roles.includes("licenciado")
-      ? "asesor"
+      ? "licenciado"
       : null;
   const staleOperationalOverride =
     !!analystRole &&
