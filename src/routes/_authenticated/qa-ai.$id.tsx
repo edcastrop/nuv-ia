@@ -330,33 +330,34 @@ function ExtractoOriginalAccordion({ extracto, expedienteId }: { extracto: Extra
             </div>
 
             {datosVisibles.length > 0 && (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[12px]">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-1.5 text-[12.5px]">
                 {datosVisibles.map(([k, v]) => (
-                  <div key={k} className="flex items-baseline justify-between gap-3 border-b border-dashed py-1" style={{ borderColor: "var(--nuvia-border)" }}>
-                    <span style={{ color: "var(--nuvia-text-muted)" }}>{k}</span>
-                    <span className="tabular-nums font-medium" style={{ color: "var(--nuvia-text-primary)" }}>{v}</span>
+                  <div key={k} className="flex items-baseline justify-between gap-3 border-b border-dashed py-1.5" style={{ borderColor: "var(--nuvia-border)" }}>
+                    <span style={{ color: "var(--nuvia-text-secondary)" }}>{k}</span>
+                    <span className="tabular-nums font-semibold" style={{ color: "#ffffff" }}>{v}</span>
                   </div>
                 ))}
               </div>
             )}
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
               <button
                 onClick={handleOpen}
                 disabled={!extracto.archivo_path || opening}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-[12px] font-semibold"
+                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-md text-[12.5px] font-semibold"
                 style={{
-                  background: extracto.archivo_path ? "var(--nuvia-accent)" : "rgba(255,255,255,0.05)",
-                  color: extracto.archivo_path ? "#0b0b0b" : "var(--nuvia-text-muted)",
-                  border: "1px solid var(--nuvia-border)",
+                  background: extracto.archivo_path ? "var(--nuvia-accent)" : "rgba(255,255,255,0.06)",
+                  color: extracto.archivo_path ? "#03121b" : "var(--nuvia-text-secondary)",
+                  border: extracto.archivo_path ? "1px solid var(--nuvia-accent)" : "1px solid var(--nuvia-border)",
                   cursor: extracto.archivo_path && !opening ? "pointer" : "not-allowed",
+                  boxShadow: extracto.archivo_path ? "0 4px 14px -6px rgba(56,189,248,0.55)" : "none",
                 }}
               >
                 <Paperclip size={13} />
                 {extracto.archivo_path ? (opening ? "Abriendo…" : "Ver extracto principal") : "Sin archivo principal"}
               </button>
               {extracto.archivo_nombre && (
-                <span className="text-[11.5px]" style={{ color: "var(--nuvia-text-muted)" }}>{extracto.archivo_nombre}</span>
+                <span className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{extracto.archivo_nombre}</span>
               )}
             </div>
 
