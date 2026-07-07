@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate, useRouterState, useSearch, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { ModeSelector } from "@/components/nuvex/ModeSelector";
@@ -60,6 +60,10 @@ export function SimuladorPage() {
   const [creating, setCreating] = useState<boolean>(false);
   const [maestroErr, setMaestroErr] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  // Guarda síncrona contra doble clic / doble disparo del certificador.
+  // `setSavingDraft` es async y no evita que un segundo click entre a
+  // `handleSaveAsCase` antes de que React re-renderice → dos maestros creados.
+  const savingRef = useRef(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [saveNombre, setSaveNombre] = useState("");
   const [pendingCertification, setPendingCertification] = useState<{
@@ -252,6 +256,10 @@ export function SimuladorPage() {
     certification?: { snapshot: DraftRawSnapshot; result: DraftAuditResult },
   ) => {
     if (!mode) return;
+    // Lock atómico: evita que un doble clic o un doble disparo del
+    // certificador cree dos expedientes maestros para el mismo cliente.
+    if (savingRef.current) return;
+    savingRef.current = true;
     const draft = readDraftCase(mode);
     const draftClient = draft?.client ?? {};
     const snapshotDatos = asRecord(certification?.snapshot?.datos);
@@ -279,6 +287,8 @@ export function SimuladorPage() {
     );
     if (!nombre) {
       // No hay nombre en la simulación → abrir diálogo para pedirlo.
+      // Liberamos el lock: no se creó nada y el usuario debe reintentar.
+      savingRef.current = false;
       setSaveOpen(true);
       return;
     }
@@ -339,10 +349,12 @@ export function SimuladorPage() {
       const mensaje = `No se puede crear el caso: faltan datos financieros mínimos del crédito.\n\n${detalle}\n\nCarga/aplica el extracto o completa Datos del crédito antes de certificar.`;
       toast.error("No se creó el caso: faltan datos financieros mínimos del crédito.", { duration: 6500 });
       if (typeof window !== "undefined") window.alert(mensaje);
+      savingRef.current = false;
       return;
     }
     if (!certification?.result.certificable) {
       toast.error("No se creó el caso: primero debe existir una auditoría NUVIA aprobada.", { duration: 6500 });
+      savingRef.current = false;
       return;
     }
     setSavingDraft(true);
@@ -402,6 +414,7 @@ export function SimuladorPage() {
       toast.error(`No se pudo crear el caso: ${errorMessage(e)}`);
     } finally {
       setSavingDraft(false);
+      savingRef.current = false;
     }
   };
 
