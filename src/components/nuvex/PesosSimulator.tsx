@@ -700,7 +700,12 @@ export function PesosSimulator({
 
           {/* Selector de modalidad — aditivo, no afecta el motor hipotecario existente */}
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-[12px] opacity-80">Tipo de producto:</span>
+            <span
+              className="text-[11px] uppercase tracking-[0.14em]"
+              style={{ color: "#9FB4D8", fontWeight: 600 }}
+            >
+              Tipo de producto
+            </span>
             {[
               { id: "hipotecario", label: "Crédito hipotecario" },
               { id: "leasing_habitacional", label: "Leasing habitacional" },
@@ -716,14 +721,17 @@ export function PesosSimulator({
                       modalidadProducto: opt.id as "hipotecario" | "leasing_habitacional",
                     })
                   }
-                  className="rounded-lg px-3 py-1.5 text-[12px]"
+                  className="rounded-lg px-3 py-1.5 text-[12px] transition-colors"
                   style={{
-                    background: activo ? "rgba(132,185,143,0.20)" : "rgba(255,255,255,0.05)",
+                    background: activo
+                      ? "linear-gradient(135deg, rgba(132,185,143,0.28), rgba(132,185,143,0.12))"
+                      : "rgba(255,255,255,0.04)",
                     border: activo
-                      ? "1px solid rgba(132,185,143,0.55)"
-                      : "1px solid rgba(255,255,255,0.15)",
-                    color: activo ? "#E6F0FF" : "#CDE0FF",
-                    fontWeight: activo ? 600 : 400,
+                      ? "1px solid rgba(132,185,143,0.65)"
+                      : "1px solid rgba(255,255,255,0.14)",
+                    color: activo ? "#F0F7FF" : "#CDE0FF",
+                    fontWeight: activo ? 600 : 500,
+                    boxShadow: activo ? "0 4px 14px -6px rgba(132,185,143,0.45)" : "none",
                   }}
                 >
                   {opt.label}
@@ -731,6 +739,7 @@ export function PesosSimulator({
               );
             })}
           </div>
+
 
           <CreditoMetaFields
             data={client}
