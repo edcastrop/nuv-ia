@@ -4,7 +4,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Json } from "@/integrations/supabase/types";
 
 import { auditar, QA_MOTOR_VERSION, TOLERANCIAS_DEFAULT, type Inconsistencia, type Modalidad, type Tolerancias } from "./qaMath";
+import { auditarLeasing, QA_LEASING_MOTOR_VERSION } from "./qaLeasing";
 import { mapCasoToExpedienteEstado } from "./casoEstados";
+
 
 // ─────────────────────────────────────────────────────────────
 // Fase 2 — Carga de reglas activas desde qa_reglas
