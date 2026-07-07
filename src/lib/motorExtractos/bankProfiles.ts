@@ -514,6 +514,9 @@ export const CAMPOS_MOTOR = [
   "tasaCobertura",
   "cuotaSinSubsidio",
   "cuotaConSubsidio",
+  // Leasing habitacional (opcionales; solo se llenan cuando producto=LEASING_HABITACIONAL)
+  "valorOpcionCompra",
+  "fechaCorte",
 ] as const;
 
 export type CampoMotor = (typeof CAMPOS_MOTOR)[number];
