@@ -224,6 +224,55 @@ export async function upsertMaestro(p: UpsertMaestro): Promise<ExpedienteMaestro
     if (error) throw error;
     return data as unknown as ExpedienteMaestro;
   }
+
+  // 🛡️ Dedup por huella: si el mismo analista acaba de crear un maestro con
+  // la misma cédula + banco + número de crédito en los últimos 3 minutos,
+  // reutilizamos ese registro en vez de crear un duplicado. Cubre casos que
+  // el lock del cliente no atrapa (doble tab, red lenta que reintenta,
+  // navegación que remonta el componente antes de que la primera respuesta
+  // vuelva, etc.). El lock del cliente ya evita el 99% en un solo tab.
+  try {
+    const credito = (p.credito ?? {}) as unknown as Record<string, unknown>;
+    const cedula = String(p.cliente?.cedula ?? "").trim();
+    const numeroCredito = String((credito.numeroCredito as string | undefined) ?? "").trim();
+    const banco = String((credito.banco as string | undefined) ?? "").trim();
+    const nombre = String(p.cliente?.nombre ?? "").trim();
+    const fingerprintHasKey = !!(cedula || numeroCredito);
+    if (fingerprintHasKey) {
+      const desde = new Date(Date.now() - 3 * 60 * 1000).toISOString();
+      let q = supabase
+        .from("expediente_maestro")
+        .select("*")
+        .eq("asesor_id", u.user.id)
+        .gte("created_at", desde)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (cedula) q = q.eq("cedula_cliente", cedula);
+      const { data: recientes } = await q;
+      const match = (recientes ?? []).find((r) => {
+        const rr = r as unknown as {
+          nombre_cliente?: string | null;
+          credito?: Record<string, unknown> | null;
+        };
+        const rc = (rr.credito ?? {}) as Record<string, unknown>;
+        const rNumero = String((rc.numeroCredito as string | undefined) ?? "").trim();
+        const rBanco = String((rc.banco as string | undefined) ?? "").trim();
+        const rNombre = String(rr.nombre_cliente ?? "").trim();
+        if (numeroCredito && rNumero && numeroCredito === rNumero) return true;
+        if (!numeroCredito && cedula && banco && rBanco === banco) return true;
+        if (!numeroCredito && !cedula && nombre && rNombre === nombre && banco && rBanco === banco) return true;
+        return false;
+      });
+      if (match) {
+        console.warn("[upsertMaestro] dedup: reutilizando maestro reciente", (match as { id?: string }).id);
+        return match as unknown as ExpedienteMaestro;
+      }
+    }
+  } catch (dedupErr) {
+    // La dedup es defensiva: si falla la consulta, seguimos con el insert normal.
+    console.warn("[upsertMaestro] dedup falló, se procede a insertar:", dedupErr);
+  }
+
   const { data, error } = await supabase.from("expediente_maestro").insert(row).select().single();
   if (error) throw error;
   return data as unknown as ExpedienteMaestro;
