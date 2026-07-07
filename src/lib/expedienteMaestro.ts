@@ -202,6 +202,45 @@ export async function getMaestro(id: string): Promise<ExpedienteMaestro> {
 export async function upsertMaestro(p: UpsertMaestro): Promise<ExpedienteMaestro> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) throw new Error("No autenticado");
+  const normalizeText = (value: unknown) => String(value ?? "").trim();
+  const normalizeDigits = (value: unknown) => normalizeText(value).replace(/\D/g, "");
+  const findExistingByFingerprint = async () => {
+    const credito = (p.credito ?? {}) as unknown as Record<string, unknown>;
+    const cedula = normalizeText(p.cliente?.cedula);
+    const cedulaNorm = normalizeDigits(cedula);
+    const numeroCredito = normalizeText(credito.numeroCredito);
+    const creditoNorm = normalizeDigits(numeroCredito);
+    const banco = normalizeText(credito.banco).toLowerCase();
+    const nombre = normalizeText(p.cliente?.nombre);
+    if (!cedulaNorm && !creditoNorm && !nombre) return null;
+
+    let q = supabase
+      .from("expediente_maestro")
+      .select("*")
+      .eq("asesor_id", u.user.id)
+      .order("created_at", { ascending: false })
+      .limit(25);
+    if (cedula) q = q.eq("cedula_cliente", cedula);
+
+    const { data } = await q;
+    const match = (data ?? []).find((r) => {
+      const rr = r as unknown as {
+        nombre_cliente?: string | null;
+        credito?: Record<string, unknown> | null;
+      };
+      const rc = (rr.credito ?? {}) as Record<string, unknown>;
+      const rCreditoNorm = normalizeDigits(rc.numeroCredito);
+      const rBanco = normalizeText(rc.banco).toLowerCase();
+      const rCedulaNorm = normalizeDigits((r as { cedula_cliente?: string | null }).cedula_cliente);
+      const rNombre = normalizeText(rr.nombre_cliente).toLowerCase();
+      if (cedulaNorm && rCedulaNorm && cedulaNorm !== rCedulaNorm) return false;
+      if (creditoNorm && rCreditoNorm && banco && rBanco) return creditoNorm === rCreditoNorm && banco === rBanco;
+      if (creditoNorm && rCreditoNorm) return creditoNorm === rCreditoNorm;
+      if (cedulaNorm && banco && rBanco) return banco === rBanco;
+      return !!nombre && rNombre === nombre.toLowerCase() && (!banco || rBanco === banco);
+    });
+    return (match ?? null) as ExpedienteMaestro | null;
+  };
   const row = {
     asesor_id: u.user.id,
     cedula_cliente: p.cliente.cedula || null,
@@ -225,48 +264,15 @@ export async function upsertMaestro(p: UpsertMaestro): Promise<ExpedienteMaestro
     return data as unknown as ExpedienteMaestro;
   }
 
-  // 🛡️ Dedup por huella: si el mismo analista acaba de crear un maestro con
-  // la misma cédula + banco + número de crédito en los últimos 3 minutos,
-  // reutilizamos ese registro en vez de crear un duplicado. Cubre casos que
-  // el lock del cliente no atrapa (doble tab, red lenta que reintenta,
-  // navegación que remonta el componente antes de que la primera respuesta
-  // vuelva, etc.). El lock del cliente ya evita el 99% en un solo tab.
+  // 🛡️ Dedup por huella completa. No usamos ventana temporal: si el mismo
+  // analista intenta certificar otra vez la misma cédula + banco + crédito,
+  // reutilizamos el maestro existente. Así cubrimos doble clic, doble tab,
+  // reintentos por red y carreras entre requests.
   try {
-    const credito = (p.credito ?? {}) as unknown as Record<string, unknown>;
-    const cedula = String(p.cliente?.cedula ?? "").trim();
-    const numeroCredito = String((credito.numeroCredito as string | undefined) ?? "").trim();
-    const banco = String((credito.banco as string | undefined) ?? "").trim();
-    const nombre = String(p.cliente?.nombre ?? "").trim();
-    const fingerprintHasKey = !!(cedula || numeroCredito);
-    if (fingerprintHasKey) {
-      const desde = new Date(Date.now() - 3 * 60 * 1000).toISOString();
-      let q = supabase
-        .from("expediente_maestro")
-        .select("*")
-        .eq("asesor_id", u.user.id)
-        .gte("created_at", desde)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (cedula) q = q.eq("cedula_cliente", cedula);
-      const { data: recientes } = await q;
-      const match = (recientes ?? []).find((r) => {
-        const rr = r as unknown as {
-          nombre_cliente?: string | null;
-          credito?: Record<string, unknown> | null;
-        };
-        const rc = (rr.credito ?? {}) as Record<string, unknown>;
-        const rNumero = String((rc.numeroCredito as string | undefined) ?? "").trim();
-        const rBanco = String((rc.banco as string | undefined) ?? "").trim();
-        const rNombre = String(rr.nombre_cliente ?? "").trim();
-        if (numeroCredito && rNumero && numeroCredito === rNumero) return true;
-        if (!numeroCredito && cedula && banco && rBanco === banco) return true;
-        if (!numeroCredito && !cedula && nombre && rNombre === nombre && banco && rBanco === banco) return true;
-        return false;
-      });
-      if (match) {
-        console.warn("[upsertMaestro] dedup: reutilizando maestro reciente", (match as { id?: string }).id);
-        return match as unknown as ExpedienteMaestro;
-      }
+    const match = await findExistingByFingerprint();
+    if (match) {
+      console.warn("[upsertMaestro] dedup: reutilizando maestro existente", match.id);
+      return match;
     }
   } catch (dedupErr) {
     // La dedup es defensiva: si falla la consulta, seguimos con el insert normal.
@@ -274,7 +280,11 @@ export async function upsertMaestro(p: UpsertMaestro): Promise<ExpedienteMaestro
   }
 
   const { data, error } = await supabase.from("expediente_maestro").insert(row).select().single();
-  if (error) throw error;
+  if (error) {
+    const raced = await findExistingByFingerprint();
+    if (raced) return raced;
+    throw error;
+  }
   return data as unknown as ExpedienteMaestro;
 }
 
