@@ -2741,9 +2741,13 @@ export type Database = {
           credito: Json
           fresh: Json
           id: string
+          incluir_opcion_compra: boolean
           licenciado: Json
           nombre_cliente: string
+          sistema_amortizacion: string | null
+          tipo_producto: string
           updated_at: string
+          valor_residual: number | null
         }
         Insert: {
           apoderado?: Json
@@ -2756,9 +2760,13 @@ export type Database = {
           credito?: Json
           fresh?: Json
           id?: string
+          incluir_opcion_compra?: boolean
           licenciado?: Json
           nombre_cliente?: string
+          sistema_amortizacion?: string | null
+          tipo_producto?: string
           updated_at?: string
+          valor_residual?: number | null
         }
         Update: {
           apoderado?: Json
@@ -2771,9 +2779,13 @@ export type Database = {
           credito?: Json
           fresh?: Json
           id?: string
+          incluir_opcion_compra?: boolean
           licenciado?: Json
           nombre_cliente?: string
+          sistema_amortizacion?: string | null
+          tipo_producto?: string
           updated_at?: string
+          valor_residual?: number | null
         }
         Relationships: []
       }
@@ -4778,6 +4790,7 @@ export type Database = {
           fecha_desembolso: string | null
           fecha_terminacion_estimada: string | null
           id: string
+          incluir_opcion_compra: boolean
           moneda: string
           notas: string | null
           otros_seguros: number
@@ -4786,11 +4799,13 @@ export type Database = {
           seguro_incendio: number
           seguro_terremoto: number
           seguro_vida: number
+          sistema_amortizacion: string | null
           tea_pct: number
           tipo_producto: string
           updated_at: string
           uvr_valor: number
           valor_desembolsado: number
+          valor_residual: number | null
           variacion_uvr_pct: number
         }
         Insert: {
@@ -4806,6 +4821,7 @@ export type Database = {
           fecha_desembolso?: string | null
           fecha_terminacion_estimada?: string | null
           id?: string
+          incluir_opcion_compra?: boolean
           moneda?: string
           notas?: string | null
           otros_seguros?: number
@@ -4814,11 +4830,13 @@ export type Database = {
           seguro_incendio?: number
           seguro_terremoto?: number
           seguro_vida?: number
+          sistema_amortizacion?: string | null
           tea_pct?: number
           tipo_producto?: string
           updated_at?: string
           uvr_valor?: number
           valor_desembolsado?: number
+          valor_residual?: number | null
           variacion_uvr_pct?: number
         }
         Update: {
@@ -4834,6 +4852,7 @@ export type Database = {
           fecha_desembolso?: string | null
           fecha_terminacion_estimada?: string | null
           id?: string
+          incluir_opcion_compra?: boolean
           moneda?: string
           notas?: string | null
           otros_seguros?: number
@@ -4842,11 +4861,13 @@ export type Database = {
           seguro_incendio?: number
           seguro_terremoto?: number
           seguro_vida?: number
+          sistema_amortizacion?: string | null
           tea_pct?: number
           tipo_producto?: string
           updated_at?: string
           uvr_valor?: number
           valor_desembolsado?: number
+          valor_residual?: number | null
           variacion_uvr_pct?: number
         }
         Relationships: []
