@@ -20,6 +20,13 @@ export type AppRole =
 const ROLE_CACHE_PREFIX = "nuvia.userRoles.";
 let memoryRoles = new Map<string, AppRole[]>();
 
+function normalizeRoles(roles: AppRole[]): AppRole[] {
+  const unique = Array.from(new Set(roles));
+  // Regla NUVIA: el analista comercial operativo es `asesor`.
+  // Si por datos históricos viene también `licenciado`, gana `asesor` para no activar flujos de licenciado.
+  return unique.includes("asesor") ? unique.filter((role) => role !== "licenciado") : unique;
+}
+
 function readRoleCache(userId?: string): AppRole[] {
   if (!userId || typeof window === "undefined") return [];
   const inMemory = memoryRoles.get(userId);
@@ -29,8 +36,9 @@ function readRoleCache(userId?: string): AppRole[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as AppRole[];
     if (Array.isArray(parsed)) {
-      memoryRoles.set(userId, parsed);
-      return parsed;
+      const normalized = normalizeRoles(parsed);
+      memoryRoles.set(userId, normalized);
+      return normalized;
     }
   } catch {
     // cache auxiliar inválido: se ignora.
@@ -39,10 +47,11 @@ function readRoleCache(userId?: string): AppRole[] {
 }
 
 function writeRoleCache(userId: string, roles: AppRole[]) {
-  memoryRoles.set(userId, roles);
+  const normalized = normalizeRoles(roles);
+  memoryRoles.set(userId, normalized);
   if (typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(`${ROLE_CACHE_PREFIX}${userId}`, JSON.stringify(roles));
+    window.localStorage.setItem(`${ROLE_CACHE_PREFIX}${userId}`, JSON.stringify(normalized));
   } catch {
     // cache auxiliar: no debe afectar navegación.
   }
@@ -61,7 +70,8 @@ export function canManageFinanzas(roles: AppRole[]): boolean {
 }
 
 export function isLicenciado(roles: AppRole[]): boolean {
-  return roles.includes("licenciado");
+  const normalized = normalizeRoles(roles);
+  return normalized.includes("licenciado");
 }
 
 export function isDirectorQA(roles: AppRole[]): boolean {
@@ -120,7 +130,7 @@ export function useUserRole() {
           .select("role")
           .eq("user_id", user.id);
         if (cancel) return;
-        const nextRoles = (data ?? []).map((r) => r.role as AppRole);
+        const nextRoles = normalizeRoles((data ?? []).map((r) => r.role as AppRole));
         writeRoleCache(user.id, nextRoles);
         setRoles(nextRoles);
         setLoading(false);
