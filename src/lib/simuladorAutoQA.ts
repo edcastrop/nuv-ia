@@ -50,8 +50,18 @@ function normalizeQaDatos(raw: ExtractoRawSnapshot): Record<string, unknown> {
     valorUVR: first("valorUVR"),
     saldoUVR: first("saldoUVR"),
     tasaCobertura: first("tasaCobertura"),
+    // Campos LEASING HABITACIONAL — preservados para qaLeasing
+    valorOpcionCompra: first("valorOpcionCompra"),
+    valorLeasing: first("valorLeasing"),
+    opcionCompraPct: first("opcionCompraPct"),
+    sistemaAmortizacion: first("sistemaAmortizacion"),
+    fechaCorte: first("fechaCorte"),
+    teaPactada: first("teaPactada", "tasaPactada", "tasaContractual"),
+    teaCobrada: first("teaCobrada", "tasaCobrada"),
+    incluirOpcionCompra: d.incluirOpcionCompra === true,
   };
 }
+
 
 const SEV_ORDER: Record<string, number> = { critica: 0, alta: 1, media: 2, baja: 3 };
 
