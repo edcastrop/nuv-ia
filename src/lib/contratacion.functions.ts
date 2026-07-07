@@ -3,7 +3,6 @@
 // y registra entrada en `expediente_historial`.
 
 import { createServerFn } from "@tanstack/react-start";
-import { Buffer } from "buffer";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { wrapNuvexEmail } from "@/lib/emailBrand.server";
@@ -181,6 +180,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         const resp = await fetch(signed.signedUrl);
         if (!resp.ok) continue;
         const arrayBuffer = await resp.arrayBuffer();
+        const { Buffer } = await import("buffer");
         const prefix = kind === "extracto" ? "Extracto_Credito" : "Cedula_Cliente";
         allowedAttachments.push({
           filename: uniqueFilename(`${prefix}_${candidate.filename}`),
