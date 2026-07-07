@@ -414,6 +414,7 @@ export function SimuladorPage() {
       toast.error(`No se pudo crear el caso: ${errorMessage(e)}`);
     } finally {
       setSavingDraft(false);
+      savingRef.current = false;
     }
   };
 
