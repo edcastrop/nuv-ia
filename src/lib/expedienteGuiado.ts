@@ -404,10 +404,10 @@ export function getSiguienteAccion(exp: Expediente, roles: AppRole[]): Siguiente
       rol: "licenciado",
       titulo: "Envía el caso a Contratación",
       descripcion:
-        "La simulación ya fue generada y NUVIA tiene una propuesta aprobable. Envíala desde el módulo financiero para pasar el caso a Contratación.",
+        "La simulación ya fue generada y NUVIA tiene una propuesta aprobable. Revisa los documentos del expediente y envíalos a Contratación desde la pestaña Documentos.",
       botonLabel: "Enviar a Contratación",
-      scrollToId: "simulador-financiero-qa",
-      tab: "financiero",
+      scrollToId: "documentos-juridicos",
+      tab: "documentos",
       prioridad: "alta",
     };
   }
