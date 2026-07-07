@@ -600,6 +600,11 @@ export function PesosSimulator({
               plazoInicial: p.cliente.plazoInicial || prev.plazoInicial,
               cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
               cuotasPendientes: p.cliente.cuotasPendientes || prev.cuotasPendientes,
+              // Leasing habitacional: activa el modo y persiste campos específicos
+              modalidadProducto: p.leasing ? "leasing_habitacional" : prev.modalidadProducto,
+              valorOpcionCompra: p.leasing?.valorOpcionCompra || prev.valorOpcionCompra,
+              sistemaAmortizacion: p.leasing?.sistemaAmortizacion || prev.sistemaAmortizacion,
+              fechaCorte: p.leasing?.fechaCorte || prev.fechaCorte,
             }));
             if (p.pesos?.saldoCapital) setSaldoCapital(p.pesos.saldoCapital);
             if (p.pesos && "valorDesembolsado" in p.pesos)
