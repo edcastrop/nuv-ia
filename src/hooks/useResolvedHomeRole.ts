@@ -9,8 +9,8 @@ export const HOME_ROLE_PRIORITY: AppRole[] = [
   "super_admin",
   "admin",
   "gerencia",
-  "licenciado", // = Analista Financiero Comercial: prioriza sus simuladores aunque tenga rol contable adicional.
-  "asesor",
+  "asesor", // Analista comercial NUVIA: nunca debe caer como licenciado si ambos roles aparecen por datos históricos.
+  "licenciado",
   "director_financiero_qa",
   "director_juridico",
   // Auditor financiero: en BD se mapea como director_financiero_qa (no hay rol "auditor").
@@ -66,9 +66,9 @@ export function useResolvedHomeRole() {
   }, [roles, override, loading]);
 
   const primary = pickPrimary(roles);
-  const analystRole = roles.includes("licenciado")
-    ? "licenciado"
-    : roles.includes("asesor")
+  const analystRole = roles.includes("asesor")
+    ? "asesor"
+    : roles.includes("licenciado")
       ? "asesor"
       : null;
   const staleOperationalOverride =
