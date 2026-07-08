@@ -225,9 +225,10 @@ function PipelinePage() {
   const [profilesMap, setProfilesMap] = useState<Map<string, PipelineProfileLite>>(new Map());
   const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null; auditor_aprobado_at: string | null }>>(new Map());
   const [identityMap, setIdentityMap] = useState<Map<string, PipelineIdentity>>(new Map());
+  const [orphanQas, setOrphanQas] = useState<OrphanQaCard[]>([]);
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+
 
   const { q, banco, stuck: soloStuck, fase, mios, asesor } = search;
 
