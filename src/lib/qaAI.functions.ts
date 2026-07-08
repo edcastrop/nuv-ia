@@ -1706,6 +1706,19 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const sinceISO = new Date(Date.now() - data.days * 86400000).toISOString();
 
+    // Guard de autorización: solo roles con `can_use_qa_ai` (super_admin,
+    // admin, gerencia, director_financiero_qa) pueden ver el universo
+    // completo. Si el cliente pide `mineOnly: false` sin tener el rol,
+    // forzamos `mineOnly = true` en servidor para evitar leakage,
+    // independientemente de lo que mande el cliente.
+    if (!data.mineOnly) {
+      const { data: canUse, error: canUseErr } = await supabase.rpc("can_use_qa_ai", { _uid: userId });
+      if (canUseErr || !canUse) {
+        data.mineOnly = true;
+      }
+    }
+
+
     // Cuando `mineOnly` está activo, primero calculamos el universo de auditorías
     // del usuario actual: las que él ejecutó (`analista_id`) más las de expedientes
     // donde él es el asesor asignado. Esto permite que un analista comercial vea
