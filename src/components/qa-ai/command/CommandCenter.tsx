@@ -1562,3 +1562,21 @@ function Section({ title, subtitle, children, icon }: { title: string; subtitle?
     </div>
   );
 }
+
+function Meta({ label, value, strong, mono, capitalize, span2 }: { label: string; value: string; strong?: boolean; mono?: boolean; capitalize?: boolean; span2?: boolean }) {
+  return (
+    <div style={{ gridColumn: span2 ? "1 / -1" : undefined, minWidth: 0 }}>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: C.textMuted }}>{label}</div>
+      <div style={{
+        marginTop: 1,
+        fontSize: 11.5,
+        fontWeight: strong ? 600 : 500,
+        color: strong ? C.text : C.textSec,
+        fontFamily: mono ? "ui-monospace, SFMono-Regular, Menlo, monospace" : undefined,
+        textTransform: capitalize ? "capitalize" : undefined,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>{value}</div>
+    </div>
+  );
+}
+
