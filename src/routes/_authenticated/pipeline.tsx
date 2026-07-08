@@ -353,16 +353,17 @@ function PipelinePage() {
     (async () => {
       const { data } = await supabase
         .from("qa_auditorias")
-        .select("id, expediente_id, qa_score, dictamen, created_at")
+        .select("id, expediente_id, qa_score, dictamen, auditor_aprobado_at, created_at")
         .in("expediente_id", ids)
         .order("created_at", { ascending: false });
       if (cancel || !data) return;
-      const next = new Map<string, { id: string; score: number; dictamen: string | null }>();
-      for (const row of data as Array<{ id: string; expediente_id: string; qa_score: number | null; dictamen: string | null }>) {
+      const next = new Map<string, { id: string; score: number; dictamen: string | null; auditor_aprobado_at: string | null }>();
+      for (const row of data as Array<{ id: string; expediente_id: string; qa_score: number | null; dictamen: string | null; auditor_aprobado_at: string | null }>) {
         if (!row.expediente_id || next.has(row.expediente_id)) continue;
-        next.set(row.expediente_id, { id: row.id, score: Number(row.qa_score ?? 0), dictamen: row.dictamen });
+        next.set(row.expediente_id, { id: row.id, score: Number(row.qa_score ?? 0), dictamen: row.dictamen, auditor_aprobado_at: row.auditor_aprobado_at ?? null });
       }
       setQaMap(next);
+
     })();
     return () => { cancel = true; };
   }, [rows]);
