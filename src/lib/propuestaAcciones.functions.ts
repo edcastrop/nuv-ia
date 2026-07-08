@@ -20,20 +20,18 @@ export const marcarAccionPropuesta = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const now = new Date().toISOString();
-    const patch: Record<string, string> = {};
+    let patch: Record<string, string>;
     if (data.accion === "export") {
-      patch.propuesta_exportada_at = now;
-      patch.propuesta_exportada_by = userId;
+      patch = { propuesta_exportada_at: now, propuesta_exportada_by: userId };
     } else if (data.accion === "whatsapp") {
-      patch.whatsapp_generado_at = now;
-      patch.whatsapp_generado_by = userId;
+      patch = { whatsapp_generado_at: now, whatsapp_generado_by: userId };
     } else {
-      patch.propuesta_email_enviada_at = now;
-      patch.propuesta_email_enviada_by = userId;
+      patch = { propuesta_email_enviada_at: now, propuesta_email_enviada_by: userId };
     }
     const { error } = await supabase
       .from("expedientes")
-      .update(patch)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .update(patch as any)
       .eq("id", data.expedienteId);
     if (error) throw new Error(error.message);
     return { ok: true, accion: data.accion, sealed_at: now };
