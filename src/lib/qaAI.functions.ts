@@ -1700,19 +1700,40 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     limit: z.number().int().positive().max(1000).default(500),
     days: z.number().int().positive().max(180).default(30),
     refreshKey: z.number().optional(),
+    mineOnly: z.boolean().optional().default(false),
   }).parse(input ?? {}))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const sinceISO = new Date(Date.now() - data.days * 86400000).toISOString();
 
-    const { data: audRaw, error: audError } = await supabase
+    // Cuando `mineOnly` está activo, primero calculamos el universo de auditorías
+    // del usuario actual: las que él ejecutó (`analista_id`) más las de expedientes
+    // donde él es el asesor asignado. Esto permite que un analista comercial vea
+    // en `/qa-ai/mis` únicamente los casos que le pertenecen.
+    let ownExpIds: string[] = [];
+    if (data.mineOnly) {
+      const { data: ownExps } = await supabase
+        .from("expedientes")
+        .select("id")
+        .eq("asesor_id", userId);
+      ownExpIds = (ownExps ?? []).map((e) => e.id as string);
+    }
+
+    let audQuery = supabase
       .from("qa_auditorias")
       .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by,origen,banco,producto,cliente_nombre")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
+    if (data.mineOnly) {
+      const filters = [`analista_id.eq.${userId}`];
+      if (ownExpIds.length) filters.push(`expediente_id.in.(${ownExpIds.join(",")})`);
+      audQuery = audQuery.or(filters.join(","));
+    }
+    const { data: audRaw, error: audError } = await audQuery;
     if (audError) throw new Error(audError.message);
 
     const audits = audRaw ?? [];
+
 
     const expIds = [...new Set(audits.map((r) => r.expediente_id).filter((id): id is string => !!id))];
     const extIds = [...new Set(audits.map((r) => r.extracto_id).filter((id): id is string => !!id))];
