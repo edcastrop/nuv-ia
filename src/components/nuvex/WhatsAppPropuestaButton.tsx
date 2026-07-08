@@ -26,6 +26,8 @@ interface Props {
   asesor?: string;
   disabled?: boolean;
   disabledReason?: string;
+  /** Se invoca la primera vez que el modal se abre con propuestas válidas. */
+  onGenerated?: () => void | Promise<void>;
 }
 
 function primerNombre(nombre?: string): string {
