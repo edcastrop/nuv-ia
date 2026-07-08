@@ -35,6 +35,19 @@ type PipelineIdentity = {
   numeroCredito?: string | null;
 };
 
+type OrphanQaCard = {
+  id: string;
+  codigo: string | null;
+  cliente_nombre: string | null;
+  banco: string | null;
+  qa_score: number | null;
+  dictamen: string | null;
+  categoria: string | null;
+  created_at: string | null;
+  analista_id: string | null;
+};
+
+
 export const pipelineSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   banco: fallback(z.string(), "").default(""),
@@ -225,9 +238,12 @@ function PipelinePage() {
   const [profilesMap, setProfilesMap] = useState<Map<string, PipelineProfileLite>>(new Map());
   const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null; auditor_aprobado_at: string | null }>>(new Map());
   const [identityMap, setIdentityMap] = useState<Map<string, PipelineIdentity>>(new Map());
+  const [orphanQas, setOrphanQas] = useState<OrphanQaCard[]>([]);
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+
 
   const { q, banco, stuck: soloStuck, fase, mios, asesor } = search;
 
@@ -378,6 +394,26 @@ function PipelinePage() {
     })();
     return () => { cancel = true; };
   }, [rows]);
+
+  // Cargar auditorías QA huérfanas (sin expediente) con nombre de cliente
+  // para renderizarlas como tarjetas virtuales en E1 (Lead en Revisión).
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_auditorias")
+        .select("id, codigo, cliente_nombre, banco, qa_score, dictamen, categoria, created_at, analista_id")
+        .is("expediente_id", null)
+        .not("cliente_nombre", "is", null)
+        .neq("cliente_nombre", "")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (cancel) return;
+      setOrphanQas((data ?? []) as OrphanQaCard[]);
+    })();
+    return () => { cancel = true; };
+  }, [lastUpdated]);
+
 
   // Hidrata cabeceras del Pipeline cuando el expediente quedó con "Sin nombre"
   // pero la lectura del extracto o la auditoría QA sí contienen datos confiables.
@@ -1366,6 +1402,19 @@ function PipelinePage() {
                     borderColor: "var(--nuvia-border)",
                     background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018))",
                   };
+              const orphansForLane: OrphanQaCard[] = etapa.id === "en_revision"
+                ? orphanQas.filter((o) => {
+                    if (banco && (o.banco ?? "") !== banco) return false;
+                    const term = q.trim().toLowerCase();
+                    if (term) {
+                      const hay = `${o.cliente_nombre ?? ""} ${o.banco ?? ""} ${o.codigo ?? ""}`.toLowerCase();
+                      if (!hay.includes(term)) return false;
+                    }
+                    if (mios && user?.id && o.analista_id !== user.id) return false;
+                    return true;
+                  })
+                : [];
+              const totalLane = items.length + orphansForLane.length;
               return (
                 <div
                   key={etapa.id}
@@ -1385,9 +1434,10 @@ function PipelinePage() {
                       </div>
                     </div>
                     <span className="shrink-0 rounded-full border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.045)] px-2.5 py-1 text-xs font-semibold text-[var(--nuvia-text-primary)]">
-                      {items.length}
+                      {totalLane}
                     </span>
                   </div>
+
                   {items.length > 0 && (
                     <div className="mb-3 flex items-center justify-between gap-2 px-1 text-xs">
                       <span className="inline-flex items-center gap-1 text-[var(--nuvia-text-secondary)]">
@@ -1404,12 +1454,74 @@ function PipelinePage() {
 
 
                   <div className="space-y-2">
-                    {items.length === 0 ? (
+                    {orphansForLane.map((o) => {
+                      const score = Number(o.qa_score ?? 0);
+                      const tone = score >= 90
+                        ? { color: "var(--nuvia-accent-green)", bg: "color-mix(in oklab, var(--nuvia-accent-green) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-accent-green) 36%, transparent)" }
+                        : score >= 70
+                          ? { color: "var(--nuvia-warning)", bg: "color-mix(in oklab, var(--nuvia-warning) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-warning) 36%, transparent)" }
+                          : { color: "var(--nuvia-danger)", bg: "color-mix(in oklab, var(--nuvia-danger) 14%, transparent)", border: "color-mix(in oklab, var(--nuvia-danger) 36%, transparent)" };
+                      return (
+                        <div
+                          key={`orphan-${o.id}`}
+                          className="group relative rounded-xl border border-dashed p-3 text-left transition hover:brightness-110"
+                          style={{ borderColor: "color-mix(in oklab, var(--nuvia-accent-blue) 40%, transparent)", background: "color-mix(in oklab, var(--nuvia-accent-blue) 8%, rgba(255,255,255,0.03))" }}
+                        >
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className="shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-black uppercase tracking-wider"
+                              style={{ color: "var(--nuvia-accent-blue)", background: "color-mix(in oklab, var(--nuvia-accent-blue) 16%, transparent)" }}
+                              title="Auditoría QA sin expediente creado"
+                            >
+                              QA
+                            </span>
+                            <Link
+                              to="/qa-ai/$id"
+                              params={{ id: o.id }}
+                              className="min-w-0 flex-1 truncate text-sm font-semibold text-[var(--nuvia-text-primary)] hover:underline"
+                              title="Abrir auditoría QA"
+                            >
+                              {o.cliente_nombre || "Sin nombre"}
+                            </Link>
+                          </div>
+                          <div className="mt-1 truncate text-xs text-[var(--nuvia-text-secondary)]">
+                            {o.banco || "—"} · sin expediente
+                          </div>
+                          {o.codigo && (
+                            <div
+                              className="mt-1 inline-block rounded px-1.5 py-0.5 text-[10px] font-black tracking-wider"
+                              style={{ background: "color-mix(in oklab, var(--nuvia-accent-blue) 12%, transparent)", color: "var(--nuvia-accent-blue)", border: "1px solid color-mix(in oklab, var(--nuvia-accent-blue) 32%, transparent)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}
+                            >
+                              {o.codigo}
+                            </div>
+                          )}
+                          <div className="mt-1 text-[11px] text-[rgba(170,179,197,0.72)]">
+                            QA {o.created_at ? new Date(o.created_at).toLocaleDateString("es-CO", { day: "2-digit", month: "short" }) : "—"}
+                          </div>
+                          <div className="mt-2 flex items-center justify-between gap-2">
+                            <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium capitalize" style={{ color: tone.color, background: tone.bg, border: `1px solid ${tone.border}` }}>
+                              <ShieldAlert className="h-3 w-3" /> {o.dictamen || o.categoria || "sin dictamen"} · {Math.round(score)}
+                            </span>
+                            <Link
+                              to="/qa-ai/$id"
+                              params={{ id: o.id }}
+                              className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold transition hover:brightness-110"
+                              style={{ color: "var(--nuvia-accent-blue)", background: "color-mix(in oklab, var(--nuvia-accent-blue) 12%, transparent)", borderColor: "color-mix(in oklab, var(--nuvia-accent-blue) 36%, transparent)" }}
+                              title="Abrir auditoría"
+                            >
+                              Abrir <ArrowRight className="h-3 w-3" />
+                            </Link>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {items.length === 0 && orphansForLane.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.02)] px-3 py-5 text-center text-xs text-[var(--nuvia-text-secondary)]">
                         Sin casos
                       </div>
                     ) : (
                       items.map((r) => {
+
                         const dias = diasDesde(r.updated_at);
                         const umbral = rowSla(r);
                         const stuck = umbral > 0 && dias > umbral;
