@@ -96,6 +96,15 @@ export function canValidarProyeccion(roles: AppRole[]): boolean {
   return roles.some((r) => ["super_admin", "director_financiero_qa", "gerencia"].includes(r));
 }
 
+// Override manual del guardarraíl automático de score en QA AI.
+// A diferencia de isDirectorQA, este permiso NO incluye admin ni gerencia:
+// solo el Director Financiero QA (rol operativo dueño del criterio) y el
+// Super Admin (rol de contingencia) pueden liberar una auditoría bloqueada,
+// dejando justificación auditable.
+export function canOverrideQA(roles: AppRole[]): boolean {
+  return roles.includes("super_admin") || roles.includes("director_financiero_qa");
+}
+
 export function useUserRole() {
   const { user, loading: authLoading } = useAuth();
   const [roles, setRoles] = useState<AppRole[]>(() => readRoleCache(user?.id));
