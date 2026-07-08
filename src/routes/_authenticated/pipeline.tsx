@@ -395,6 +395,26 @@ function PipelinePage() {
     return () => { cancel = true; };
   }, [rows]);
 
+  // Cargar auditorías QA huérfanas (sin expediente) con nombre de cliente
+  // para renderizarlas como tarjetas virtuales en E1 (Lead en Revisión).
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      const { data } = await supabase
+        .from("qa_auditorias")
+        .select("id, codigo, cliente_nombre, banco, qa_score, dictamen, categoria, created_at, analista_id")
+        .is("expediente_id", null)
+        .not("cliente_nombre", "is", null)
+        .neq("cliente_nombre", "")
+        .order("created_at", { ascending: false })
+        .limit(200);
+      if (cancel) return;
+      setOrphanQas((data ?? []) as OrphanQaCard[]);
+    })();
+    return () => { cancel = true; };
+  }, [lastUpdated]);
+
+
   // Hidrata cabeceras del Pipeline cuando el expediente quedó con "Sin nombre"
   // pero la lectura del extracto o la auditoría QA sí contienen datos confiables.
   useEffect(() => {
