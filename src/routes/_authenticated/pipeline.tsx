@@ -1420,7 +1420,22 @@ function PipelinePage() {
                 : [];
 
               const totalLane = items.length + orphansForLane.length;
-              const honorariosLane = items.reduce((acc, r) => acc + Number(r.honorarios_final ?? 0), 0);
+              const honorariosLane = items.reduce((acc, r) => {
+                const anyR = r as unknown as {
+                  honorarios_final?: number | string | null;
+                  honorarios_pactados?: number | string | null;
+                  honorarios_recalculados?: number | string | null;
+                  honorarios_base?: number | string | null;
+                  propuesta_data?: Record<string, unknown> | null;
+                };
+                const val = num(anyR.honorarios_final)
+                  || num(anyR.honorarios_recalculados)
+                  || num(anyR.honorarios_pactados)
+                  || num(anyR.honorarios_base)
+                  || num(anyR.propuesta_data?.honorarios)
+                  || num(anyR.propuesta_data?.honorariosFinal);
+                return acc + val;
+              }, 0);
               const honorariosLabel = honorariosLane >= 1_000_000
                 ? `$${(honorariosLane / 1_000_000).toFixed(honorariosLane >= 10_000_000 ? 0 : 1)}M`
                 : honorariosLane >= 1_000
@@ -1448,23 +1463,38 @@ function PipelinePage() {
                       {totalLane}
                     </span>
                   </div>
-                  {honorariosLane > 0 && (
+                  {totalLane > 0 && (
                     <div
                       className="mb-3 flex items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-[11px]"
-                      style={{
-                        borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 32%, transparent)",
-                        background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
-                      }}
-                      title={`Honorarios acumulados en ${etapa.titulo}: $${honorariosLane.toLocaleString("es-CO")}`}
+                      style={honorariosLane > 0
+                        ? {
+                            borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 32%, transparent)",
+                            background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
+                          }
+                        : {
+                            borderColor: "var(--nuvia-border)",
+                            background: "rgba(255,255,255,0.03)",
+                          }}
+                      title={`Honorarios acumulados en ${etapa.titulo}: $${honorariosLane.toLocaleString("es-CO")}${honorariosLane === 0 ? " · aún sin simulación con honorarios calculados" : ""}`}
                     >
-                      <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[10px]" style={{ color: "var(--nuvia-accent-green)" }}>
+                      <span
+                        className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[10px]"
+                        style={{ color: honorariosLane > 0 ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)" }}
+                      >
                         <Coins className="h-3 w-3" /> Honorarios
                       </span>
-                      <span className="font-black tabular-nums" style={{ color: "var(--nuvia-accent-green)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                      <span
+                        className="font-black tabular-nums"
+                        style={{
+                          color: honorariosLane > 0 ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)",
+                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                        }}
+                      >
                         {honorariosLabel}
                       </span>
                     </div>
                   )}
+
 
 
                   {items.length > 0 && (
