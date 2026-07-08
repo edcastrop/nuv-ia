@@ -229,7 +229,7 @@ export function buildWhatsAppMessage(p: {
 }
 
 export function WhatsAppPropuestaButton(props: Props) {
-  const { disabled, disabledReason } = props;
+  const { disabled, disabledReason, onGenerated } = props;
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -244,6 +244,14 @@ export function WhatsAppPropuestaButton(props: Props) {
     }
     setOpen(true);
     setCopied(false);
+    try {
+      const r = onGenerated?.();
+      if (r && typeof (r as Promise<void>).then === "function") {
+        (r as Promise<void>).catch((e) => console.warn("[whatsapp:onGenerated]", e));
+      }
+    } catch (e) {
+      console.warn("[whatsapp:onGenerated]", e);
+    }
   };
 
   const message = open ? buildWhatsAppMessage(props) : "";
