@@ -508,6 +508,7 @@ function CurrentStateCard(props: {
   valorBeneficioMensual: number; cuotaConCobertura: number;
   cuotasPendientesConCobertura: number;
   saldoCapital: number;
+  tasaMensualPct?: number;
 }) {
   const tieneInteres = typeof props.interesMensual === "number";
   const tieneCapital = typeof props.capitalMensual === "number";
