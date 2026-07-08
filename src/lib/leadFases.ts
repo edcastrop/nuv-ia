@@ -65,7 +65,15 @@ export function progresoLead(exp: Expediente, qa: QALite): ProgresoLead {
 }
 
 export interface MotivoRevision {
-  code: "qa_bajo" | "honorarios_piso" | "descuento_alto" | "ahorro_bajo" | "plazo_excesivo" | "banco_sin_perfil";
+  code:
+    | "qa_bajo"
+    | "honorarios_piso"
+    | "descuento_alto"
+    | "ahorro_bajo"
+    | "plazo_excesivo"
+    | "banco_sin_perfil"
+    | "auditoria_en_curso"
+    | "auditoria_rechazada";
   label: string;
   detalle: string;
 }
@@ -74,6 +82,26 @@ export function motivosRevision(exp: Expediente, qa: QALite): MotivoRevision[] {
   const motivos: MotivoRevision[] = [];
   const propuesta = leerPropuesta(exp);
 
+  // Auditoría QA — la fase de auditoría mantiene el lead en revisión hasta que
+  // el auditor selle el dictamen. Si fue rechazada, permanece en revisión
+  // aunque el score sea alto, hasta que se re-audite o se corrija.
+  if (qa) {
+    const dictamen = (qa.dictamen ?? "").toLowerCase();
+    if (dictamen === "rechazado") {
+      motivos.push({
+        code: "auditoria_rechazada",
+        label: "Auditoría rechazada",
+        detalle: `Dictamen QA rechazado · Score ${Math.round(qa.score)}/100`,
+      });
+    } else if (dictamen === "requiere_revision" || !qa.auditor_aprobado_at) {
+      motivos.push({
+        code: "auditoria_en_curso",
+        label: "Auditoría en curso",
+        detalle: `Auditoría QA sin sello del auditor${qa.dictamen ? ` · ${qa.dictamen}` : ""}`,
+      });
+    }
+  }
+
   if (qa && qa.score < 70) {
     motivos.push({
       code: "qa_bajo",
@@ -81,6 +109,7 @@ export function motivosRevision(exp: Expediente, qa: QALite): MotivoRevision[] {
       detalle: `Score QA ${Math.round(qa.score)}/100${qa.dictamen ? ` · ${qa.dictamen}` : ""}`,
     });
   }
+
 
   const hon = n(exp.honorarios_final);
   if (hon > 0 && hon < PISO_HONORARIOS) {
