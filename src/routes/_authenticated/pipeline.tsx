@@ -1402,6 +1402,19 @@ function PipelinePage() {
                     borderColor: "var(--nuvia-border)",
                     background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.018))",
                   };
+              const orphansForLane: OrphanQaCard[] = etapa.id === "en_revision"
+                ? orphanQas.filter((o) => {
+                    if (banco && (o.banco ?? "") !== banco) return false;
+                    const term = q.trim().toLowerCase();
+                    if (term) {
+                      const hay = `${o.cliente_nombre ?? ""} ${o.banco ?? ""} ${o.codigo ?? ""}`.toLowerCase();
+                      if (!hay.includes(term)) return false;
+                    }
+                    if (mios && user?.id && o.analista_id !== user.id) return false;
+                    return true;
+                  })
+                : [];
+              const totalLane = items.length + orphansForLane.length;
               return (
                 <div
                   key={etapa.id}
@@ -1421,9 +1434,10 @@ function PipelinePage() {
                       </div>
                     </div>
                     <span className="shrink-0 rounded-full border border-[var(--nuvia-border)] bg-[rgba(255,255,255,0.045)] px-2.5 py-1 text-xs font-semibold text-[var(--nuvia-text-primary)]">
-                      {items.length}
+                      {totalLane}
                     </span>
                   </div>
+
                   {items.length > 0 && (
                     <div className="mb-3 flex items-center justify-between gap-2 px-1 text-xs">
                       <span className="inline-flex items-center gap-1 text-[var(--nuvia-text-secondary)]">
