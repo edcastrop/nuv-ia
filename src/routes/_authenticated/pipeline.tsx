@@ -1420,6 +1420,12 @@ function PipelinePage() {
                 : [];
 
               const totalLane = items.length + orphansForLane.length;
+              const honorariosLane = items.reduce((acc, r) => acc + Number(r.honorarios_final ?? 0), 0);
+              const honorariosLabel = honorariosLane >= 1_000_000
+                ? `$${(honorariosLane / 1_000_000).toFixed(honorariosLane >= 10_000_000 ? 0 : 1)}M`
+                : honorariosLane >= 1_000
+                  ? `$${Math.round(honorariosLane / 1_000)}K`
+                  : `$${honorariosLane.toLocaleString("es-CO")}`;
               return (
                 <div
                   key={etapa.id}
@@ -1442,6 +1448,24 @@ function PipelinePage() {
                       {totalLane}
                     </span>
                   </div>
+                  {honorariosLane > 0 && (
+                    <div
+                      className="mb-3 flex items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-[11px]"
+                      style={{
+                        borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 32%, transparent)",
+                        background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
+                      }}
+                      title={`Honorarios acumulados en ${etapa.titulo}: $${honorariosLane.toLocaleString("es-CO")}`}
+                    >
+                      <span className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[10px]" style={{ color: "var(--nuvia-accent-green)" }}>
+                        <Coins className="h-3 w-3" /> Honorarios
+                      </span>
+                      <span className="font-black tabular-nums" style={{ color: "var(--nuvia-accent-green)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
+                        {honorariosLabel}
+                      </span>
+                    </div>
+                  )}
+
 
                   {items.length > 0 && (
                     <div className="mb-3 flex items-center justify-between gap-2 px-1 text-xs">
