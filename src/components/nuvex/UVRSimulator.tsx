@@ -1218,6 +1218,13 @@ export function UVRSimulator({
                       "pdf-content-uvr",
                       `NUVEX_Propuesta_UVR_${sanitizeFileName(client.nombre)}.pdf`,
                     );
+                    if (init?.id) {
+                      try {
+                        await marcarAccionPropuesta({ data: { expedienteId: init.id, accion: "export" } });
+                      } catch (e) {
+                        console.warn("[marcarAccionPropuesta:export]", e);
+                      }
+                    }
                   }}
                   className="inline-flex items-center gap-1.5 rounded-lg px-5 py-2.5 text-sm font-semibold transition-transform hover:scale-[1.01]"
                   style={{
@@ -1238,6 +1245,14 @@ export function UVRSimulator({
                   disabled={!recomendada || !calc || calc.propuestas.length === 0}
                   disabledReason="Primero calcula la simulación UVR."
                   label="Enviar propuesta al cliente"
+                  onSent={async () => {
+                    if (!init?.id) return;
+                    try {
+                      await marcarAccionPropuesta({ data: { expedienteId: init.id, accion: "email" } });
+                    } catch (e) {
+                      console.warn("[marcarAccionPropuesta:email]", e);
+                    }
+                  }}
                 />
                 <WhatsAppPropuestaButton
                   nombre={client.nombre}
@@ -1245,6 +1260,14 @@ export function UVRSimulator({
                   telefono={client.celular}
                   asesor={client.asesor}
                   cuotaActual={cuotaSimulacionPesosNum}
+                  onGenerated={async () => {
+                    if (!init?.id) return;
+                    try {
+                      await marcarAccionPropuesta({ data: { expedienteId: init.id, accion: "whatsapp" } });
+                    } catch (e) {
+                      console.warn("[marcarAccionPropuesta:whatsapp]", e);
+                    }
+                  }}
                   propuestas={(() => {
                     const analyst = propuestasComercialesSnapshot?.propuestas ?? [];
                     if (analyst.length > 0) {
