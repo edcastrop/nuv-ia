@@ -1463,30 +1463,25 @@ function PipelinePage() {
                       {totalLane}
                     </span>
                   </div>
-                  {totalLane > 0 && (
+                  {honorariosLane > 0 && (
                     <div
                       className="mb-3 flex items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-[11px]"
-                      style={honorariosLane > 0
-                        ? {
-                            borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 32%, transparent)",
-                            background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
-                          }
-                        : {
-                            borderColor: "var(--nuvia-border)",
-                            background: "rgba(255,255,255,0.03)",
-                          }}
-                      title={`Honorarios acumulados en ${etapa.titulo}: $${honorariosLane.toLocaleString("es-CO")}${honorariosLane === 0 ? " · aún sin simulación con honorarios calculados" : ""}`}
+                      style={{
+                        borderColor: "color-mix(in oklab, var(--nuvia-accent-green) 32%, transparent)",
+                        background: "color-mix(in oklab, var(--nuvia-accent-green) 10%, transparent)",
+                      }}
+                      title={`Honorarios acumulados en ${etapa.titulo}: $${honorariosLane.toLocaleString("es-CO")}`}
                     >
                       <span
                         className="inline-flex items-center gap-1 font-semibold uppercase tracking-wide text-[10px]"
-                        style={{ color: honorariosLane > 0 ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)" }}
+                        style={{ color: "var(--nuvia-accent-green)" }}
                       >
                         <Coins className="h-3 w-3" /> Honorarios
                       </span>
                       <span
                         className="font-black tabular-nums"
                         style={{
-                          color: honorariosLane > 0 ? "var(--nuvia-accent-green)" : "var(--nuvia-text-secondary)",
+                          color: "var(--nuvia-accent-green)",
                           fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
                         }}
                       >
@@ -1494,6 +1489,7 @@ function PipelinePage() {
                       </span>
                     </div>
                   )}
+
 
 
 
