@@ -35,6 +35,19 @@ type PipelineIdentity = {
   numeroCredito?: string | null;
 };
 
+type OrphanQaCard = {
+  id: string;
+  codigo: string | null;
+  cliente_nombre: string | null;
+  banco: string | null;
+  qa_score: number | null;
+  dictamen: string | null;
+  categoria: string | null;
+  created_at: string | null;
+  analista_id: string | null;
+};
+
+
 export const pipelineSearchSchema = z.object({
   q: fallback(z.string(), "").default(""),
   banco: fallback(z.string(), "").default(""),
