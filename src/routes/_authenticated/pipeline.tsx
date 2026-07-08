@@ -228,6 +228,8 @@ function PipelinePage() {
   const [orphanQas, setOrphanQas] = useState<OrphanQaCard[]>([]);
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
 
 
   const { q, banco, stuck: soloStuck, fase, mios, asesor } = search;
