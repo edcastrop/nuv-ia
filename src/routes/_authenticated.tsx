@@ -623,7 +623,10 @@ function AuthenticatedLayout() {
 
               ...(hasAny("super_admin", "admin", "director_financiero_qa", "gerencia")
                 ? [{ to: "/qa-ai", label: "NUVIA QA AI", Icon: ClipboardCheck }]
-                : []),
+                : hasAny("licenciado", "asesor")
+                  ? [{ to: "/qa-ai/mis", label: "Mis auditorías QA", Icon: ClipboardCheck }]
+                  : []),
+
             ],
           },
           {
