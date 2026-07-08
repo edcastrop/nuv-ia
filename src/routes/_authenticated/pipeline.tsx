@@ -1411,9 +1411,14 @@ function PipelinePage() {
                       if (!hay.includes(term)) return false;
                     }
                     if (mios && user?.id && o.analista_id !== user.id) return false;
+                    if (asesor) {
+                      const asesorIds = asesor.split(",").filter(Boolean);
+                      if (!o.analista_id || !asesorIds.includes(o.analista_id)) return false;
+                    }
                     return true;
                   })
                 : [];
+
               const totalLane = items.length + orphansForLane.length;
               return (
                 <div
