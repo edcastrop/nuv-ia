@@ -57,17 +57,17 @@ const LEAD_INTERNAL_STAGES: ReadonlyArray<EtapaPipelineId> = ["lead", "extracto"
 
 const PIPELINE_VISUAL_LANES: ReadonlyArray<PipelineLane> = [
   {
-    id: "con_proyeccion",
+    id: "en_revision",
     numero: 1,
-    titulo: "Lead con Proyección",
-    descripcion: "Lead comercial con soporte bancario, simulación o avance financiero listo para gestión.",
+    titulo: "Lead en Revisión",
+    descripcion: "Entrada del pipeline: todo lead nuevo, en auditoría o con alertas espera aquí hasta que quede aprobado.",
     internalIds: LEAD_INTERNAL_STAGES,
   },
   {
-    id: "en_revision",
+    id: "con_proyeccion",
     numero: 2,
-    titulo: "Lead en Revisión",
-    descripcion: "Lead que requiere validación de Dirección antes de continuar el flujo comercial.",
+    titulo: "Lead con Proyección",
+    descripcion: "Lead limpio: proyección lista, auditoría QA aprobada y sin motivos abiertos. Listo para avanzar a contratación.",
     internalIds: LEAD_INTERNAL_STAGES,
   },
   ...ETAPAS_PIPELINE.filter((e) => e.numero >= 4).map((e, idx) => ({
@@ -78,6 +78,7 @@ const PIPELINE_VISUAL_LANES: ReadonlyArray<PipelineLane> = [
     internalIds: [e.id] as const,
   })),
 ];
+
 
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
