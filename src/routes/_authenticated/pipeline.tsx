@@ -57,17 +57,17 @@ const LEAD_INTERNAL_STAGES: ReadonlyArray<EtapaPipelineId> = ["lead", "extracto"
 
 const PIPELINE_VISUAL_LANES: ReadonlyArray<PipelineLane> = [
   {
-    id: "con_proyeccion",
+    id: "en_revision",
     numero: 1,
-    titulo: "Lead con Proyección",
-    descripcion: "Lead comercial con soporte bancario, simulación o avance financiero listo para gestión.",
+    titulo: "Lead en Revisión",
+    descripcion: "Entrada del pipeline: todo lead nuevo, en auditoría o con alertas espera aquí hasta que quede aprobado.",
     internalIds: LEAD_INTERNAL_STAGES,
   },
   {
-    id: "en_revision",
+    id: "con_proyeccion",
     numero: 2,
-    titulo: "Lead en Revisión",
-    descripcion: "Lead que requiere validación de Dirección antes de continuar el flujo comercial.",
+    titulo: "Lead con Proyección",
+    descripcion: "Lead limpio: proyección lista, auditoría QA aprobada y sin motivos abiertos. Listo para avanzar a contratación.",
     internalIds: LEAD_INTERNAL_STAGES,
   },
   ...ETAPAS_PIPELINE.filter((e) => e.numero >= 4).map((e, idx) => ({
@@ -78,6 +78,7 @@ const PIPELINE_VISUAL_LANES: ReadonlyArray<PipelineLane> = [
     internalIds: [e.id] as const,
   })),
 ];
+
 
 
 export const Route = createFileRoute("/_authenticated/pipeline")({
@@ -150,11 +151,25 @@ function isLeadInternalStage(etapa: EtapaPipelineId): boolean {
   return LEAD_INTERNAL_STAGES.includes(etapa);
 }
 
-function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null } | undefined): PipelineLaneId {
+function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null; auditor_aprobado_at?: string | null } | undefined): PipelineLaneId {
   const etapa = etapaInterna(exp);
   if (!isLeadInternalStage(etapa)) return etapa;
-  return motivosRevision(exp, qa).length > 0 ? "en_revision" : "con_proyeccion";
+  // Regla nueva: E1=en_revision es la entrada por default. Sólo promovemos a
+  // E2=con_proyeccion cuando el lead está limpio: sin motivos abiertos,
+  // tiene proyección financiera y la auditoría QA fue aprobada y sellada.
+  const motivos = motivosRevision(exp, qa);
+  if (motivos.length > 0) return "en_revision";
+  const propuesta = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
+  const nuevaCuota = Number(propuesta.nuevaCuota ?? 0) || 0;
+  const nuevoPlazo = Number(propuesta.nuevoPlazo ?? 0) || 0;
+  const ahorroTotal = Number(propuesta.ahorroTotal ?? 0) || 0;
+  const tieneProyeccion = nuevaCuota > 0 || nuevoPlazo > 0 || ahorroTotal > 0;
+  const dictamen = (qa?.dictamen ?? "").toLowerCase();
+  const auditoriaAprobada = !!qa && !!qa.auditor_aprobado_at && (dictamen === "aprobado" || dictamen === "aprobado_obs");
+  if (tieneProyeccion && auditoriaAprobada) return "con_proyeccion";
+  return "en_revision";
 }
+
 
 function getLaneById(id: PipelineLaneId): PipelineLane {
   return PIPELINE_VISUAL_LANES.find((x) => x.id === id) ?? PIPELINE_VISUAL_LANES[0];
@@ -197,7 +212,7 @@ function PipelinePage() {
   const [qLocal, setQLocal] = useState(search.q);
   const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
   const [profilesMap, setProfilesMap] = useState<Map<string, PipelineProfileLite>>(new Map());
-  const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null }>>(new Map());
+  const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null; auditor_aprobado_at: string | null }>>(new Map());
   const [identityMap, setIdentityMap] = useState<Map<string, PipelineIdentity>>(new Map());
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
@@ -338,16 +353,17 @@ function PipelinePage() {
     (async () => {
       const { data } = await supabase
         .from("qa_auditorias")
-        .select("id, expediente_id, qa_score, dictamen, created_at")
+        .select("id, expediente_id, qa_score, dictamen, auditor_aprobado_at, created_at")
         .in("expediente_id", ids)
         .order("created_at", { ascending: false });
       if (cancel || !data) return;
-      const next = new Map<string, { id: string; score: number; dictamen: string | null }>();
-      for (const row of data as Array<{ id: string; expediente_id: string; qa_score: number | null; dictamen: string | null }>) {
+      const next = new Map<string, { id: string; score: number; dictamen: string | null; auditor_aprobado_at: string | null }>();
+      for (const row of data as Array<{ id: string; expediente_id: string; qa_score: number | null; dictamen: string | null; auditor_aprobado_at: string | null }>) {
         if (!row.expediente_id || next.has(row.expediente_id)) continue;
-        next.set(row.expediente_id, { id: row.id, score: Number(row.qa_score ?? 0), dictamen: row.dictamen });
+        next.set(row.expediente_id, { id: row.id, score: Number(row.qa_score ?? 0), dictamen: row.dictamen, auditor_aprobado_at: row.auditor_aprobado_at ?? null });
       }
       setQaMap(next);
+
     })();
     return () => { cancel = true; };
   }, [rows]);
@@ -496,9 +512,10 @@ function PipelinePage() {
     let estancados = 0;
     let total = 0;
     const fases: Array<{ id: string; label: string; count: number }> = [
-      { id: "con_proyeccion", label: "Lead con Proyección", count: grupos.get("con_proyeccion")?.length ?? 0 },
       { id: "en_revision", label: "Lead en Revisión", count: grupos.get("en_revision")?.length ?? 0 },
+      { id: "con_proyeccion", label: "Lead con Proyección", count: grupos.get("con_proyeccion")?.length ?? 0 },
     ];
+
     let honorarios = 0;
     etapasVisibles.forEach((etapa) => {
       const items = grupos.get(etapa.id) ?? [];
