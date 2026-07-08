@@ -520,7 +520,14 @@ function CurrentStateCard(props: {
           <Row label="Banco" value={props.banco} />
           <Row label="Producto" value={props.producto} />
           <Row label="Plazo inicial" value={`${props.plazoOriginal} meses`} />
+          {typeof props.tasaMensualPct === "number" && props.tasaMensualPct > 0 && (
+            <Row
+              label="Tasa cobrada"
+              value={`${formatNumber(props.tasaMensualPct, 2)}% NM · ${formatNumber((Math.pow(1 + props.tasaMensualPct / 100, 12) - 1) * 100, 2)}% EA`}
+            />
+          )}
         </Group>
+
 
         <Group title="CUOTAS">
           <Row label="Canceladas" value={`${props.cuotasPagadas}`} />
