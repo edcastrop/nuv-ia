@@ -212,7 +212,7 @@ function PipelinePage() {
   const [qLocal, setQLocal] = useState(search.q);
   const [analistas, setAnalistas] = useState<{ id: string; nombre: string | null; email: string | null }[]>([]);
   const [profilesMap, setProfilesMap] = useState<Map<string, PipelineProfileLite>>(new Map());
-  const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null }>>(new Map());
+  const [qaMap, setQaMap] = useState<Map<string, { id: string; score: number; dictamen: string | null; auditor_aprobado_at: string | null }>>(new Map());
   const [identityMap, setIdentityMap] = useState<Map<string, PipelineIdentity>>(new Map());
   const [peekId, setPeekId] = useState<string | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
