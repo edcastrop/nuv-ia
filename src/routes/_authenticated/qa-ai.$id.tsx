@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
-import { obtenerAuditoriaQA, reejecutarAuditoriaQA, aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
+import { obtenerAuditoriaQA, reejecutarAuditoriaQA, aprobarAuditoriaPorAuditor, aprobarAuditoriaConOverride } from "@/lib/qaAI.functions";
+import { useUserRole, canOverrideQA } from "@/hooks/useUserRole";
 import { auditar, reconstruir, QA_MOTOR_VERSION, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
@@ -152,8 +153,8 @@ function Accordion({ title, icon, count, children, defaultOpen = false }:
 
 /* ---------- Sticky header ---------- */
 
-function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor, codigo, auditorAprobado }:
-  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string; codigo: string | null; auditorAprobado: boolean }) {
+function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor, codigo, auditorAprobado, auditorOverride }:
+  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string; codigo: string | null; auditorAprobado: boolean; auditorOverride: boolean }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     if (!codigo) return;
@@ -180,10 +181,19 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
             {copied ? "Copiado ✓" : codigo}
           </button>
         )}
-        {auditorAprobado && (
+        {auditorAprobado && !auditorOverride && (
           <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
             style={{ background: "rgba(132,185,143,0.18)", color: "var(--nuvia-success)", border: "1px solid rgba(132,185,143,0.5)" }}>
             ✓ Aprobada por auditor
+          </span>
+        )}
+        {auditorAprobado && auditorOverride && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: "rgba(245,199,122,0.18)", color: "#F5C77A", border: "1px solid rgba(245,199,122,0.5)" }}
+            title="Aprobada saltando el guardarraíl automático mediante override manual"
+          >
+            <ShieldAlert size={10} /> Aprobada con override manual
           </span>
         )}
         <span style={{ color: "var(--nuvia-border)" }}>·</span>
@@ -403,6 +413,9 @@ function ResultadoQaAi() {
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const doReejecutar = useServerFn(reejecutarAuditoriaQA);
   const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
+  const doAprobarOverride = useServerFn(aprobarAuditoriaConOverride);
+  const { roles } = useUserRole();
+  const puedeOverride = canOverrideQA(roles);
   const [data, setData] = useState<{
     auditoria: Record<string, unknown> | null;
     inconsistencias: Inc[];
@@ -414,6 +427,9 @@ function ResultadoQaAi() {
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
   const [aprobando, setAprobando] = useState(false);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideText, setOverrideText] = useState("");
+  const [overrideEnviando, setOverrideEnviando] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as {
     auditoria: Record<string, unknown> | null;
@@ -690,7 +706,11 @@ function ResultadoQaAi() {
     } finally { setReloading(false); }
   };
 
-  const yaAprobadaAuditor = !!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+  const auditorAt = (a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+  const yaAprobadaAuditor = !!auditorAt;
+  const auditorOverride = !!(a as unknown as { auditor_override?: boolean | null }).auditor_override;
+  const auditorOverrideJustificacion = ((a as unknown as { auditor_override_justificacion?: string | null }).auditor_override_justificacion ?? null);
+
   const handleAprobar = async () => {
     if (aprobando || yaAprobadaAuditor) return;
     const notas = window.prompt("Notas para el analista (opcional):", "") ?? "";
@@ -703,6 +723,23 @@ function ResultadoQaAi() {
     } catch (err) {
       alert((err as Error).message);
     } finally { setAprobando(false); }
+  };
+
+  const handleOverride = async () => {
+    if (overrideEnviando || yaAprobadaAuditor) return;
+    const justificacion = overrideText.trim();
+    if (justificacion.length < 20) return;
+    if (!window.confirm("¿Aplicar OVERRIDE manual? Esta decisión queda registrada de forma permanente con tu justificación.")) return;
+    setOverrideEnviando(true);
+    try {
+      const res = await doAprobarOverride({ data: { auditoriaId: id, justificacion } }) as { ok: boolean; codigo: string | null };
+      setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
+      setOverrideOpen(false);
+      setOverrideText("");
+      alert(`✓ Auditoría ${res.codigo ?? ""} liberada con override manual. Registro auditable creado.`);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally { setOverrideEnviando(false); }
   };
 
   const handlePdf = () => exportarDictamenPDF({
@@ -718,7 +755,8 @@ function ResultadoQaAi() {
         cliente={cliente} banco={banco} producto={producto} fecha={fecha}
         score={score} scoreColor={scoreColor} certLabel={cert.label} certColor={cert.color}
         codigo={(a as unknown as { codigo: string | null }).codigo ?? null}
-        auditorAprobado={!!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at}
+        auditorAprobado={yaAprobadaAuditor}
+        auditorOverride={auditorOverride}
       />
 
 
@@ -1116,6 +1154,7 @@ function ResultadoQaAi() {
                   ? `Certificación ${Math.round(Number(score ?? 0))}/100 (${categoriaEfectiva || dictamenEfectivo}). NUVIA exige score ≥ 85 y dictamen APROBADO / APROBADO CON OBSERVACIONES. Devuelva al analista para corregir y reauditar.`
                   : null;
                 return (
+              <>
               <button
                 onClick={handleAprobar}
                 disabled={aprobando || yaAprobadaAuditor || bloqueado}
@@ -1149,8 +1188,151 @@ function ResultadoQaAi() {
                   ? `🚫 No certificable (${Math.round(Number(score ?? 0))}/100)`
                   : yaAprobadaAuditor ? "Aprobada por auditor" : aprobando ? "Aprobando…" : "Aprobar y liberar al analista"}
               </button>
+
+              {/* Override manual: solo Dirección Financiera QA / Super Admin,
+                  solo cuando el guardarraíl bloquea y la auditoría aún no
+                  está aprobada. Visualmente ámbar + ShieldAlert para que no
+                  se confunda con la aprobación normal. */}
+              {bloqueado && !yaAprobadaAuditor && puedeOverride && !overrideOpen && (
+                <button
+                  type="button"
+                  onClick={() => setOverrideOpen(true)}
+                  title="Liberar esta auditoría saltando el guardarraíl automático. Requiere justificación auditable."
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                  style={{
+                    background: "rgba(245,199,122,0.14)",
+                    color: "#F5C77A",
+                    border: "1px dashed rgba(245,199,122,0.55)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <ShieldAlert size={14} /> Aprobar con override manual
+                </button>
+              )}
+              </>
                 );
               })()}
+
+              {/* Formulario de justificación del override */}
+              {overrideOpen && !yaAprobadaAuditor && puedeOverride && (
+                <div
+                  className="w-full mt-2 rounded-xl p-4"
+                  style={{
+                    background: "rgba(245,199,122,0.08)",
+                    border: "1px solid rgba(245,199,122,0.35)",
+                  }}
+                >
+                  <div className="flex items-start gap-2 mb-2">
+                    <ShieldAlert size={16} style={{ color: "#F5C77A" }} className="mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-[12.5px] font-bold" style={{ color: "#F5C77A" }}>
+                        Override manual del guardarraíl QA
+                      </p>
+                      <p className="text-[11.5px] mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+                        Vas a liberar una auditoría que el guardarraíl automático bloqueó. Esta decisión queda
+                        registrada de forma permanente con tu identidad, la fecha y tu justificación. Es visible
+                        para cualquier persona que abra esta auditoría después.
+                      </p>
+                    </div>
+                  </div>
+                  <textarea
+                    value={overrideText}
+                    onChange={(e) => setOverrideText(e.target.value)}
+                    placeholder="Explica por qué es correcto liberar este caso a pesar del guardarraíl (mínimo 20 caracteres). Ej.: contexto operativo del banco, revisión manual de los hallazgos, decisión de dirección…"
+                    rows={4}
+                    className="w-full rounded-lg px-3 py-2 text-[12.5px] font-medium"
+                    style={{
+                      background: "rgba(0,0,0,0.3)",
+                      color: "var(--nuvia-text-primary)",
+                      border: "1px solid var(--nuvia-border)",
+                      outline: "none",
+                      resize: "vertical",
+                    }}
+                  />
+                  <div className="flex items-center justify-between gap-3 mt-2">
+                    <span
+                      className="text-[11px] font-mono"
+                      style={{
+                        color: overrideText.trim().length >= 20 ? "var(--nuvia-success)" : "var(--nuvia-text-muted)",
+                      }}
+                    >
+                      {overrideText.trim().length}/20 caracteres mínimos
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setOverrideOpen(false); setOverrideText(""); }}
+                        disabled={overrideEnviando}
+                        className="rounded-lg px-3 py-1.5 text-[12px] font-semibold"
+                        style={{
+                          background: "transparent",
+                          color: "var(--nuvia-text-secondary)",
+                          border: "1px solid var(--nuvia-border)",
+                          cursor: overrideEnviando ? "not-allowed" : "pointer",
+                        }}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleOverride}
+                        disabled={overrideEnviando || overrideText.trim().length < 20}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12px] font-bold"
+                        style={{
+                          background: overrideText.trim().length >= 20 ? "#F5C77A" : "rgba(245,199,122,0.25)",
+                          color: overrideText.trim().length >= 20 ? "#0B1220" : "var(--nuvia-text-muted)",
+                          border: "none",
+                          cursor: (overrideEnviando || overrideText.trim().length < 20) ? "not-allowed" : "pointer",
+                          opacity: overrideEnviando ? 0.6 : 1,
+                        }}
+                      >
+                        <ShieldAlert size={13} />
+                        {overrideEnviando ? "Aplicando override…" : "Confirmar override y liberar caso"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Rastro auditable persistente: visible siempre que la auditoría
+                  haya sido aprobada con override, para cualquiera que la abra. */}
+              {yaAprobadaAuditor && auditorOverride && (
+                <div
+                  className="w-full mt-2 rounded-xl p-3.5"
+                  style={{
+                    background: "rgba(245,199,122,0.10)",
+                    border: "1px solid rgba(245,199,122,0.45)",
+                  }}
+                >
+                  <div className="flex items-start gap-2">
+                    <ShieldAlert size={16} style={{ color: "#F5C77A" }} className="mt-0.5 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                          style={{ background: "rgba(245,199,122,0.22)", color: "#F5C77A", border: "1px solid rgba(245,199,122,0.5)" }}
+                        >
+                          Aprobado con override manual
+                        </span>
+                        {auditorAt && (
+                          <span className="text-[10.5px]" style={{ color: "var(--nuvia-text-muted)" }}>
+                            {new Date(auditorAt).toLocaleString("es-CO")}
+                          </span>
+                        )}
+                      </div>
+                      {auditorOverrideJustificacion && (
+                        <p
+                          className="mt-1.5 text-[12px] leading-relaxed whitespace-pre-wrap"
+                          style={{ color: "var(--nuvia-text-primary)" }}
+                        >
+                          <b style={{ color: "var(--nuvia-text-secondary)" }}>Justificación: </b>
+                          {auditorOverrideJustificacion}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
 
 
