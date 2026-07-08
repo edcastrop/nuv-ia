@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useQueryClient } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -8,8 +8,24 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
 import { VictoryProvider } from "@/components/victory/VictoryProvider";
+import { signOut } from "@/hooks/useAuth";
+import {
+  CHECK_INTERVAL_MS,
+  canExtend,
+  clearClientSessionStart,
+  extendClientSession,
+  getSessionStartedAt,
+  isExpired,
+  isPublicPath,
+  markClientSessionStart,
+  markWarned,
+  shouldWarn,
+} from "@/lib/sessionLifetime";
+import { supabase } from "@/integrations/supabase/client";
 
 import appCss from "../styles.css?url";
 
