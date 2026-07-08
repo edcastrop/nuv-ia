@@ -1,7 +1,12 @@
 // Vista "2 etapas" para leads del Pipeline NUVEX.
-// - "con_proyeccion": flujo normal (lead → extracto → simulación → QA OK).
-// - "en_revision":    requiere intervención de Dirección (QA<70, honorarios bajo piso,
-//                     descuento alto, ahorro bajo, plazo excesivo, banco sin perfil).
+// - "en_revision":    E1 · entrada del pipeline. Todo lead nuevo arranca aquí:
+//                     sin proyección validada, con auditoría pendiente, o con
+//                     alertas (QA<70, honorarios bajo piso, descuento alto,
+//                     ahorro bajo, plazo excesivo, banco sin perfil,
+//                     auditoría en curso o rechazada).
+// - "con_proyeccion": E2 · lead ya limpio: tiene proyección, auditoría QA
+//                     aprobada y ningún motivo de revisión abierto. Listo para
+//                     avanzar a contratación.
 //
 // Pure helpers: NO tocan DB, NO mutan tipos existentes. Aditivos sobre Expediente.
 
@@ -17,7 +22,13 @@ export type FaseLead = "con_proyeccion" | "en_revision";
 
 const ETAPAS_LEAD: ReadonlyArray<EtapaPipelineId> = ["lead", "extracto", "proyeccion", "presentacion", "cierre"];
 
-export type QALite = { id: string; score: number; dictamen: string | null } | null | undefined;
+export type QALite = {
+  id: string;
+  score: number;
+  dictamen: string | null;
+  auditor_aprobado_at?: string | null;
+} | null | undefined;
+
 
 function n(v: unknown): number {
   if (v == null) return 0;
