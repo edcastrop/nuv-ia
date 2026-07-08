@@ -1912,6 +1912,178 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     return { rows, bancos, analistas, topErrores, tendencia, prioridad };
   });
 
+// ─────────────────────────────────────────────────────────────
+// Helper compartido: liberación operativa tras aprobar una auditoría QA.
+// Reutilizado por `aprobarAuditoriaPorAuditor` (flujo normal, con
+// guardarraíl de score/dictamen) y por `aprobarAuditoriaConOverride`
+// (Director Financiero QA / Super Admin, salta el guardarraíl).
+// El único diferencial entre ambos flujos es el texto de auditoría
+// (observación de historial + mensaje al analista): cuando viene
+// `opts.override`, marcamos explícitamente "OVERRIDE manual" + la
+// justificación para que el rastro auditable sea inequívoco.
+// ─────────────────────────────────────────────────────────────
+type AuditoriaLiberable = {
+  id: string;
+  codigo: string | null;
+  analista_id: string | null;
+  expediente_id: string | null;
+  qa_score: number | null;
+  dictamen: string | null;
+};
+
+async function ejecutarLiberacionOperativaAuditor(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  aud: AuditoriaLiberable,
+  opts: { notas?: string | null; override?: { justificacion: string } | null },
+): Promise<{ liberacionOperativaOk: boolean; liberacionOperativaError: string | null }> {
+  let liberacionOperativaOk = false;
+  let liberacionOperativaError: string | null = null;
+
+  const notas = opts.notas ?? null;
+  const override = opts.override ?? null;
+  const codigoCorto = aud.codigo ?? aud.id.slice(0, 8);
+
+  if (aud.expediente_id) {
+    try {
+      // 1) Snapshot de la propuesta vigente en `aprobado_data`
+      const { data: exp } = await supabase
+        .from("expedientes")
+        .select(
+          "estado_caso, propuesta_data, credito_data, cliente_data, honorarios_base, honorarios_final, descuento, discount_data, banco, producto, numero_credito",
+        )
+        .eq("id", aud.expediente_id)
+        .maybeSingle();
+
+      if (exp) {
+        const e = exp as Record<string, unknown>;
+        const estadoCasoAnterior = (e.estado_caso as string | null) ?? null;
+
+        const disc = (e.discount_data ?? null) as { vigencia?: string | null; percent?: number | null } | null;
+        const snapshot = {
+          fechaAprobacion: new Date().toISOString(),
+          aprobadoPor: userId,
+          validacionId: null,
+          origen: override ? "qa_ai_auditor_override" : "qa_ai_auditor",
+          auditoriaId: aud.id,
+          auditoriaCodigo: aud.codigo,
+          override: override ? { justificacion: override.justificacion } : null,
+          propuesta: e.propuesta_data ?? null,
+          credito: e.credito_data ?? null,
+          cliente: e.cliente_data ?? null,
+          honorariosBase: e.honorarios_base ?? null,
+          honorariosFinal: e.honorarios_final ?? null,
+          descuento: e.descuento ?? null,
+          discountData: e.discount_data ?? null,
+          vigencia: disc?.vigencia ?? null,
+          banco: e.banco ?? null,
+          producto: e.producto ?? null,
+          numeroCredito: e.numero_credito ?? null,
+        };
+
+        // 2) Cambio de estado_caso → proyeccion_aprobada_qa
+        const nuevoEstadoCaso = "proyeccion_aprobada_qa" as const;
+        const estadoDerivado = mapCasoToExpedienteEstado(nuevoEstadoCaso);
+
+        await supabase
+          .from("expedientes")
+          .update({
+            aprobado_data: snapshot as unknown as Json,
+            estado_caso: nuevoEstadoCaso,
+            estado: estadoDerivado,
+          } as never)
+          .eq("id", aud.expediente_id);
+
+        // 3) Historial de la transición
+        const observacionBase = override
+          ? `Aprobado con OVERRIDE manual por auditor QA AI – ${codigoCorto} · Justificación: ${override.justificacion}`
+          : `Aprobado por auditor QA AI – ${codigoCorto}${notas ? ` · ${notas}` : ""}`;
+
+        await supabase.from("expediente_historial").insert({
+          expediente_id: aud.expediente_id,
+          estado_caso_anterior: estadoCasoAnterior,
+          estado_caso_nuevo: nuevoEstadoCaso,
+          accion_origen: "manual",
+          observacion: observacionBase,
+          user_id: userId,
+        } as never);
+
+        // 4) Notificar a jurídica de que el caso quedó listo para contratación
+        try {
+          const { data: roles } = await supabase
+            .from("user_roles")
+            .select("user_id, role")
+            .in("role", ["juridica", "director_juridico"] as never);
+          const destinos = Array.from(
+            new Set(((roles ?? []) as Array<{ user_id: string }>).map((r) => r.user_id)),
+          );
+          if (destinos.length) {
+            await supabase.from("notificaciones_usuario").insert(
+              destinos.map((uid) => ({
+                user_id: uid,
+                titulo: override ? "Caso liberado por override QA" : "Nuevo caso aprobado por QA",
+                mensaje: override
+                  ? `Caso liberado con OVERRIDE manual por Dirección Financiera QA (${codigoCorto}). Listo para gestión jurídica.`
+                  : `Caso liberado por auditor QA AI (${codigoCorto}). Listo para gestión jurídica.`,
+                tipo: "qa_aprobada",
+                link: `/casos/${aud.expediente_id}`,
+                metadata: {
+                  expediente_id: aud.expediente_id,
+                  auditoria_id: aud.id,
+                  codigo: aud.codigo,
+                  override: !!override,
+                } as unknown as Json,
+              })),
+            );
+          }
+        } catch {
+          /* notificaciones best-effort */
+        }
+
+        liberacionOperativaOk = true;
+      }
+    } catch (e) {
+      liberacionOperativaError = e instanceof Error ? e.message : String(e);
+      console.warn("[qaAI] no se pudo liberar operativamente el caso", e);
+    }
+  }
+
+  if (aud.analista_id) {
+    try {
+      await supabase.from("notificaciones_usuario").insert({
+        user_id: aud.analista_id,
+        titulo: override
+          ? `Auditoría ${codigoCorto} aprobada con override manual`
+          : `Auditoría ${codigoCorto} aprobada`,
+        mensaje:
+          (override
+            ? `Tu auditoría QA fue liberada con OVERRIDE manual por Dirección Financiera QA. Justificación: ${override.justificacion}.`
+            : `Tu auditoría QA fue verificada y aprobada por el auditor.`) +
+          (liberacionOperativaOk
+            ? ` El caso quedó liberado y avanzó a Contratación.`
+            : ` Puedes continuar con la propuesta comercial del caso.`) +
+          (!override && notas ? ` Notas: ${notas}` : ""),
+        tipo: "qa_auditoria_aprobada",
+        link: aud.expediente_id ? `/qa-ai/${aud.id}` : `/qa-ai/${aud.id}?from=simulador`,
+        metadata: {
+          auditoria_id: aud.id,
+          codigo: aud.codigo,
+          expediente_id: aud.expediente_id,
+          score: aud.qa_score,
+          dictamen: aud.dictamen,
+          liberacion_operativa: liberacionOperativaOk,
+          liberacion_operativa_error: liberacionOperativaError,
+          override: !!override,
+        } as unknown as Json,
+      });
+    } catch {
+      /* no-op best-effort */
+    }
+  }
+
+  return { liberacionOperativaOk, liberacionOperativaError };
+}
+
 /**
  * Aprobar manualmente una auditoría como auditor, sellando fecha + autor +
  * notas y notificando al analista para que pueda continuar el caso.
@@ -1967,130 +2139,16 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
 
     let liberacionOperativaOk = false;
     let liberacionOperativaError: string | null = null;
-    let estadoCasoAnterior: string | null = null;
 
-    if (!yaAprobada && aud.expediente_id) {
-      try {
-        // 1) Snapshot de la propuesta vigente en `aprobado_data`
-        const { data: exp } = await supabase
-          .from("expedientes")
-          .select(
-            "estado_caso, propuesta_data, credito_data, cliente_data, honorarios_base, honorarios_final, descuento, discount_data, banco, producto, numero_credito",
-          )
-          .eq("id", aud.expediente_id)
-          .maybeSingle();
-
-        if (exp) {
-          const e = exp as Record<string, unknown>;
-          estadoCasoAnterior = (e.estado_caso as string | null) ?? null;
-
-          const disc = (e.discount_data ?? null) as { vigencia?: string | null; percent?: number | null } | null;
-          const snapshot = {
-            fechaAprobacion: new Date().toISOString(),
-            aprobadoPor: userId,
-            validacionId: null,
-            origen: "qa_ai_auditor",
-            auditoriaId: aud.id,
-            auditoriaCodigo: aud.codigo,
-            propuesta: e.propuesta_data ?? null,
-            credito: e.credito_data ?? null,
-            cliente: e.cliente_data ?? null,
-            honorariosBase: e.honorarios_base ?? null,
-            honorariosFinal: e.honorarios_final ?? null,
-            descuento: e.descuento ?? null,
-            discountData: e.discount_data ?? null,
-            vigencia: disc?.vigencia ?? null,
-            banco: e.banco ?? null,
-            producto: e.producto ?? null,
-            numeroCredito: e.numero_credito ?? null,
-          };
-
-          // 2) Cambio de estado_caso → proyeccion_aprobada_qa
-          const nuevoEstadoCaso = "proyeccion_aprobada_qa" as const;
-          const estadoDerivado = mapCasoToExpedienteEstado(nuevoEstadoCaso);
-
-          await supabase
-            .from("expedientes")
-            .update({
-              aprobado_data: snapshot as unknown as Json,
-              estado_caso: nuevoEstadoCaso,
-              estado: estadoDerivado,
-            } as never)
-            .eq("id", aud.expediente_id);
-
-          // 3) Historial de la transición
-          await supabase.from("expediente_historial").insert({
-            expediente_id: aud.expediente_id,
-            estado_caso_anterior: estadoCasoAnterior,
-            estado_caso_nuevo: nuevoEstadoCaso,
-            accion_origen: "manual",
-            observacion: `Aprobado por auditor QA AI – ${aud.codigo ?? aud.id.slice(0, 8)}${data.notas ? ` · ${data.notas}` : ""}`,
-            user_id: userId,
-          } as never);
-
-          // 4) Notificar a jurídica de que el caso quedó listo para contratación
-          try {
-            const { data: roles } = await supabase
-              .from("user_roles")
-              .select("user_id, role")
-              .in("role", ["juridica", "director_juridico"] as never);
-            const destinos = Array.from(
-              new Set(((roles ?? []) as Array<{ user_id: string }>).map((r) => r.user_id)),
-            );
-            if (destinos.length) {
-              await supabase.from("notificaciones_usuario").insert(
-                destinos.map((uid) => ({
-                  user_id: uid,
-                  titulo: "Nuevo caso aprobado por QA",
-                  mensaje: `Caso liberado por auditor QA AI (${aud.codigo ?? aud.id.slice(0, 8)}). Listo para gestión jurídica.`,
-                  tipo: "qa_aprobada",
-                  link: `/casos/${aud.expediente_id}`,
-                  metadata: {
-                    expediente_id: aud.expediente_id,
-                    auditoria_id: aud.id,
-                    codigo: aud.codigo,
-                  } as unknown as Json,
-                })),
-              );
-            }
-          } catch {
-            /* notificaciones best-effort */
-          }
-
-          liberacionOperativaOk = true;
-        }
-      } catch (e) {
-        liberacionOperativaError = e instanceof Error ? e.message : String(e);
-        console.warn("[qaAI] no se pudo liberar operativamente el caso", e);
-      }
-    }
-
-    if (!yaAprobada && aud.analista_id) {
-      try {
-        await supabase.from("notificaciones_usuario").insert({
-          user_id: aud.analista_id,
-          titulo: `Auditoría ${aud.codigo ?? aud.id.slice(0, 8)} aprobada`,
-          mensaje:
-            `Tu auditoría QA fue verificada y aprobada por el auditor.` +
-            (liberacionOperativaOk
-              ? ` El caso quedó liberado y avanzó a Contratación.`
-              : ` Puedes continuar con la propuesta comercial del caso.`) +
-            (data.notas ? ` Notas: ${data.notas}` : ""),
-          tipo: "qa_auditoria_aprobada",
-          link: aud.expediente_id ? `/qa-ai/${aud.id}` : `/qa-ai/${aud.id}?from=simulador`,
-          metadata: {
-            auditoria_id: aud.id,
-            codigo: aud.codigo,
-            expediente_id: aud.expediente_id,
-            score: aud.qa_score,
-            dictamen: aud.dictamen,
-            liberacion_operativa: liberacionOperativaOk,
-            liberacion_operativa_error: liberacionOperativaError,
-          } as unknown as Json,
-        });
-      } catch {
-        /* no-op best-effort */
-      }
+    if (!yaAprobada) {
+      const res = await ejecutarLiberacionOperativaAuditor(
+        supabase,
+        userId,
+        aud as AuditoriaLiberable,
+        { notas: data.notas || null, override: null },
+      );
+      liberacionOperativaOk = res.liberacionOperativaOk;
+      liberacionOperativaError = res.liberacionOperativaError;
     }
 
     return {
@@ -2098,6 +2156,90 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
       yaAprobada,
       codigo: aud.codigo,
       aprobadoAt: new Date().toISOString(),
+      liberacionOperativaOk,
+      liberacionOperativaError,
+    };
+  });
+
+/**
+ * Aprobar una auditoría **saltando el guardarraíl automático** de
+ * score/dictamen. Solo Director Financiero QA o Super Admin. Requiere
+ * justificación explícita (≥ 20 caracteres) que queda persistida en
+ * `auditor_override_justificacion` para rastro auditable. La liberación
+ * operativa (snapshot, cambio de estado, historial, notificaciones) usa el
+ * mismo helper que el flujo normal, con textos que marcan el OVERRIDE.
+ */
+export const aprobarAuditoriaConOverride = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      auditoriaId: z.string().uuid(),
+      justificacion: z
+        .string()
+        .trim()
+        .min(20, "La justificación debe tener al menos 20 caracteres.")
+        .max(2000),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // 1) Autorización estricta: solo director_financiero_qa o super_admin.
+    // No usamos isDirectorQA (que incluye admin/gerencia) porque este
+    // override es una decisión operativa del dueño del criterio QA.
+    const { data: rolesRows, error: errRoles } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (errRoles) throw new Error(errRoles.message);
+    const userRoles = new Set((rolesRows ?? []).map((r) => String(r.role)));
+    if (!userRoles.has("director_financiero_qa") && !userRoles.has("super_admin")) {
+      throw new Error(
+        "No autorizado: solo Director Financiero QA o Super Admin pueden aplicar override manual sobre el guardarraíl.",
+      );
+    }
+
+    const { data: aud, error: errAud } = await supabase
+      .from("qa_auditorias")
+      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,categoria,auditor_aprobado_at")
+      .eq("id", data.auditoriaId)
+      .maybeSingle();
+    if (errAud) throw new Error(errAud.message);
+    if (!aud) throw new Error("Auditoría no encontrada");
+
+    const yaAprobada = !!aud.auditor_aprobado_at;
+    if (yaAprobada) {
+      throw new Error("Esta auditoría ya fue aprobada. No se puede aplicar override sobre una aprobación existente.");
+    }
+
+    // 2) Sellar aprobación + marca de override + justificación.
+    const { error: errUpd } = await supabase
+      .from("qa_auditorias")
+      .update({
+        auditor_aprobado_at: new Date().toISOString(),
+        auditor_aprobado_by: userId,
+        auditor_notas: null,
+        auditor_override: true,
+        auditor_override_justificacion: data.justificacion,
+      } as never)
+      .eq("id", data.auditoriaId);
+    if (errUpd) throw new Error(errUpd.message);
+
+    // 3) Liberación operativa compartida (mismo flujo que la aprobación normal).
+    const { liberacionOperativaOk, liberacionOperativaError } =
+      await ejecutarLiberacionOperativaAuditor(
+        supabase,
+        userId,
+        aud as AuditoriaLiberable,
+        { notas: null, override: { justificacion: data.justificacion } },
+      );
+
+    return {
+      ok: true,
+      yaAprobada: false,
+      codigo: aud.codigo,
+      aprobadoAt: new Date().toISOString(),
+      override: true,
       liberacionOperativaOk,
       liberacionOperativaError,
     };
