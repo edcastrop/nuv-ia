@@ -82,12 +82,40 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   }, [mode]);
 
   useEffect(() => {
+    // Hash estable del snapshot para detectar cambios REALES vs re-emisiones
+    // idénticas. PesosSimulator/UVRSimulator disparan `nuvia:draftRawReady`
+    // dentro de un useEffect que se re-ejecuta en muchos re-renders; sin este
+    // filtro, cada re-emisión reseteaba el estado "done" (auditoría aprobada)
+    // a "ready", deshabilitando el botón "Certificar y crear caso" aunque
+    // matemáticamente la simulación ya estaba certificable. Le pasaba a
+    // cualquier analista tras editar cualquier campo o al re-render por foco.
+    const hashSnapshot = (s: DraftRawSnapshot): string => {
+      try {
+        return JSON.stringify({
+          banco: s.banco ?? null,
+          producto: s.producto ?? null,
+          moneda: s.moneda ?? null,
+          tipoCredito: s.tipoCredito ?? null,
+          datos: s.datos ?? null,
+        });
+      } catch {
+        return "";
+      }
+    };
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<DraftRawSnapshot>).detail;
       if (!detail || !detail.datos) return;
+      const prevSnap = snapshotRef.current;
+      const sameSnapshot =
+        !!prevSnap && hashSnapshot(prevSnap) === hashSnapshot(detail);
       snapshotRef.current = detail;
+      if (sameSnapshot) {
+        // Re-emisión idéntica: no tocar el estado. Si ya estaba "done" con
+        // certificable=true, el botón sigue activo.
+        return;
+      }
       setState((prev) => {
-        // Si estábamos esperando o ya había un resultado viejo, marcamos "listo".
+        // Cambio real de inputs: la auditoría anterior queda invalidada.
         if (prev.kind === "done" || prev.kind === "error") return { kind: "ready" };
         return { kind: "ready" };
       });
