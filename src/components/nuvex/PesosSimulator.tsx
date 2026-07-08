@@ -27,6 +27,7 @@ import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
 import { EnviarDocumentoButton } from "./EnviarDocumentoButton";
 import { WhatsAppPropuestaButton } from "./WhatsAppPropuestaButton";
+import { marcarAccionPropuesta } from "@/lib/propuestaAcciones.functions";
 import { NUVEX } from "./constants";
 import {
   DiscountModule,
