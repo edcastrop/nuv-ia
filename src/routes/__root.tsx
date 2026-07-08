@@ -173,9 +173,110 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <ClientSessionLifetimeGuard />
       <Outlet />
       <Toaster position="bottom-right" richColors closeButton />
       {!isLanding && <VictoryProvider />}
     </QueryClientProvider>
   );
+}
+
+/**
+ * Client-side 24h re-login enforcement — cache-refresh only, NOT a security control.
+ * Skips public routes. Warns 60min before expiry (1 extension max). At expiry,
+ * shows a persistent toast whose only action is signOut + navigate to /login.
+ */
+function ClientSessionLifetimeGuard() {
+  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const queryClient = useQueryClient();
+  const expiredToastShown = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const doForcedSignOut = async () => {
+      try {
+        queryClient.clear();
+        clearClientSessionStart();
+        await signOut();
+      } finally {
+        router.navigate({ to: "/login" });
+      }
+    };
+
+    const showExpiredToast = () => {
+      if (expiredToastShown.current) return;
+      expiredToastShown.current = true;
+      toast.error("Sesión expirada (24 h). Guarda tu trabajo y vuelve a iniciar para recibir la última versión.", {
+        id: "nuvia-client-session-expired",
+        duration: Infinity,
+        onDismiss: () => { expiredToastShown.current = false; },
+        onAutoClose: () => { expiredToastShown.current = false; },
+        action: {
+          label: "Cerrar sesión y volver a entrar",
+          onClick: () => { void doForcedSignOut(); },
+        },
+      });
+    };
+
+    const showWarnToast = () => {
+      markWarned();
+      const canStillExtend = canExtend();
+      toast.warning(
+        canStillExtend
+          ? "Tu sesión expira en menos de 1 hora. Puedes extenderla una vez o cerrar sesión ahora."
+          : "Tu sesión expira en menos de 1 hora. Ya usaste tu extensión — cierra sesión cuando termines.",
+        {
+          id: "nuvia-client-session-warn",
+          duration: 30_000,
+          action: canStillExtend
+            ? {
+                label: "Extender 24 h",
+                onClick: () => {
+                  if (extendClientSession()) {
+                    toast.success("Sesión extendida 24 h más.", { id: "nuvia-client-session-extended" });
+                  }
+                },
+              }
+            : {
+                label: "Cerrar sesión",
+                onClick: () => { void doForcedSignOut(); },
+              },
+        },
+      );
+    };
+
+    const check = async () => {
+      if (cancelled) return;
+      if (isPublicPath(pathname)) return;
+
+      // Backfill: if a user is already signed in but has no stamp (existing sessions
+      // before this feature shipped), start the 24h clock now.
+      if (getSessionStartedAt() == null) {
+        const { data } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (!data.session) return;
+        markClientSessionStart();
+        return;
+      }
+
+      if (isExpired()) {
+        showExpiredToast();
+        return;
+      }
+      if (shouldWarn()) {
+        showWarnToast();
+      }
+    };
+
+    void check();
+    const id = window.setInterval(() => { void check(); }, CHECK_INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [pathname, router, queryClient]);
+
+  return null;
 }
