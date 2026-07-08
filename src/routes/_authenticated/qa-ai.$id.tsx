@@ -722,49 +722,187 @@ function ResultadoQaAi() {
       />
 
 
-      {/* FICHA DE CONTEXTO */}
-      <div className="mt-2">
-        <NCard>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Banco · Producto</p>
-              <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{banco}</p>
-              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{producto}{data?.extracto?.moneda ? ` · ${data.extracto.moneda}` : ""}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Cliente · Obligación</p>
-              <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{cliente}</p>
-              {!!(expInfo?.cedula ?? ex.cedula) && (
-                <p className="text-[11.5px] tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
-                  CC {String(expInfo?.cedula ?? ex.cedula)}
-                </p>
-              )}
-              {!!(ex.numeroObligacion ?? ex.numeroCredito ?? expInfo?.numero_credito) && (
-                <p className="text-[12px] tabular-nums" style={{ color: "var(--nuvia-text-secondary)" }}>
-                  N° {String(ex.numeroObligacion ?? ex.numeroCredito ?? expInfo?.numero_credito)}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Crédito</p>
-              <p className="text-[13px] font-semibold tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>
-                Saldo ${fmt(numDato(recSnap.saldoCapital), 0)}
-              </p>
-              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
-                {fmt(numDato(recSnap.tasaEa), 4)}% EA · Cuota ${fmt(numDato(ex.cuota ?? recSnap.cuotaBaseSinSubsidio), 0)}
-              </p>
-              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
-                {Math.round(numDato(recSnap.cuotasPagadas) ?? 0)} pagadas · {Math.round(numDato(recSnap.cuotasPendientes) ?? 0)} pendientes
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--nuvia-text-muted)" }}>Analista</p>
-              <p className="text-[13px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{data?.analista?.nombre ?? data?.ejecutor?.nombre ?? "Analista"}</p>
-              <p className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>{cert.label}</p>
-            </div>
+      {/* VISTA RÁPIDA · Ficha compacta para ubicar el caso al instante */}
+      {(() => {
+        const codigoQA = (a as unknown as { codigo: string | null }).codigo ?? null;
+        const iniciales = (cliente || "?")
+          .split(/\s+/).filter(Boolean).slice(0, 2)
+          .map((s) => s[0]!.toUpperCase()).join("") || "·";
+        const analistaNombre = data?.analista?.nombre ?? data?.ejecutor?.nombre ?? "Analista";
+        const tipoCredito = a.modalidad === "uvr"
+          ? "Hipotecario UVR"
+          : a.modalidad === "hipotecario" ? "Hipotecario"
+          : a.modalidad === "leasing" ? "Leasing"
+          : String(a.modalidad ?? "Crédito");
+        const cedulaVal = expInfo?.cedula ?? (ex.cedula as string | undefined);
+        const oblig = ex.numeroObligacion ?? ex.numeroCredito ?? expInfo?.numero_credito;
+        return (
+          <div className="mt-2">
+            <NCard>
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto] gap-4 lg:items-center">
+                {/* Identidad */}
+                <div className="flex items-start gap-3.5 min-w-0">
+                  <div
+                    className="grid place-items-center rounded-2xl text-[15px] font-bold shrink-0"
+                    style={{
+                      width: 52, height: 52,
+                      background: "linear-gradient(135deg, rgba(91,140,255,0.28), rgba(31,210,134,0.22))",
+                      color: "var(--nuvia-text-primary)",
+                      border: "1px solid var(--nuvia-border-strong)",
+                    }}
+                    aria-hidden
+                  >
+                    {iniciales}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-bold uppercase"
+                        style={{
+                          background: "rgba(91,140,255,0.14)",
+                          color: "#8FB4FF",
+                          border: "1px solid rgba(91,140,255,0.38)",
+                          fontSize: 9.5, letterSpacing: "0.14em",
+                        }}
+                      >
+                        NUVIA · QA AI
+                      </span>
+                      {codigoQA && (
+                        <span
+                          className="inline-flex items-center rounded-md px-2 py-0.5 font-mono font-semibold"
+                          style={{
+                            background: "rgba(132,185,143,0.12)",
+                            color: "var(--nuvia-success)",
+                            border: "1px solid rgba(132,185,143,0.35)",
+                            fontSize: 10.5,
+                          }}
+                          title="Acrónimo de la auditoría"
+                        >
+                          {codigoQA}
+                        </span>
+                      )}
+                      <span
+                        className="inline-flex items-center rounded-full px-2 py-0.5 font-bold uppercase"
+                        style={{
+                          background: `${cert.color}1f`,
+                          color: cert.color,
+                          border: `1px solid ${cert.color}55`,
+                          fontSize: 9.5, letterSpacing: "0.12em",
+                        }}
+                      >
+                        {cert.label}
+                      </span>
+                    </div>
+                    <h2
+                      className="mt-1.5 font-bold tracking-tight break-words"
+                      style={{
+                        fontSize: "clamp(18px, 1.9vw, 22px)",
+                        lineHeight: 1.15,
+                        color: "var(--nuvia-text-primary)",
+                      }}
+                    >
+                      {cliente}
+                    </h2>
+                    <div
+                      className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1"
+                      style={{ fontSize: 11.5, color: "var(--nuvia-text-secondary)" }}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        <span className="opacity-60">Banco</span>
+                        <b style={{ color: "var(--nuvia-text-primary)" }}>{banco}</b>
+                      </span>
+                      <span style={{ color: "var(--nuvia-border)" }}>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="opacity-60">Producto</span>
+                        <b style={{ color: "var(--nuvia-text-primary)" }}>{producto}</b>
+                      </span>
+                      <span style={{ color: "var(--nuvia-border)" }}>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="opacity-60">Tipo</span>
+                        <b style={{ color: "var(--nuvia-text-primary)" }}>{tipoCredito}</b>
+                      </span>
+                      {cedulaVal && (
+                        <>
+                          <span style={{ color: "var(--nuvia-border)" }}>·</span>
+                          <span className="inline-flex items-center gap-1 tabular-nums">
+                            <span className="opacity-60">CC</span>
+                            <b style={{ color: "var(--nuvia-text-primary)" }}>{String(cedulaVal)}</b>
+                          </span>
+                        </>
+                      )}
+                      {oblig && (
+                        <>
+                          <span style={{ color: "var(--nuvia-border)" }}>·</span>
+                          <span className="inline-flex items-center gap-1 tabular-nums">
+                            <span className="opacity-60">N°</span>
+                            <b style={{ color: "var(--nuvia-text-primary)" }}>{String(oblig)}</b>
+                          </span>
+                        </>
+                      )}
+                      <span style={{ color: "var(--nuvia-border)" }}>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="opacity-60">Analista</span>
+                        <b style={{ color: "var(--nuvia-text-primary)" }}>{analistaNombre}</b>
+                      </span>
+                      <span style={{ color: "var(--nuvia-border)" }}>·</span>
+                      <span className="inline-flex items-center gap-1">
+                        <span className="opacity-60">Fecha</span>
+                        <b style={{ color: "var(--nuvia-text-primary)" }}>{fecha}</b>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Score chip */}
+                <div
+                  className="flex items-center gap-3 rounded-xl px-4 py-3 self-start lg:self-center"
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: `1px solid ${scoreColor}44`,
+                    minWidth: 200,
+                  }}
+                >
+                  <div
+                    className="grid place-items-center rounded-lg"
+                    style={{
+                      width: 46, height: 46,
+                      background: `${scoreColor}1f`,
+                      border: `1px solid ${scoreColor}55`,
+                    }}
+                  >
+                    <span
+                      className="font-bold tabular-nums"
+                      style={{ fontSize: 18, color: scoreColor, lineHeight: 1 }}
+                    >
+                      {Math.round(score)}
+                    </span>
+                  </div>
+                  <div className="min-w-0">
+                    <p
+                      className="text-[9.5px] font-bold uppercase tracking-[0.14em]"
+                      style={{ color: "var(--nuvia-text-muted)" }}
+                    >
+                      Score QA
+                    </p>
+                    <p
+                      className="text-[12px] font-semibold"
+                      style={{ color: "var(--nuvia-text-primary)" }}
+                    >
+                      {trofeo.icono} {trofeo.titulo}
+                    </p>
+                    <p
+                      className="text-[11px] tabular-nums"
+                      style={{ color: "var(--nuvia-text-secondary)" }}
+                    >
+                      Saldo ${fmt(numDato(recSnap.saldoCapital), 0)} · {fmt(numDato(recSnap.tasaEa), 4)}% EA
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </NCard>
           </div>
-        </NCard>
-      </div>
+        );
+      })()}
 
       {/* CONDICIONES COMERCIALES · propuesta que verá el cliente */}
       {(() => {
