@@ -291,6 +291,7 @@ export function PrintDocument(props: Props) {
               cuotaConCobertura={cuotaConCobertura}
               cuotasPendientesConCobertura={cuotasPendientesConCobertura}
               saldoCapital={creditState?.saldoCapital ?? 0}
+              tasaMensualPct={creditState?.tasaMensualPct}
             />
             <RecommendedCard
               nuevaCuota={nuevaCuota}
