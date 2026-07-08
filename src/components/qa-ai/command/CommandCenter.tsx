@@ -1367,70 +1367,122 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
         </div>
       </div>
 
-      <div ref={scrollerRef} onWheel={handleWheel} style={{ overflowX: "auto", overscrollBehaviorX: "contain", touchAction: "pan-x pan-y" }}>
-        <table style={{ width: "100%", fontSize: 12, minWidth: 1100, borderCollapse: "separate", borderSpacing: 0 }}>
-          <thead>
-            <tr>
-              {["Prioridad", "Código", "Fecha", "Cliente", "Banco", "Analista", "Producto", "Modalidad", "Ticket", "Score", "Estado", "Riesgo", "Acción"].map((h) => (
-                <th key={h} style={th}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {visibles.length === 0 ? (
-              <tr><td colSpan={13} style={{ padding: 28, textAlign: "center", color: C.textMuted }}>Sin casos en la cola.</td></tr>
-            ) : visibles.map((r) => {
+      <div ref={scrollerRef} onWheel={handleWheel} style={{ overflowX: "hidden" }}>
+        {visibles.length === 0 ? (
+          <div style={{ padding: 32, textAlign: "center", color: C.textMuted, fontSize: 12 }}>Sin casos en la cola.</div>
+        ) : (
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+            gap: 12,
+          }}>
+            {visibles.map((r) => {
               const p = prioridad(r);
               const d = dictamen[r.dictamen] ?? { label: r.dictamen, color: C.textSec };
+              const scoreCol = score(r.qa_score);
+              const iniciales = (r.cliente_nombre ?? "?").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "·";
+              const fecha = r.ejecutado_at
+                ? new Date(r.ejecutado_at).toLocaleString("es-CO", { day: "2-digit", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })
+                : "—";
+              const tipo = r.modalidad === "uvr" ? "Hipotecario UVR"
+                : r.modalidad === "hipotecario" ? "Hipotecario"
+                : r.modalidad === "leasing" ? "Leasing"
+                : (r.modalidad || "Crédito");
               return (
-                <tr key={r.id} style={{ height: 60, borderBottom: `1px solid ${C.divider}`, transition: "background .22s" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                <div
+                  key={r.id}
+                  style={{
+                    background: "rgba(13,18,38,0.72)",
+                    border: `1px solid ${C.border}`,
+                    borderLeft: `3px solid ${p.color}`,
+                    borderRadius: 14,
+                    padding: 14,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 10,
+                    transition: "transform .18s ease, border-color .18s ease, background .18s ease",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.background = "rgba(20,27,52,0.82)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.background = "rgba(13,18,38,0.72)"; }}
                 >
-                  <td style={td}>
-                    <span style={{
-                      padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700,
-                      background: `${p.color}22`, color: p.color, border: `1px solid ${p.color}44`, whiteSpace: "nowrap",
-                    }}>{p.label}</span>
-                  </td>
-                  <td style={{ ...td, color: C.textSec, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10.5 }}>
-                    {r.codigo ?? "—"}
-                    {r.auditor_aprobado_at ? (
-                      <span title="Aprobada por auditor" style={{ marginLeft: 6, color: C.success }}>✓</span>
-                    ) : null}
-                    {r.motor_version && r.motor_version !== QA_MOTOR_VERSION ? (
-                      <span title="Motor desactualizado" style={{ marginLeft: 6, color: C.danger }}>↻</span>
-                    ) : null}
-                  </td>
-                  <td style={{ ...td, color: C.textSec, fontVariantNumeric: "tabular-nums", fontSize: 11 }}>
-                    {r.ejecutado_at ? new Date(r.ejecutado_at).toLocaleString("es-CO", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit" }) : "—"}
-                  </td>
-                  <td style={{ ...td, color: C.text, fontWeight: 600 }}>{r.cliente_nombre ?? "—"}</td>
-                  <td style={{ ...td, color: C.text }}>{r.banco ?? "—"}</td>
-                  <td style={{ ...td, color: C.textSec }}>{r.analista_nombre ?? "—"}</td>
-                  <td style={{ ...td, color: C.textSec }}>{r.producto ?? "—"}</td>
-                  <td style={{ ...td, color: C.text, textTransform: "capitalize" }}>{r.modalidad}</td>
-                  <td style={{ ...td, color: C.textSec, fontVariantNumeric: "tabular-nums" }}>{r.ticket ? fCop(r.ticket) : "—"}</td>
-                  <td style={{ ...td, color: score(r.qa_score), fontWeight: 700, fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{r.qa_score.toFixed(1)}</td>
-                  <td style={td}>
-                    <span style={{
-                      padding: "3px 10px", borderRadius: 999, fontSize: 10, fontWeight: 700,
-                      background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
-                    }}>{d.label}</span>
-                  </td>
-                  <td style={td}>
-                    {r.alertas_criticas > 0 ? (
-                      <span style={{ color: C.danger, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 600 }}>
-                        <AlertTriangle size={12} /> {r.alertas_criticas}
-                      </span>
-                    ) : r.sla_vencido ? (
-                      <span style={{ color: C.warning }}>SLA vencido</span>
-                    ) : (
-                      <span style={{ color: C.textMuted }}>—</span>
-                    )}
-                  </td>
-                  <td style={td}>
-                    <div style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
+                  {/* Header row: badges + score */}
+                  <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, minWidth: 0, flex: 1 }}>
+                      <span style={{
+                        padding: "2px 8px", borderRadius: 999, fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3,
+                        background: `${p.color}22`, color: p.color, border: `1px solid ${p.color}44`, whiteSpace: "nowrap",
+                      }}>{p.label}</span>
+                      <span style={{
+                        padding: "2px 8px", borderRadius: 999, fontSize: 9.5, fontWeight: 700, letterSpacing: 0.3,
+                        background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
+                      }}>{d.label}</span>
+                      {r.auditor_aprobado_at && (
+                        <span title="Aprobada por auditor" style={{
+                          padding: "2px 7px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
+                          background: `${C.success}1f`, color: C.success, border: `1px solid ${C.success}55`,
+                        }}>✓ Auditor</span>
+                      )}
+                    </div>
+                    <div style={{
+                      display: "grid", placeItems: "center", minWidth: 44, height: 44, borderRadius: 10,
+                      background: `${scoreCol}1a`, border: `1px solid ${scoreCol}55`, flexShrink: 0,
+                    }}>
+                      <span style={{ color: scoreCol, fontWeight: 800, fontSize: 15, fontVariantNumeric: "tabular-nums", lineHeight: 1 }}>{r.qa_score.toFixed(0)}</span>
+                    </div>
+                  </div>
+
+                  {/* Identity: initials + client */}
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", minWidth: 0 }}>
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+                      background: "linear-gradient(135deg, rgba(91,140,255,0.28), rgba(31,210,134,0.20))",
+                      border: `1px solid ${C.borderStrong}`,
+                      color: C.text, display: "grid", placeItems: "center", fontSize: 12, fontWeight: 700,
+                    }}>{iniciales}</div>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ color: C.text, fontWeight: 700, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {r.cliente_nombre ?? "Cliente sin identificar"}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 2 }}>
+                        <span style={{
+                          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                          fontSize: 10, color: C.textMuted,
+                          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                        }}>{r.codigo ?? "—"}</span>
+                        {r.motor_version && r.motor_version !== QA_MOTOR_VERSION && (
+                          <span title="Motor desactualizado" style={{ color: C.danger, fontSize: 11 }}>↻</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Grid of key fields */}
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "6px 12px",
+                    fontSize: 11, color: C.textSec,
+                  }}>
+                    <Meta label="Banco" value={r.banco ?? "—"} strong />
+                    <Meta label="Producto" value={r.producto ?? "—"} strong />
+                    <Meta label="Tipo" value={tipo} strong capitalize />
+                    <Meta label="Ticket" value={r.ticket ? fCop(r.ticket) : "—"} mono />
+                    <Meta label="Analista" value={r.analista_nombre ?? "—"} span2 />
+                    <Meta label="Fecha" value={fecha} mono span2 />
+                  </div>
+
+                  {/* Footer: risk + actions */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, paddingTop: 8, borderTop: `1px solid ${C.divider}` }}>
+                    <div style={{ fontSize: 10.5, minWidth: 0, flex: 1 }}>
+                      {r.alertas_criticas > 0 ? (
+                        <span style={{ color: C.danger, display: "inline-flex", alignItems: "center", gap: 4, fontWeight: 700 }}>
+                          <AlertTriangle size={11} /> {r.alertas_criticas} crítica{r.alertas_criticas === 1 ? "" : "s"}
+                        </span>
+                      ) : r.sla_vencido ? (
+                        <span style={{ color: C.warning, fontWeight: 700 }}>SLA vencido</span>
+                      ) : (
+                        <span style={{ color: C.textMuted }}>Sin alertas</span>
+                      )}
+                    </div>
+                    <div style={{ display: "inline-flex", gap: 6, alignItems: "center" }}>
                       <Link to="/qa-ai/$id" params={{ id: r.id }} title="Ver dictamen" style={{
                         display: "inline-flex", alignItems: "center", gap: 3, padding: "5px 10px",
                         borderRadius: 8, background: `${C.primary}1a`, color: C.primary,
@@ -1450,13 +1502,14 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                         }}><Paperclip size={11} /></button>
                       )}
                     </div>
-                  </td>
-                </tr>
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
+          </div>
+        )}
       </div>
+
       {ordered.length > 5 && (
         <div style={{ display: "flex", justifyContent: "center", marginTop: 14 }}>
           <button onClick={() => setShowAll((v) => !v)} style={{
@@ -1509,3 +1562,21 @@ function Section({ title, subtitle, children, icon }: { title: string; subtitle?
     </div>
   );
 }
+
+function Meta({ label, value, strong, mono, capitalize, span2 }: { label: string; value: string; strong?: boolean; mono?: boolean; capitalize?: boolean; span2?: boolean }) {
+  return (
+    <div style={{ gridColumn: span2 ? "1 / -1" : undefined, minWidth: 0 }}>
+      <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.2, textTransform: "uppercase", color: C.textMuted }}>{label}</div>
+      <div style={{
+        marginTop: 1,
+        fontSize: 11.5,
+        fontWeight: strong ? 600 : 500,
+        color: strong ? C.text : C.textSec,
+        fontFamily: mono ? "ui-monospace, SFMono-Regular, Menlo, monospace" : undefined,
+        textTransform: capitalize ? "capitalize" : undefined,
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>{value}</div>
+    </div>
+  );
+}
+
