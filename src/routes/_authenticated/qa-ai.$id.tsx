@@ -413,6 +413,9 @@ function ResultadoQaAi() {
   const fetchAud = useServerFn(obtenerAuditoriaQA);
   const doReejecutar = useServerFn(reejecutarAuditoriaQA);
   const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
+  const doAprobarOverride = useServerFn(aprobarAuditoriaConOverride);
+  const { roles } = useUserRole();
+  const puedeOverride = canOverrideQA(roles);
   const [data, setData] = useState<{
     auditoria: Record<string, unknown> | null;
     inconsistencias: Inc[];
@@ -420,6 +423,13 @@ function ResultadoQaAi() {
     analista?: { nombre?: string | null; email?: string | null } | null;
     ejecutor?: { nombre?: string | null; email?: string | null } | null;
   } | null>(null);
+  const [copilotoOpen, setCopilotoOpen] = useState(false);
+  const [verTodas, setVerTodas] = useState(false);
+  const [reloading, setReloading] = useState(false);
+  const [aprobando, setAprobando] = useState(false);
+  const [overrideOpen, setOverrideOpen] = useState(false);
+  const [overrideText, setOverrideText] = useState("");
+  const [overrideEnviando, setOverrideEnviando] = useState(false);
   const [copilotoOpen, setCopilotoOpen] = useState(false);
   const [verTodas, setVerTodas] = useState(false);
   const [reloading, setReloading] = useState(false);
