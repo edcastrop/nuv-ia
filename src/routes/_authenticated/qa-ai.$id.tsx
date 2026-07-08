@@ -153,8 +153,8 @@ function Accordion({ title, icon, count, children, defaultOpen = false }:
 
 /* ---------- Sticky header ---------- */
 
-function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor, codigo, auditorAprobado }:
-  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string; codigo: string | null; auditorAprobado: boolean }) {
+function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, certLabel, certColor, codigo, auditorAprobado, auditorOverride }:
+  { cliente: string; banco: string; producto: string; fecha: string; score: number; scoreColor: string; certLabel: string; certColor: string; codigo: string | null; auditorAprobado: boolean; auditorOverride: boolean }) {
   const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     if (!codigo) return;
@@ -181,10 +181,19 @@ function StickyHeader({ cliente, banco, producto, fecha, score, scoreColor, cert
             {copied ? "Copiado ✓" : codigo}
           </button>
         )}
-        {auditorAprobado && (
+        {auditorAprobado && !auditorOverride && (
           <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
             style={{ background: "rgba(132,185,143,0.18)", color: "var(--nuvia-success)", border: "1px solid rgba(132,185,143,0.5)" }}>
             ✓ Aprobada por auditor
+          </span>
+        )}
+        {auditorAprobado && auditorOverride && (
+          <span
+            className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+            style={{ background: "rgba(245,199,122,0.18)", color: "#F5C77A", border: "1px solid rgba(245,199,122,0.5)" }}
+            title="Aprobada saltando el guardarraíl automático mediante override manual"
+          >
+            <ShieldAlert size={10} /> Aprobada con override manual
           </span>
         )}
         <span style={{ color: "var(--nuvia-border)" }}>·</span>
