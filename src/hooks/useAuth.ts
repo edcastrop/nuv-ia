@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Session, User } from "@supabase/supabase-js";
+import { markClientSessionStart, clearClientSessionStart, getSessionStartedAt } from "@/lib/sessionLifetime";
 
 interface State {
   session: Session | null;
@@ -54,8 +55,15 @@ export function useAuth(): State {
     } = supabase.auth.onAuthStateChange((event, session) => {
       if (!active) return;
       if (session) {
+        if (event === "SIGNED_IN" && getSessionStartedAt() == null) {
+          // Stamp only if empty so a token refresh doesn't reset the 24h client-cache cycle.
+          markClientSessionStart();
+        }
         safeSetState({ session, user: session.user, loading: false });
         return;
+      }
+      if (event === "SIGNED_OUT") {
+        clearClientSessionStart();
       }
       const cached = event === "SIGNED_OUT" ? null : readCachedSession();
       safeSetState({ session: cached, user: cached?.user ?? null, loading: false });
