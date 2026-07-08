@@ -3016,7 +3016,12 @@ export type Database = {
           producto: string | null
           producto_bancario_id: string | null
           propuesta_data: Json
+          propuesta_email_enviada_at: string | null
+          propuesta_email_enviada_by: string | null
+          propuesta_exportada_at: string | null
+          propuesta_exportada_by: string | null
           qa_auditoria_id: string | null
+          qa_auditoria_origen_id: string | null
           qa_categoria: Database["public"]["Enums"]["qa_categoria"] | null
           qa_dictamen: Database["public"]["Enums"]["qa_dictamen"] | null
           qa_ejecutada_at: string | null
@@ -3038,6 +3043,8 @@ export type Database = {
           validacion_motivo_devolucion: string | null
           validacion_version: number
           verificacion_cierre: Json | null
+          whatsapp_generado_at: string | null
+          whatsapp_generado_by: string | null
         }
         Insert: {
           aceptacion_cliente_at?: string | null
@@ -3072,7 +3079,12 @@ export type Database = {
           producto?: string | null
           producto_bancario_id?: string | null
           propuesta_data?: Json
+          propuesta_email_enviada_at?: string | null
+          propuesta_email_enviada_by?: string | null
+          propuesta_exportada_at?: string | null
+          propuesta_exportada_by?: string | null
           qa_auditoria_id?: string | null
+          qa_auditoria_origen_id?: string | null
           qa_categoria?: Database["public"]["Enums"]["qa_categoria"] | null
           qa_dictamen?: Database["public"]["Enums"]["qa_dictamen"] | null
           qa_ejecutada_at?: string | null
@@ -3094,6 +3106,8 @@ export type Database = {
           validacion_motivo_devolucion?: string | null
           validacion_version?: number
           verificacion_cierre?: Json | null
+          whatsapp_generado_at?: string | null
+          whatsapp_generado_by?: string | null
         }
         Update: {
           aceptacion_cliente_at?: string | null
@@ -3128,7 +3142,12 @@ export type Database = {
           producto?: string | null
           producto_bancario_id?: string | null
           propuesta_data?: Json
+          propuesta_email_enviada_at?: string | null
+          propuesta_email_enviada_by?: string | null
+          propuesta_exportada_at?: string | null
+          propuesta_exportada_by?: string | null
           qa_auditoria_id?: string | null
+          qa_auditoria_origen_id?: string | null
           qa_categoria?: Database["public"]["Enums"]["qa_categoria"] | null
           qa_dictamen?: Database["public"]["Enums"]["qa_dictamen"] | null
           qa_ejecutada_at?: string | null
@@ -3150,6 +3169,8 @@ export type Database = {
           validacion_motivo_devolucion?: string | null
           validacion_version?: number
           verificacion_cierre?: Json | null
+          whatsapp_generado_at?: string | null
+          whatsapp_generado_by?: string | null
         }
         Relationships: [
           {
@@ -3169,6 +3190,13 @@ export type Database = {
           {
             foreignKeyName: "expedientes_qa_auditoria_id_fkey"
             columns: ["qa_auditoria_id"]
+            isOneToOne: false
+            referencedRelation: "qa_auditorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "expedientes_qa_auditoria_origen_id_fkey"
+            columns: ["qa_auditoria_origen_id"]
             isOneToOne: false
             referencedRelation: "qa_auditorias"
             referencedColumns: ["id"]
@@ -6353,6 +6381,7 @@ export type Database = {
       nuvia_qa_copilot_puede_usar: { Args: { _uid: string }; Returns: boolean }
       preview_desvinculacion: { Args: { _target: string }; Returns: Json }
       procesar_recordatorios_onboarding: { Args: never; Returns: Json }
+      promover_qa_a_expediente: { Args: { _qa_id: string }; Returns: string }
       qa_bloquea_avance: { Args: { _expediente_id: string }; Returns: boolean }
       reactivar_usuario_solicitud: {
         Args: {
