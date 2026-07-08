@@ -101,8 +101,49 @@ export function ReconstruccionAuditorBlock({
     };
   }, [modo, sandboxId]);
 
+  // V3 QA FIX: "Compartir en el hilo" ahora publica la comparativa Analista
+  // vs Auditor (no solo los inputs del analista). Escuchamos el mismo evento
+  // que usa ComparativaAnalistaAuditor para conocer los valores actuales del
+  // auditor dentro del simulador embebido.
+  type AuditorLive = {
+    saldoCapital?: number;
+    tasaEa?: number;
+    seguros?: number;
+    cuotaBase?: number;
+    cuotasPendientes?: number;
+    nuevaCuota?: number | null;
+    saldoUVR?: number;
+    valorUVR?: number;
+    variacionUVR?: number;
+  };
+  const [auditorLive, setAuditorLive] = useState<AuditorLive | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (ev: Event) => {
+      const detail = (ev as CustomEvent).detail as (AuditorLive & { expedienteId?: string }) | undefined;
+      if (!detail || detail.expedienteId !== sandboxId) return;
+      setAuditorLive({
+        saldoCapital: detail.saldoCapital,
+        tasaEa: detail.tasaEa,
+        seguros: detail.seguros,
+        cuotaBase: detail.cuotaBase,
+        cuotasPendientes: detail.cuotasPendientes,
+        nuevaCuota: detail.nuevaCuota ?? null,
+        saldoUVR: detail.saldoUVR,
+        valorUVR: detail.valorUVR,
+        variacionUVR: detail.variacionUVR,
+      });
+    };
+    window.addEventListener("nuvex:simulador-inputs", handler);
+    return () => window.removeEventListener("nuvex:simulador-inputs", handler);
+  }, [sandboxId]);
+
   const handleEnviarHilo = async () => {
     if (!puedeEditar || enviando) return;
+    if (!auditorLive) {
+      toast.error("Modifica al menos un campo del simulador para generar la comparativa.");
+      return;
+    }
     setEnviando(true);
     try {
       const canal = await getCanalDeAuditoria(
@@ -110,17 +151,51 @@ export function ReconstruccionAuditorBlock({
         `${cliente || "Cliente"} · ${banco || "Banco"}`,
         [],
       );
+      const num = (v: unknown) => {
+        const n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      };
+      const fmtN = (n: number) =>
+        n === 0 ? "—" : n.toLocaleString("es-CO", { maximumFractionDigits: 0 });
+      const fmtPct = (n: number) =>
+        n === 0 ? "—" : `${n.toLocaleString("es-CO", { maximumFractionDigits: 4 })}%`;
+      const fmt = (v: number, kind: "money" | "pct" | "int") =>
+        kind === "pct" ? fmtPct(v) : kind === "int" ? String(v || "—") : fmtN(v);
+      const pctDelta = (a: number, b: number) =>
+        a === 0 ? 0 : ((b - a) / Math.abs(a)) * 100;
+
+      const rows: Array<{ label: string; a: number; b: number; kind: "money" | "pct" | "int" }> = [
+        { label: "Saldo capital", a: num(analistaRaw.saldoCapital), b: num(auditorLive.saldoCapital), kind: "money" },
+        { label: "Tasa EA", a: num(analistaRaw.tasaEa), b: num(auditorLive.tasaEa), kind: "pct" },
+        { label: "Seguros", a: num(analistaRaw.seguros), b: num(auditorLive.seguros), kind: "money" },
+        { label: "Cuota base (sin subsidio)", a: num(analistaRaw.cuotaBaseSinSubsidio), b: num(auditorLive.cuotaBase), kind: "money" },
+        { label: "Cuotas pendientes", a: num(analistaRaw.cuotasPendientes), b: num(auditorLive.cuotasPendientes), kind: "int" },
+      ];
+      if (modo === "uvr") {
+        rows.push(
+          { label: "Saldo UVR", a: num(analistaRaw.saldoUVR), b: num(auditorLive.saldoUVR), kind: "money" },
+          { label: "Valor UVR", a: num(analistaRaw.valorUVR), b: num(auditorLive.valorUVR), kind: "money" },
+          { label: "Variación UVR EA", a: num(analistaRaw.variacionUvrEa), b: num(auditorLive.variacionUVR), kind: "pct" },
+        );
+      }
+
       const lineas = [
-        "🔧 **Reconstrucción del auditor**",
+        "🔧 **Reconstrucción del auditor · Analista vs Auditor**",
         `Cliente: ${cliente || "—"} · Banco: ${banco || "—"}`,
         "",
-        "_Inputs originales del analista:_",
-        ...snapshot.map((r) => `• ${r.label}: ${r.value}`),
-        "",
-        "_El auditor publicó esta reconstrucción para revisar contigo. Abre el dictamen para ver los recálculos._",
+        ...rows.map((r) => {
+          const d = pctDelta(r.a, r.b);
+          const flag = Math.abs(d) >= 5 ? "🔴" : Math.abs(d) >= 0.5 ? "🟡" : "🟢";
+          return `${flag} ${r.label}: ${fmt(r.a, r.kind)} → ${fmt(r.b, r.kind)} (${d >= 0 ? "+" : ""}${d.toFixed(2)}%)`;
+        }),
       ];
+      if (auditorLive.nuevaCuota != null && Number.isFinite(Number(auditorLive.nuevaCuota))) {
+        lineas.push("", `💡 Cuota recomendada por el auditor: ${fmtN(num(auditorLive.nuevaCuota))}`);
+      }
+      lineas.push("", "_Abre el dictamen para ver el detalle de la reconstrucción._");
+
       await enviarMensaje(canal.id, lineas.join("\n"), [], []);
-      toast.success("Reconstrucción publicada en el hilo de la auditoría.");
+      toast.success("Comparativa publicada en el hilo de la auditoría.");
     } catch (e) {
       toast.error(`No se pudo publicar: ${e instanceof Error ? e.message : "error"}`);
     } finally {
