@@ -430,10 +430,6 @@ function ResultadoQaAi() {
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideText, setOverrideText] = useState("");
   const [overrideEnviando, setOverrideEnviando] = useState(false);
-  const [copilotoOpen, setCopilotoOpen] = useState(false);
-  const [verTodas, setVerTodas] = useState(false);
-  const [reloading, setReloading] = useState(false);
-  const [aprobando, setAprobando] = useState(false);
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as {
     auditoria: Record<string, unknown> | null;
