@@ -151,11 +151,25 @@ function isLeadInternalStage(etapa: EtapaPipelineId): boolean {
   return LEAD_INTERNAL_STAGES.includes(etapa);
 }
 
-function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null } | undefined): PipelineLaneId {
+function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null; auditor_aprobado_at?: string | null } | undefined): PipelineLaneId {
   const etapa = etapaInterna(exp);
   if (!isLeadInternalStage(etapa)) return etapa;
-  return motivosRevision(exp, qa).length > 0 ? "en_revision" : "con_proyeccion";
+  // Regla nueva: E1=en_revision es la entrada por default. Sólo promovemos a
+  // E2=con_proyeccion cuando el lead está limpio: sin motivos abiertos,
+  // tiene proyección financiera y la auditoría QA fue aprobada y sellada.
+  const motivos = motivosRevision(exp, qa);
+  if (motivos.length > 0) return "en_revision";
+  const propuesta = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
+  const nuevaCuota = Number(propuesta.nuevaCuota ?? 0) || 0;
+  const nuevoPlazo = Number(propuesta.nuevoPlazo ?? 0) || 0;
+  const ahorroTotal = Number(propuesta.ahorroTotal ?? 0) || 0;
+  const tieneProyeccion = nuevaCuota > 0 || nuevoPlazo > 0 || ahorroTotal > 0;
+  const dictamen = (qa?.dictamen ?? "").toLowerCase();
+  const auditoriaAprobada = !!qa && !!qa.auditor_aprobado_at && (dictamen === "aprobado" || dictamen === "aprobado_obs");
+  if (tieneProyeccion && auditoriaAprobada) return "con_proyeccion";
+  return "en_revision";
 }
+
 
 function getLaneById(id: PipelineLaneId): PipelineLane {
   return PIPELINE_VISUAL_LANES.find((x) => x.id === id) ?? PIPELINE_VISUAL_LANES[0];
