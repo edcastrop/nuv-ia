@@ -154,20 +154,31 @@ function isLeadInternalStage(etapa: EtapaPipelineId): boolean {
 function laneVisualLead(exp: Expediente, qa: { id: string; score: number; dictamen: string | null; auditor_aprobado_at?: string | null } | undefined): PipelineLaneId {
   const etapa = etapaInterna(exp);
   if (!isLeadInternalStage(etapa)) return etapa;
-  // Regla nueva: E1=en_revision es la entrada por default. Sólo promovemos a
-  // E2=con_proyeccion cuando el lead está limpio: sin motivos abiertos,
-  // tiene proyección financiera y la auditoría QA fue aprobada y sellada.
+  // Regla dura E2: se requiere que la propuesta comercial haya sido
+  // exportada (PDF) Y que se haya generado el mensaje de WhatsApp.
+  // Sin ambos sellos el lead sigue en E1 aunque tenga proyección/QA.
+  const anyExp = exp as unknown as {
+    propuesta_exportada_at?: string | null;
+    whatsapp_generado_at?: string | null;
+    propuesta_data?: Record<string, unknown>;
+  };
+  const propExportada = !!anyExp.propuesta_exportada_at;
+  const whatsappGen = !!anyExp.whatsapp_generado_at;
+  if (!propExportada || !whatsappGen) return "en_revision";
+
+  // Además, motivos de revisión activos siguen bloqueando la promoción.
   const motivos = motivosRevision(exp, qa);
   if (motivos.length > 0) return "en_revision";
-  const propuesta = (exp as unknown as { propuesta_data?: Record<string, unknown> }).propuesta_data ?? {};
+
+  // Sanity check: debe existir proyección con datos.
+  const propuesta = anyExp.propuesta_data ?? {};
   const nuevaCuota = Number(propuesta.nuevaCuota ?? 0) || 0;
   const nuevoPlazo = Number(propuesta.nuevoPlazo ?? 0) || 0;
   const ahorroTotal = Number(propuesta.ahorroTotal ?? 0) || 0;
   const tieneProyeccion = nuevaCuota > 0 || nuevoPlazo > 0 || ahorroTotal > 0;
-  const dictamen = (qa?.dictamen ?? "").toLowerCase();
-  const auditoriaAprobada = !!qa && !!qa.auditor_aprobado_at && (dictamen === "aprobado" || dictamen === "aprobado_obs");
-  if (tieneProyeccion && auditoriaAprobada) return "con_proyeccion";
-  return "en_revision";
+  if (!tieneProyeccion) return "en_revision";
+
+  return "con_proyeccion";
 }
 
 
