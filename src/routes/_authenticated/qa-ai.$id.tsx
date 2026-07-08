@@ -706,7 +706,11 @@ function ResultadoQaAi() {
     } finally { setReloading(false); }
   };
 
-  const yaAprobadaAuditor = !!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+  const auditorAt = (a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+  const yaAprobadaAuditor = !!auditorAt;
+  const auditorOverride = !!(a as unknown as { auditor_override?: boolean | null }).auditor_override;
+  const auditorOverrideJustificacion = ((a as unknown as { auditor_override_justificacion?: string | null }).auditor_override_justificacion ?? null);
+
   const handleAprobar = async () => {
     if (aprobando || yaAprobadaAuditor) return;
     const notas = window.prompt("Notas para el analista (opcional):", "") ?? "";
@@ -719,6 +723,23 @@ function ResultadoQaAi() {
     } catch (err) {
       alert((err as Error).message);
     } finally { setAprobando(false); }
+  };
+
+  const handleOverride = async () => {
+    if (overrideEnviando || yaAprobadaAuditor) return;
+    const justificacion = overrideText.trim();
+    if (justificacion.length < 20) return;
+    if (!window.confirm("¿Aplicar OVERRIDE manual? Esta decisión queda registrada de forma permanente con tu justificación.")) return;
+    setOverrideEnviando(true);
+    try {
+      const res = await doAprobarOverride({ data: { auditoriaId: id, justificacion } }) as { ok: boolean; codigo: string | null };
+      setData(await fetchAud({ data: { id } }) as { auditoria: Record<string, unknown> | null; inconsistencias: Inc[] });
+      setOverrideOpen(false);
+      setOverrideText("");
+      alert(`✓ Auditoría ${res.codigo ?? ""} liberada con override manual. Registro auditable creado.`);
+    } catch (err) {
+      alert((err as Error).message);
+    } finally { setOverrideEnviando(false); }
   };
 
   const handlePdf = () => exportarDictamenPDF({
@@ -734,7 +755,8 @@ function ResultadoQaAi() {
         cliente={cliente} banco={banco} producto={producto} fecha={fecha}
         score={score} scoreColor={scoreColor} certLabel={cert.label} certColor={cert.color}
         codigo={(a as unknown as { codigo: string | null }).codigo ?? null}
-        auditorAprobado={!!(a as unknown as { auditor_aprobado_at: string | null }).auditor_aprobado_at}
+        auditorAprobado={yaAprobadaAuditor}
+        auditorOverride={auditorOverride}
       />
 
 
