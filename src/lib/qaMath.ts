@@ -1188,6 +1188,9 @@ export function construirVeredicto(
     plazoImplicito,
     plazoReportado,
     desfasePlazo,
+    cuotaExtracto: hp.cuotaExtracto,
+    cuotaTeorica: hp.cuotaTeorica,
+    desfaseCuota: hp.desfaseCuota,
   };
 
   function dedupe(arr: string[]) { return Array.from(new Set(arr)); }
