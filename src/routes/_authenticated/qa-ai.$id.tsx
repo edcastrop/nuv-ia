@@ -639,8 +639,12 @@ function ResultadoQaAi() {
     : nivelDesfase === "BAJO" ? "var(--nuvia-warning)"
     : nivelDesfase === "MEDIO" ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
 
-  /* ----- Hallazgo administrativo de plazo (Fase 1 motor de diagnóstico) ----- */
-  const hallazgoPlazoAdm = (veredicto?.hallazgos ?? []).find((h) => h.categoria === "administrativa");
+  /* ----- Hallazgos administrativos (Fase 1 + 1.5 motor de diagnóstico) ----- */
+  const hallazgosAdm = (veredicto?.hallazgos ?? []).filter((h) => h.categoria === "administrativa");
+  const hallazgoPlazoAdm = hallazgosAdm.find(
+    (h) => h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE",
+  );
+  const hallazgoCuotaAdm = hallazgosAdm.find((h) => h.codigo === "CUOTA_VS_TEORICA");
   const veredictoParaBlock: Veredicto | undefined = veredicto
     ? { ...veredicto, hallazgos: (veredicto.hallazgos ?? []).filter((h) => h.categoria !== "administrativa") }
     : undefined;
