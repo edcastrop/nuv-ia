@@ -639,6 +639,13 @@ function ResultadoQaAi() {
     : nivelDesfase === "BAJO" ? "var(--nuvia-warning)"
     : nivelDesfase === "MEDIO" ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
 
+  /* ----- Hallazgo administrativo de plazo (Fase 1 motor de diagnóstico) ----- */
+  const hallazgoPlazoAdm = (veredicto?.hallazgos ?? []).find((h) => h.categoria === "administrativa");
+  const veredictoParaBlock: Veredicto | undefined = veredicto
+    ? { ...veredicto, hallazgos: (veredicto.hallazgos ?? []).filter((h) => h.categoria !== "administrativa") }
+    : undefined;
+
+
   /* ----- Acción recomendada (máx 3) ----- */
   const requiereAclaracion =
     incCrit > 0 ||
