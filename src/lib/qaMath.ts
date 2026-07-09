@@ -641,11 +641,30 @@ export function auditar(input: AuditarInput): AuditarOutput {
     mensaje: `Falta campo financiero crítico: ${campo}`,
     sugerencia: "Complete este dato desde el extracto antes de aprobar o liberar la auditoría.",
   }));
-  const incs = [...incExt, ...incSim, ...incFaltantes];
+  const incsRaw = [...incExt, ...incSim, ...incFaltantes];
+
+  // Reclasificación administrativa del desfase de plazo (Fase 1 del motor
+  // de diagnóstico): si el desfase implícito vs reportado es el ÚNICO
+  // hallazgo material y va en dirección "cliente pagando más de lo que
+  // el extracto necesita" (desfase < 0 → abonos no reflejados), no debe
+  // penalizar el QA Score. La condición se evalúa sobre `hallazgos`
+  // (misma lista que usa sevExtracto), no sobre `incs`, porque pueden
+  // existir hallazgos críticos SIN inconsistencia paralela (ej.
+  // TASA_FUERA_RANGO, FALTA_SALDO). Ver `esPlazoAdministrativo`.
+  const hpPreview = computarHallazgosBase(input, rec);
+  const plazoAdministrativo = esPlazoAdministrativo(hpPreview);
+  const incs = plazoAdministrativo
+    ? incsRaw.filter((i) => i.tipo !== "plazo")
+    : incsRaw;
+
   const score = calcularScore(incs, faltantes.length, tol);
-  const veredicto = construirVeredicto(input, rec, incs, score);
+  const veredicto = construirVeredicto(input, rec, incs, score, {
+    plazoAdministrativo,
+    precomputed: hpPreview,
+  });
   return { motorVersion: QA_MOTOR_VERSION, reconstruccion: rec, inconsistencias: incs, score, faltantes, veredicto };
 }
+
 
 // ──────────────────────────────────────────────────────────────
 // 9. Veredicto narrativo (determinístico)
