@@ -23,9 +23,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   auditarSimulacionDraft,
   escalarConsultaTecnica,
+  estadoAprobacionAuditoria,
   type DraftAuditResult,
   type DraftAuditHallazgo,
 } from "@/lib/simuladorDraftQA.functions";
+
 
 // ─────────────────────────────────────────────────────────────
 // Snapshot que los simuladores emiten al parsear un extracto
