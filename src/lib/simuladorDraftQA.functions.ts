@@ -1032,3 +1032,44 @@ export const listMisConsultasTecnicas = createServerFn({ method: "POST" })
     }));
   });
 
+// ─────────────────────────────────────────────────────────────
+// Lookup ligero para NuviaDraftAuditCard: cuando el analista
+// vuelve al simulador con ?auditoriaId=<id> tras una aprobación
+// del Director QA (normal u override), determina si la auditoría
+// ya está formalmente aprobada para saltar la ejecución del
+// motor matemático local y habilitar directamente "Certificar y
+// crear caso". Usa RLS: el analista lee su propia auditoría vía
+// política `qa_auditorias_select_owner_escalada` cuando
+// origen='simulador_escalado'.
+// ─────────────────────────────────────────────────────────────
+export const estadoAprobacionAuditoria = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: row, error } = await supabase
+      .from("qa_auditorias")
+      .select(
+        "id,codigo,origen,dictamen,qa_score,auditor_aprobado_at,auditor_aprobado_by,auditor_override,auditor_override_justificacion,expediente_id",
+      )
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) return { aprobada: false as const };
+    const aprobadoAt = (row as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+    return {
+      aprobada: !!aprobadoAt,
+      aprobadoAt: aprobadoAt ?? null,
+      aprobadoPor: (row as { auditor_aprobado_by: string | null }).auditor_aprobado_by ?? null,
+      override: !!(row as { auditor_override: boolean | null }).auditor_override,
+      overrideJustificacion:
+        (row as { auditor_override_justificacion: string | null }).auditor_override_justificacion ?? null,
+      dictamen: (row as { dictamen: string | null }).dictamen ?? null,
+      score: (row as { qa_score: number | null }).qa_score ?? 0,
+      codigo: (row as { codigo: string | null }).codigo ?? null,
+      origen: (row as { origen: string | null }).origen ?? null,
+      expedienteId: (row as { expediente_id: string | null }).expediente_id ?? null,
+    };
+  });
+
+
