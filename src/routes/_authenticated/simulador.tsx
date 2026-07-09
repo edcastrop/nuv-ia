@@ -456,6 +456,8 @@ export function SimuladorPage() {
       {draftMode && (
         <NuviaDraftAuditCard
           mode={mode}
+          auditoriaId={auditoriaId}
+
           onCertificar={(payload) => {
             if (!mode) {
               toast.error("Selecciona Pesos o UVR primero.");
