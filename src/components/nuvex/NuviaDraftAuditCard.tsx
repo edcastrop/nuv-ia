@@ -161,11 +161,9 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
         // certificable=true, el botón sigue activo.
         return;
       }
-      setState((prev) => {
-        // Cambio real de inputs: la auditoría anterior queda invalidada.
-        if (prev.kind === "done" || prev.kind === "error") return { kind: "ready" };
-        return { kind: "ready" };
-      });
+      // Cambio real de inputs: la auditoría anterior queda invalidada.
+      setDirectorApproval(null);
+      setState({ kind: "ready" });
     };
     window.addEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
