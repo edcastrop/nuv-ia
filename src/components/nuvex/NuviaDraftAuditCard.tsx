@@ -171,6 +171,29 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
   }, []);
 
+  // Cuando existe aprobación formal del Director QA y hay snapshot listo,
+  // promovemos el panel a "done" sintético con certificable=true para saltar
+  // la ejecución local del motor. Cualquier cambio real de inputs vuelve el
+  // estado a "ready" (handler de arriba), lo cual invalida esta promoción —
+  // deseable: si el analista editó los inputs, no debe poder certificar con
+  // la aprobación previa.
+  useEffect(() => {
+    if (!directorApproval) return;
+    if (state.kind !== "ready") return;
+    const synthetic: DraftAuditResult = {
+      score: directorApproval.score || 100,
+      categoria: "aprobado",
+      dictamen: "aprobado",
+      criticos: 0,
+      totalHallazgos: 0,
+      hallazgos: [],
+      certificable: true,
+      hashCalculo: "",
+    };
+    setState({ kind: "done", result: synthetic });
+  }, [directorApproval, state.kind]);
+
+
   // 2. Ejecutar auditoría dry-run
   const handleAuditar = async () => {
     const snap = snapshotRef.current;
