@@ -884,10 +884,16 @@ export function computarHallazgosBase(
   }
 
   // ── Check 6: cuota total cliente vs cuota teórica (caso sin override oficial) ──
+  let desfaseCuota: number | undefined;
+  let cuotaExtracto: number | undefined;
+  let cuotaTeorica: number | undefined;
   if (ext.cuota && ext.cuota > 0 && rec.cuotaTotalConSeguros > 0) {
     const diff = ext.cuota - rec.cuotaTotalConSeguros;
     const pct = Math.abs(diff) / ext.cuota;
     if (pct > 0.03) {
+      desfaseCuota = diff;
+      cuotaExtracto = ext.cuota;
+      cuotaTeorica = rec.cuotaTotalConSeguros;
       pushH({
         codigo: "CUOTA_VS_TEORICA",
         severidad: pct > 0.15 ? "critica" : "warning",
@@ -899,6 +905,7 @@ export function computarHallazgosBase(
       });
     }
   }
+
 
   // ── Check 7: campos críticos faltantes ──
   if (!r.saldoCapital) pushH({ codigo: "FALTA_SALDO", severidad: "critica", titulo: "Falta el saldo del crédito", detalle: "Sin saber cuánto debe el cliente hoy, NUVIA no puede revisar nada.", pista: "Tome el saldo a capital del último extracto disponible y vuelva a auditar." });
