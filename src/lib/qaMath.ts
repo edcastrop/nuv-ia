@@ -950,6 +950,39 @@ export function esPlazoAdministrativo(hp: HallazgosBase): boolean {
   return !otroCritico;
 }
 
+/**
+ * Fase 1.5 · Reclasifica CUOTA_VS_TEORICA como "administrativa" (no
+ * penaliza score) SOLO cuando:
+ *   1. Existe el hallazgo CUOTA_VS_TEORICA.
+ *   2. desfaseCuota > 0 (ext.cuota > cuota teórica → cliente paga MÁS de
+ *      lo que exige la reamortización teórica; nunca al revés).
+ *   3. No hay OTRO hallazgo crítico excluyendo CUOTA_VS_TEORICA y
+ *      PLAZO_IMPLICITO_VS_REPORTADO (misma causa raíz: abonos a capital
+ *      no reflejados en la reprogramación del banco).
+ *   4. Si coexiste con un hallazgo PLAZO_IMPLICITO_*, la dirección del
+ *      plazo debe ser consistente (desfasePlazo < 0). Si hay contradicción
+ *      entre ambos checks, NO reclasifica.
+ */
+export function esCuotaAdministrativa(hp: HallazgosBase): boolean {
+  const tieneCuota = hp.hallazgos.some((h) => h.codigo === "CUOTA_VS_TEORICA");
+  if (!tieneCuota) return false;
+  if (hp.desfaseCuota === undefined || hp.desfaseCuota <= 0) return false;
+  const otroCritico = hp.hallazgos.some(
+    (h) =>
+      h.severidad === "critica" &&
+      h.codigo !== "CUOTA_VS_TEORICA" &&
+      h.codigo !== "PLAZO_IMPLICITO_VS_REPORTADO",
+  );
+  if (otroCritico) return false;
+  const tienePlazoHallazgo = hp.hallazgos.some(
+    (h) => h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE",
+  );
+  if (tienePlazoHallazgo && (hp.desfasePlazo === undefined || hp.desfasePlazo >= 0)) {
+    return false;
+  }
+  return true;
+}
+
 export function construirVeredicto(
   input: AuditarInput,
   rec: Reconstruccion,
