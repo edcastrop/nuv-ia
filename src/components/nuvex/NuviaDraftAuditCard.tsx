@@ -23,9 +23,11 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   auditarSimulacionDraft,
   escalarConsultaTecnica,
+  estadoAprobacionAuditoria,
   type DraftAuditResult,
   type DraftAuditHallazgo,
 } from "@/lib/simuladorDraftQA.functions";
+
 
 // ─────────────────────────────────────────────────────────────
 // Snapshot que los simuladores emiten al parsear un extracto
@@ -61,15 +63,60 @@ type Props = {
   onCertificar: (payload: { snapshot: DraftRawSnapshot; result: DraftAuditResult }) => void;
   onSalir: () => void;
   onNuevaSimulacion?: () => void;
+  /**
+   * Cuando el analista aterriza en /herramientas/simulador?auditoriaId=<id>
+   * tras una aprobación del Director QA (normal u override), este prop
+   * dispara el lookup a `estadoAprobacionAuditoria` para saltar la ejecución
+   * local del motor y habilitar directamente "Certificar y crear caso".
+   */
+  auditoriaId?: string;
 };
 
-export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion }: Props) {
+type DirectorApproval = {
+  aprobadoAt: string;
+  override: boolean;
+  overrideJustificacion: string | null;
+  score: number;
+  codigo: string | null;
+};
+
+export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion, auditoriaId }: Props) {
   const [state, setState] = useState<PanelState>({ kind: mode ? "waiting" : "idle" });
   const [showHallazgos, setShowHallazgos] = useState(false);
   const [escalarOpen, setEscalarOpen] = useState(false);
+  const [directorApproval, setDirectorApproval] = useState<DirectorApproval | null>(null);
   const snapshotRef = useRef<DraftRawSnapshot | null>(null);
 
   const runAudit = useServerFn(auditarSimulacionDraft);
+  const fetchAprobacion = useServerFn(estadoAprobacionAuditoria);
+
+  // Lookup de aprobación del Director QA cuando se llega vía ?auditoriaId=.
+  useEffect(() => {
+    if (!auditoriaId) {
+      setDirectorApproval(null);
+      return;
+    }
+    let cancel = false;
+    (async () => {
+      try {
+        const res = await fetchAprobacion({ data: { id: auditoriaId } });
+        if (cancel) return;
+        if (res.aprobada && res.aprobadoAt) {
+          setDirectorApproval({
+            aprobadoAt: res.aprobadoAt,
+            override: !!res.override,
+            overrideJustificacion: res.overrideJustificacion ?? null,
+            score: res.score ?? 0,
+            codigo: res.codigo ?? null,
+          });
+        }
+      } catch {
+        /* silencioso: si falla, el analista sigue viendo el flujo normal */
+      }
+    })();
+    return () => { cancel = true; };
+  }, [auditoriaId, fetchAprobacion]);
+
 
   // 1. Cuando cambia el modo (pesos/uvr) o llega un raw nuevo, actualizamos estado.
   useEffect(() => {
@@ -124,6 +171,29 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
   }, []);
 
+  // Cuando existe aprobación formal del Director QA y hay snapshot listo,
+  // promovemos el panel a "done" sintético con certificable=true para saltar
+  // la ejecución local del motor. Cualquier cambio real de inputs vuelve el
+  // estado a "ready" (handler de arriba), lo cual invalida esta promoción —
+  // deseable: si el analista editó los inputs, no debe poder certificar con
+  // la aprobación previa.
+  useEffect(() => {
+    if (!directorApproval) return;
+    if (state.kind !== "ready") return;
+    const synthetic: DraftAuditResult = {
+      score: directorApproval.score || 100,
+      categoria: "aprobado",
+      dictamen: "aprobado",
+      criticos: 0,
+      totalHallazgos: 0,
+      hallazgos: [],
+      certificable: true,
+      hashCalculo: "",
+    };
+    setState({ kind: "done", result: synthetic });
+  }, [directorApproval, state.kind]);
+
+
   // 2. Ejecutar auditoría dry-run
   const handleAuditar = async () => {
     const snap = snapshotRef.current;
@@ -176,9 +246,23 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
               Modo exploración
             </span>
+            {directorApproval && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-200"
+                title={
+                  directorApproval.override
+                    ? `Override manual del Director QA. Justificación: ${directorApproval.overrideJustificacion ?? "—"}`
+                    : "Aprobada por Director QA"
+                }
+              >
+                {directorApproval.override ? "Aprobado por Director QA (override)" : "Aprobado por Director QA"}
+                {directorApproval.codigo ? ` · ${directorApproval.codigo}` : ""}
+              </span>
+            )}
             <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
               Herramientas · Simulador · Nada se guarda en el ERP
             </span>
+
             <div className="ml-auto flex items-center gap-2">
               {onNuevaSimulacion && (
                 <button
