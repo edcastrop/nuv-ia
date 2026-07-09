@@ -988,7 +988,11 @@ export function construirVeredicto(
   rec: Reconstruccion,
   inconsistencias: Inconsistencia[],
   score: ScoreResultado,
-  opts?: { plazoAdministrativo?: boolean; precomputed?: HallazgosBase },
+  opts?: {
+    plazoAdministrativo?: boolean;
+    cuotaAdministrativa?: boolean;
+    precomputed?: HallazgosBase;
+  },
 ): Veredicto {
   const r = input.reconstruccion;
   const ext = input.extracto ?? {};
@@ -996,12 +1000,15 @@ export function construirVeredicto(
 
   const hp = opts?.precomputed ?? computarHallazgosBase(input, rec);
   const plazoAdm = opts?.plazoAdministrativo ?? false;
+  const cuotaAdm = opts?.cuotaAdministrativa ?? false;
 
   // Etiqueta cada hallazgo con categoria: los de plazo pasan a "administrativa"
-  // sólo si el flag lo indica (evaluado en auditar()); el resto = "matematica".
+  // sólo si el flag lo indica (evaluado en auditar()); CUOTA_VS_TEORICA idem.
   const hallazgos: VeredictoHallazgo[] = hp.hallazgos.map((h) => {
     const esPlazo = h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE";
-    const categoria: "matematica" | "administrativa" = plazoAdm && esPlazo ? "administrativa" : "matematica";
+    const esCuota = h.codigo === "CUOTA_VS_TEORICA";
+    const categoria: "matematica" | "administrativa" =
+      (plazoAdm && esPlazo) || (cuotaAdm && esCuota) ? "administrativa" : "matematica";
     return { ...h, categoria };
   });
 
