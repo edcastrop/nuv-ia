@@ -246,9 +246,23 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
             <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-300">
               Modo exploración
             </span>
+            {directorApproval && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full border border-emerald-400/40 bg-emerald-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-emerald-200"
+                title={
+                  directorApproval.override
+                    ? `Override manual del Director QA. Justificación: ${directorApproval.overrideJustificacion ?? "—"}`
+                    : "Aprobada por Director QA"
+                }
+              >
+                {directorApproval.override ? "Aprobado por Director QA (override)" : "Aprobado por Director QA"}
+                {directorApproval.codigo ? ` · ${directorApproval.codigo}` : ""}
+              </span>
+            )}
             <span className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
               Herramientas · Simulador · Nada se guarda en el ERP
             </span>
+
             <div className="ml-auto flex items-center gap-2">
               {onNuevaSimulacion && (
                 <button
