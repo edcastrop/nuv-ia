@@ -643,23 +643,31 @@ export function auditar(input: AuditarInput): AuditarOutput {
   }));
   const incsRaw = [...incExt, ...incSim, ...incFaltantes];
 
-  // Reclasificación administrativa del desfase de plazo (Fase 1 del motor
-  // de diagnóstico): si el desfase implícito vs reportado es el ÚNICO
-  // hallazgo material y va en dirección "cliente pagando más de lo que
-  // el extracto necesita" (desfase < 0 → abonos no reflejados), no debe
-  // penalizar el QA Score. La condición se evalúa sobre `hallazgos`
-  // (misma lista que usa sevExtracto), no sobre `incs`, porque pueden
-  // existir hallazgos críticos SIN inconsistencia paralela (ej.
-  // TASA_FUERA_RANGO, FALTA_SALDO). Ver `esPlazoAdministrativo`.
+  // Reclasificación administrativa (Fase 1 y 1.5 del motor de diagnóstico):
+  // ciertos hallazgos son consecuencia de abonos a capital no reflejados
+  // aún en la reprogramación del banco (misma causa raíz) y no deben
+  // penalizar el QA Score cuando el resto del extracto reconcilia bien.
+  // La condición se evalúa sobre `hallazgos` (misma lista que usa
+  // sevExtracto), no sobre `incs`, porque pueden existir hallazgos críticos
+  // SIN inconsistencia paralela (ej. TASA_FUERA_RANGO, FALTA_SALDO).
+  //   · Fase 1  → PLAZO_IMPLICITO_* (ver `esPlazoAdministrativo`).
+  //   · Fase 1.5 → CUOTA_VS_TEORICA (ver `esCuotaAdministrativa`).
   const hpPreview = computarHallazgosBase(input, rec);
   const plazoAdministrativo = esPlazoAdministrativo(hpPreview);
-  const incs = plazoAdministrativo
-    ? incsRaw.filter((i) => i.tipo !== "plazo")
-    : incsRaw;
+  const cuotaAdministrativa = esCuotaAdministrativa(hpPreview);
+  const incs = incsRaw.filter((i) => {
+    if (plazoAdministrativo && i.tipo === "plazo") return false;
+    // Sólo Check 6 de compararExtracto usa (tipo:"cuota", campo:"cuota").
+    // `incFaltantes` usa campo:"extracto.cuota"; `compararSimulacion` usa
+    // "ahorro_proyectado"/"nuevo_plazo". Filtro seguro.
+    if (cuotaAdministrativa && i.tipo === "cuota" && i.campo === "cuota") return false;
+    return true;
+  });
 
   const score = calcularScore(incs, faltantes.length, tol);
   const veredicto = construirVeredicto(input, rec, incs, score, {
     plazoAdministrativo,
+    cuotaAdministrativa,
     precomputed: hpPreview,
   });
   return { motorVersion: QA_MOTOR_VERSION, reconstruccion: rec, inconsistencias: incs, score, faltantes, veredicto };
@@ -694,6 +702,11 @@ export interface Veredicto {
   plazoImplicito?: number;
   plazoReportado?: number;
   desfasePlazo?: number;
+  /** Fase 1.5 · valores del Check 6 expuestos para la UI (bloque de
+   *  reconciliación automática cuando aplica esCuotaAdministrativa). */
+  cuotaExtracto?: number;
+  cuotaTeorica?: number;
+  desfaseCuota?: number;
 }
 
 export interface VeredictoHallazgo {
@@ -730,6 +743,13 @@ export interface HallazgosBase {
   frechConsistente: boolean;
   tieneFresh: boolean;
   hayExcel: boolean;
+  /** Fase 1.5: diff = ext.cuota − rec.cuotaTotalConSeguros del Check 6.
+   *  Positivo = cliente paga MÁS que la cuota teórica (candidato a
+   *  reclasificación administrativa). Ver `esCuotaAdministrativa`. */
+  desfaseCuota?: number;
+  /** Fase 1.5: ext.cuota y cuota teórica que dispararon Check 6 (para UI). */
+  cuotaExtracto?: number;
+  cuotaTeorica?: number;
 }
 
 export function computarHallazgosBase(
@@ -869,10 +889,16 @@ export function computarHallazgosBase(
   }
 
   // ── Check 6: cuota total cliente vs cuota teórica (caso sin override oficial) ──
+  let desfaseCuota: number | undefined;
+  let cuotaExtracto: number | undefined;
+  let cuotaTeorica: number | undefined;
   if (ext.cuota && ext.cuota > 0 && rec.cuotaTotalConSeguros > 0) {
     const diff = ext.cuota - rec.cuotaTotalConSeguros;
     const pct = Math.abs(diff) / ext.cuota;
     if (pct > 0.03) {
+      desfaseCuota = diff;
+      cuotaExtracto = ext.cuota;
+      cuotaTeorica = rec.cuotaTotalConSeguros;
       pushH({
         codigo: "CUOTA_VS_TEORICA",
         severidad: pct > 0.15 ? "critica" : "warning",
@@ -884,6 +910,7 @@ export function computarHallazgosBase(
       });
     }
   }
+
 
   // ── Check 7: campos críticos faltantes ──
   if (!r.saldoCapital) pushH({ codigo: "FALTA_SALDO", severidad: "critica", titulo: "Falta el saldo del crédito", detalle: "Sin saber cuánto debe el cliente hoy, NUVIA no puede revisar nada.", pista: "Tome el saldo a capital del último extracto disponible y vuelva a auditar." });
@@ -901,6 +928,9 @@ export function computarHallazgosBase(
     frechConsistente,
     tieneFresh,
     hayExcel,
+    desfaseCuota,
+    cuotaExtracto,
+    cuotaTeorica,
   };
 }
 
@@ -925,12 +955,49 @@ export function esPlazoAdministrativo(hp: HallazgosBase): boolean {
   return !otroCritico;
 }
 
+/**
+ * Fase 1.5 · Reclasifica CUOTA_VS_TEORICA como "administrativa" (no
+ * penaliza score) SOLO cuando:
+ *   1. Existe el hallazgo CUOTA_VS_TEORICA.
+ *   2. desfaseCuota > 0 (ext.cuota > cuota teórica → cliente paga MÁS de
+ *      lo que exige la reamortización teórica; nunca al revés).
+ *   3. No hay OTRO hallazgo crítico excluyendo CUOTA_VS_TEORICA y
+ *      PLAZO_IMPLICITO_VS_REPORTADO (misma causa raíz: abonos a capital
+ *      no reflejados en la reprogramación del banco).
+ *   4. Si coexiste con un hallazgo PLAZO_IMPLICITO_*, la dirección del
+ *      plazo debe ser consistente (desfasePlazo < 0). Si hay contradicción
+ *      entre ambos checks, NO reclasifica.
+ */
+export function esCuotaAdministrativa(hp: HallazgosBase): boolean {
+  const tieneCuota = hp.hallazgos.some((h) => h.codigo === "CUOTA_VS_TEORICA");
+  if (!tieneCuota) return false;
+  if (hp.desfaseCuota === undefined || hp.desfaseCuota <= 0) return false;
+  const otroCritico = hp.hallazgos.some(
+    (h) =>
+      h.severidad === "critica" &&
+      h.codigo !== "CUOTA_VS_TEORICA" &&
+      h.codigo !== "PLAZO_IMPLICITO_VS_REPORTADO",
+  );
+  if (otroCritico) return false;
+  const tienePlazoHallazgo = hp.hallazgos.some(
+    (h) => h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE",
+  );
+  if (tienePlazoHallazgo && (hp.desfasePlazo === undefined || hp.desfasePlazo >= 0)) {
+    return false;
+  }
+  return true;
+}
+
 export function construirVeredicto(
   input: AuditarInput,
   rec: Reconstruccion,
   inconsistencias: Inconsistencia[],
   score: ScoreResultado,
-  opts?: { plazoAdministrativo?: boolean; precomputed?: HallazgosBase },
+  opts?: {
+    plazoAdministrativo?: boolean;
+    cuotaAdministrativa?: boolean;
+    precomputed?: HallazgosBase;
+  },
 ): Veredicto {
   const r = input.reconstruccion;
   const ext = input.extracto ?? {};
@@ -938,12 +1005,15 @@ export function construirVeredicto(
 
   const hp = opts?.precomputed ?? computarHallazgosBase(input, rec);
   const plazoAdm = opts?.plazoAdministrativo ?? false;
+  const cuotaAdm = opts?.cuotaAdministrativa ?? false;
 
   // Etiqueta cada hallazgo con categoria: los de plazo pasan a "administrativa"
-  // sólo si el flag lo indica (evaluado en auditar()); el resto = "matematica".
+  // sólo si el flag lo indica (evaluado en auditar()); CUOTA_VS_TEORICA idem.
   const hallazgos: VeredictoHallazgo[] = hp.hallazgos.map((h) => {
     const esPlazo = h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE";
-    const categoria: "matematica" | "administrativa" = plazoAdm && esPlazo ? "administrativa" : "matematica";
+    const esCuota = h.codigo === "CUOTA_VS_TEORICA";
+    const categoria: "matematica" | "administrativa" =
+      (plazoAdm && esPlazo) || (cuotaAdm && esCuota) ? "administrativa" : "matematica";
     return { ...h, categoria };
   });
 
@@ -1123,6 +1193,9 @@ export function construirVeredicto(
     plazoImplicito,
     plazoReportado,
     desfasePlazo,
+    cuotaExtracto: hp.cuotaExtracto,
+    cuotaTeorica: hp.cuotaTeorica,
+    desfaseCuota: hp.desfaseCuota,
   };
 
   function dedupe(arr: string[]) { return Array.from(new Set(arr)); }
