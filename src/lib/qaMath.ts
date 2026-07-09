@@ -702,6 +702,11 @@ export interface Veredicto {
   plazoImplicito?: number;
   plazoReportado?: number;
   desfasePlazo?: number;
+  /** Fase 1.5 · valores del Check 6 expuestos para la UI (bloque de
+   *  reconciliación automática cuando aplica esCuotaAdministrativa). */
+  cuotaExtracto?: number;
+  cuotaTeorica?: number;
+  desfaseCuota?: number;
 }
 
 export interface VeredictoHallazgo {
