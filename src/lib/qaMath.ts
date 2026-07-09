@@ -738,6 +738,13 @@ export interface HallazgosBase {
   frechConsistente: boolean;
   tieneFresh: boolean;
   hayExcel: boolean;
+  /** Fase 1.5: diff = ext.cuota − rec.cuotaTotalConSeguros del Check 6.
+   *  Positivo = cliente paga MÁS que la cuota teórica (candidato a
+   *  reclasificación administrativa). Ver `esCuotaAdministrativa`. */
+  desfaseCuota?: number;
+  /** Fase 1.5: ext.cuota y cuota teórica que dispararon Check 6 (para UI). */
+  cuotaExtracto?: number;
+  cuotaTeorica?: number;
 }
 
 export function computarHallazgosBase(
