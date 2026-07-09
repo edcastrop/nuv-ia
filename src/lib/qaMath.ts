@@ -923,6 +923,9 @@ export function computarHallazgosBase(
     frechConsistente,
     tieneFresh,
     hayExcel,
+    desfaseCuota,
+    cuotaExtracto,
+    cuotaTeorica,
   };
 }
 
