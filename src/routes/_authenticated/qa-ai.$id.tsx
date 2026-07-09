@@ -1685,11 +1685,22 @@ function ResultadoQaAi() {
         ]}
       />
 
+      {hallazgoPlazoAdm && veredicto?.plazoImplicito && veredicto?.plazoReportado ? (
+        <ReconciliacionAutomaticaBlock
+          plazoImplicito={veredicto.plazoImplicito}
+          plazoReportado={veredicto.plazoReportado}
+          modoSimulador={a.modalidad === "uvr" ? "uvr" : "pesos"}
+          maestroId={maestroId ?? expedienteIdCert ?? undefined}
+          auditoriaId={id}
+        />
+      ) : null}
+
       <Accordion title="Veredicto técnico completo" icon={<Brain size={15} style={{ color: "var(--nuvia-accent)" }} />}>
         <div className="-mt-px">
-          <VeredictoBlock veredicto={veredicto} />
+          <VeredictoBlock veredicto={veredictoParaBlock} />
         </div>
       </Accordion>
+
 
 
       <Accordion
