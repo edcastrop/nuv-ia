@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
@@ -638,6 +638,13 @@ function ResultadoQaAi() {
   const colorDesfase = nivelDesfase === "OK" ? "var(--nuvia-success)"
     : nivelDesfase === "BAJO" ? "var(--nuvia-warning)"
     : nivelDesfase === "MEDIO" ? "var(--nuvia-warning)" : "var(--nuvia-danger)";
+
+  /* ----- Hallazgo administrativo de plazo (Fase 1 motor de diagnóstico) ----- */
+  const hallazgoPlazoAdm = (veredicto?.hallazgos ?? []).find((h) => h.categoria === "administrativa");
+  const veredictoParaBlock: Veredicto | undefined = veredicto
+    ? { ...veredicto, hallazgos: (veredicto.hallazgos ?? []).filter((h) => h.categoria !== "administrativa") }
+    : undefined;
+
 
   /* ----- Acción recomendada (máx 3) ----- */
   const requiereAclaracion =
@@ -1678,11 +1685,22 @@ function ResultadoQaAi() {
         ]}
       />
 
+      {hallazgoPlazoAdm && veredicto?.plazoImplicito && veredicto?.plazoReportado ? (
+        <ReconciliacionAutomaticaBlock
+          plazoImplicito={veredicto.plazoImplicito}
+          plazoReportado={veredicto.plazoReportado}
+          modoSimulador={a.modalidad === "uvr" ? "uvr" : "pesos"}
+          maestroId={maestroId ?? expedienteIdCert ?? undefined}
+          auditoriaId={id}
+        />
+      ) : null}
+
       <Accordion title="Veredicto técnico completo" icon={<Brain size={15} style={{ color: "var(--nuvia-accent)" }} />}>
         <div className="-mt-px">
-          <VeredictoBlock veredicto={veredicto} />
+          <VeredictoBlock veredicto={veredictoParaBlock} />
         </div>
       </Accordion>
+
 
 
       <Accordion
@@ -1922,3 +1940,105 @@ function ResultadoQaAi() {
     </PageLayout>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// Fase 1 · Motor de Diagnóstico
+// Sección "Reconciliado automáticamente por NUVIA"
+// Se muestra sólo cuando el motor reclasificó el desfase de plazo como
+// administrativo (no penaliza score). Ver `esPlazoAdministrativo` en qaMath.ts.
+// El botón NO ejecuta el cambio al montar; sólo al clic explícito escribe
+// en sessionStorage el nuevo valor de cuotasPendientes y navega al simulador.
+// ─────────────────────────────────────────────────────────────
+function ReconciliacionAutomaticaBlock({
+  plazoImplicito,
+  plazoReportado,
+  modoSimulador,
+  maestroId,
+  auditoriaId,
+}: {
+  plazoImplicito: number;
+  plazoReportado: number;
+  modoSimulador: "pesos" | "uvr";
+  maestroId?: string;
+  auditoriaId: string;
+}) {
+  const navigate = useNavigate();
+  const [aplicando, setAplicando] = useState(false);
+
+  const handleActualizar = () => {
+    if (aplicando) return;
+    setAplicando(true);
+    // Merge no destructivo del draft del simulador en sessionStorage.
+    // La key coincide con la usada por useSimulatorDraft.ts:
+    //   nuvex.simulatorDraft.{pesos|uvr}.{expedienteId ?? "standalone"}
+    try {
+      const key = `nuvex.simulatorDraft.${modoSimulador}.${maestroId ?? "standalone"}`;
+      const raw = sessionStorage.getItem(key);
+      const prev = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      const merged = { ...prev, cuotasPendientes: String(plazoImplicito) };
+      sessionStorage.setItem(key, JSON.stringify(merged));
+    } catch {
+      // Si sessionStorage está bloqueado el simulador arrancará con sus
+      // defaults; el usuario podrá ajustar el plazo manualmente.
+    }
+    navigate({
+      to: "/simulador",
+      search: {
+        maestroId: maestroId ?? undefined,
+        modo: modoSimulador,
+        auditoriaId,
+      },
+    });
+  };
+
+  return (
+    <section
+      className="rounded-2xl border p-5"
+      style={{
+        background: "rgba(58, 168, 138, 0.06)",
+        borderColor: "rgba(58, 168, 138, 0.35)",
+      }}
+    >
+      <header className="flex items-start gap-3 mb-3">
+        <div
+          className="flex h-8 w-8 items-center justify-center rounded-full shrink-0"
+          style={{ background: "rgba(58, 168, 138, 0.15)" }}
+        >
+          <CheckCircle2 size={16} style={{ color: "var(--nuvia-success)" }} />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-[14px] font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>
+            Reconciliado automáticamente por NUVIA
+          </h3>
+          <p className="text-[11.5px] mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
+            Diferencia administrativa · no penaliza el QA Score
+          </p>
+        </div>
+      </header>
+
+      <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--nuvia-text-primary)" }}>
+        NUVIA no encontró otros errores matemáticos en este extracto. La única diferencia es
+        el plazo: el extracto reporta <strong>{plazoReportado}</strong> cuotas pendientes,
+        pero pagando la cuota actual el crédito termina en <strong>{plazoImplicito}</strong>.
+        Esto es consistente con abonos a capital no reflejados aún en el plazo del extracto.
+      </p>
+
+      <button
+        type="button"
+        onClick={handleActualizar}
+        disabled={aplicando}
+        className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+        style={{
+          background: "var(--nuvia-success)",
+          color: "#0a1a14",
+          border: "1px solid var(--nuvia-success)",
+          cursor: aplicando ? "not-allowed" : "pointer",
+          opacity: aplicando ? 0.6 : 1,
+        }}
+      >
+        <Calculator size={14} /> Actualizar plazo del simulador a {plazoImplicito} cuotas
+      </button>
+    </section>
+  );
+}
+

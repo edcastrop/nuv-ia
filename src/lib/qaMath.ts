@@ -641,11 +641,30 @@ export function auditar(input: AuditarInput): AuditarOutput {
     mensaje: `Falta campo financiero crítico: ${campo}`,
     sugerencia: "Complete este dato desde el extracto antes de aprobar o liberar la auditoría.",
   }));
-  const incs = [...incExt, ...incSim, ...incFaltantes];
+  const incsRaw = [...incExt, ...incSim, ...incFaltantes];
+
+  // Reclasificación administrativa del desfase de plazo (Fase 1 del motor
+  // de diagnóstico): si el desfase implícito vs reportado es el ÚNICO
+  // hallazgo material y va en dirección "cliente pagando más de lo que
+  // el extracto necesita" (desfase < 0 → abonos no reflejados), no debe
+  // penalizar el QA Score. La condición se evalúa sobre `hallazgos`
+  // (misma lista que usa sevExtracto), no sobre `incs`, porque pueden
+  // existir hallazgos críticos SIN inconsistencia paralela (ej.
+  // TASA_FUERA_RANGO, FALTA_SALDO). Ver `esPlazoAdministrativo`.
+  const hpPreview = computarHallazgosBase(input, rec);
+  const plazoAdministrativo = esPlazoAdministrativo(hpPreview);
+  const incs = plazoAdministrativo
+    ? incsRaw.filter((i) => i.tipo !== "plazo")
+    : incsRaw;
+
   const score = calcularScore(incs, faltantes.length, tol);
-  const veredicto = construirVeredicto(input, rec, incs, score);
+  const veredicto = construirVeredicto(input, rec, incs, score, {
+    plazoAdministrativo,
+    precomputed: hpPreview,
+  });
   return { motorVersion: QA_MOTOR_VERSION, reconstruccion: rec, inconsistencias: incs, score, faltantes, veredicto };
 }
+
 
 // ──────────────────────────────────────────────────────────────
 // 9. Veredicto narrativo (determinístico)
@@ -683,14 +702,40 @@ export interface VeredictoHallazgo {
   titulo: string;
   detalle: string;
   pista: string; // qué debe hacer el analista
+  /**
+   * "matematica" (default) → penaliza score y aparece en la lista normal de hallazgos.
+   * "administrativa" → NO penaliza score y se muestra en la sección "Reconciliado
+   *   automáticamente por NUVIA". Actualmente sólo se marca así el desfase de plazo
+   *   (PLAZO_IMPLICITO_VS_REPORTADO / PLAZO_IMPLICITO_LEVE) cuando el resto del
+   *   extracto reconcilia bien — ver auditar() y regla en `computarHallazgosBase`.
+   */
+  categoria?: "matematica" | "administrativa";
 }
 
-export function construirVeredicto(
+// ──────────────────────────────────────────────────────────────
+// Helper puro: detección de hallazgos + flags derivados.
+// Se extrajo del cuerpo original de construirVeredicto para poder
+// reutilizar la lista de hallazgos en `auditar()` ANTES de calcular
+// el score (necesario para la clasificación administrativa de plazo).
+// El resultado es determinista dado (input, rec).
+// ──────────────────────────────────────────────────────────────
+export interface HallazgosBase {
+  hallazgos: VeredictoHallazgo[];
+  plazoImplicito?: number;
+  plazoReportado?: number;
+  desfasePlazo?: number;
+  desfaseGrande: boolean;
+  desfaseCritico: boolean;
+  saldoUvrConsistente: boolean;
+  frechConsistente: boolean;
+  tieneFresh: boolean;
+  hayExcel: boolean;
+}
+
+export function computarHallazgosBase(
   input: AuditarInput,
   rec: Reconstruccion,
-  inconsistencias: Inconsistencia[],
-  score: ScoreResultado,
-): Veredicto {
+): HallazgosBase {
   const r = input.reconstruccion;
   const ext = input.extracto ?? {};
   const sim = input.simulacion;
@@ -698,8 +743,8 @@ export function construirVeredicto(
   const tieneFresh = (r.coberturaFrechValorMensual ?? 0) > 0 || (r.coberturaFrechPp ?? 0) > 0;
   const hayExcel = !!sim && Object.values(sim).some((v) => v !== undefined && v !== null);
   const hallazgos: VeredictoHallazgo[] = [];
-
   const pushH = (h: VeredictoHallazgo) => hallazgos.push(h);
+  const fmtCop = (v: number) => `$${Math.round(v).toLocaleString("es-CO")}`;
 
   // ── Check 1: plazo implícito por cuota oficial vs plazo reportado ──
   let plazoImplicito: number | undefined;
@@ -732,8 +777,6 @@ export function construirVeredicto(
   const desfaseAbs = desfasePlazo !== undefined ? Math.abs(desfasePlazo) : 0;
   const desfaseGrande = desfaseAbs > 6;
   const desfaseCritico = desfaseAbs > 30;
-
-  const fmtCop = (v: number) => `$${Math.round(v).toLocaleString("es-CO")}`;
 
   if (desfaseCritico) {
     const cuotaRef = Math.round(r.cuotaFinancieraSinSeguros ?? ext.cuota ?? 0);
@@ -846,6 +889,79 @@ export function construirVeredicto(
   if (!r.saldoCapital) pushH({ codigo: "FALTA_SALDO", severidad: "critica", titulo: "Falta el saldo del crédito", detalle: "Sin saber cuánto debe el cliente hoy, NUVIA no puede revisar nada.", pista: "Tome el saldo a capital del último extracto disponible y vuelva a auditar." });
   if (!r.tasaEa) pushH({ codigo: "FALTA_TASA", severidad: "critica", titulo: "Falta la tasa de interés", detalle: "Sin la tasa actual no se puede saber si la cuota está bien calculada.", pista: "Busque en el extracto la tasa efectiva anual (EA) vigente — no la del momento del desembolso." });
   if (!r.cuotasPendientes) pushH({ codigo: "FALTA_PLAZO", severidad: "critica", titulo: "Falta el plazo que queda", detalle: "Sin saber cuántas cuotas faltan, no se puede simular el crédito.", pista: "Revise la sección del extracto que dice 'cuotas pendientes' o 'plazo remanente'." });
+
+  return {
+    hallazgos,
+    plazoImplicito,
+    plazoReportado,
+    desfasePlazo,
+    desfaseGrande,
+    desfaseCritico,
+    saldoUvrConsistente,
+    frechConsistente,
+    tieneFresh,
+    hayExcel,
+  };
+}
+
+/**
+ * Determina si el hallazgo de desfase de plazo debe reclasificarse como
+ * "administrativa" (no penaliza score). Se cumple SOLO cuando:
+ *   1. No hay OTRO hallazgo crítico (mismo criterio que sevExtracto).
+ *   2. desfasePlazo < 0 (cliente terminaría ANTES → consistente con abonos
+ *      no reflejados en el plazo; nunca al revés).
+ *   3. La matemática de Check 1 reconstruyó un plazoImplicito válido
+ *      (implícito en que exista el hallazgo con desfasePlazo definido).
+ */
+export function esPlazoAdministrativo(hp: HallazgosBase): boolean {
+  const tienePlazo = hp.hallazgos.some(
+    (h) => h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE",
+  );
+  if (!tienePlazo) return false;
+  if (hp.desfasePlazo === undefined || hp.desfasePlazo >= 0) return false;
+  const otroCritico = hp.hallazgos.some(
+    (h) => h.severidad === "critica" && h.codigo !== "PLAZO_IMPLICITO_VS_REPORTADO",
+  );
+  return !otroCritico;
+}
+
+export function construirVeredicto(
+  input: AuditarInput,
+  rec: Reconstruccion,
+  inconsistencias: Inconsistencia[],
+  score: ScoreResultado,
+  opts?: { plazoAdministrativo?: boolean; precomputed?: HallazgosBase },
+): Veredicto {
+  const r = input.reconstruccion;
+  const ext = input.extracto ?? {};
+  const isUvr = input.modalidad === "uvr";
+
+  const hp = opts?.precomputed ?? computarHallazgosBase(input, rec);
+  const plazoAdm = opts?.plazoAdministrativo ?? false;
+
+  // Etiqueta cada hallazgo con categoria: los de plazo pasan a "administrativa"
+  // sólo si el flag lo indica (evaluado en auditar()); el resto = "matematica".
+  const hallazgos: VeredictoHallazgo[] = hp.hallazgos.map((h) => {
+    const esPlazo = h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE";
+    const categoria: "matematica" | "administrativa" = plazoAdm && esPlazo ? "administrativa" : "matematica";
+    return { ...h, categoria };
+  });
+
+  const plazoImplicito = hp.plazoImplicito;
+  const plazoReportado = hp.plazoReportado;
+  const desfasePlazo = hp.desfasePlazo;
+  const desfaseGrande = hp.desfaseGrande;
+  const desfaseCritico = hp.desfaseCritico;
+  const saldoUvrConsistente = hp.saldoUvrConsistente;
+  const frechConsistente = hp.frechConsistente;
+  const tieneFresh = hp.tieneFresh;
+  const hayExcel = hp.hayExcel;
+
+  // Referencias mantenidas por compatibilidad con el resto de la narrativa.
+  void isUvr;
+  void ext;
+
+
 
 
   // ── Estado de fuentes ──
