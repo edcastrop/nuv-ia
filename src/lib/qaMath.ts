@@ -643,23 +643,31 @@ export function auditar(input: AuditarInput): AuditarOutput {
   }));
   const incsRaw = [...incExt, ...incSim, ...incFaltantes];
 
-  // Reclasificación administrativa del desfase de plazo (Fase 1 del motor
-  // de diagnóstico): si el desfase implícito vs reportado es el ÚNICO
-  // hallazgo material y va en dirección "cliente pagando más de lo que
-  // el extracto necesita" (desfase < 0 → abonos no reflejados), no debe
-  // penalizar el QA Score. La condición se evalúa sobre `hallazgos`
-  // (misma lista que usa sevExtracto), no sobre `incs`, porque pueden
-  // existir hallazgos críticos SIN inconsistencia paralela (ej.
-  // TASA_FUERA_RANGO, FALTA_SALDO). Ver `esPlazoAdministrativo`.
+  // Reclasificación administrativa (Fase 1 y 1.5 del motor de diagnóstico):
+  // ciertos hallazgos son consecuencia de abonos a capital no reflejados
+  // aún en la reprogramación del banco (misma causa raíz) y no deben
+  // penalizar el QA Score cuando el resto del extracto reconcilia bien.
+  // La condición se evalúa sobre `hallazgos` (misma lista que usa
+  // sevExtracto), no sobre `incs`, porque pueden existir hallazgos críticos
+  // SIN inconsistencia paralela (ej. TASA_FUERA_RANGO, FALTA_SALDO).
+  //   · Fase 1  → PLAZO_IMPLICITO_* (ver `esPlazoAdministrativo`).
+  //   · Fase 1.5 → CUOTA_VS_TEORICA (ver `esCuotaAdministrativa`).
   const hpPreview = computarHallazgosBase(input, rec);
   const plazoAdministrativo = esPlazoAdministrativo(hpPreview);
-  const incs = plazoAdministrativo
-    ? incsRaw.filter((i) => i.tipo !== "plazo")
-    : incsRaw;
+  const cuotaAdministrativa = esCuotaAdministrativa(hpPreview);
+  const incs = incsRaw.filter((i) => {
+    if (plazoAdministrativo && i.tipo === "plazo") return false;
+    // Sólo Check 6 de compararExtracto usa (tipo:"cuota", campo:"cuota").
+    // `incFaltantes` usa campo:"extracto.cuota"; `compararSimulacion` usa
+    // "ahorro_proyectado"/"nuevo_plazo". Filtro seguro.
+    if (cuotaAdministrativa && i.tipo === "cuota" && i.campo === "cuota") return false;
+    return true;
+  });
 
   const score = calcularScore(incs, faltantes.length, tol);
   const veredicto = construirVeredicto(input, rec, incs, score, {
     plazoAdministrativo,
+    cuotaAdministrativa,
     precomputed: hpPreview,
   });
   return { motorVersion: QA_MOTOR_VERSION, reconstruccion: rec, inconsistencias: incs, score, faltantes, veredicto };
