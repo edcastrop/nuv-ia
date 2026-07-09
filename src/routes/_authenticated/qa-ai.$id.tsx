@@ -1962,36 +1962,46 @@ function ResultadoQaAi() {
 // en sessionStorage el nuevo valor de cuotasPendientes y navega al simulador.
 // ─────────────────────────────────────────────────────────────
 function ReconciliacionAutomaticaBlock({
-  plazoImplicito,
-  plazoReportado,
+  plazo,
+  cuota,
   modoSimulador,
   maestroId,
   auditoriaId,
 }: {
-  plazoImplicito: number;
-  plazoReportado: number;
+  plazo?: { implicito: number; reportado: number };
+  cuota?: { extracto: number; teorica: number };
   modoSimulador: "pesos" | "uvr";
   maestroId?: string;
   auditoriaId: string;
 }) {
   const navigate = useNavigate();
   const [aplicando, setAplicando] = useState(false);
+  if (!plazo && !cuota) return null;
+
+  const fmtCop = (v: number) => `$${Math.round(v).toLocaleString("es-CO")}`;
 
   const handleActualizar = () => {
     if (aplicando) return;
     setAplicando(true);
     // Merge no destructivo del draft del simulador en sessionStorage.
-    // La key coincide con la usada por useSimulatorDraft.ts:
-    //   nuvex.simulatorDraft.{pesos|uvr}.{expedienteId ?? "standalone"}
+    // Key: nuvex.simulatorDraft.{pesos|uvr}.{expedienteId ?? "standalone"}
+    // Campos:
+    //   · Plazo   → cuotasPendientes (string) — igual en Pesos y UVR.
+    //   · Cuota   → Pesos: cuotaActual · UVR: cuotaActualPesos.
     try {
       const key = `nuvex.simulatorDraft.${modoSimulador}.${maestroId ?? "standalone"}`;
       const raw = sessionStorage.getItem(key);
       const prev = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-      const merged = { ...prev, cuotasPendientes: String(plazoImplicito) };
+      const merged: Record<string, unknown> = { ...prev };
+      if (plazo) merged.cuotasPendientes = String(plazo.implicito);
+      if (cuota) {
+        const cuotaStr = String(Math.round(cuota.extracto));
+        if (modoSimulador === "uvr") merged.cuotaActualPesos = cuotaStr;
+        else merged.cuotaActual = cuotaStr;
+      }
       sessionStorage.setItem(key, JSON.stringify(merged));
     } catch {
-      // Si sessionStorage está bloqueado el simulador arrancará con sus
-      // defaults; el usuario podrá ajustar el plazo manualmente.
+      // sessionStorage bloqueado → el simulador arrancará con sus defaults.
     }
     navigate({
       to: "/simulador",
@@ -2002,6 +2012,13 @@ function ReconciliacionAutomaticaBlock({
       },
     });
   };
+
+  const botonLabel =
+    plazo && cuota
+      ? `Actualizar plazo y cuota del simulador`
+      : plazo
+        ? `Actualizar plazo del simulador a ${plazo.implicito} cuotas`
+        : `Actualizar cuota del simulador a ${fmtCop(cuota!.extracto)}`;
 
   return (
     <section
@@ -2023,17 +2040,35 @@ function ReconciliacionAutomaticaBlock({
             Reconciliado automáticamente por NUVIA
           </h3>
           <p className="text-[11.5px] mt-0.5" style={{ color: "var(--nuvia-text-secondary)" }}>
-            Diferencia administrativa · no penaliza el QA Score
+            {plazo && cuota
+              ? "Diferencias administrativas de plazo y cuota · no penalizan el QA Score"
+              : "Diferencia administrativa · no penaliza el QA Score"}
           </p>
         </div>
       </header>
 
-      <p className="text-[13px] leading-relaxed mb-4" style={{ color: "var(--nuvia-text-primary)" }}>
-        NUVIA no encontró otros errores matemáticos en este extracto. La única diferencia es
-        el plazo: el extracto reporta <strong>{plazoReportado}</strong> cuotas pendientes,
-        pero pagando la cuota actual el crédito termina en <strong>{plazoImplicito}</strong>.
-        Esto es consistente con abonos a capital no reflejados aún en el plazo del extracto.
-      </p>
+      <div className="space-y-3 mb-4 text-[13px] leading-relaxed" style={{ color: "var(--nuvia-text-primary)" }}>
+        <p>
+          NUVIA no encontró otros errores matemáticos en este extracto. Las diferencias
+          detectadas son consistentes con abonos a capital que el banco aún no ha reflejado
+          en la reprogramación del crédito.
+        </p>
+        {plazo ? (
+          <p>
+            <strong>Plazo:</strong> el extracto reporta <strong>{plazo.reportado}</strong>{" "}
+            cuotas pendientes, pero pagando la cuota actual el crédito termina en{" "}
+            <strong>{plazo.implicito}</strong>.
+          </p>
+        ) : null}
+        {cuota ? (
+          <p>
+            <strong>Cuota:</strong> el extracto cobra <strong>{fmtCop(cuota.extracto)}</strong>,
+            mientras que la reamortización teórica con saldo, tasa y plazo actuales da{" "}
+            <strong>{fmtCop(cuota.teorica)}</strong>. El cliente paga más de lo que exige la
+            teoría, por eso el plazo real cae.
+          </p>
+        ) : null}
+      </div>
 
       <button
         type="button"
@@ -2048,9 +2083,10 @@ function ReconciliacionAutomaticaBlock({
           opacity: aplicando ? 0.6 : 1,
         }}
       >
-        <Calculator size={14} /> Actualizar plazo del simulador a {plazoImplicito} cuotas
+        <Calculator size={14} /> {botonLabel}
       </button>
     </section>
   );
 }
+
 
