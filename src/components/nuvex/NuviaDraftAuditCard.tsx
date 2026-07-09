@@ -63,15 +63,60 @@ type Props = {
   onCertificar: (payload: { snapshot: DraftRawSnapshot; result: DraftAuditResult }) => void;
   onSalir: () => void;
   onNuevaSimulacion?: () => void;
+  /**
+   * Cuando el analista aterriza en /herramientas/simulador?auditoriaId=<id>
+   * tras una aprobación del Director QA (normal u override), este prop
+   * dispara el lookup a `estadoAprobacionAuditoria` para saltar la ejecución
+   * local del motor y habilitar directamente "Certificar y crear caso".
+   */
+  auditoriaId?: string;
 };
 
-export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion }: Props) {
+type DirectorApproval = {
+  aprobadoAt: string;
+  override: boolean;
+  overrideJustificacion: string | null;
+  score: number;
+  codigo: string | null;
+};
+
+export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion, auditoriaId }: Props) {
   const [state, setState] = useState<PanelState>({ kind: mode ? "waiting" : "idle" });
   const [showHallazgos, setShowHallazgos] = useState(false);
   const [escalarOpen, setEscalarOpen] = useState(false);
+  const [directorApproval, setDirectorApproval] = useState<DirectorApproval | null>(null);
   const snapshotRef = useRef<DraftRawSnapshot | null>(null);
 
   const runAudit = useServerFn(auditarSimulacionDraft);
+  const fetchAprobacion = useServerFn(estadoAprobacionAuditoria);
+
+  // Lookup de aprobación del Director QA cuando se llega vía ?auditoriaId=.
+  useEffect(() => {
+    if (!auditoriaId) {
+      setDirectorApproval(null);
+      return;
+    }
+    let cancel = false;
+    (async () => {
+      try {
+        const res = await fetchAprobacion({ data: { id: auditoriaId } });
+        if (cancel) return;
+        if (res.aprobada && res.aprobadoAt) {
+          setDirectorApproval({
+            aprobadoAt: res.aprobadoAt,
+            override: !!res.override,
+            overrideJustificacion: res.overrideJustificacion ?? null,
+            score: res.score ?? 0,
+            codigo: res.codigo ?? null,
+          });
+        }
+      } catch {
+        /* silencioso: si falla, el analista sigue viendo el flujo normal */
+      }
+    })();
+    return () => { cancel = true; };
+  }, [auditoriaId, fetchAprobacion]);
+
 
   // 1. Cuando cambia el modo (pesos/uvr) o llega un raw nuevo, actualizamos estado.
   useEffect(() => {
