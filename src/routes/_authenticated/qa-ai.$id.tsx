@@ -1689,10 +1689,18 @@ function ResultadoQaAi() {
         ]}
       />
 
-      {hallazgoPlazoAdm && veredicto?.plazoImplicito && veredicto?.plazoReportado ? (
+      {(hallazgoPlazoAdm || hallazgoCuotaAdm) ? (
         <ReconciliacionAutomaticaBlock
-          plazoImplicito={veredicto.plazoImplicito}
-          plazoReportado={veredicto.plazoReportado}
+          plazo={
+            hallazgoPlazoAdm && veredicto?.plazoImplicito && veredicto?.plazoReportado
+              ? { implicito: veredicto.plazoImplicito, reportado: veredicto.plazoReportado }
+              : undefined
+          }
+          cuota={
+            hallazgoCuotaAdm && veredicto?.cuotaExtracto && veredicto?.cuotaTeorica
+              ? { extracto: veredicto.cuotaExtracto, teorica: veredicto.cuotaTeorica }
+              : undefined
+          }
           modoSimulador={a.modalidad === "uvr" ? "uvr" : "pesos"}
           maestroId={maestroId ?? expedienteIdCert ?? undefined}
           auditoriaId={id}
