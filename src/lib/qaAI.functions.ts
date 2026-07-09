@@ -2064,7 +2064,7 @@ async function ejecutarLiberacionOperativaAuditor(
             : ` Puedes continuar con la propuesta comercial del caso.`) +
           (!override && notas ? ` Notas: ${notas}` : ""),
         tipo: "qa_auditoria_aprobada",
-        link: aud.expediente_id ? `/qa-ai/${aud.id}` : `/qa-ai/${aud.id}?from=simulador`,
+        link: aud.expediente_id ? `/qa-ai/${aud.id}` : `/herramientas/simulador?auditoriaId=${aud.id}`,
         metadata: {
           auditoria_id: aud.id,
           codigo: aud.codigo,
