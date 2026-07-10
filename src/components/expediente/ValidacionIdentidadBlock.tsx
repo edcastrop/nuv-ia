@@ -248,7 +248,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
         )}
         {draft.cotitularActivo && (
           <div className="md:col-span-3 space-y-3 rounded-xl border bg-[rgba(255,255,255,0.03)] p-3" style={{ borderColor: "rgba(132,150,200,0.22)" }}>
-            {puedeEditar && (
+            {puedeLeerCedula && (
               <CedulaReaderMaestro
                 label="cotitular"
                 tone="dark"
