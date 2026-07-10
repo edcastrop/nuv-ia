@@ -749,12 +749,17 @@ function SendChecklistModal({
   const [asunto, setAsunto] = useState(defaults.asunto);
   const [cuerpo, setCuerpo] = useState(defaults.cuerpo);
 
-  // Default de "Cuotas a eliminar" derivado del caso:
-  // plazoOriginal − nuevoPlazo (propuesta_data). Editable por el usuario.
+  // Default de "Cuotas a eliminar" — fuente única de verdad:
+  //   1) propuesta_data.cuotasEliminadas (lo que el analista escogió en el simulador).
+  //   2) Fallback: plazoOriginal − nuevoPlazo (por compatibilidad con casos viejos
+  //      sin cuotasEliminadas persistido).
+  // Editable por el usuario.
   const cuotasDefault = useMemo(() => {
+    const propuesta = (simExpediente?.propuesta_data ?? {}) as Partial<PropuestaData>;
+    const cuotasElim = Number(propuesta.cuotasEliminadas ?? 0);
+    if (Number.isFinite(cuotasElim) && cuotasElim > 0) return String(cuotasElim);
     const plazoOrigStr = (expediente.credito?.plazoOriginal || "").trim();
     const plazoOrig = parseInt(plazoOrigStr.replace(/[^\d]/g, ""), 10);
-    const propuesta = (simExpediente?.propuesta_data ?? {}) as Partial<PropuestaData>;
     const nuevoPlazo = Number(propuesta.nuevoPlazo ?? 0);
     if (!Number.isFinite(plazoOrig) || !Number.isFinite(nuevoPlazo) || nuevoPlazo <= 0) return "";
     const diff = plazoOrig - nuevoPlazo;
