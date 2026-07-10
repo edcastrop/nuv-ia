@@ -2048,37 +2048,67 @@ async function ejecutarLiberacionOperativaAuditor(
     }
   }
 
-  if (aud.analista_id) {
-    try {
-      await supabase.from("notificaciones_usuario").insert({
-        user_id: aud.analista_id,
-        titulo: override
-          ? `Auditoría ${codigoCorto} aprobada con override manual`
-          : `Auditoría ${codigoCorto} aprobada`,
-        mensaje:
-          (override
-            ? `Tu auditoría QA fue liberada con OVERRIDE manual por Dirección Financiera QA. Justificación: ${override.justificacion}.`
-            : `Tu auditoría QA fue verificada y aprobada por el auditor.`) +
-          (liberacionOperativaOk
-            ? ` El caso quedó liberado y avanzó a Contratación.`
-            : ` Puedes continuar con la propuesta comercial del caso.`) +
-          (!override && notas ? ` Notas: ${notas}` : ""),
-        tipo: "qa_auditoria_aprobada",
-        link: aud.expediente_id ? `/qa-ai/${aud.id}` : `/herramientas/simulador?auditoriaId=${aud.id}`,
-        metadata: {
-          auditoria_id: aud.id,
-          codigo: aud.codigo,
-          expediente_id: aud.expediente_id,
-          score: aud.qa_score,
-          dictamen: aud.dictamen,
-          liberacion_operativa: liberacionOperativaOk,
-          liberacion_operativa_error: liberacionOperativaError,
-          override: !!override,
-        } as unknown as Json,
-      });
-    } catch {
-      /* no-op best-effort */
+  try {
+    // Destinatarios operativos: analista_id de la auditoría + asesor_id +
+    // licenciado_id del expediente. Deduplicados. Se excluye al auditor
+    // (userId) para no auto-notificarlo.
+    let asesorId: string | null = null;
+    let licenciadoId: string | null = null;
+    if (aud.expediente_id) {
+      const { data: expRow } = await supabase
+        .from("expedientes")
+        .select("asesor_id, licenciado_id")
+        .eq("id", aud.expediente_id)
+        .maybeSingle();
+      const r = (expRow as { asesor_id: string | null; licenciado_id: string | null } | null) ?? null;
+      asesorId = r?.asesor_id ?? null;
+      licenciadoId = r?.licenciado_id ?? null;
     }
+    const destinos = Array.from(
+      new Set(
+        [aud.analista_id ?? null, asesorId, licenciadoId]
+          .filter((v): v is string => !!v)
+          .filter((v) => v !== userId),
+      ),
+    );
+
+    if (destinos.length) {
+      const titulo = override
+        ? `Auditoría ${codigoCorto} aprobada con override manual`
+        : `Auditoría ${codigoCorto} aprobada`;
+      const mensaje =
+        (override
+          ? `Tu auditoría QA fue liberada con OVERRIDE manual por Dirección Financiera QA. Justificación: ${override.justificacion}.`
+          : `Tu auditoría QA fue verificada y aprobada por el auditor.`) +
+        (liberacionOperativaOk
+          ? ` El caso quedó liberado y avanzó a Contratación.`
+          : ` Puedes continuar con la propuesta comercial del caso.`) +
+        (!override && notas ? ` Notas: ${notas}` : "");
+      const link = aud.expediente_id ? `/qa-ai/${aud.id}` : `/herramientas/simulador?auditoriaId=${aud.id}`;
+      const metadata = {
+        auditoria_id: aud.id,
+        codigo: aud.codigo,
+        expediente_id: aud.expediente_id,
+        score: aud.qa_score,
+        dictamen: aud.dictamen,
+        liberacion_operativa: liberacionOperativaOk,
+        liberacion_operativa_error: liberacionOperativaError,
+        override: !!override,
+      } as unknown as Json;
+
+      await supabase.from("notificaciones_usuario").insert(
+        destinos.map((uid) => ({
+          user_id: uid,
+          titulo,
+          mensaje,
+          tipo: "qa_auditoria_aprobada",
+          link,
+          metadata,
+        })),
+      );
+    }
+  } catch {
+    /* no-op best-effort */
   }
 
   return { liberacionOperativaOk, liberacionOperativaError };

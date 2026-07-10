@@ -64,19 +64,27 @@ export async function notificarRoles(roles: AppRole[], p: NotifPayload, opts?: {
   }
 }
 
-/** Notifica al asesor responsable del expediente (si existe). */
+/**
+ * Notifica al operativo(s) responsable(s) del expediente.
+ * Incluye tanto `asesor_id` como `licenciado_id` (deduplicados),
+ * excluye al usuario que ejecuta la acción y mantiene retorno
+ * silencioso si no hay destinatarios. Firma pública sin cambios.
+ */
 export async function notificarAsesorExpediente(expedienteId: string, p: NotifPayload): Promise<void> {
   try {
     const { data } = await supabase
       .from("expedientes")
-      .select("asesor_id")
+      .select("asesor_id, licenciado_id")
       .eq("id", expedienteId)
       .maybeSingle();
-    const aid = (data as { asesor_id: string | null } | null)?.asesor_id;
-    if (!aid) return;
+    const row = (data as { asesor_id: string | null; licenciado_id: string | null } | null) ?? null;
     const me = await currentUserId();
-    if (aid === me) return;
-    await notificarUsuarios([aid], p);
+    const targets = [row?.asesor_id, row?.licenciado_id]
+      .filter((v): v is string => !!v)
+      .filter((v) => v !== me);
+    const uniq = Array.from(new Set(targets));
+    if (uniq.length === 0) return;
+    await notificarUsuarios(uniq, p);
   } catch {
     /* swallow */
   }
