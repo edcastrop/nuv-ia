@@ -6,6 +6,7 @@ import { departamentoDeMunicipio } from "@/lib/colombiaLocations";
 import type { ModalidadCat } from "@/lib/productosBancarios";
 import type { Cobertura, Interviniente } from "./intervinientes";
 import type { IngresosCliente } from "./PerfilIngresosEnVivo";
+import { deriveDraftKey } from "./pendingSoportes";
 
 export interface ClientData {
   nombre: string;
