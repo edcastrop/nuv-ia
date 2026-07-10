@@ -18,7 +18,7 @@ import {
   ANON_DRAFT_KEY,
   deriveDraftKey,
   enqueueCedula,
-  relabelDraftKey,
+  relabelEntryDraftKey,
 } from "./pendingSoportes";
 import { PendingSoportesBanner } from "./PendingSoportesBanner";
 
@@ -230,22 +230,25 @@ export function ClientCedulaButton({ onApply, expedienteId, draftKey }: Props) {
     } else if (snapshot.length > 0) {
       // Sin caso todavía: encolamos para adjuntar al certificar.
       const scopeAlEnqueue = enqueueScope;
-      enqueueCedula({
+      const entryId = enqueueCedula({
         draftKey: scopeAlEnqueue,
         files: snapshot,
         isTitular: true,
         label: `Cédula titular (${snapshot.length} archivo${snapshot.length > 1 ? "s" : ""})`,
       });
       // Si la IA leyó la cédula del titular y estábamos en ANON, re-etiquetamos
-      // TODAS las entradas anónimas al scope real del cliente ahora identificado.
+      // ÚNICAMENTE esta entrada al scope real del cliente ahora identificado.
+      // Nunca en bloque: otras entradas anónimas (p. ej. de un intento previo)
+      // deben conservar su scope para no cruzarse con este cliente.
       const nuevoScope = deriveDraftKey({
         cedula: payload.cedula,
         nombre: payload.nombre,
       });
       if (scopeAlEnqueue === ANON_DRAFT_KEY && nuevoScope !== ANON_DRAFT_KEY) {
-        relabelDraftKey(ANON_DRAFT_KEY, nuevoScope);
+        relabelEntryDraftKey(entryId, nuevoScope);
       }
     }
+
 
     setStage("applied");
     setTimeout(() => {
