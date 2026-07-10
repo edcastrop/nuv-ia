@@ -411,19 +411,28 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
             />
             ¿Cliente declara renta?
           </label>
-          <label className="flex items-center gap-2 text-xs">
-            <span>Frecuencia de pago:</span>
-            <select
-              value={flags.frecuenciaPago}
-              onChange={(e) =>
-                setFlags((s) => ({ ...s, frecuenciaPago: e.target.value as "mensual" | "quincenal" }))
-              }
-              className="rounded-md border border-[#E3E7EE] px-2 py-0.5 text-xs"
-            >
-              <option value="mensual">Mensual (3 desprendibles)</option>
-              <option value="quincenal">Quincenal (6 desprendibles)</option>
-            </select>
-          </label>
+          {perfil !== "independiente" && (
+            <label className="flex items-center gap-2 text-xs">
+              <span>Frecuencia de pago:</span>
+              <select
+                value={flags.frecuenciaPago}
+                onChange={(e) =>
+                  setFlags((s) => ({ ...s, frecuenciaPago: e.target.value as "mensual" | "quincenal" }))
+                }
+                className="rounded-md border border-[#E3E7EE] px-2 py-0.5 text-xs"
+              >
+                <option value="mensual">Mensual (3 desprendibles)</option>
+                <option value="quincenal">Quincenal (6 desprendibles)</option>
+              </select>
+            </label>
+          )}
+          {perfil !== "empleado" && (
+            <div className="flex items-start gap-2 text-xs text-[#242424]/70 rounded-md bg-[#F1F5F9] border border-[#E3E7EE] px-2 py-1.5">
+              <span>📄</span>
+              <span>Ingresos verificados con los <strong>últimos 3 extractos bancarios</strong> (ver lista de documentos).</span>
+            </div>
+          )}
+
           <label className="flex items-center gap-2 text-xs">
             <input
               type="checkbox"
@@ -471,19 +480,28 @@ export function ChecklistDocumental({ expediente, simExpediente }: Props) {
               />
               ¿Cotitular declara renta?
             </label>
-            <label className="flex items-center gap-2 text-xs">
-              <span>Frecuencia de pago:</span>
-              <select
-                value={flagsCot.frecuenciaPago}
-                onChange={(e) =>
-                  setFlagsCot((s) => ({ ...s, frecuenciaPago: e.target.value as "mensual" | "quincenal" }))
-                }
-                className="rounded-md border border-[#E3E7EE] px-2 py-0.5 text-xs"
-              >
-                <option value="mensual">Mensual (3 desprendibles)</option>
-                <option value="quincenal">Quincenal (6 desprendibles)</option>
-              </select>
-            </label>
+            {perfilCot !== "independiente" && (
+              <label className="flex items-center gap-2 text-xs">
+                <span>Frecuencia de pago:</span>
+                <select
+                  value={flagsCot.frecuenciaPago}
+                  onChange={(e) =>
+                    setFlagsCot((s) => ({ ...s, frecuenciaPago: e.target.value as "mensual" | "quincenal" }))
+                  }
+                  className="rounded-md border border-[#E3E7EE] px-2 py-0.5 text-xs"
+                >
+                  <option value="mensual">Mensual (3 desprendibles)</option>
+                  <option value="quincenal">Quincenal (6 desprendibles)</option>
+                </select>
+              </label>
+            )}
+            {perfilCot !== "empleado" && (
+              <div className="flex items-start gap-2 text-xs text-[#242424]/70 rounded-md bg-[#F1F5F9] border border-[#C7D9EF] px-2 py-1.5">
+                <span>📄</span>
+                <span>Ingresos del cotitular verificados con los <strong>últimos 3 extractos bancarios</strong> (ver lista de documentos).</span>
+              </div>
+            )}
+
             <label className="flex items-center gap-2 text-xs">
               <input
                 type="checkbox"
