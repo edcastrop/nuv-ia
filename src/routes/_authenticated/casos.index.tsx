@@ -268,6 +268,24 @@ function CasosPage() {
     });
   }, [rows, mios, user?.id, banco, modalidad, analistaId]);
 
+  // Agrupación visual por cliente + banco (post-filtros, en memoria, O(n))
+  const grupos = useMemo(() => {
+    const m = new Map<string, { key: string; cliente: string; banco: string; creditos: Expediente[] }>();
+    filteredRows.forEach((r) => {
+      const { key, nombre, banco: bnk } = normClienteKey(r.cliente_nombre, r.banco);
+      let g = m.get(key);
+      if (!g) { g = { key, cliente: nombre, banco: bnk, creditos: [] }; m.set(key, g); }
+      g.creditos.push(r);
+    });
+    const arr = Array.from(m.values());
+    arr.forEach((g) => g.creditos.sort((a, b) => (b.updated_at ?? "").localeCompare(a.updated_at ?? "")));
+    arr.sort((a, b) => (b.creditos[0]?.updated_at ?? "").localeCompare(a.creditos[0]?.updated_at ?? ""));
+    return arr;
+  }, [filteredRows]);
+
+  const autoExpandAll = (search ?? "").trim() !== "";
+  const isGroupOpen = (k: string) => autoExpandAll || openGroups.has(k);
+
   const duplicateCaseKeys = useMemo(() => {
     const counts = new Map<string, number>();
     rows.forEach((r) => {
