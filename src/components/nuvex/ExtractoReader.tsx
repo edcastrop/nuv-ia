@@ -562,7 +562,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     setStagingNotice(null);
     uploadedOriginalsRef.current = [];
     setUploadedOriginals([]);
+    // Descartamos los ids pendientes locales: si el analista abandona la
+    // lectura sin aplicar, esas entradas siguen en el registry con su
+    // scope original (típicamente ANON) y serán purgadas por
+    // `purgeStaleAnonEntries` en el siguiente montaje standalone.
+    pendingExtractoEntryIdsRef.current = new Set();
     if (fileRef.current) fileRef.current.value = "";
+
   };
 
   const handleFileSelect = async (f: File) => {
