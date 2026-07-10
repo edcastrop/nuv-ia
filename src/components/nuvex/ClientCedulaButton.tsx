@@ -304,6 +304,13 @@ export function ClientCedulaButton({ onApply, expedienteId, draftKey }: Props) {
       </div>
 
       <div className="mt-3 space-y-3">
+        {!expedienteId && (
+          <PendingSoportesBanner
+            draftKey={enqueueScope}
+            kinds={["cedula-titular"]}
+          />
+        )}
+
         {(stage === "idle" || stage === "error") && (
           <>
             <div
