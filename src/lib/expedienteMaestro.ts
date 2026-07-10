@@ -302,9 +302,9 @@ export function modoFromMaestro(m: ExpedienteMaestro): "pesos" | "uvr" {
   return /uvr/.test(t) ? "uvr" : "pesos";
 }
 
-const hasText = (value: unknown) => String(value ?? "").trim().length > 0;
+export const hasText = (value: unknown) => String(value ?? "").trim().length > 0;
 
-function camposFaltantesParaOperativo(m: ExpedienteMaestro): string[] {
+export function camposFaltantesParaOperativo(m: ExpedienteMaestro): string[] {
   const credito = m.credito ?? emptyCredito();
   const missing: string[] = [];
   if (!hasText(m.cliente?.nombre || m.nombre_cliente)) missing.push("nombre del cliente");
@@ -316,13 +316,14 @@ function camposFaltantesParaOperativo(m: ExpedienteMaestro): string[] {
   return missing;
 }
 
-function mergeMeaningful<T extends Record<string, unknown>>(base: T, incoming: Record<string, unknown>): T {
+export function mergeMeaningful<T extends Record<string, unknown>>(base: T, incoming: Record<string, unknown>): T {
   const next = { ...base } as Record<string, unknown>;
   for (const [key, value] of Object.entries(incoming)) {
     if (hasText(value) || typeof value === "number" || typeof value === "boolean") next[key] = value;
   }
   return next as T;
 }
+
 
 /**
  * Construye un `Expediente` parcial (in-memory, sin id) consumible por los simuladores
