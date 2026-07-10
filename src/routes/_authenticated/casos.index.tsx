@@ -116,6 +116,58 @@ const MILESTONES = [
   { key: "firmado",    label: "Firm", etapa: 15 },
 ];
 
+/* ============ Agrupación visual por cliente + banco (solo render) ============ */
+function normStr(v: string | null | undefined): string {
+  return (v ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, " ");
+}
+function normClienteKey(nombre: string | null | undefined, banco: string | null | undefined) {
+  return {
+    key: `${normStr(nombre)}||${normStr(banco)}`,
+    nombre: (nombre ?? "").trim() || "Sin nombre",
+    banco: (banco ?? "").trim() || "—",
+  };
+}
+
+const RED_ESTADOS = new Set<string>([
+  "proyeccion_devuelta_qa", "devuelto_banco", "negado_banco", "prejuridico", "proceso_cerrado",
+]);
+const YELLOW_HINTS = [
+  "pendiente", "en_estudio", "docs_complementarios", "negociacion",
+  "radicacion", "proyeccion_pendiente_qa", "contrato_enviado", "cuenta_cobro",
+];
+const CERT_ESTADOS = new Set<string>([
+  "honorarios_pagados", "paz_y_salvo_generado", "caso_finalizado",
+]);
+
+type GrupoTone = "red" | "yellow" | "green";
+function grupoSemaforo(rs: Expediente[]): { tone: GrupoTone; label: string; color: string; bg: string; border: string } {
+  const hasRed = rs.some((r) => {
+    const es = (r.estado_caso ?? "").toString();
+    if (RED_ESTADOS.has(es)) return true;
+    const cat = (r.qa_categoria ?? "").toString().toUpperCase();
+    const score = r.qa_score ?? null;
+    if (cat.includes("FAIL") || cat.includes("RECHAZ") || cat.includes("DEVUEL")) return true;
+    if (score !== null && score < 70) return true;
+    return false;
+  });
+  if (hasRed) return { tone: "red", label: "Requiere atención", color: "#FB7185", bg: "rgba(244,63,94,0.12)", border: "rgba(244,63,94,0.45)" };
+  const hasYellow = rs.some((r) => {
+    const es = (r.estado_caso ?? "").toString();
+    if (YELLOW_HINTS.some((h) => es.includes(h))) return true;
+    const et = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+    const nivel = slaNivel(diasDesde(r.updated_at), UMBRAL_DIAS_ETAPA[et] ?? 0);
+    if (nivel === "atencion" || nivel === "critico") return true;
+    return false;
+  });
+  if (hasYellow) return { tone: "yellow", label: "En seguimiento", color: "#F59E0B", bg: "rgba(245,158,11,0.12)", border: "rgba(245,158,11,0.4)" };
+  return { tone: "green", label: "En orden", color: "#84B98F", bg: "rgba(132,185,143,0.12)", border: "rgba(132,185,143,0.4)" };
+}
+
 function CasosPage() {
   type CasosSearch = z.infer<typeof casosSearchSchema>;
   const urlSearch = Route.useSearch();
