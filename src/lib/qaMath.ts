@@ -1247,6 +1247,24 @@ export function construirVeredicto(
   // ── Recomendaciones (lenguaje sencillo, ajustadas al tipo de crédito) ──
   const recs: string[] = hallazgos.map((h) => h.pista);
 
+  // Inyecta hipótesis y recomendación de conciliación por abono extraordinario.
+  // Aparecen SIEMPRE al frente para que el analista vea el motivo del scoreCap
+  // antes que el resto de causas/recs.
+  const conc = opts?.conciliacion;
+  if (conc?.detectada) {
+    for (const hip of conc.hipotesis) causas.unshift(hip);
+    if (conc.nivel === "critica_no_conciliable") {
+      causas.unshift(
+        "Riesgo: coexisten hallazgos críticos independientes del abono extraordinario. NUVIA capó el score en 85 y marcó el caso como REQUIERE AUDITORÍA.",
+      );
+    } else {
+      causas.unshift(
+        "Aviso: NUVIA reconcilió los hallazgos como abono extraordinario y capó el score en 94. El dictamen queda como APROBADO CON OBSERVACIONES.",
+      );
+    }
+    if (conc.recomendacionAnalista) recs.unshift(conc.recomendacionAnalista);
+  }
+
   if (recs.length > 0) {
     // 1) Abonos a capital — matiz UVR
     if (isUvr) {
