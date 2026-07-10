@@ -124,20 +124,20 @@ export function enqueueExtracto(input: {
   return id;
 }
 
-/** Re-etiqueta entradas con `oldKey` (típicamente ANON) a `newKey`.
- *  Se llama cuando el lector IA autocompleta la cédula del titular. */
-export function relabelDraftKey(oldKey: string, newKey: string) {
-  if (!oldKey || !newKey || oldKey === newKey) return;
-  let changed = false;
-  for (const e of registry.values()) {
-    if (e.draftKey === oldKey && e.status !== "flushing") {
-      e.draftKey = newKey;
-      e.relabeled = true;
-      changed = true;
-    }
-  }
-  if (changed) bump();
+/** Re-etiqueta UNA entrada específica por `entryId`.
+ *  Único mecanismo permitido para mover una entry a un nuevo scope
+ *  (típicamente ANON → ced:<n>) cuando el lector IA identifica al
+ *  cliente. Nunca opera sobre múltiples entradas ni por draftKey global,
+ *  para evitar arrastrar soportes de otros intentos al cliente equivocado. */
+export function relabelEntryDraftKey(entryId: string, newKey: string) {
+  const e = registry.get(entryId);
+  if (!e || !newKey || e.draftKey === newKey) return;
+  if (e.status === "flushing") return;
+  e.draftKey = newKey;
+  e.relabeled = true;
+  bump();
 }
+
 
 export function removeEntry(id: string) {
   if (registry.delete(id)) bump();
