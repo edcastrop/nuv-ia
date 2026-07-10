@@ -6,7 +6,6 @@ export type ExpedienteLive = {
   id: string;
   estado?: string | null;
   estado_caso?: string | null;
-  etapa_pipeline?: EtapaPipelineId | null;
   qa_score?: number | null;
   updated_at?: string | null;
   etapa: EtapaPipelineId;
