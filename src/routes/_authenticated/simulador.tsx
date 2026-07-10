@@ -20,13 +20,16 @@ import {
   emptyAsesor,
   emptyLicenciado,
   emptyApoderado,
+  type ExpedienteMaestro,
 } from "@/lib/expedienteMaestro";
+import { certificarExpedienteServer } from "@/lib/expedienteMaestro.functions";
 import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
 import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
 import { certificarSimulacionDraft, type DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
 import { deriveDraftKey, flushPendingSoportes } from "@/components/nuvex/pendingSoportes";
+
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -72,6 +75,8 @@ export function SimuladorPage() {
     result: DraftAuditResult;
   } | null>(null);
   const certifyDraftAudit = useServerFn(certificarSimulacionDraft);
+  const certificarExpediente = useServerFn(certificarExpedienteServer);
+
 
 
   // Carga del maestro existente (si llegó por URL desde Expediente Maestro).
@@ -377,23 +382,28 @@ export function SimuladorPage() {
       };
       const audit = await certifyDraftAudit({ data: { snapshot: certification.snapshot } });
 
-      const maestro = await upsertMaestro({
-        cliente,
-        cotitular: emptyCotitular(),
-        credito,
-        fresh: emptyFresh(),
-        asesor: emptyAsesor(),
-        licenciado: emptyLicenciado(),
-        apoderado: emptyApoderado(),
-      });
-      let expId: string | null = null;
-      try {
-        const exp = await ensureOperativeExpedienteForMaestro(maestro, audit.auditoriaId);
-        expId = exp.id;
-      } catch (e) {
-        console.warn("[simulador] no se pudo crear operativo certificado:", e);
-        throw e;
-      }
+      // ÚNICO punto de entrada del flujo de certificación:
+      // JWT validado una sola vez server-side; asesor_id inmutable = context.userId
+      // aplicado a AMBOS registros (expediente_maestro + expedientes) en la misma
+      // request. Elimina la ventana en la que la sesión del cliente podía cambiar
+      // entre upsertMaestro() y ensureOperativeExpedienteForMaestro().
+      const certResult = (await certificarExpediente({
+        data: {
+          maestro: {
+            cliente,
+            cotitular: emptyCotitular(),
+            credito,
+            fresh: emptyFresh(),
+            asesor: emptyAsesor(),
+            licenciado: emptyLicenciado(),
+            apoderado: emptyApoderado(),
+          },
+          auditoriaId: audit.auditoriaId,
+        },
+      })) as { maestro: ExpedienteMaestro; expediente: Expediente };
+      const maestro = certResult.maestro;
+      const expId: string | null = certResult.expediente?.id ?? null;
+
       if (expId && typeof window !== "undefined") {
         if (pesosDraft) sessionStorage.setItem(writeKey("pesos", expId), pesosDraft);
         if (uvrDraft) sessionStorage.setItem(writeKey("uvr", expId), uvrDraft);
