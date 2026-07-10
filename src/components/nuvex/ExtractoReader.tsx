@@ -114,6 +114,9 @@ interface Props {
    *  `expediente_soportes` (categoria `extracto_banco`) para que viaje
    *  con el expediente cuando se envíe a Contratación. */
   expedienteId?: string | null;
+  /** Scope del borrador cuando aún no existe expedienteId — usado para
+   *  encolar los `UploadedOriginal` y adjuntarlos al certificar el caso. */
+  draftKey?: string;
 }
 
 // PDF.js dynamic loader (client-only)
