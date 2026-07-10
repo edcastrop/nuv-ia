@@ -386,11 +386,17 @@ function StatusBadge({ state }: { state: PanelState }) {
       case "loading":
         return { bg: "bg-sky-400/15", br: "border-sky-400/40", tx: "text-sky-100", label: "Auditando" };
       case "done": {
+        const conc = state.result.conciliacion;
+        const scoreTxt = state.result.score.toFixed(0);
+        if (conc?.requiereAuditoria === true)
+          return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · AUDITORÍA OBLIGATORIA · ${scoreTxt}/100` };
+        if (state.result.certificable && conc?.detectada === true)
+          return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · APROBADA CON ALERTA · ${scoreTxt}/100` };
         if (state.result.certificable)
-          return { bg: "bg-emerald-400/15", br: "border-emerald-400/40", tx: "text-emerald-100", label: `NUVIA · APROBADA · ${state.result.score.toFixed(0)}/100` };
+          return { bg: "bg-emerald-400/15", br: "border-emerald-400/40", tx: "text-emerald-100", label: `NUVIA · APROBADA · ${scoreTxt}/100` };
         if (state.result.dictamen === "rechazado")
-          return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · RECHAZADA · ${state.result.score.toFixed(0)}/100` };
-        return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · HALLAZGOS · ${state.result.score.toFixed(0)}/100` };
+          return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · RECHAZADA · ${scoreTxt}/100` };
+        return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · HALLAZGOS · ${scoreTxt}/100` };
       }
       case "error":
         return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: "Error" };
