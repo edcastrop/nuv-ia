@@ -282,6 +282,20 @@ export function UVRSimulator({
     ],
   );
   useSimulatorDraft("uvr", init?.id, currentDraft);
+  useEffect(() => {
+    if (init?.id) return;
+    purgeStaleAnonEntries();
+  }, [init?.id]);
+  const draftScopeKey = useMemo(
+    () =>
+      deriveDraftKey({
+        cedula: client.cedula,
+        nombre: client.nombre,
+        numeroCredito: client.numeroCredito,
+        banco: client.banco,
+      }),
+    [client.cedula, client.nombre, client.numeroCredito, client.banco],
+  );
   const handleSaved = (e: Expediente) => {
     clearSimulatorDraft("uvr", init?.id);
     onSaved?.(e);
