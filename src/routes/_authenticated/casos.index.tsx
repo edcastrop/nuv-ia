@@ -1070,6 +1070,29 @@ function MicroStat({ icon, label, value, tone, small }: { icon: React.ReactNode;
 }
 
 /* =====================================================
+   GROUP STAT (cliente-agrupado)
+   ===================================================== */
+function GroupStat({ label, value, color, small }: { label: string; value: string; color: string; small?: boolean }) {
+  return (
+    <div
+      className="rounded-lg px-2.5 py-2 min-w-0"
+      style={{ background: "rgba(255,255,255,0.03)", border: `1px solid ${BORDER}` }}
+    >
+      <div className="text-[9px] font-bold uppercase tracking-[0.16em] truncate" style={{ color: TEXT2 }}>
+        {label}
+      </div>
+      <div
+        className={`font-black tabular-nums leading-none mt-1 truncate ${small ? "text-[13px]" : "text-[16px]"}`}
+        style={{ color }}
+        title={value}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+/* =====================================================
    IA CARD
    ===================================================== */
 function IACard({
