@@ -179,7 +179,7 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
           </div>
         )}
       </div>
-      {puedeEditar && (
+      {puedeLeerCedula && (
         <div className="mb-3 rounded-xl border bg-[rgba(255,255,255,0.03)] p-3" style={{ borderColor: "rgba(132,150,200,0.22)" }}>
           <CedulaReaderMaestro
             label="titular"
@@ -199,6 +199,16 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
           <p className="mt-2 text-[10.5px] text-[var(--nuvia-text-secondary)]">
             Al leer la cédula se rellenan los campos del titular en el borrador. Pulsa <strong>Guardar cambios</strong> para persistirlos.
           </p>
+        </div>
+      )}
+      {puedeLeerCedula && !puedeEditar && (
+        <div className="mb-3 rounded-lg border p-3 text-xs" style={{ borderColor: "rgba(132,150,200,0.22)", background: "rgba(59,130,246,0.08)", color: "var(--nuvia-accent-blue)" }}>
+          <div className="flex items-start gap-1.5">
+            <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+            <span>
+              El expediente ya fue enviado a Contratación. Puedes volver a leer la cédula si necesitas reemplazar el soporte; para editar los datos, solicita devolución.
+            </span>
+          </div>
         </div>
       )}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs mb-4">
