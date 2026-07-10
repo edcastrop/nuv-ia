@@ -309,6 +309,12 @@ export function CedulaReader({ intervinientes, producto, expedienteId, draftKey,
 
       {open && (
         <div className="mt-4 space-y-3">
+          {!expedienteId && (
+            <PendingSoportesBanner
+              draftKey={draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY}
+              kinds={["cedula-titular", "cedula-cotitular"]}
+            />
+          )}
           {/* Selector de destino */}
           <div className="flex flex-wrap items-center gap-2">
             <label className="text-[11px] font-medium text-[#242424]/70">Aplicar a:</label>
