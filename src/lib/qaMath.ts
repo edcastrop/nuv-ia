@@ -851,6 +851,10 @@ export interface Veredicto {
   cuotaExtracto?: number;
   cuotaTeorica?: number;
   desfaseCuota?: number;
+  /** Diagnóstico de conciliación por abono extraordinario (Fase 1/1.5).
+   *  Presente siempre que auditar() se ejecute; permite a la UI mostrar
+   *  el nivel de riesgo y el tope de score aplicado. */
+  conciliacion?: ConciliacionAbonoExtraordinario;
 }
 
 export interface VeredictoHallazgo {
