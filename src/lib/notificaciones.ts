@@ -45,6 +45,12 @@ export async function marcarTodasLeidas(): Promise<void> {
     .update({ leida: true } as never)
     .eq("user_id", u.user.id)
     .eq("leida", false);
+  // También marca todas las caso_alertas visibles por RLS como leídas,
+  // no solo las cargadas en el batch actual de la campana.
+  await supabase
+    .from("caso_alertas" as never)
+    .update({ leida: true } as never)
+    .eq("leida", false);
 }
 
 export async function contarNoLeidas(): Promise<number> {

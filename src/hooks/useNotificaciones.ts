@@ -2,13 +2,10 @@ import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import {
   contarCasoAlertasNoLeidas,
-  contarColabNotifsNoLeidas,
   contarNoLeidas,
   listCasoAlertasComoNotif,
-  listColabNotifsComoNotif,
   listMisNotificaciones,
   marcarCasoAlertaLeida,
-  marcarColabNotifLeida,
   marcarLeida,
   marcarTodasLeidas,
   type Notificacion,
@@ -24,19 +21,17 @@ export function useNotificaciones() {
   const reload = useCallback(async () => {
     if (!user) return;
     try {
-      const [lst, c, alertas, cAlertas, colab, cColab] = await Promise.all([
+      const [lst, c, alertas, cAlertas] = await Promise.all([
         listMisNotificaciones(),
         contarNoLeidas(),
         listCasoAlertasComoNotif(),
         contarCasoAlertasNoLeidas(),
-        listColabNotifsComoNotif(),
-        contarColabNotifsNoLeidas(),
       ]);
-      const merged = [...lst, ...alertas, ...colab].sort(
+      const merged = [...lst, ...alertas].sort(
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
       setItems(merged);
-      setUnread(c + cAlertas + cColab);
+      setUnread(c + cAlertas);
     } catch {
       setItems([]);
       setUnread(0);
@@ -61,11 +56,6 @@ export function useNotificaciones() {
         { event: "*", schema: "public", table: "caso_alertas" },
         () => { void reload(); },
       )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "colab_notificaciones", filter: `user_id=eq.${user.id}` },
-        () => { void reload(); },
-      )
       .subscribe();
     return () => {
       supabase.removeChannel(ch);
@@ -75,8 +65,6 @@ export function useNotificaciones() {
   const leer = async (id: string) => {
     if (id.startsWith("alerta:")) {
       await marcarCasoAlertaLeida(id.slice("alerta:".length));
-    } else if (id.startsWith("colab:")) {
-      await marcarColabNotifLeida(id.slice("colab:".length));
     } else {
       await marcarLeida(id);
     }
@@ -84,12 +72,6 @@ export function useNotificaciones() {
   };
   const leerTodas = async () => {
     await marcarTodasLeidas();
-    const pendientesAlerta = items.filter((n) => n.id.startsWith("alerta:") && !n.leida);
-    const pendientesColab = items.filter((n) => n.id.startsWith("colab:") && !n.leida);
-    await Promise.all([
-      ...pendientesAlerta.map((n) => marcarCasoAlertaLeida(n.id.slice("alerta:".length))),
-      ...pendientesColab.map((n) => marcarColabNotifLeida(n.id.slice("colab:".length))),
-    ]);
     await reload();
   };
 

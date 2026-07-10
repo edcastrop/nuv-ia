@@ -331,8 +331,7 @@ function AuthenticatedLayout() {
             .from("notificaciones_usuario" as never)
             .select("id", { count: "exact", head: true })
             .eq("user_id", uid)
-            .eq("leida", false)
-            .neq("tipo", "mensaje_interno"),
+            .eq("leida", false),
         ]);
         if (active) setUnread((ca ?? 0) + (nu ?? 0));
       } catch {
