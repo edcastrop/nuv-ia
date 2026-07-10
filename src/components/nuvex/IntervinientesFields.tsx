@@ -70,6 +70,7 @@ export function IntervinientesFields({ producto, data, onChange, onTitularSync, 
         intervinientes={list}
         producto={producto}
         expedienteId={expedienteId}
+        draftKey={draftKey}
         onApply={(next) => onChange(next)}
         onTitularSync={onTitularSync}
       />
