@@ -222,11 +222,11 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
         producto: exp.producto,
         cliente_data: exp.cliente_data as unknown as never,
         credito_data: exp.credito_data as unknown as never,
-        propuesta_data: exp.propuesta_data as unknown as never,
+        propuesta_data: (data.propuestaData ?? exp.propuesta_data) as unknown as never,
         discount_data: exp.discount_data as unknown as never,
-        honorarios_base: exp.honorarios_base,
-        honorarios_final: exp.honorarios_final,
-        descuento: exp.descuento,
+        honorarios_base: data.honorariosBase ?? exp.honorarios_base ?? 0,
+        honorarios_final: data.honorariosFinal ?? exp.honorarios_final ?? 0,
+        descuento: data.descuento ?? exp.descuento ?? 0,
         qa_auditoria_id: data.auditoriaId ?? null,
       } as never)
       .select("*")
