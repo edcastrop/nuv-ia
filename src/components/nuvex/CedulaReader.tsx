@@ -100,7 +100,7 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
   return images;
 }
 
-export function CedulaReader({ intervinientes, producto, expedienteId, onApply, onTitularSync }: Props) {
+export function CedulaReader({ intervinientes, producto, expedienteId, draftKey, onApply, onTitularSync }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
