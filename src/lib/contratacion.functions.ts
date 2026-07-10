@@ -34,7 +34,7 @@ import {
   detectAttachmentLimitViolation,
   detectCotitularInconsistencies,
   enforceDestinatariosServer,
-  normalizarCotitularesActivos,
+  resolveCotitularesFromClienteData,
   type SoporteRow,
 } from "@/lib/contratacionValidacion";
 
