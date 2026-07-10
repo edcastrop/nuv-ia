@@ -638,6 +638,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
             user_id: uid,
           } as never);
         if (insErr) console.warn("[ExtractoReader] No se pudo registrar soporte:", insErr);
+      } else {
+        // Sin expediente aún: encolamos la metadata para insertar el
+        // `expediente_soportes` al certificar el caso. El archivo ya está
+        // en storage — solo falta el vínculo con el expediente.
+        const scope = draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY;
+        enqueueExtracto({
+          draftKey: scope,
+          originals: [uploaded],
+          label: `Extracto — ${f.name}`,
+        });
       }
       return uploaded;
     } catch (e) {
