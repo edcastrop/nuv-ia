@@ -22,6 +22,8 @@ import {
   parseProductoComercial,
 } from "@/lib/productosBancarios";
 import { hasRealCoverageSignals, normalizeCoverageProductLabel } from "@/lib/coverageDetection";
+import { ANON_DRAFT_KEY, enqueueExtracto } from "./pendingSoportes";
+import { PendingSoportesBanner } from "./PendingSoportesBanner";
 
 type Modo = "pesos" | "uvr";
 
