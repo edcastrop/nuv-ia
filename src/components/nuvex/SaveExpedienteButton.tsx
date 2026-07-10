@@ -94,12 +94,13 @@ export function SaveExpedienteButton({
     const banco = (payload.cliente?.banco ?? "").trim();
     const producto = (payload.cliente?.tipoProducto ?? "").trim();
     const numeroCredito = (payload.cliente?.numeroCredito ?? "").trim();
-    const cedula = (payload.cliente?.cedula ?? "").trim();
+    // NOTA: la cédula NO es requisito para crear/actualizar el expediente.
+    // Se captura y valida en Validación de identidad / Control contractual.
+    // La única puerta de entrada para certificar es la auditoría NUVIA (QA).
     const faltantes: string[] = [];
     if (!banco) faltantes.push("Banco");
     if (!producto) faltantes.push("Tipo de producto");
     if (!numeroCredito) faltantes.push("Número de crédito");
-    if (!cedula) faltantes.push("Cédula");
     if (faltantes.length > 0) {
       const lista = faltantes.map((f) => `  • ${f}`).join("\n");
       setMsg(`❌ No se puede guardar: faltan datos del expediente (${faltantes.join(", ")}).`);
@@ -108,7 +109,7 @@ export function SaveExpedienteButton({
           "No se puede guardar este caso: faltan datos mínimos del crédito.\n\n" +
             lista +
             "\n\nCompleta la ficha del cliente y del crédito antes de guardar. " +
-            "NUVIA ya no acepta expedientes sin banco, producto, cédula o número de crédito " +
+            "NUVIA ya no acepta expedientes sin banco, producto o número de crédito " +
             "porque quedan huérfanos en el tablero de Casos y bloquean la auditoría QA y honorarios.",
         );
       }
