@@ -335,6 +335,40 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
             </div>
           </div>
 
+          {/* Alerta de conciliación por abono extraordinario */}
+          {done?.conciliacion?.detectada === true && (
+            <div
+              className={`rounded-xl border px-3 py-2 text-[12px] leading-snug ${
+                done.conciliacion.requiereAuditoria
+                  ? "border-rose-400/40 bg-rose-400/10 text-rose-100"
+                  : "border-amber-400/40 bg-amber-400/10 text-amber-100"
+              }`}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-full border border-current/40 bg-black/20 px-2 py-0.5 text-[10.5px] font-semibold uppercase tracking-[0.14em]">
+                  {done.conciliacion.requiereAuditoria
+                    ? "Auditoría obligatoria"
+                    : "Posible abono extraordinario no normalizado"}
+                </span>
+                {done.conciliacion.nivel && (
+                  <span className="text-[10.5px] uppercase tracking-[0.14em] opacity-70">
+                    Nivel: {done.conciliacion.nivel.replace(/_/g, " ")}
+                  </span>
+                )}
+              </div>
+              <p className="mt-1.5 text-[12px]">
+                {done.conciliacion.requiereAuditoria
+                  ? "NUVIA detectó hallazgos críticos que no se explican por un abono extraordinario. La certificación queda bloqueada hasta que Dirección QA audite el caso."
+                  : "NUVIA detectó una posible reducción de saldo o cuota por un movimiento no normalizado (por ejemplo un abono extraordinario). Valida el impacto antes de enviar la propuesta comercial."}
+              </p>
+              {done.conciliacion.recomendacionAnalista && (
+                <p className="mt-1 text-[11.5px] opacity-80">
+                  {done.conciliacion.recomendacionAnalista}
+                </p>
+              )}
+            </div>
+          )}
+
           {/* Hallazgos expandibles */}
           {done && done.totalHallazgos > 0 && (
             <div className="rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2 text-[12px] text-slate-200">
@@ -386,11 +420,17 @@ function StatusBadge({ state }: { state: PanelState }) {
       case "loading":
         return { bg: "bg-sky-400/15", br: "border-sky-400/40", tx: "text-sky-100", label: "Auditando" };
       case "done": {
+        const conc = state.result.conciliacion;
+        const scoreTxt = state.result.score.toFixed(0);
+        if (conc?.requiereAuditoria === true)
+          return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · AUDITORÍA OBLIGATORIA · ${scoreTxt}/100` };
+        if (state.result.certificable && conc?.detectada === true)
+          return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · APROBADA CON ALERTA · ${scoreTxt}/100` };
         if (state.result.certificable)
-          return { bg: "bg-emerald-400/15", br: "border-emerald-400/40", tx: "text-emerald-100", label: `NUVIA · APROBADA · ${state.result.score.toFixed(0)}/100` };
+          return { bg: "bg-emerald-400/15", br: "border-emerald-400/40", tx: "text-emerald-100", label: `NUVIA · APROBADA · ${scoreTxt}/100` };
         if (state.result.dictamen === "rechazado")
-          return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · RECHAZADA · ${state.result.score.toFixed(0)}/100` };
-        return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · HALLAZGOS · ${state.result.score.toFixed(0)}/100` };
+          return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · RECHAZADA · ${scoreTxt}/100` };
+        return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · HALLAZGOS · ${scoreTxt}/100` };
       }
       case "error":
         return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: "Error" };

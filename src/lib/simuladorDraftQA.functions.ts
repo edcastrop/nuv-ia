@@ -17,7 +17,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { auditar, TOLERANCIAS_DEFAULT, QA_MOTOR_VERSION, type Modalidad, type Tolerancias } from "@/lib/qaMath";
+import { auditar, TOLERANCIAS_DEFAULT, QA_MOTOR_VERSION, type Modalidad, type Tolerancias, type ConciliacionAbonoExtraordinario } from "@/lib/qaMath";
 
 
 // ─────────────────────────────────────────────────────────────
@@ -122,6 +122,13 @@ export type DraftAuditResult = {
   certificable: boolean;
   hashCalculo: string;
   motivoBloqueo?: string;
+  /**
+   * Resultado de la conciliación por abono extraordinario. Se expone al cliente
+   * para que la UI pueda diferenciar visualmente los casos "aprobado con
+   * alerta" (detectada + reconciliada) y los que requieren auditoría obligatoria
+   * (`requiereAuditoria=true`). No altera reglas de certificación.
+   */
+  conciliacion?: ConciliacionAbonoExtraordinario;
 };
 
 const draftInputSchema = z.object({
@@ -296,6 +303,7 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
       certificable,
       hashCalculo,
       motivoBloqueo,
+      conciliacion: result.veredicto?.conciliacion,
     };
   });
 
