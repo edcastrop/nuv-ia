@@ -661,7 +661,6 @@ export function auditar(input: AuditarInput): AuditarOutput {
   //   · Sin admin subyacente                                  → sin cambios.
   // Nunca puede haber score 100 si hubo `plazoAdministrativo` o
   // `cuotaAdministrativa`.
-  const hpPreview = computarHallazgosBase(input, rec);
   const plazoAdministrativo = esPlazoAdministrativo(hpPreview);
   const cuotaAdministrativa = esCuotaAdministrativa(hpPreview);
   const { inconsistenciasAjustadas, conciliacion } = aplicarConciliacionAbonoExtraordinario({
