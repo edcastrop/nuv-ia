@@ -241,6 +241,8 @@ export function EnviarContratacionButton({ ctx, onSent }: Props) {
   );
 }
 
+const CORREO_OPERATIVO_OBLIGATORIO = "contabilidad@nuvex.com.co";
+
 function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionContext; onClose: () => void; onSent: () => void }) {
   const send = useServerFn(enviarContratacion);
   const [destinatarios, setDestinatarios] = useState<DestinatarioContratacion[]>([]);
@@ -250,6 +252,8 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  const [successInfo, setSuccessInfo] = useState<{ messageId: string | null; warning: string | null } | null>(null);
+  const [obligatorioBloqueado, setObligatorioBloqueado] = useState(false);
   const [soportes, setSoportes] = useState<SoporteAdjunto[]>([]);
   const [loadingSoportes, setLoadingSoportes] = useState(true);
 
@@ -258,7 +262,14 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     try {
       const rows = await listDestinatarios();
       setDestinatarios(rows);
-      setSelected(new Set(rows.filter((r) => r.activo).map((r) => r.email)));
+      const activos = rows.filter((r) => r.activo).map((r) => r.email);
+      const set = new Set(activos);
+      const obligatorioActivo = rows.some(
+        (r) => r.email.toLowerCase() === CORREO_OPERATIVO_OBLIGATORIO && r.activo,
+      );
+      setObligatorioBloqueado(!obligatorioActivo);
+      if (obligatorioActivo) set.add(CORREO_OPERATIVO_OBLIGATORIO);
+      setSelected(set);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -314,19 +325,39 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   };
 
   const handleDelete = async (d: DestinatarioContratacion) => {
+    if (d.email.toLowerCase() === CORREO_OPERATIVO_OBLIGATORIO) {
+      setError("El correo operativo de contratación no puede eliminarse.");
+      return;
+    }
     if (!confirm(`¿Eliminar ${d.email}?`)) return;
     try { await deleteDestinatario(d.id); await reload(); } catch (e) { setError((e as Error).message); }
   };
 
-  const toggleSel = (email: string) =>
+  const toggleSel = (email: string) => {
+    if (email.toLowerCase() === CORREO_OPERATIVO_OBLIGATORIO && !obligatorioBloqueado) {
+      setError("El correo operativo de contratación no puede desmarcarse.");
+      setSelected((prev) => new Set([...prev, CORREO_OPERATIVO_OBLIGATORIO]));
+      return;
+    }
     setSelected((prev) => {
       const n = new Set(prev);
       if (n.has(email)) n.delete(email); else n.add(email);
       return n;
     });
+  };
 
   const handleSend = async () => {
     setError(null);
+    setSuccessInfo(null);
+    if (obligatorioBloqueado) {
+      setError("Falta el destinatario operativo obligatorio (contabilidad@nuvex.com.co). Contacta a Admin para activarlo.");
+      return;
+    }
+    if (!selected.has(CORREO_OPERATIVO_OBLIGATORIO)) {
+      setError("El correo operativo de contratación (contabilidad@nuvex.com.co) es obligatorio.");
+      setSelected((prev) => new Set([...prev, CORREO_OPERATIVO_OBLIGATORIO]));
+      return;
+    }
     const dests = Array.from(selected);
     if (dests.length === 0) { setError("Selecciona al menos un destinatario."); return; }
     if (!ctx.poderDocs.length || !ctx.datosDoc) { setError("Faltan documentos por generar."); return; }
@@ -336,12 +367,6 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     try {
       const poderBlobs = await Promise.all(ctx.poderDocs.map((d) => legalDocToPDFBlob(d)));
       const datosPdf = await legalDocToPDFBlob(ctx.datosDoc);
-      // Re-leer soportes en el momento del envío para intentar previsualizarlos.
-      // NOTA: si el navegador no puede leerlos (RLS de storage, extensiones, red),
-      // NO bloqueamos el envío: el servidor completa el paquete con acceso admin
-      // desde expediente_soportes / extractos_lecturas / credito_data.archivoPath
-      // y valida que cédula + extracto viajen. Sólo si el servidor tampoco los
-      // encuentra, devuelve un error claro que se muestra al usuario.
       let soportesActuales: SoporteAdjunto[] = [];
       try {
         soportesActuales = await fetchSoportesCliente(ctx.expedienteId);
@@ -368,15 +393,24 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
         contentType: a.contentType,
         contentBase64: await blobToBase64(a.blob),
       })));
-      await send({ data: { expedienteId: ctx.expedienteId, destinatarios: dests, asunto, cuerpo, attachments: encoded } });
+      const result = await send({ data: { expedienteId: ctx.expedienteId, destinatarios: dests, asunto, cuerpo, attachments: encoded } });
+      const messageId = (result as { messageId?: string | null } | null)?.messageId ?? null;
+      const warning = (result as { warning?: string | null } | null)?.warning ?? null;
+      setSuccessInfo({ messageId, warning });
       setDone(true);
-      setTimeout(() => onSent(), 1200);
+      if (!warning) {
+        setTimeout(() => onSent(), 1500);
+      }
     } catch (e) {
       setError((e as Error).message);
+      setDone(false);
     } finally {
       setSending(false);
     }
   };
+
+  const puedeEnviar = !sending && selected.size > 0 && !done;
+  const puedeReintentar = !sending && error !== null && !done;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
@@ -417,29 +451,55 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
 
           <div>
             <div className="text-[11px] uppercase tracking-wider font-semibold text-[#242424]/70 mb-1">Destinatarios</div>
+            {obligatorioBloqueado && (
+              <div className="mb-2 rounded-lg border p-2 text-xs"
+                style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg, color: NUVEX.rojoTexto }}>
+                Falta el destinatario operativo obligatorio ({CORREO_OPERATIVO_OBLIGATORIO}). Contacta a Admin para activarlo antes de enviar.
+              </div>
+            )}
             {loadingD ? (
               <div className="text-xs text-[#242424]/60">Cargando…</div>
             ) : (
               <div className="space-y-1">
-                {destinatarios.map((d) => (
-                  <div key={d.id} className="flex items-center gap-2 rounded-lg border bg-white p-2 text-sm" style={{ borderColor: "#E3E7EE" }}>
-                    <input type="checkbox" checked={selected.has(d.email)} onChange={() => toggleSel(d.email)} />
-                    <div className="flex-1">
-                      <div className="font-medium text-[#242424]">{d.email}</div>
-                      {d.nombre && <div className="text-[11px] text-[#242424]/60">{d.nombre}</div>}
-                    </div>
-                    <label className="text-[11px] text-[#242424]/60 inline-flex items-center gap-1">
+                {destinatarios.map((d) => {
+                  const esObligatorio = d.email.toLowerCase() === CORREO_OPERATIVO_OBLIGATORIO;
+                  return (
+                    <div key={d.id} className="flex items-center gap-2 rounded-lg border bg-white p-2 text-sm" style={{ borderColor: esObligatorio ? NUVEX.azul : "#E3E7EE" }}>
                       <input
                         type="checkbox"
-                        checked={d.activo}
-                        onChange={async (e) => { try { await setDestinatarioActivo(d.id, e.target.checked); await reload(); } catch (er) { setError((er as Error).message); } }}
-                      /> Activo
-                    </label>
-                    <button onClick={() => handleDelete(d)} className="text-[#B42318] hover:bg-[#FDECEC] rounded p-1" title="Eliminar">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
+                        checked={selected.has(d.email)}
+                        disabled={esObligatorio && !obligatorioBloqueado}
+                        onChange={() => toggleSel(d.email)}
+                      />
+                      <div className="flex-1">
+                        <div className="font-medium text-[#242424]">
+                          {d.email}
+                          {esObligatorio && (
+                            <span className="ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded" style={{ background: NUVEX.azul, color: "white" }}>
+                              OBLIGATORIO
+                            </span>
+                          )}
+                        </div>
+                        {d.nombre && <div className="text-[11px] text-[#242424]/60">{d.nombre}</div>}
+                      </div>
+                      <label className="text-[11px] text-[#242424]/60 inline-flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          checked={d.activo}
+                          onChange={async (e) => { try { await setDestinatarioActivo(d.id, e.target.checked); await reload(); } catch (er) { setError((er as Error).message); } }}
+                        /> Activo
+                      </label>
+                      <button
+                        onClick={() => handleDelete(d)}
+                        disabled={esObligatorio}
+                        className="text-[#B42318] hover:bg-[#FDECEC] rounded p-1 disabled:opacity-40 disabled:cursor-not-allowed"
+                        title={esObligatorio ? "El correo operativo no puede eliminarse" : "Eliminar"}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  );
+                })}
                 {destinatarios.length === 0 && (
                   <div className="text-xs text-[#242424]/60">No hay destinatarios. Añade al menos uno.</div>
                 )}
@@ -463,29 +523,56 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
           {error && (
             <div className="rounded-lg border p-2 text-xs"
               style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg, color: NUVEX.rojoTexto }}>
-              {error}
+              <div className="font-semibold mb-1">No fue posible completar el envío.</div>
+              <div>{error}</div>
+              <div className="mt-1 text-[11px] opacity-80">El intento quedó registrado. Puedes volver a intentarlo sin crear un nuevo expediente.</div>
             </div>
           )}
-          {done && (
-            <div className="rounded-lg border p-2 text-xs inline-flex items-center gap-1.5"
+          {done && successInfo && !successInfo.warning && (
+            <div className="rounded-lg border p-2 text-xs inline-flex items-start gap-1.5"
               style={{ borderColor: "#BBE4C9", background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }}>
-              <CheckCircle2 size={13} /> Correo enviado correctamente.
+              <CheckCircle2 size={13} className="mt-0.5" />
+              <div>
+                <div className="font-semibold">Paquete enviado correctamente a Contratación.</div>
+                <div>Destinatario principal: {CORREO_OPERATIVO_OBLIGATORIO}.</div>
+                {successInfo.messageId && <div>ID del envío: <code>{successInfo.messageId}</code></div>}
+              </div>
+            </div>
+          )}
+          {done && successInfo?.warning === "trazabilidad_parcial" && (
+            <div className="rounded-lg border p-2 text-xs"
+              style={{ borderColor: "#FDE68A", background: "#FEF3C7", color: "#92400E" }}>
+              <div className="font-semibold mb-1">Correo enviado, pero falló el registro interno.</div>
+              {successInfo.messageId && <div>ID del envío: <code>{successInfo.messageId}</code></div>}
+              <div className="mt-1">Contacta a soporte con este ID. <strong>No reenvíes.</strong></div>
             </div>
           )}
         </div>
 
         <div className="border-t border-[#E3E7EE] px-5 py-3 flex justify-end gap-2">
           <button onClick={onClose} className="rounded-lg border border-[#E3E7EE] px-3 py-1.5 text-xs font-medium text-[#242424] hover:bg-[#F7F9FB]">
-            Cancelar
+            {done ? "Cerrar" : "Cancelar"}
           </button>
-          <button
-            onClick={handleSend}
-            disabled={sending || selected.size === 0}
-            className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
-            style={{ backgroundColor: NUVEX.azul }}
-          >
-            {sending ? <><Loader2 size={13} className="animate-spin" /> Enviando…</> : <><Send size={13} /> Enviar ahora</>}
-          </button>
+          {puedeReintentar && (
+            <button
+              onClick={handleSend}
+              disabled={sending}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+              style={{ backgroundColor: "#B45309" }}
+            >
+              <Send size={13} /> Reintentar envío
+            </button>
+          )}
+          {!done && !puedeReintentar && (
+            <button
+              onClick={handleSend}
+              disabled={!puedeEnviar}
+              className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-semibold text-white disabled:opacity-60"
+              style={{ backgroundColor: NUVEX.azul }}
+            >
+              {sending ? <><Loader2 size={13} className="animate-spin" /> Enviando…</> : <><Send size={13} /> Enviar ahora</>}
+            </button>
+          )}
         </div>
       </div>
     </div>
