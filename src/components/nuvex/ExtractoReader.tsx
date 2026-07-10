@@ -22,7 +22,13 @@ import {
   parseProductoComercial,
 } from "@/lib/productosBancarios";
 import { hasRealCoverageSignals, normalizeCoverageProductLabel } from "@/lib/coverageDetection";
-import { ANON_DRAFT_KEY, enqueueExtracto } from "./pendingSoportes";
+import {
+  ANON_DRAFT_KEY,
+  enqueueExtracto,
+  deriveDraftKey,
+  relabelEntryDraftKey,
+} from "./pendingSoportes";
+
 
 type Modo = "pesos" | "uvr";
 
@@ -501,6 +507,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   const [uploadedOriginals, setUploadedOriginals] = useState<UploadedOriginal[]>([]);
   const stagingCountRef = useRef(0);
   const uploadedOriginalsRef = useRef<UploadedOriginal[]>([]);
+  // Ids de entradas encoladas por ESTA sesión de lectura del extracto.
+  // Al aplicar (cuando ya se conoce cédula/nombre por OCR), re-etiquetamos
+  // SOLO estas entradas al scope real del cliente — simétrico a lo que
+  // hace ClientCedulaButton con la cédula del titular.
+  const pendingExtractoEntryIdsRef = useRef<Set<string>>(new Set());
+
   const { data: catalogoProductos = [] } = useProductosBancarios();
 
   useEffect(() => {
@@ -550,7 +562,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
     setStagingNotice(null);
     uploadedOriginalsRef.current = [];
     setUploadedOriginals([]);
+    // Descartamos los ids pendientes locales: si el analista abandona la
+    // lectura sin aplicar, esas entradas siguen en el registry con su
+    // scope original (típicamente ANON) y serán purgadas por
+    // `purgeStaleAnonEntries` en el siguiente montaje standalone.
+    pendingExtractoEntryIdsRef.current = new Set();
     if (fileRef.current) fileRef.current.value = "";
+
   };
 
   const handleFileSelect = async (f: File) => {
@@ -644,11 +662,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         // `expediente_soportes` al certificar el caso. El archivo ya está
         // en storage — solo falta el vínculo con el expediente.
         const scope = draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY;
-        enqueueExtracto({
+        const entryId = enqueueExtracto({
           draftKey: scope,
           originals: [uploaded],
           label: `Extracto — ${f.name}`,
         });
+        pendingExtractoEntryIdsRef.current.add(entryId);
+
       }
       return uploaded;
     } catch (e) {
@@ -1453,8 +1473,29 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         fechaCorte: get("fechaCorte"),
       };
     }
+    // Antes de aplicar al simulador: si NO hay expediente aún y encolamos
+    // originales durante esta lectura, re-etiquetamos ÚNICAMENTE esas
+    // entradas al scope real del cliente (derivado del OCR). Simétrico
+    // a ClientCedulaButton — evita que el extracto quede huérfano en
+    // ANON cuando `handleSaveAsCase` calcule el scope desde el snapshot
+    // certificado. No tocamos entradas de otros borradores.
+    if (!expedienteId && pendingExtractoEntryIdsRef.current.size > 0) {
+      const nuevoScope = deriveDraftKey({
+        cedula: cedulaLimpia,
+        nombre: getCliente(),
+        numeroCredito: get("numeroCredito"),
+        banco: bancoCanon,
+      });
+      if (nuevoScope !== ANON_DRAFT_KEY) {
+        for (const id of pendingExtractoEntryIdsRef.current) {
+          relabelEntryDraftKey(id, nuevoScope);
+        }
+      }
+      pendingExtractoEntryIdsRef.current = new Set();
+    }
     const applied = await onApply(payload);
     if (applied === false) return;
+
     setStage("applied");
     setOpen(false);
     setTimeout(() => {
