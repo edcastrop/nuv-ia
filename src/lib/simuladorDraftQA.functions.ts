@@ -260,12 +260,21 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
     // (con o sin observaciones menores). Un score alto con hallazgos menores
     // no debe bloquear la creación del caso: los hallazgos quedan trazados
     // en la auditoría del expediente.
+    // Bloqueo adicional: si la conciliación por abono extraordinario detectó
+    // hallazgos críticos NO conciliables (`requiereAuditoria=true`), la
+    // certificación queda bloqueada hasta que Dirección QA revise el caso —
+    // aunque el dictamen numérico haya quedado en `aprobado_obs`.
+    const requiereAuditoriaConciliacion =
+      result.veredicto?.conciliacion?.requiereAuditoria === true;
     const certificable =
-      criticos === 0 && (dictamen === "aprobado" || dictamen === "aprobado_obs");
+      criticos === 0 &&
+      !requiereAuditoriaConciliacion &&
+      (dictamen === "aprobado" || dictamen === "aprobado_obs");
 
     let motivoBloqueo: string | undefined;
     if (!certificable) {
       if (criticos > 0) motivoBloqueo = `${criticos} hallazgo(s) crítico(s). Corrige o escala a Dirección Financiera.`;
+      else if (requiereAuditoriaConciliacion) motivoBloqueo = "La conciliación de NUVIA detectó hallazgos críticos ajenos al abono extraordinario. Requiere auditoría de Dirección QA antes de crear el caso.";
       else if (dictamen === "rechazado") motivoBloqueo = "La auditoría rechaza los inputs. Simulación no viable.";
       else if (dictamen === "requiere_revision") motivoBloqueo = "La auditoría requiere revisión antes de certificar.";
       else motivoBloqueo = "La auditoría requiere ajustes menores.";
