@@ -80,6 +80,8 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
       v.validacion_estado === "devuelto_datos_incorrectos" ||
       (isSuperAdmin && v.validacion_estado === "bloqueado_inconsistencia"));
 
+  const puedeLeerCedula = esLicenciado || esContratacion;
+
   useEffect(() => {
     if (showHist) listHistorialValidacion(exp.id).then(setHistorial).catch(() => {});
   }, [showHist, exp.id]);
