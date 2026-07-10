@@ -256,6 +256,12 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   const [obligatorioBloqueado, setObligatorioBloqueado] = useState(false);
   const [soportes, setSoportes] = useState<SoporteAdjunto[]>([]);
   const [loadingSoportes, setLoadingSoportes] = useState(true);
+  // Idempotencia por intento (protección contra doble envío entre pestañas/usuarios/clics
+  // paralelos). Se persiste mientras dure el modal y se regenera tras un error terminal
+  // para permitir un reintento limpio con nueva clave.
+  const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
+    (globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+  );
 
   const reload = async () => {
     setLoadingD(true);
