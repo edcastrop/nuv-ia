@@ -336,15 +336,18 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     try {
       const poderBlobs = await Promise.all(ctx.poderDocs.map((d) => legalDocToPDFBlob(d)));
       const datosPdf = await legalDocToPDFBlob(ctx.datosDoc);
-      // Re-leer soportes en el momento del envío para garantizar consistencia
-      // (por si se cargaron justo antes de enviar).
-      const soportesActuales = await fetchSoportesCliente(ctx.expedienteId);
-      const cedulaLista = soportesActuales.some((s) => s.kind === "cedula");
-      const extractoListo = soportesActuales.some((s) => s.kind === "extracto");
-      if (!cedulaLista || !extractoListo) {
+      // Re-leer soportes en el momento del envío para intentar previsualizarlos.
+      // NOTA: si el navegador no puede leerlos (RLS de storage, extensiones, red),
+      // NO bloqueamos el envío: el servidor completa el paquete con acceso admin
+      // desde expediente_soportes / extractos_lecturas / credito_data.archivoPath
+      // y valida que cédula + extracto viajen. Sólo si el servidor tampoco los
+      // encuentra, devuelve un error claro que se muestra al usuario.
+      let soportesActuales: SoporteAdjunto[] = [];
+      try {
+        soportesActuales = await fetchSoportesCliente(ctx.expedienteId);
         setSoportes(soportesActuales);
-        const faltantes = [!cedulaLista ? "cédula del cliente" : null, !extractoListo ? "extracto bancario" : null].filter(Boolean).join(" y ");
-        throw new Error(`No se puede enviar a contratación: falta adjuntar ${faltantes}.`);
+      } catch (e) {
+        console.warn("[Contratacion] fetch preview soportes falló, continúa con envío:", e);
       }
       const attachments: { blob: Blob; filename: string; contentType: string }[] = [
         ...poderBlobs.map((blob: Blob, i: number) => ({
@@ -359,6 +362,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
           contentType: s.contentType,
         })),
       ];
+
       const encoded = await Promise.all(attachments.map(async (a) => ({
         filename: a.filename,
         contentType: a.contentType,
@@ -398,14 +402,15 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
               {loadingSoportes ? (
                 <li className="text-[#242424]/50">Cargando soportes del cliente…</li>
               ) : soportes.length === 0 ? (
-                <li className="text-[#B42318]">
-                  ⚠ No se encontró cédula ni extracto del cliente en soportes. Cárgalos antes de enviar.
+                <li className="text-[#B45309]">
+                  ⚠ No se pudo previsualizar cédula/extracto desde el navegador. Si están cargados en el expediente, el servidor los adjuntará automáticamente al enviar. Si el envío falla por soportes faltantes, sube la cédula desde el lector inteligente y vuelve a intentar.
                 </li>
               ) : (
                 soportes.map((s, i) => (
                   <li key={i}>{s.label} — {s.filename}</li>
                 ))
               )}
+
             </ul>
           </div>
 
