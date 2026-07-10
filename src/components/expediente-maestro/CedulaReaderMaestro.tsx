@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Upload,
@@ -90,6 +90,7 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
 
 export function CedulaReaderMaestro({ label, onApply, tone = "light", expedienteId, soporteSubcategoria, onSoporteUploaded }: Props) {
   const dark = tone === "dark";
+  const fileInputId = useId();
   // Paleta NUVIA dark (alineada con .nuvia-input y NCard oscura)
   const T = dark
     ? {
@@ -313,7 +314,8 @@ export function CedulaReaderMaestro({ label, onApply, tone = "light", expediente
         <div className="mt-4 space-y-3">
           {(stage === "idle" || stage === "error") && (
             <>
-              <div
+              <label
+                htmlFor={fileInputId}
                 onDragEnter={(e) => { e.preventDefault(); setDragActive(true); }}
                 onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
                 onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
@@ -322,7 +324,6 @@ export function CedulaReaderMaestro({ label, onApply, tone = "light", expediente
                   setDragActive(false);
                   if (e.dataTransfer.files?.length) addToQueue(e.dataTransfer.files);
                 }}
-                onClick={() => fileRef.current?.click()}
                 className="cursor-pointer rounded-xl border-2 border-dashed p-6 text-center transition-colors"
                 style={{
                   borderColor: dragActive ? NUVEX.azul : T.dropBorder,
@@ -339,16 +340,17 @@ export function CedulaReaderMaestro({ label, onApply, tone = "light", expediente
                   JPG, PNG, WEBP o PDF (máx. 4)
                 </div>
                 <input
+                  id={fileInputId}
                   ref={fileRef}
                   type="file"
                   multiple
                   accept="image/*,application/pdf"
-                  className="hidden"
+                  className="sr-only"
                   onChange={(e) => {
                     if (e.target.files?.length) addToQueue(e.target.files);
                   }}
                 />
-              </div>
+              </label>
 
               {queue.length > 0 && (
                 <div className="space-y-2 rounded-xl border p-3" style={{ borderColor: T.innerBorder, background: T.innerBg }}>
