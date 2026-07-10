@@ -14,6 +14,13 @@ import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
 import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
 import { supabase } from "@/integrations/supabase/client";
 import { NUVEX } from "./constants";
+import {
+  ANON_DRAFT_KEY,
+  deriveDraftKey,
+  enqueueCedula,
+  relabelDraftKey,
+} from "./pendingSoportes";
+import { PendingSoportesBanner } from "./PendingSoportesBanner";
 
 type Stage = "idle" | "reading" | "review" | "applied" | "error";
 
@@ -33,6 +40,9 @@ interface Props {
    *  `soportes-banco` y se registran en `expediente_soportes` (categoria
    *  `identidad`) para que viajen con el expediente a Contratación. */
   expedienteId?: string | null;
+  /** Scope del borrador en curso (cliente). Cuando NO hay expedienteId,
+   *  las imágenes se encolan bajo este scope para adjuntarse al certificar. */
+  draftKey?: string;
 }
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
