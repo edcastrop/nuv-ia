@@ -41,6 +41,14 @@ export type DraftRawSnapshot = {
   datos?: Record<string, unknown> | null;
   archivoPath?: string | null;
   archivoNombre?: string | null;
+  // Honorarios/propuesta ya aprobados por el analista en el simulador.
+  // Viajan snapshot → handleSaveAsCase → certificarExpedienteServer → INSERT
+  // expedientes, para que honorarios_base/_final/descuento/propuesta_data no
+  // nazcan en 0 en el flujo de certificación draft.
+  honorariosBase?: number | null;
+  honorariosFinal?: number | null;
+  descuento?: number | null;
+  propuesta?: Record<string, unknown> | null;
 };
 
 const NUVIA_DRAFT_EVENT = "nuvia:draftRawReady";
