@@ -75,6 +75,8 @@ export function SimuladorPage() {
     result: DraftAuditResult;
   } | null>(null);
   const certifyDraftAudit = useServerFn(certificarSimulacionDraft);
+  const certificarExpediente = useServerFn(certificarExpedienteServer);
+
 
 
   // Carga del maestro existente (si llegó por URL desde Expediente Maestro).
