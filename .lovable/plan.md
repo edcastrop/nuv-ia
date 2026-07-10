@@ -1,97 +1,141 @@
-## Objetivo
 
-Agregar soporte para **Leasing Habitacional en pesos con opción de compra** dentro del simulador en pesos actual, conservando 100% intacta la lógica de crédito hipotecario. Un solo simulador, dos motores matemáticos según el tipo de producto.
+# Corrección urgente — Envío a Contratación
 
-## Alcance (qué SÍ / qué NO)
+## 1. Constraint real de `envios_contratacion.estado_envio`
 
-**SÍ:**
-- Selector "Tipo de producto" (Crédito hipotecario | Leasing habitacional) en el simulador en pesos.
-- Nuevo motor `proyectarLeasing` con Sistema Francés + valor residual (opción de compra).
-- Campos adicionales visibles solo en modo leasing: número de leasing, valor del leasing, canon actual, valor opción de compra, sistema de amortización, fecha de corte, cánones pagados/pendientes.
-- Extracción automática desde extracto PDF (Banco de Bogotá primero, arquitectura extensible).
-- Escenarios de optimización con canon extra (50k / 100k / 150k / 200k / manual).
-- Switch "¿Incluir opción de compra en la proyección de pago final?" (no / sí).
-- Alertas QA específicas de leasing.
-- Persistencia (`expediente_maestro`, `proyecciones_financieras`) con flag `tipo_producto` y `valor_residual`.
+Verificado contra la base:
 
-**NO:**
-- No se toca la ruta ni el motor UVR.
-- No se modifica ningún cálculo actual de hipotecario en pesos (`proyectarPesos` queda igual).
-- No se rediseña la UI: se reutiliza estilo NUVIA existente (NCard, tone dark según memoria).
-- No se crea página nueva; todo vive dentro de `PesosSimulator.tsx`.
+- Columna `text NOT NULL DEFAULT 'enviado'`.
+- **No existe CHECK ni ENUM.** Cualquier string es válido.
+- Los únicos valores usados hoy son `'enviado'` y `'error'`.
 
-## Cambios técnicos
+Por tanto puedo introducir un tercer valor `'preparando'` sin migración. **No se creará migración.**
 
-### 1. Motor matemático — `src/lib/proyeccion.ts`
-Se agrega, sin modificar `proyectarPesos`:
+Estados finales a usar:
+
+- `preparando` — fila creada al inicio, antes de validar/enviar.
+- `enviado` — Resend confirmó éxito.
+- `error` — cualquier fallo antes o durante el envío.
+- `enviado_trazabilidad_parcial` — Resend confirmó éxito pero falló el UPDATE del expediente o el INSERT en `expediente_historial` (conserva `proveedor_message_id`).
+
+## 2. Orden actual del flujo (server: `enviarContratacion`)
+
+1. Verifica expediente accesible.
+2. Verifica `LOVABLE_API_KEY` + `RESEND_API_KEY`.
+3. Lee asesor.
+4. `ensureStoredSupport("cedula")` y `ensureStoredSupport("extracto")` — completa adjuntos desde storage si faltan.
+5. Valida por nombre de archivo que existan cédula y extracto → si falla: `throw` **sin dejar rastro**.
+6. Llama a Resend.
+7. Si Resend falla: inserta fila `error` y `throw`.
+8. Si Resend OK: inserta fila `enviado`, actualiza `expedientes.estado` y crea `expediente_historial`.
+
+**Bug raíz:** los `throw` de los pasos 1–5 no dejan fila en `envios_contratacion`. El analista no ve error persistente y el sistema no registra el intento.
+
+## 3. Punto exacto de la fila inicial
+
+En `contratacion.functions.ts`, dentro de `.handler(...)`, **como primera operación después de resolver `userId`** y **antes** de verificar expediente/keys/adjuntos:
 
 ```ts
-export interface LeasingInput extends ProyeccionInputBase {
-  valorResidual: number;              // opción de compra
-  incluirOpcionCompra: boolean;       // switch UI
-  sistemaAmortizacion?: "frances" | "aleman" | "cuota_fija";
+const { data: intento, error: intentoErr } = await supabase
+  .from("envios_contratacion")
+  .insert({
+    expediente_id: data.expedienteId,
+    user_id: userId,
+    destinatarios: data.destinatarios,
+    asunto: data.asunto,
+    documentos: data.attachments.map(a => ({ name: a.filename, type: a.contentType, size: Math.floor(a.contentBase64.length*3/4) })),
+    estado_envio: "preparando",
+  })
+  .select("id")
+  .single();
+if (intentoErr || !intento) throw new Error("No se pudo registrar el intento de envío.");
+const intentoId = intento.id;
+```
+
+Todas las rutas de error posteriores hacen `UPDATE ... WHERE id = intentoId`.
+
+## 4. Archivos a modificar
+
+Exactamente tres:
+
+1. `src/lib/contratacion.functions.ts` — fila inicial, wrapping try/catch por fase, validación completa del paquete, manejo de errores Supabase, respuesta enriquecida.
+2. `src/components/expediente-maestro/EnviarContratacion.tsx` — `contabilidad@nuvex.com.co` obligatorio, no cerrar modal en error, mensajes claros, botón "Reintentar envío" tras error.
+3. `src/lib/contratacion.ts` — (solo si es necesario) añadir tipos para el nuevo shape de respuesta del server.
+
+**No se tocan** otros archivos. No se tocan buckets, RLS, triggers, `cliente_id`, QA, simuladores, honorarios, pipeline, matemática, motor financiero, extractos históricos, ni Validación de Identidad.
+
+## 5. Validación del paquete (server-side, tras `ensureStoredSupport`)
+
+Sobre `allowedAttachments` (paquete final antes de Resend):
+
+```
+requeridos = {
+  poder: /^poder|_poder|poderesp/i,
+  ficha: /ficha|datos_contrato|contrato/i,
+  cedula: /(cedula|cédula|identidad)/i,
+  extracto: /extracto/i,
 }
-
-export function proyectarLeasing(input: LeasingInput): ProyeccionResultado & {
-  valorResidual: number;
-  saldoFinalConvergeAlResidual: boolean;
-};
 ```
 
-Fórmula del canon financiero (Francés con FV):
-```
-PMT = (PV − FV / (1+i)^n) · i / (1 − (1+i)^-n)
-```
-- Cada mes: interés = saldo·i; capital = PMT − interés; saldoFinal = saldo − capital.
-- Se detiene cuando `saldo ≤ valorResidual + tolerancia` (no llega a 0).
-- Si `incluirOpcionCompra=true`, agrega una cuota final = valorResidual y saldo llega a 0.
+Faltantes se acumulan en un array `faltantes: string[]`. Si `faltantes.length > 0` → UPDATE fila `preparando` → `error` con `error: "Faltan: " + faltantes.join(", ")` y `throw` con mensaje accionable.
 
-### 2. Persistencia
-Migración: agregar a `expediente_maestro` y `proyecciones_financieras`
-- `tipo_producto text default 'hipotecario'` (`'hipotecario' | 'leasing_habitacional'`)
-- `valor_residual numeric`
-- `incluir_opcion_compra boolean default false`
-- `sistema_amortizacion text`
+**Cotitular:** el flujo genera un poder por cada `poderDocs` (ya incluye cotitular). La cédula del cotitular llega via `expediente_soportes.subcategoria = cedula_cotitular_*`. No añado un requisito rígido de "poder cotitular separado" porque no siempre aplica contractualmente; sí validaré que si el expediente tiene cotitulares activos (leyendo `apoderados_nuvex` con `expediente_id`), viaje al menos una cédula extra. Si no la trae, se agrega a `faltantes`.
 
-RLS existente se preserva (columnas nuevas heredan policies).
+## 6. Manejo de errores
 
-### 3. UI — `PesosSimulator.tsx`
-- Nuevo `ModalidadProducto` (radio o segment) arriba del bloque "Datos del crédito".
-- Cuando es leasing: renombrar labels ("Cuota" → "Canon", "Cuotas pendientes" → "Cánones pendientes"), mostrar campos "Valor opción de compra", "Sistema de amortización", "Fecha de corte".
-- Switch avanzado dentro del bloque de optimización.
-- Botones de canon extra: 50k / 100k / 150k / 200k / manual (reutiliza el patrón actual de "aporte extra").
-- KPIs adicionales: valor residual, opción de compra, costo total, intereses totales, veces pagado.
+Para cada fase, wrap con try/catch que **actualiza `envios_contratacion` a estado `error`** con `error: "[fase] mensaje"` truncado a 2000 chars (sin JWT, sin base64, sin PII completa — sólo código, fase, nombre de archivo, cantidad y expediente_id).
 
-### 4. Parser de extractos — `src/lib/motorExtractos/`
-- Nuevo `bancoBogotaLeasingParser.ts` (basado en el hipotecario existente) que detecta encabezado "LEASING HABITACIONAL" y extrae: valor del leasing, plazo inicial, cánones pagados/pendientes, canon actual, seguros, TEA, valor opción de compra, sistema, fecha de corte.
-- Registrar en `bankProfiles.ts` como producto adicional del Banco de Bogotá.
+- **Antes de Resend** (validación, storage, base64, credenciales, payload): UPDATE fila a `error` → `throw` con mensaje accionable. Expediente **no** se toca. Historial **no** se crea.
+- **Error de Resend**: UPDATE fila a `error` con status HTTP + body resumido. Sin update de expediente. Sin historial.
+- **Resend OK pero falla el UPDATE de `expedientes` o el INSERT de `historial`**: UPDATE fila a `enviado_trazabilidad_parcial`, **conserva `proveedor_message_id`**. Devuelve al cliente `{ ok: true, messageId, warning: "trazabilidad_parcial" }`. `console.error` seguro con `intentoId` y `messageId`. **No** se duplica correo.
 
-### 5. QA — extensión de `simuladorAutoQA.ts`
-Nuevas reglas activas solo cuando `tipo_producto === 'leasing_habitacional'`:
-- Canon banco vs canon reconstruido (Δ > 1%).
-- Saldo final no converge al residual (Δ > 0.5%).
-- Opción de compra fuera del rango esperado (7–15% del valor del leasing) — alerta soft.
-- Capital 0 en cuota donde debería existir amortización.
-- TEA pactada vs cobrada.
-- Seguros mezclados en canon financiero.
+Todos los `.insert()` y `.update()` de Supabase revisan `{ error }` explícitamente.
 
-## Diseño
+## 7. Destinatario obligatorio (UI)
 
-- Mismo estilo NUVIA (dark tokens, NCard, NSelect según memoria).
-- Los nuevos campos aparecen inline en los bloques existentes; no se crean pestañas ni pantallas nuevas.
-- Copys en español consistentes con el resto ("Canon", "Opción de compra", "Valor residual").
+- Al cargar `listDestinatarios()`, forzar que `contabilidad@nuvex.com.co` esté en `selected` (aunque el analista lo intente desmarcar → se vuelve a marcar con toast: "El correo operativo de contratación no puede desmarcarse").
+- Si no aparece en la tabla (o está inactivo), botón "Enviar" bloqueado con mensaje: "Falta el destinatario operativo obligatorio. Contacta a Admin."
+- **No se modifica** `contratacion_destinatarios`. Solo lectura.
+- No se usa `contratacion@nuvex.com.co` hardcoded en ninguna parte.
 
-## Entregables
+## 8. Reintento mínimo
 
-1. Motor `proyectarLeasing` + tests unitarios rápidos (script node en /tmp para validar contra el ejemplo Banco de Bogotá: PV=325.990.284, residual=32.599.028, n=224, TEA=10.29%, seguros=82.802).
-2. Migración de columnas nuevas + regeneración de tipos.
-3. `PesosSimulator.tsx` con selector, campos condicionales, KPIs, escenarios y switch.
-4. Parser leasing Banco de Bogotá + registro en `bankProfiles`.
-5. Reglas QA leasing.
-6. Verificación: cargar el ejemplo del Banco de Bogotá, comprobar que el canon reconstruido ≈ 3.150.355 y saldo final ≈ 32.599.028.
+Cuando `error` está seteado y no `done`:
 
-## Confirmaciones antes de implementar
+- Se muestra botón "Reintentar envío" (junto al "Cerrar").
+- Reintento = mismo `handleSend()` (no reutiliza base64 anterior; regenera poderes + ficha + relee soportes).
+- Server crea una **nueva fila** en `envios_contratacion` cada vez (no se introduce `intento_numero` porque la columna no existe y el objetivo es no migrar).
+- El modal **no se cierra automáticamente** en error. Solo se cierra en éxito confirmado por Resend.
+- No se crea expediente nuevo. Estado del expediente solo cambia a `ENVIADO_CONTRATACION` en éxito Resend.
 
-1. ¿La opción de compra debe quedar registrada como **saldo residual proyectado** dentro de `proyecciones_financieras` o como campo separado en `expediente_maestro` (o ambos)?
-2. Para el parser: además de Banco de Bogotá, ¿hay otros bancos con leasing habitacional que quieras dejar preparados en este mismo cambio (Davivienda, Bancolombia), o los agregamos después?
-3. ¿El módulo de **honorarios** debe reconocer leasing habitacional como producto y calcular sobre "cánones eliminados + intereses evitados", o mantiene la lógica actual sin cambios en esta iteración?
+## 9. Límite de adjuntos
+
+**Evidencia real** (query sobre `envios_contratacion` exitosos):
+
+| max_docs | avg_docs | envíos > 10 | total |
+|---|---|---|---|
+| 9 | 4 | 0 | 33 |
+
+**Ningún paquete histórico superó 10 adjuntos.** Por tanto **mantengo `max(10)`** y mejoro el mensaje del validador Zod a:
+
+> "Este paquete supera el límite permitido de 10 adjuntos. Reduce o consolida los archivos antes de enviar."
+
+## 10. Mensajes visibles al analista
+
+- ÉXITO: `"Paquete enviado correctamente a Contratación. Destinatario principal: contabilidad@nuvex.com.co. ID del envío: {messageId}"`.
+- ÉXITO parcial (trazabilidad): `"Correo enviado (ID: {messageId}), pero falló el registro interno. Contacta a soporte con este ID; no reenvíes."`.
+- ERROR documentos: `"No fue posible enviar el paquete. Faltan: {lista}. Carga los documentos pendientes y vuelve a intentarlo."`.
+- ERROR técnico: `"No fue posible completar el envío. El intento quedó registrado. Puedes volver a intentarlo sin crear un nuevo expediente."`.
+
+## 11. Resultado esperado en los dos casos reales
+
+- **NUV_2026_MG_000046**: sin cédula ni extracto → al pulsar Enviar, el server registra fila `error` con `"Faltan: cedula, extracto"` y la UI muestra el mensaje de documentos faltantes. El expediente no cambia de estado.
+- **NUV_2026_EC_000201**: cédulas + extracto presentes → reintento tras el fix debe completar y dejar fila `enviado` con `proveedor_message_id`.
+
+## 12. Fuera de alcance (confirmado)
+
+QA, simuladores, honorarios, pipeline, RLS, triggers, buckets, `cliente_id`, matemática financiera, documentos originales, migraciones OCR, migración de históricos, columna `intento_numero`, módulo complejo de reenvíos.
+
+---
+
+**Pendiente tu aprobación para implementar.**
