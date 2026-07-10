@@ -245,7 +245,21 @@ export function CedulaReader({ intervinientes, producto, expedienteId, draftKey,
     // Persistir las imágenes originales como soportes del expediente
     // (fire-and-forget; no bloquea la UX).
     const snapshot = [...queue];
-    void uploadQueueAsSoporte(appliedIdx, snapshot);
+    if (expedienteId) {
+      void uploadQueueAsSoporte(appliedIdx, snapshot);
+    } else if (snapshot.length > 0) {
+      const isTitular = appliedIdx === 0;
+      const scope = draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY;
+      enqueueCedula({
+        draftKey: scope,
+        files: snapshot,
+        isTitular,
+        cotitularIdx: isTitular ? undefined : appliedIdx,
+        label: isTitular
+          ? `Cédula titular (${snapshot.length} archivo${snapshot.length > 1 ? "s" : ""})`
+          : `Cédula cotitular ${appliedIdx} (${snapshot.length} archivo${snapshot.length > 1 ? "s" : ""})`,
+      });
+    }
 
     setStage("applied");
     setTimeout(() => {
