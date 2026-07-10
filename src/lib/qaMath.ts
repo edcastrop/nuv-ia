@@ -1141,6 +1141,7 @@ export function construirVeredicto(
     plazoAdministrativo?: boolean;
     cuotaAdministrativa?: boolean;
     precomputed?: HallazgosBase;
+    conciliacion?: ConciliacionAbonoExtraordinario;
   },
 ): Veredicto {
   const r = input.reconstruccion;
