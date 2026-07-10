@@ -26,6 +26,7 @@ import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
 import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
 import { certificarSimulacionDraft, type DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
+import { deriveDraftKey, flushPendingSoportes } from "@/components/nuvex/pendingSoportes";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
