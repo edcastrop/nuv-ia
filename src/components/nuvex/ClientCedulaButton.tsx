@@ -14,6 +14,13 @@ import { extractCedula, type CedulaData } from "@/lib/cedula.functions";
 import { normalizeColombiaLocation } from "@/lib/colombiaLocations";
 import { supabase } from "@/integrations/supabase/client";
 import { NUVEX } from "./constants";
+import {
+  ANON_DRAFT_KEY,
+  deriveDraftKey,
+  enqueueCedula,
+  relabelDraftKey,
+} from "./pendingSoportes";
+import { PendingSoportesBanner } from "./PendingSoportesBanner";
 
 type Stage = "idle" | "reading" | "review" | "applied" | "error";
 
@@ -33,6 +40,9 @@ interface Props {
    *  `soportes-banco` y se registran en `expediente_soportes` (categoria
    *  `identidad`) para que viajen con el expediente a Contratación. */
   expedienteId?: string | null;
+  /** Scope del borrador en curso (cliente). Cuando NO hay expedienteId,
+   *  las imágenes se encolan bajo este scope para adjuntarse al certificar. */
+  draftKey?: string;
 }
 
 function fileToDataUrl(file: File | Blob): Promise<string> {
@@ -97,7 +107,7 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
  * Lector de cédula simplificado para el simulador comercial.
  * Aplica los datos directamente al cliente (sin pasar por intervinientes).
  */
-export function ClientCedulaButton({ onApply, expedienteId }: Props) {
+export function ClientCedulaButton({ onApply, expedienteId, draftKey }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -105,6 +115,10 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
   const [dragActive, setDragActive] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const lastFilesRef = useRef<File[]>([]);
+  // Scope efectivo en el momento del `enqueue`. Si el analista aún no ha
+  // capturado nada, cae en ANON y se re-etiqueta al aplicar si la IA
+  // detectó cédula (o al certificar el caso).
+  const enqueueScope = draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY;
 
   const call = useServerFn(extractCedula);
 
@@ -198,7 +212,7 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
   const apply = () => {
     if (!parsed) return;
     const location = normalizeColombiaLocation(parsed.lugarExpedicion);
-    onApply({
+    const payload: ClientCedulaPayload = {
       nombre: parsed.nombreCompleto || "",
       cedula: parsed.numeroCedula || "",
       lugarExpedicion: location.label || parsed.lugarExpedicion || "",
@@ -206,11 +220,32 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
       lugarExpedicionCiudad: location.municipio,
       lugarExpedicionMunicipio: location.municipio,
       fechaExpedicion: parsed.fechaExpedicion || "",
-    });
-    // Persistir las imágenes originales como soportes del expediente
-    // para que viajen a Contratación (fire-and-forget).
+    };
+    onApply(payload);
+
     const snapshot = [...lastFilesRef.current];
-    void uploadAsSoporte(snapshot);
+    if (expedienteId) {
+      // Caso ya existe: subida directa (comportamiento previo).
+      void uploadAsSoporte(snapshot);
+    } else if (snapshot.length > 0) {
+      // Sin caso todavía: encolamos para adjuntar al certificar.
+      const scopeAlEnqueue = enqueueScope;
+      enqueueCedula({
+        draftKey: scopeAlEnqueue,
+        files: snapshot,
+        isTitular: true,
+        label: `Cédula titular (${snapshot.length} archivo${snapshot.length > 1 ? "s" : ""})`,
+      });
+      // Si la IA leyó la cédula del titular y estábamos en ANON, re-etiquetamos
+      // TODAS las entradas anónimas al scope real del cliente ahora identificado.
+      const nuevoScope = deriveDraftKey({
+        cedula: payload.cedula,
+        nombre: payload.nombre,
+      });
+      if (scopeAlEnqueue === ANON_DRAFT_KEY && nuevoScope !== ANON_DRAFT_KEY) {
+        relabelDraftKey(ANON_DRAFT_KEY, nuevoScope);
+      }
+    }
 
     setStage("applied");
     setTimeout(() => {
@@ -218,6 +253,7 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
       reset();
     }, 700);
   };
+
 
   if (!open) {
     return (
@@ -268,6 +304,13 @@ export function ClientCedulaButton({ onApply, expedienteId }: Props) {
       </div>
 
       <div className="mt-3 space-y-3">
+        {!expedienteId && (
+          <PendingSoportesBanner
+            draftKey={enqueueScope}
+            kinds={["cedula-titular"]}
+          />
+        )}
+
         {(stage === "idle" || stage === "error") && (
           <>
             <div

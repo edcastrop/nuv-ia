@@ -26,6 +26,7 @@ import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
 import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
 import { certificarSimulacionDraft, type DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
+import { deriveDraftKey, flushPendingSoportes } from "@/components/nuvex/pendingSoportes";
 
 const simSearchSchema = z.object({
   maestroId: z.string().optional(),
@@ -396,6 +397,28 @@ export function SimuladorPage() {
       if (expId && typeof window !== "undefined") {
         if (pesosDraft) sessionStorage.setItem(writeKey("pesos", expId), pesosDraft);
         if (uvrDraft) sessionStorage.setItem(writeKey("uvr", expId), uvrDraft);
+      }
+      // Adjuntar los soportes encolados durante la simulación (cédula/extracto
+      // que se cargaron antes de existir el expediente). Se filtra por
+      // `draftKey` para no tocar entradas de OTROS borradores en curso.
+      if (expId) {
+        try {
+          const scope = deriveDraftKey({
+            cedula,
+            nombre,
+            numeroCredito: credito.numeroCredito,
+            banco: credito.banco,
+          });
+          const res = await flushPendingSoportes(expId, scope);
+          if (res.failed > 0) {
+            toast.warning(
+              `Se adjuntaron ${res.ok} soporte${res.ok === 1 ? "" : "s"}, pero ${res.failed} falló${res.failed === 1 ? "" : "n"}. Revisa el expediente y vuelve a cargarlos si es necesario.`,
+              { duration: 8000 },
+            );
+          }
+        } catch (flushErr) {
+          console.warn("[simulador] flushPendingSoportes error:", flushErr);
+        }
       }
       // Limpieza crítica: eliminamos los drafts "standalone" para que la
       // próxima vez que alguien entre a /herramientas/simulador NO vea

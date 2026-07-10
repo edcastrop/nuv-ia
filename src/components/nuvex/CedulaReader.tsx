@@ -18,6 +18,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { NUVEX } from "./constants";
 import type { Interviniente, RolInterviniente } from "./intervinientes";
 import { defaultInterviniente, rolCotitular } from "./intervinientes";
+import {
+  ANON_DRAFT_KEY,
+  enqueueCedula,
+} from "./pendingSoportes";
+import { PendingSoportesBanner } from "./PendingSoportesBanner";
 
 
 type Stage = "idle" | "reading" | "review" | "applied" | "error";
@@ -29,6 +34,8 @@ interface Props {
    *  `soportes-banco` y las registra en `expediente_soportes` para que
    *  viajen con el expediente a Contratación. */
   expedienteId?: string | null;
+  /** Scope del borrador en curso — usado cuando aún no existe expedienteId. */
+  draftKey?: string;
   /** Aplica los datos al interviniente en `targetIdx` (o agrega uno nuevo si idx === -1). */
   onApply: (next: Interviniente[], targetIdx: number) => void;
   /** Opcional: si el target es el titular (idx 0), sincroniza también el nombre y cédula en ClientFields. */
@@ -93,7 +100,7 @@ async function renderPdfToImages(file: File): Promise<{ mime: string; dataUrl: s
   return images;
 }
 
-export function CedulaReader({ intervinientes, producto, expedienteId, onApply, onTitularSync }: Props) {
+export function CedulaReader({ intervinientes, producto, expedienteId, draftKey, onApply, onTitularSync }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -238,7 +245,21 @@ export function CedulaReader({ intervinientes, producto, expedienteId, onApply, 
     // Persistir las imágenes originales como soportes del expediente
     // (fire-and-forget; no bloquea la UX).
     const snapshot = [...queue];
-    void uploadQueueAsSoporte(appliedIdx, snapshot);
+    if (expedienteId) {
+      void uploadQueueAsSoporte(appliedIdx, snapshot);
+    } else if (snapshot.length > 0) {
+      const isTitular = appliedIdx === 0;
+      const scope = draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY;
+      enqueueCedula({
+        draftKey: scope,
+        files: snapshot,
+        isTitular,
+        cotitularIdx: isTitular ? undefined : appliedIdx,
+        label: isTitular
+          ? `Cédula titular (${snapshot.length} archivo${snapshot.length > 1 ? "s" : ""})`
+          : `Cédula cotitular ${appliedIdx} (${snapshot.length} archivo${snapshot.length > 1 ? "s" : ""})`,
+      });
+    }
 
     setStage("applied");
     setTimeout(() => {
@@ -288,6 +309,12 @@ export function CedulaReader({ intervinientes, producto, expedienteId, onApply, 
 
       {open && (
         <div className="mt-4 space-y-3">
+          {!expedienteId && (
+            <PendingSoportesBanner
+              draftKey={draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY}
+              kinds={["cedula-titular", "cedula-cotitular"]}
+            />
+          )}
           {/* Selector de destino */}
           <div className="flex flex-wrap items-center gap-2">
             <label className="text-[11px] font-medium text-[#242424]/70">Aplicar a:</label>

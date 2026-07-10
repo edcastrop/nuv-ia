@@ -70,6 +70,7 @@ import {
   readSimulatorDraft,
   useSimulatorDraft,
 } from "./useSimulatorDraft";
+import { deriveDraftKey, purgeStaleAnonEntries } from "./pendingSoportes";
 
 import { aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
 
@@ -219,6 +220,23 @@ export function PesosSimulator({
     ],
   );
   useSimulatorDraft("pesos", init?.id, currentDraft);
+  // Al montar un simulador standalone (sin caso previo), barrer entradas
+  // anónimas huérfanas del registry (ver pendingSoportes.ts). No toca
+  // entradas ya asociadas a un cliente identificado.
+  useEffect(() => {
+    if (init?.id) return;
+    purgeStaleAnonEntries();
+  }, [init?.id]);
+  const draftScopeKey = useMemo(
+    () =>
+      deriveDraftKey({
+        cedula: client.cedula,
+        nombre: client.nombre,
+        numeroCredito: client.numeroCredito,
+        banco: client.banco,
+      }),
+    [client.cedula, client.nombre, client.numeroCredito, client.banco],
+  );
   const handleSaved = (e: Expediente) => {
     clearSimulatorDraft("pesos", init?.id);
     onSaved?.(e);
@@ -573,6 +591,7 @@ export function PesosSimulator({
           modo="pesos"
           existingArchivoPath={extractoArchivoPath}
           expedienteId={init?.id}
+          draftKey={draftScopeKey}
           onApply={async (p: ExtractoApplyPayload) => {
             // Alerta crítica: bloquear si el extracto está en UVR pero estamos en simulador de Pesos.
             if (p.monedaDetectada && p.monedaDetectada !== "pesos") {

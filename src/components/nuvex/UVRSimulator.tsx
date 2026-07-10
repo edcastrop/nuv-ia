@@ -70,6 +70,7 @@ import {
   readSimulatorDraft,
   useSimulatorDraft,
 } from "./useSimulatorDraft";
+import { deriveDraftKey, purgeStaleAnonEntries } from "./pendingSoportes";
 
 import { aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
 
@@ -281,6 +282,20 @@ export function UVRSimulator({
     ],
   );
   useSimulatorDraft("uvr", init?.id, currentDraft);
+  useEffect(() => {
+    if (init?.id) return;
+    purgeStaleAnonEntries();
+  }, [init?.id]);
+  const draftScopeKey = useMemo(
+    () =>
+      deriveDraftKey({
+        cedula: client.cedula,
+        nombre: client.nombre,
+        numeroCredito: client.numeroCredito,
+        banco: client.banco,
+      }),
+    [client.cedula, client.nombre, client.numeroCredito, client.banco],
+  );
   const handleSaved = (e: Expediente) => {
     clearSimulatorDraft("uvr", init?.id);
     onSaved?.(e);
@@ -705,6 +720,7 @@ export function UVRSimulator({
           modo="uvr"
           existingArchivoPath={extractoArchivoPath}
           expedienteId={init?.id}
+          draftKey={draftScopeKey}
           onApply={async (p: ExtractoApplyPayload) => {
             // Alerta crítica: bloquear si el extracto está en Pesos pero estamos en simulador UVR.
             if (p.monedaDetectada && p.monedaDetectada !== "uvr") {

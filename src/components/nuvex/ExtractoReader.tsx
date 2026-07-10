@@ -22,6 +22,7 @@ import {
   parseProductoComercial,
 } from "@/lib/productosBancarios";
 import { hasRealCoverageSignals, normalizeCoverageProductLabel } from "@/lib/coverageDetection";
+import { ANON_DRAFT_KEY, enqueueExtracto } from "./pendingSoportes";
 
 type Modo = "pesos" | "uvr";
 
@@ -114,6 +115,9 @@ interface Props {
    *  `expediente_soportes` (categoria `extracto_banco`) para que viaje
    *  con el expediente cuando se envíe a Contratación. */
   expedienteId?: string | null;
+  /** Scope del borrador cuando aún no existe expedienteId — usado para
+   *  encolar los `UploadedOriginal` y adjuntarlos al certificar el caso. */
+  draftKey?: string;
 }
 
 // PDF.js dynamic loader (client-only)
@@ -478,7 +482,7 @@ type StagedItem = { mime: string; dataUrl: string; sourceName: string };
 type UploadedOriginal = { path: string; name: string; mime: string | null; size: number | null };
 const MAX_PAGES = 6;
 
-export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteId }: Props) {
+export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteId, draftKey }: Props) {
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<Stage>("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -635,6 +639,16 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
             user_id: uid,
           } as never);
         if (insErr) console.warn("[ExtractoReader] No se pudo registrar soporte:", insErr);
+      } else {
+        // Sin expediente aún: encolamos la metadata para insertar el
+        // `expediente_soportes` al certificar el caso. El archivo ya está
+        // en storage — solo falta el vínculo con el expediente.
+        const scope = draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY;
+        enqueueExtracto({
+          draftKey: scope,
+          originals: [uploaded],
+          label: `Extracto — ${f.name}`,
+        });
       }
       return uploaded;
     } catch (e) {
