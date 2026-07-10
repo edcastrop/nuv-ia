@@ -662,11 +662,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         // `expediente_soportes` al certificar el caso. El archivo ya está
         // en storage — solo falta el vínculo con el expediente.
         const scope = draftKey && draftKey.length > 0 ? draftKey : ANON_DRAFT_KEY;
-        enqueueExtracto({
+        const entryId = enqueueExtracto({
           draftKey: scope,
           originals: [uploaded],
           label: `Extracto — ${f.name}`,
         });
+        pendingExtractoEntryIdsRef.current.add(entryId);
+
       }
       return uploaded;
     } catch (e) {
