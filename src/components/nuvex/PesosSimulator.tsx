@@ -524,6 +524,7 @@ export function PesosSimulator({
     const cuotaN = parseCurrency(cuotaActual);
     const teaN = parsePercentage(tea);
     if (!(saldoN > 0 && cuotaN > 0 && teaN > 0)) return;
+    const d = recomendada ? computeDiscount(recomendada.honorarios, discount) : null;
     emitDraftRawReady({
       banco: client.banco || null,
       producto: client.tipoProducto || null,
@@ -548,6 +549,24 @@ export function PesosSimulator({
         tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
         valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
       },
+      honorariosBase: recomendada ? recomendada.honorarios : undefined,
+      honorariosFinal: d ? d.final : undefined,
+      descuento: d ? d.descuento : undefined,
+      propuesta: recomendada
+        ? {
+            index: recomendada.index,
+            nuevaCuota: recomendada.nuevaCuota,
+            nuevoPlazo: recomendada.nuevoPlazo,
+            cuotasEliminadas: recomendada.cuotasEliminadas,
+            añosEliminados: recomendada.añosEliminados,
+            ahorroIntereses: recomendada.ahorroIntereses,
+            ahorroSeguros: recomendada.ahorroSeguros,
+            ahorroTotal: recomendada.ahorroTotal,
+            honorarios: recomendada.honorarios,
+            totalProyectado: recomendada.totalProyectado,
+            fuente: manualValido ? "manual" : "automatica",
+          }
+        : undefined,
     });
   }, [
     init?.id,
@@ -566,6 +585,9 @@ export function PesosSimulator({
     cuotasPendientes,
     cobertura.tasaCobertura,
     cobertura.valorCobertura,
+    recomendada,
+    discount,
+    manualValido,
   ]);
 
 
