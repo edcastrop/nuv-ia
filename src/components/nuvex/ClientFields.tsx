@@ -140,7 +140,16 @@ export function ClientFields({
   return (
     <div className="space-y-4">
       <div className="flex justify-end">
-        <ClientCedulaButton onApply={handleCedulaAI} expedienteId={expedienteId} />
+        <ClientCedulaButton
+          onApply={handleCedulaAI}
+          expedienteId={expedienteId}
+          draftKey={deriveDraftKey({
+            cedula: data.cedula,
+            nombre: data.nombre,
+            numeroCredito: data.numeroCredito,
+            banco: data.banco,
+          })}
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
