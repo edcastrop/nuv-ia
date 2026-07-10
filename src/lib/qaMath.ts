@@ -641,7 +641,14 @@ export function auditar(input: AuditarInput): AuditarOutput {
     mensaje: `Falta campo financiero crítico: ${campo}`,
     sugerencia: "Complete este dato desde el extracto antes de aprobar o liberar la auditoría.",
   }));
-  const incsRaw = [...incExt, ...incSim, ...incFaltantes];
+  const hpPreview = computarHallazgosBase(input, rec);
+  // Sintetiza Inconsistencias a partir de hallazgos que NO tienen equivalente
+  // en compararExtracto/compararSimulacion (TASA_FUERA_RANGO, FRECH_INCOHERENTE,
+  // UVR_SALDO_MISMATCH, PLAZO_TOTAL_ATIPICO). Sin esto, esos hallazgos vivían
+  // sólo en `veredicto.hallazgos` y NO penalizaban score → un caso con tasa
+  // fuera de rango podía terminar en 100.
+  const incHallazgos = sintetizarInconsistenciasDeHallazgos(hpPreview.hallazgos);
+  const incsRaw = [...incExt, ...incSim, ...incFaltantes, ...incHallazgos];
 
   // Reclasificación administrativa (Fase 1 y 1.5 del motor de diagnóstico):
   // ciertos hallazgos son consecuencia de abonos a capital no reflejados
@@ -654,7 +661,6 @@ export function auditar(input: AuditarInput): AuditarOutput {
   //   · Sin admin subyacente                                  → sin cambios.
   // Nunca puede haber score 100 si hubo `plazoAdministrativo` o
   // `cuotaAdministrativa`.
-  const hpPreview = computarHallazgosBase(input, rec);
   const plazoAdministrativo = esPlazoAdministrativo(hpPreview);
   const cuotaAdministrativa = esCuotaAdministrativa(hpPreview);
   const { inconsistenciasAjustadas, conciliacion } = aplicarConciliacionAbonoExtraordinario({
@@ -685,6 +691,46 @@ export interface ConciliacionAbonoExtraordinario {
   requiereAuditoria: boolean;
   hipotesis: string[];
   recomendacionAnalista: string | null;
+}
+
+/**
+ * Promueve a `Inconsistencia` los `VeredictoHallazgo` que sólo vivían en
+ * `hp.hallazgos` y por lo tanto no penalizaban el score. Se omiten:
+ *   · PLAZO_IMPLICITO_* y CUOTA_VS_TEORICA → ya generan inc en compararExtracto.
+ *   · FALTA_SALDO/TASA/PLAZO             → ya cubiertos por `incFaltantes`.
+ * El resto (TASA_FUERA_RANGO, FRECH_INCOHERENTE, UVR_SALDO_MISMATCH,
+ * PLAZO_TOTAL_ATIPICO, …) se traduce a inc con la misma severidad.
+ */
+function sintetizarInconsistenciasDeHallazgos(
+  hallazgos: VeredictoHallazgo[],
+): Inconsistencia[] {
+  const SKIP = new Set([
+    "PLAZO_IMPLICITO_VS_REPORTADO",
+    "PLAZO_IMPLICITO_LEVE",
+    "CUOTA_VS_TEORICA",
+    "FALTA_SALDO",
+    "FALTA_TASA",
+    "FALTA_PLAZO",
+  ]);
+  const tipoPorCodigo: Record<string, InconsistenciaTipo> = {
+    TASA_FUERA_RANGO: "tasa",
+    FRECH_INCOHERENTE: "cuota",
+    UVR_SALDO_MISMATCH: "saldo",
+    PLAZO_TOTAL_ATIPICO: "plazo",
+  };
+  const out: Inconsistencia[] = [];
+  for (const h of hallazgos) {
+    if (SKIP.has(h.codigo)) continue;
+    const tipo = tipoPorCodigo[h.codigo] ?? "saldo";
+    out.push({
+      tipo,
+      severidad: h.severidad,
+      campo: h.codigo.toLowerCase(),
+      mensaje: h.titulo,
+      sugerencia: h.pista,
+    });
+  }
+  return out;
 }
 
 export function aplicarConciliacionAbonoExtraordinario(args: {
@@ -786,14 +832,24 @@ function aplicarScoreCap(
   conciliacion: ConciliacionAbonoExtraordinario,
   tol: Tolerancias,
 ): ScoreResultado {
-  if (conciliacion.scoreCap === null) return score;
-  if (score.score <= conciliacion.scoreCap) return score;
+  const needsCap = conciliacion.scoreCap !== null && score.score > conciliacion.scoreCap;
+  const forcedRevision = conciliacion.requiereAuditoria;
 
-  const capped = Math.round(conciliacion.scoreCap * 100) / 100;
+  if (!needsCap && !forcedRevision) return score;
+
+  const capped = needsCap
+    ? Math.round((conciliacion.scoreCap as number) * 100) / 100
+    : score.score;
   const crit = score.penalizaciones.some((p) => p.tipo === "inconsistencias_critica" && p.valor > 0);
 
   let dictamen: Dictamen;
   if (crit) dictamen = "rechazado";
+  else if (forcedRevision) {
+    // `critica_no_conciliable` NUNCA puede quedar como `aprobado`/`aprobado_obs`,
+    // independientemente del score: coexisten hallazgos críticos ajenos al abono
+    // extraordinario y el caso debe pasar por auditoría humana.
+    dictamen = capped < tol.umbScoreRevisar ? "rechazado" : "requiere_revision";
+  }
   else if (capped >= tol.umbScoreExcelente) dictamen = "aprobado";
   else if (capped >= tol.umbScoreAprobado) dictamen = "aprobado_obs";
   else if (capped >= tol.umbScoreRevisar) dictamen = "requiere_revision";
@@ -801,20 +857,19 @@ function aplicarScoreCap(
 
   let categoria: Categoria;
   if (dictamen === "rechazado") categoria = "rechazado";
+  else if (dictamen === "requiere_revision") categoria = "revisar";
   else if (capped >= tol.umbScoreExcelente) categoria = "excelente";
   else if (capped >= tol.umbScoreAprobado) categoria = "aprobado";
-  else if (capped >= tol.umbScoreRevisar) categoria = "revisar";
-  else categoria = "rechazado";
+  else categoria = "revisar";
 
-  return {
-    score: capped,
-    categoria,
-    dictamen,
-    penalizaciones: [
-      ...score.penalizaciones,
-      { tipo: `score_cap_${conciliacion.nivel}`, valor: Math.max(0, score.score - capped) },
-    ],
-  };
+  const penalizaciones = needsCap
+    ? [
+        ...score.penalizaciones,
+        { tipo: `score_cap_${conciliacion.nivel}`, valor: Math.max(0, score.score - capped) },
+      ]
+    : score.penalizaciones;
+
+  return { score: capped, categoria, dictamen, penalizaciones };
 }
 
 
