@@ -303,6 +303,7 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
       certificable,
       hashCalculo,
       motivoBloqueo,
+      conciliacion: result.veredicto?.conciliacion,
     };
   });
 
