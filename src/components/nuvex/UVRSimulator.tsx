@@ -70,6 +70,7 @@ import {
   readSimulatorDraft,
   useSimulatorDraft,
 } from "./useSimulatorDraft";
+import { deriveDraftKey, purgeStaleAnonEntries } from "./pendingSoportes";
 
 import { aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
 
