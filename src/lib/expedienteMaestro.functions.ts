@@ -56,7 +56,7 @@ const normalizeDigits = (value: unknown) => normalizeText(value).replace(/\D/g, 
 export const certificarExpedienteServer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: CertificarExpedienteInput) => data)
-  .handler(async ({ data, context }): Promise<CertificarExpedienteResult> => {
+  .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const p = data.maestro;
 
