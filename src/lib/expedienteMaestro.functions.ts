@@ -186,7 +186,7 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
         .select("*")
         .maybeSingle();
       const expediente = (updateError ? existing : updated ?? existing) as unknown as Expediente;
-      return { maestro, expediente } as unknown as Record<string, unknown>;
+      return JSON.parse(JSON.stringify({ maestro, expediente })) as { maestro: ExpedienteMaestro; expediente: Expediente };
     }
 
     const nombreCliente = String(maestro.cliente?.nombre || maestro.nombre_cliente || "").trim();
@@ -231,9 +231,9 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
         .select("*")
         .eq("id", maestro.id)
         .maybeSingle();
-      if (raced) return { maestro, expediente: raced } as unknown as Record<string, unknown>;
+      if (raced) return JSON.parse(JSON.stringify({ maestro, expediente: raced })) as { maestro: ExpedienteMaestro; expediente: Expediente };
       throw insertError;
     }
 
-    return { maestro, expediente: created } as unknown as Record<string, unknown>;
+    return JSON.parse(JSON.stringify({ maestro, expediente: created })) as { maestro: ExpedienteMaestro; expediente: Expediente };
   });
