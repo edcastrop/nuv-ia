@@ -122,6 +122,13 @@ export type DraftAuditResult = {
   certificable: boolean;
   hashCalculo: string;
   motivoBloqueo?: string;
+  /**
+   * Resultado de la conciliación por abono extraordinario. Se expone al cliente
+   * para que la UI pueda diferenciar visualmente los casos "aprobado con
+   * alerta" (detectada + reconciliada) y los que requieren auditoría obligatoria
+   * (`requiereAuditoria=true`). No altera reglas de certificación.
+   */
+  conciliacion?: ConciliacionAbonoExtraordinario;
 };
 
 const draftInputSchema = z.object({
