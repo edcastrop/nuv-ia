@@ -34,7 +34,7 @@ import {
   detectAttachmentLimitViolation,
   detectCotitularInconsistencies,
   enforceDestinatariosServer,
-  normalizarCotitularesActivos,
+  resolveCotitularesFromClienteData,
   type SoporteRow,
 } from "@/lib/contratacionValidacion";
 
@@ -206,7 +206,13 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       // FASE 4 — Consistencia cotitular + ensamblado por subcategoría
       // ───────────────────────────────────────────────────────────────────────
       const clienteData = ((exp as { cliente_data?: unknown }).cliente_data ?? {}) as Record<string, unknown>;
-      const cotitularesActivos = normalizarCotitularesActivos(clienteData.cotitulares);
+      const { cotitulares: cotitularesActivos, conflicts: cotitularConflicts } =
+        resolveCotitularesFromClienteData(clienteData);
+      if (cotitularConflicts.length > 0) {
+        const msg = `Contradicción en datos de cotitular: ${cotitularConflicts.map((c) => c.message).join(" | ")}`;
+        await markError("validacion", msg);
+        throw new Error(msg);
+      }
       const cedulasRequeridas = computeCedulasRequeridas(cotitularesActivos);
 
       const { data: soportesRows, error: soportesErr } = await supabaseAdmin

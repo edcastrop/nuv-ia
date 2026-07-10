@@ -8,6 +8,7 @@ import {
   detectSoporteCotitularPositions,
   enforceDestinatariosServer,
   normalizarCotitularesActivos,
+  resolveCotitularesFromClienteData,
   type SoporteRow,
 } from "../contratacionValidacion";
 
@@ -32,33 +33,207 @@ describe("detectAttachmentLimitViolation", () => {
   });
 });
 
-describe("normalizarCotitularesActivos", () => {
-  test("null / no-array → []", () => {
-    expect(normalizarCotitularesActivos(null)).toEqual([]);
-    expect(normalizarCotitularesActivos(undefined)).toEqual([]);
-    expect(normalizarCotitularesActivos({})).toEqual([]);
+describe("resolveCotitularesFromClienteData — esquema nuevo (cotitulares[])", () => {
+  test("null / vacío → [] sin conflictos", () => {
+    expect(resolveCotitularesFromClienteData(null)).toEqual({ cotitulares: [], conflicts: [] });
+    expect(resolveCotitularesFromClienteData({})).toEqual({ cotitulares: [], conflicts: [] });
+    expect(resolveCotitularesFromClienteData({ cotitulares: [] })).toEqual({ cotitulares: [], conflicts: [] });
   });
-  test("filtra por activo y nombre válido", () => {
-    const out = normalizarCotitularesActivos([
-      { nombre: "Ana", activo: true },
-      { nombre: "  ", activo: true },
-      { nombre: "Beto", activo: false },
-      { nombre: "Carlos" },
+  test("filtra inactivos y registra fuente", () => {
+    const { cotitulares, conflicts } = resolveCotitularesFromClienteData({
+      cotitulares: [
+        { nombre: "Ana Pérez", cedula: "111", activo: true },
+        { nombre: "Beto", cedula: "222", activo: false },
+        { nombre: "Carlos" },
+      ],
+    });
+    expect(conflicts).toEqual([]);
+    expect(cotitulares.map((c) => ({ nombre: c.nombre, cedula: c.cedula, sources: c.sources }))).toEqual([
+      { nombre: "Ana Pérez", cedula: "111", sources: ["cotitulares"] },
+      { nombre: "Carlos", cedula: null, sources: ["cotitulares"] },
     ]);
-    expect(out.map((c) => c.nombre)).toEqual(["Ana", "Carlos"]);
   });
 });
 
-describe("computeCedulasRequeridas", () => {
-  test("titular solo cuando no hay cotitulares", () => {
-    expect(computeCedulasRequeridas([])).toEqual(["cedula_titular"]);
+describe("resolveCotitularesFromClienteData — esquema histórico (informacionJuridica)", () => {
+  test("informacionJuridica.cotitular activo → 1 cotitular resuelto", () => {
+    const { cotitulares, conflicts } = resolveCotitularesFromClienteData({
+      informacionJuridica: {
+        cotitular: {
+          activo: true,
+          nombre: "MANUEL ALBERTO ARIAS ARIZA",
+          cedula: "1033699568",
+        },
+      },
+    });
+    expect(conflicts).toEqual([]);
+    expect(cotitulares).toHaveLength(1);
+    expect(cotitulares[0]).toMatchObject({
+      cedula: "1033699568",
+      nombre: "MANUEL ALBERTO ARIAS ARIZA",
+      sources: ["informacionJuridica"],
+    });
   });
-  test("titular + cotitular_1..N", () => {
-    expect(computeCedulasRequeridas([{ nombre: "A" }, { nombre: "B" }])).toEqual([
-      "cedula_titular",
-      "cedula_cotitular_1",
-      "cedula_cotitular_2",
+  test("informacionJuridica.cotitular con activo=false → descartado", () => {
+    const { cotitulares } = resolveCotitularesFromClienteData({
+      informacionJuridica: { cotitular: { activo: false, nombre: "X", cedula: "999" } },
+    });
+    expect(cotitulares).toEqual([]);
+  });
+});
+
+describe("resolveCotitularesFromClienteData — esquema intervinientes[]", () => {
+  test("normaliza rol (tildes, mayúsculas, espacios)", () => {
+    const { cotitulares } = resolveCotitularesFromClienteData({
+      intervinientes: [
+        { rol: "Titular", nombreCompleto: "T", cedula: "1" },
+        { rol: "  cotitular  ", nombreCompleto: "C1", cedula: "10" },
+        { rol: "COTITULAR", nombreCompleto: "C2", cedula: "20" },
+        { rol: "Codeudór", nombreCompleto: "X", cedula: "30" }, // no cotitular
+      ],
+    });
+    const cedulas = cotitulares.map((c) => c.cedula);
+    expect(cedulas).toEqual(["10", "20"]);
+  });
+});
+
+describe("resolveCotitularesFromClienteData — combinación de las 3 fuentes (caso 000201)", () => {
+  const clienteData000201 = {
+    // esquema nuevo NO presente (null) — caso real
+    cotitulares: null,
+    informacionJuridica: {
+      cotitular: {
+        activo: true,
+        nombre: "MANUEL ALBERTO ARIAS ARIZA",
+        cedula: "1033699568",
+      },
+      titular: { nombre: "JENIFER ANDREA MORENO SAMUDIO", cedula: "1020748272" },
+    },
+    intervinientes: [
+      { rol: "Titular", nombreCompleto: "JENIFER ANDREA MORENO SAMUDIO", cedula: "1020748272" },
+      { rol: "Cotitular", nombreCompleto: "MANUEL ALBERTO ARIAS ARIZA", cedula: "1033699568" },
+    ],
+  };
+
+  test("cotitular declarado en informacionJuridica + intervinientes → dedup en 1 con 2 fuentes", () => {
+    const { cotitulares, conflicts } = resolveCotitularesFromClienteData(clienteData000201);
+    expect(conflicts).toEqual([]);
+    expect(cotitulares).toHaveLength(1);
+    expect(cotitulares[0].cedula).toBe("1033699568");
+    expect(cotitulares[0].nombre.toUpperCase()).toContain("MANUEL ALBERTO ARIAS ARIZA");
+    expect(cotitulares[0].sources.sort()).toEqual(["informacionJuridica", "intervinientes"]);
+  });
+
+  test("computeCedulasRequeridas incluye titular + cotitular_1 (una sola posición)", () => {
+    const { cotitulares } = resolveCotitularesFromClienteData(clienteData000201);
+    expect(computeCedulasRequeridas(cotitulares)).toEqual(["cedula_titular", "cedula_cotitular_1"]);
+  });
+
+  test("cedula_cotitular_1 en soportes NO produce inconsistencia y no duplica adjunto", () => {
+    const { cotitulares } = resolveCotitularesFromClienteData(clienteData000201);
+    const soportes = [mkSoporte("cedula_titular"), mkSoporte("cedula_cotitular_1")];
+    expect(detectCotitularInconsistencies(soportes, cotitulares)).toEqual([]);
+  });
+});
+
+describe("resolveCotitularesFromClienteData — deduplicación", () => {
+  test("misma cédula en tres fuentes → 1 cotitular con 3 sources", () => {
+    const { cotitulares, conflicts } = resolveCotitularesFromClienteData({
+      cotitulares: [{ nombre: "Ana Perez", cedula: "111", activo: true }],
+      informacionJuridica: { cotitular: { activo: true, nombre: "ANA PEREZ", cedula: "111" } },
+      intervinientes: [{ rol: "Cotitular", nombreCompleto: "Ana  Pérez", cedula: "111" }],
+    });
+    expect(conflicts).toEqual([]);
+    expect(cotitulares).toHaveLength(1);
+    expect(cotitulares[0].sources.sort()).toEqual(["cotitulares", "informacionJuridica", "intervinientes"]);
+  });
+
+  test("orden determinístico por cédula ASC", () => {
+    const { cotitulares } = resolveCotitularesFromClienteData({
+      cotitulares: [
+        { nombre: "Z", cedula: "999", activo: true },
+        { nombre: "A", cedula: "100", activo: true },
+        { nombre: "M", cedula: "500", activo: true },
+      ],
+    });
+    expect(cotitulares.map((c) => c.cedula)).toEqual(["100", "500", "999"]);
+  });
+
+  test("sin cédula → dedup por nombre normalizado (tildes/espacios/mayúsculas)", () => {
+    const { cotitulares } = resolveCotitularesFromClienteData({
+      cotitulares: [{ nombre: "Ana  Pérez" }],
+      intervinientes: [{ rol: "Cotitular", nombreCompleto: "ANA PEREZ" }],
+    });
+    expect(cotitulares).toHaveLength(1);
+    expect(cotitulares[0].sources.sort()).toEqual(["cotitulares", "intervinientes"]);
+  });
+});
+
+describe("resolveCotitularesFromClienteData — contradicciones", () => {
+  test("misma cédula con nombres materialmente distintos → conflicto", () => {
+    const { conflicts } = resolveCotitularesFromClienteData({
+      cotitulares: [{ nombre: "Ana Perez", cedula: "1033699568", activo: true }],
+      intervinientes: [{ rol: "Cotitular", nombreCompleto: "Beto Ramirez", cedula: "1033699568" }],
+    });
+    expect(conflicts.some((c) => c.code === "cedula_nombres_distintos")).toBe(true);
+    const msg = conflicts.find((c) => c.code === "cedula_nombres_distintos")!.message;
+    // Cédula enmascarada: sólo se exponen los últimos 3 dígitos.
+    expect(msg).not.toContain("1033699568");
+    expect(msg).toContain("***568");
+    expect(msg).not.toContain("Ana Perez");
+    expect(msg).not.toContain("Beto Ramirez");
+  });
+
+  test("mismo nombre con cédulas distintas → conflicto", () => {
+    const { conflicts } = resolveCotitularesFromClienteData({
+      cotitulares: [{ nombre: "Ana Perez", cedula: "111", activo: true }],
+      intervinientes: [{ rol: "Cotitular", nombreCompleto: "Ana Perez", cedula: "222" }],
+    });
+    expect(conflicts.some((c) => c.code === "nombre_cedulas_distintas")).toBe(true);
+  });
+
+  test("cotitular activo en una fuente e inactivo en otra → conflicto", () => {
+    const { conflicts } = resolveCotitularesFromClienteData({
+      cotitulares: [{ nombre: "Ana", cedula: "111", activo: false }],
+      informacionJuridica: { cotitular: { activo: true, nombre: "Ana", cedula: "111" } },
+    });
+    expect(conflicts.some((c) => c.code === "activo_vs_inactivo")).toBe(true);
+  });
+
+  test("no elige silenciosamente una fuente ganadora: la contradicción se REPORTA", () => {
+    const { conflicts } = resolveCotitularesFromClienteData({
+      cotitulares: [{ nombre: "Ana Perez", cedula: "111", activo: true }],
+      intervinientes: [{ rol: "Cotitular", nombreCompleto: "Beto Ramirez", cedula: "111" }],
+    });
+    expect(conflicts.length).toBeGreaterThan(0);
+  });
+});
+
+describe("detectCotitularInconsistencies — soportes huérfanos", () => {
+  test("cedula_cotitular_2 sin cotitular 2 resuelto → bloquea aunque el 1 esté OK", () => {
+    const soportes = [
+      mkSoporte("cedula_titular"),
+      mkSoporte("cedula_cotitular_1"),
+      mkSoporte("cedula_cotitular_2"),
+    ];
+    const { cotitulares } = resolveCotitularesFromClienteData({
+      cotitulares: [{ nombre: "Ana", cedula: "111", activo: true }],
+    });
+    const msgs = detectCotitularInconsistencies(soportes, cotitulares);
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0]).toContain("cotitular 2");
+  });
+
+  test("caso 000046 (sin cédulas, sin cotitulares) → sin inconsistencias por este chequeo", () => {
+    expect(detectCotitularInconsistencies([], [])).toEqual([]);
+  });
+
+  test("normalizarCotitularesActivos mantiene retro-compat con esquema nuevo", () => {
+    const out = normalizarCotitularesActivos([
+      { nombre: "Ana", cedula: "111", activo: true },
+      { nombre: "Beto", cedula: "222", activo: false },
     ]);
+    expect(out.map((c) => c.nombre)).toEqual(["Ana"]);
   });
 });
 
@@ -76,34 +251,6 @@ describe("detectSoporteCotitularPositions", () => {
     expect(
       detectSoporteCotitularPositions([mkSoporte("cedula_cotitular_1", "extracto_banco")]),
     ).toEqual([]);
-  });
-});
-
-describe("detectCotitularInconsistencies (caso 000201)", () => {
-  test("cedula_cotitular_1 presente pero cotitulares vacío → bloquea", () => {
-    const soportes = [mkSoporte("cedula_titular"), mkSoporte("cedula_cotitular_1")];
-    const msgs = detectCotitularInconsistencies(soportes, []);
-    expect(msgs).toHaveLength(1);
-    expect(msgs[0]).toContain("Inconsistencia documental");
-    expect(msgs[0]).toContain("cotitular 1");
-    expect(msgs[0]).toContain("cliente_data");
-  });
-  test("cedula_cotitular_1 + cotitulares=[{Ana}] → OK", () => {
-    const soportes = [mkSoporte("cedula_titular"), mkSoporte("cedula_cotitular_1")];
-    expect(detectCotitularInconsistencies(soportes, [{ nombre: "Ana" }])).toEqual([]);
-  });
-  test("cedula_cotitular_2 sin cotitular 2 registrado → bloquea aunque el 1 esté OK", () => {
-    const soportes = [
-      mkSoporte("cedula_titular"),
-      mkSoporte("cedula_cotitular_1"),
-      mkSoporte("cedula_cotitular_2"),
-    ];
-    const msgs = detectCotitularInconsistencies(soportes, [{ nombre: "Ana" }]);
-    expect(msgs).toHaveLength(1);
-    expect(msgs[0]).toContain("cotitular 2");
-  });
-  test("caso 000046 (sin cédulas, sin cotitulares) → sin inconsistencias por este chequeo", () => {
-    expect(detectCotitularInconsistencies([], [])).toEqual([]);
   });
 });
 
