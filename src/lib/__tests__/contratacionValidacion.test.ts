@@ -172,14 +172,16 @@ describe("resolveCotitularesFromClienteData — deduplicación", () => {
 describe("resolveCotitularesFromClienteData — contradicciones", () => {
   test("misma cédula con nombres materialmente distintos → conflicto", () => {
     const { conflicts } = resolveCotitularesFromClienteData({
-      cotitulares: [{ nombre: "Ana Perez", cedula: "111", activo: true }],
-      intervinientes: [{ rol: "Cotitular", nombreCompleto: "Beto Ramirez", cedula: "111" }],
+      cotitulares: [{ nombre: "Ana Perez", cedula: "1033699568", activo: true }],
+      intervinientes: [{ rol: "Cotitular", nombreCompleto: "Beto Ramirez", cedula: "1033699568" }],
     });
     expect(conflicts.some((c) => c.code === "cedula_nombres_distintos")).toBe(true);
-    // No filtra información sensible: cédula enmascarada, nombre no aparece completo
     const msg = conflicts.find((c) => c.code === "cedula_nombres_distintos")!.message;
-    expect(msg).not.toContain("111");
-    expect(msg).toContain("***111");
+    // Cédula enmascarada: sólo se exponen los últimos 3 dígitos.
+    expect(msg).not.toContain("1033699568");
+    expect(msg).toContain("***568");
+    expect(msg).not.toContain("Ana Perez");
+    expect(msg).not.toContain("Beto Ramirez");
   });
 
   test("mismo nombre con cédulas distintas → conflicto", () => {
