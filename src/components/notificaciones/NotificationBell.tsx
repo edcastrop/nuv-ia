@@ -80,18 +80,17 @@ export function NotificationBell() {
     };
   }, [open]);
 
-  const counts = { qa: 0, mensajes: 0, sistema: 0 } as Record<Exclude<TabKey, "todas">, number>;
+  const counts = { qa: 0, sistema: 0 } as Record<Exclude<TabKey, "todas">, number>;
   items.forEach((n) => { counts[categorize(n)] += 1; });
   const tabOptions = useMemo(
     () => ([
       { k: "todas", label: "Todas", n: items.length },
       { k: "qa", label: "QA", n: counts.qa },
-      { k: "mensajes", label: "Mensajes", n: counts.mensajes },
       { k: "sistema", label: "Sistema", n: counts.sistema },
     ] as Array<{ k: TabKey; label: string; n: number }>).filter((t) =>
       t.k === "todas" || (t.n > 0 && t.n < items.length),
     ),
-    [counts.mensajes, counts.qa, counts.sistema, items.length],
+    [counts.qa, counts.sistema, items.length],
   );
   const filtered = tab === "todas" ? items : items.filter((n) => categorize(n) === tab);
 
