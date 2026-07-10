@@ -646,6 +646,7 @@ export function UVRSimulator({
     const teaN = parsePercentage(teaCobrada);
     if (!(cuotaN > 0 && teaN > 0)) return;
     if (!(saldoUVRN > 0 || saldoPesosN > 0)) return;
+    const d = recomendada ? computeDiscount(recomendada.honorarios, discount) : null;
     emitDraftRawReady({
       banco: client.banco || null,
       producto: client.tipoProducto || null,
@@ -675,6 +676,24 @@ export function UVRSimulator({
         tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
         valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
       },
+      honorariosBase: recomendada ? recomendada.honorarios : undefined,
+      honorariosFinal: d ? d.final : undefined,
+      descuento: d ? d.descuento : undefined,
+      propuesta: recomendada
+        ? {
+            index: recomendada.index,
+            nuevaCuota: recomendada.nuevaCuota,
+            nuevoPlazo: recomendada.nuevoPlazo,
+            cuotasEliminadas: recomendada.cuotasEliminadas,
+            añosEliminados: recomendada.añosEliminados,
+            ahorroIntereses: recomendada.ahorroIntereses,
+            ahorroSeguros: recomendada.ahorroSeguros,
+            ahorroTotal: recomendada.ahorroTotal,
+            honorarios: recomendada.honorarios,
+            totalProyectado: recomendada.totalProyectado,
+            fuente: manualValido ? "manual" : "automatica",
+          }
+        : undefined,
     });
   }, [
     init?.id,
@@ -696,6 +715,9 @@ export function UVRSimulator({
     cuotasPendientes,
     cobertura.tasaCobertura,
     cobertura.valorCobertura,
+    recomendada,
+    discount,
+    manualValido,
   ]);
 
 
