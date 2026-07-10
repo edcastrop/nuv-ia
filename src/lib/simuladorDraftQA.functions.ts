@@ -399,8 +399,16 @@ export const certificarSimulacionDraft = createServerFn({ method: "POST" })
 
     const criticos = result.inconsistencias.filter((i) => i.severidad === "critica").length;
     const dictamen = result.score.dictamen;
-    const certificable = criticos === 0 && (dictamen === "aprobado" || dictamen === "aprobado_obs");
+    const requiereAuditoriaConciliacion =
+      result.veredicto?.conciliacion?.requiereAuditoria === true;
+    const certificable =
+      criticos === 0 &&
+      !requiereAuditoriaConciliacion &&
+      (dictamen === "aprobado" || dictamen === "aprobado_obs");
     if (!certificable) {
+      if (requiereAuditoriaConciliacion) {
+        throw new Error("NUVIA detectó hallazgos críticos ajenos al abono extraordinario. Requiere auditoría de Dirección QA antes de crear el caso.");
+      }
       throw new Error("NUVIA no puede certificar esta simulación: corrige los hallazgos críticos o escala a Dirección Financiera.");
     }
 
