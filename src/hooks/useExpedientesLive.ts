@@ -28,7 +28,7 @@ export function useExpedientesLive(casoIds: string[]): Record<string, Expediente
     const hydrate = async () => {
       const { data } = await supabase
         .from("expedientes")
-        .select("id, estado, estado_caso, etapa_pipeline, qa_score, updated_at")
+        .select("id, estado, estado_caso, qa_score, updated_at")
         .in("id", casoIds);
       if (!active || !data) return;
       const next: Record<string, ExpedienteLive> = {};
