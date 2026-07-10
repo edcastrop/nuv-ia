@@ -20,9 +20,11 @@ interface Props {
   onTitularSync?: (nombre: string, cedula: string) => void;
   /** Si se provee, el lector de cédula sube las imágenes como soportes del expediente. */
   expedienteId?: string | null;
+  /** Scope del borrador (cliente) — se propaga al lector para encolar soportes. */
+  draftKey?: string;
 }
 
-export function IntervinientesFields({ producto, data, onChange, onTitularSync, expedienteId }: Props) {
+export function IntervinientesFields({ producto, data, onChange, onTitularSync, expedienteId, draftKey }: Props) {
   const leasing = isLeasing(producto);
   const rolT = rolTitular(producto);
   const rolC = rolCotitular(producto);
