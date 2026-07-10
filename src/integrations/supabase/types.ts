@@ -2219,6 +2219,7 @@ export type Database = {
           estado_envio: string
           expediente_id: string
           id: string
+          idempotency_key: string | null
           proveedor_message_id: string | null
           user_id: string | null
         }
@@ -2231,6 +2232,7 @@ export type Database = {
           estado_envio?: string
           expediente_id: string
           id?: string
+          idempotency_key?: string | null
           proveedor_message_id?: string | null
           user_id?: string | null
         }
@@ -2243,6 +2245,7 @@ export type Database = {
           estado_envio?: string
           expediente_id?: string
           id?: string
+          idempotency_key?: string | null
           proveedor_message_id?: string | null
           user_id?: string | null
         }
