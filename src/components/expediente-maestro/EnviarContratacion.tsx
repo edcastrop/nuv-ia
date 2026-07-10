@@ -399,7 +399,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
         contentType: a.contentType,
         contentBase64: await blobToBase64(a.blob),
       })));
-      const result = await send({ data: { expedienteId: ctx.expedienteId, destinatarios: dests, asunto, cuerpo, attachments: encoded } });
+      const result = await send({ data: { expedienteId: ctx.expedienteId, idempotencyKey, destinatarios: dests, asunto, cuerpo, attachments: encoded } });
       const messageId = (result as { messageId?: string | null } | null)?.messageId ?? null;
       const warning = (result as { warning?: string | null } | null)?.warning ?? null;
       setSuccessInfo({ messageId, warning });
@@ -410,6 +410,11 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     } catch (e) {
       setError((e as Error).message);
       setDone(false);
+      // Rotar idempotencyKey: el intento anterior quedó marcado como error o
+      // rechazado por unique-violation. Un nuevo clic debe estrenar clave.
+      setIdempotencyKey(
+        globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      );
     } finally {
       setSending(false);
     }
