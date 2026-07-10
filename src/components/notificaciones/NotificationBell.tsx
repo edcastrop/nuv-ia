@@ -34,14 +34,12 @@ function sevLabel(s: string) {
   return s === "alta" ? "Alta" : s === "media" ? "Media" : "Baja";
 }
 
-type TabKey = "todas" | "qa" | "mensajes" | "sistema";
+type TabKey = "todas" | "qa" | "sistema";
 
 function categorize(n: Notificacion): Exclude<TabKey, "todas"> {
-  const id = String(n.id);
   const tipo = String(n.tipo || "");
   const titulo = String(n.titulo || "");
   if (tipo === "alerta_qa" || /qa/i.test(titulo) || /qa/i.test(tipo)) return "qa";
-  if (id.startsWith("colab:") || tipo === "mensaje_interno" || tipo === "mencion") return "mensajes";
   return "sistema";
 }
 
