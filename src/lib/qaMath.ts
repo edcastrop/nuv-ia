@@ -1363,6 +1363,7 @@ export function construirVeredicto(
     cuotaExtracto: hp.cuotaExtracto,
     cuotaTeorica: hp.cuotaTeorica,
     desfaseCuota: hp.desfaseCuota,
+    conciliacion: opts?.conciliacion,
   };
 
   function dedupe(arr: string[]) { return Array.from(new Set(arr)); }
