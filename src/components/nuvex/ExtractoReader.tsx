@@ -1473,8 +1473,29 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
         fechaCorte: get("fechaCorte"),
       };
     }
+    // Antes de aplicar al simulador: si NO hay expediente aún y encolamos
+    // originales durante esta lectura, re-etiquetamos ÚNICAMENTE esas
+    // entradas al scope real del cliente (derivado del OCR). Simétrico
+    // a ClientCedulaButton — evita que el extracto quede huérfano en
+    // ANON cuando `handleSaveAsCase` calcule el scope desde el snapshot
+    // certificado. No tocamos entradas de otros borradores.
+    if (!expedienteId && pendingExtractoEntryIdsRef.current.size > 0) {
+      const nuevoScope = deriveDraftKey({
+        cedula: cedulaLimpia,
+        nombre: getCliente(),
+        numeroCredito: get("numeroCredito"),
+        banco: bancoCanon,
+      });
+      if (nuevoScope !== ANON_DRAFT_KEY) {
+        for (const id of pendingExtractoEntryIdsRef.current) {
+          relabelEntryDraftKey(id, nuevoScope);
+        }
+      }
+      pendingExtractoEntryIdsRef.current = new Set();
+    }
     const applied = await onApply(payload);
     if (applied === false) return;
+
     setStage("applied");
     setOpen(false);
     setTimeout(() => {
