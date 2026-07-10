@@ -693,6 +693,46 @@ export interface ConciliacionAbonoExtraordinario {
   recomendacionAnalista: string | null;
 }
 
+/**
+ * Promueve a `Inconsistencia` los `VeredictoHallazgo` que sólo vivían en
+ * `hp.hallazgos` y por lo tanto no penalizaban el score. Se omiten:
+ *   · PLAZO_IMPLICITO_* y CUOTA_VS_TEORICA → ya generan inc en compararExtracto.
+ *   · FALTA_SALDO/TASA/PLAZO             → ya cubiertos por `incFaltantes`.
+ * El resto (TASA_FUERA_RANGO, FRECH_INCOHERENTE, UVR_SALDO_MISMATCH,
+ * PLAZO_TOTAL_ATIPICO, …) se traduce a inc con la misma severidad.
+ */
+function sintetizarInconsistenciasDeHallazgos(
+  hallazgos: VeredictoHallazgo[],
+): Inconsistencia[] {
+  const SKIP = new Set([
+    "PLAZO_IMPLICITO_VS_REPORTADO",
+    "PLAZO_IMPLICITO_LEVE",
+    "CUOTA_VS_TEORICA",
+    "FALTA_SALDO",
+    "FALTA_TASA",
+    "FALTA_PLAZO",
+  ]);
+  const tipoPorCodigo: Record<string, InconsistenciaTipo> = {
+    TASA_FUERA_RANGO: "tasa",
+    FRECH_INCOHERENTE: "cuota",
+    UVR_SALDO_MISMATCH: "saldo",
+    PLAZO_TOTAL_ATIPICO: "plazo",
+  };
+  const out: Inconsistencia[] = [];
+  for (const h of hallazgos) {
+    if (SKIP.has(h.codigo)) continue;
+    const tipo = tipoPorCodigo[h.codigo] ?? "saldo";
+    out.push({
+      tipo,
+      severidad: h.severidad,
+      campo: h.codigo.toLowerCase(),
+      mensaje: h.titulo,
+      sugerencia: h.pista,
+    });
+  }
+  return out;
+}
+
 export function aplicarConciliacionAbonoExtraordinario(args: {
   inconsistencias: Inconsistencia[];
   hp: HallazgosBase;
