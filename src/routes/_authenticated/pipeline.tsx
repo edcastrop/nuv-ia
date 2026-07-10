@@ -327,9 +327,23 @@ function PipelinePage() {
     cargar(false);
     const auto = setInterval(() => cargar(true), 60_000);
     const tick = setInterval(() => setNowTick(Date.now()), 15_000);
+    const channel = supabase
+      .channel("pipeline-live")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "expedientes" },
+        () => cargar(true),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "expedientes" },
+        () => cargar(true),
+      )
+      .subscribe();
     return () => {
       clearInterval(auto);
       clearInterval(tick);
+      supabase.removeChannel(channel);
     };
   }, []);
 

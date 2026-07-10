@@ -179,6 +179,24 @@ function CasosPage() {
     return () => { cancel = true; };
   }, [search, estado, etapa, reloadKey]);
 
+  // Realtime: refrescar el listado cuando cambia estado/estado_caso en expedientes.
+  useEffect(() => {
+    const channel = supabase
+      .channel("casos-index-live")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "expedientes" },
+        () => setReloadKey((k) => k + 1),
+      )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "expedientes" },
+        () => setReloadKey((k) => k + 1),
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, []);
+
   const filteredRows = useMemo(() => {
     return rows.filter((r) => {
       if (mios && user?.id && !(r.asesor_id === user.id || r.licenciado_id === user.id)) return false;

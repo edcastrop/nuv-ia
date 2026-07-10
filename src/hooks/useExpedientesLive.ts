@@ -6,7 +6,6 @@ export type ExpedienteLive = {
   id: string;
   estado?: string | null;
   estado_caso?: string | null;
-  etapa_pipeline?: EtapaPipelineId | null;
   qa_score?: number | null;
   updated_at?: string | null;
   etapa: EtapaPipelineId;
@@ -29,7 +28,7 @@ export function useExpedientesLive(casoIds: string[]): Record<string, Expediente
     const hydrate = async () => {
       const { data } = await supabase
         .from("expedientes")
-        .select("id, estado, estado_caso, etapa_pipeline, qa_score, updated_at")
+        .select("id, estado, estado_caso, qa_score, updated_at")
         .in("id", casoIds);
       if (!active || !data) return;
       const next: Record<string, ExpedienteLive> = {};
