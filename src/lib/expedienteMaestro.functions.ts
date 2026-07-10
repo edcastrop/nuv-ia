@@ -43,6 +43,13 @@ export interface CertificarExpedienteInput {
     apoderado: ApoderadoMaestro;
   };
   auditoriaId?: string | null;
+  // Honorarios / propuesta ya aprobados por el analista en el simulador.
+  // Se aplican al INSERT de `expedientes` cuando existen; si no vienen,
+  // se conservan los ceros que devuelve maestroToExpediente por defecto.
+  honorariosBase?: number | null;
+  honorariosFinal?: number | null;
+  descuento?: number | null;
+  propuestaData?: Record<string, unknown> | null;
 }
 
 export interface CertificarExpedienteResult {
