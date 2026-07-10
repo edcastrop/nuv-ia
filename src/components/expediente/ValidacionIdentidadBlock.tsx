@@ -177,7 +177,30 @@ export function ValidacionIdentidadBlock({ exp, onChanged }: Props) {
           </div>
         )}
       </div>
+      {puedeEditar && (
+        <div className="mb-3 rounded-xl border bg-[rgba(255,255,255,0.03)] p-3" style={{ borderColor: "rgba(132,150,200,0.22)" }}>
+          <CedulaReaderMaestro
+            label="titular"
+            tone="dark"
+            expedienteId={exp.id}
+            soporteSubcategoria="cedula_titular"
+            onSoporteUploaded={() => setSoportesVersion((n) => n + 1)}
+            onApply={(patch) => {
+              setDraft({
+                ...draft,
+                nombre: patch.nombre || draft.nombre,
+                cedula: patch.cedula || draft.cedula,
+                lugarExpedicion: (patch as { expedidaEn?: string }).expedidaEn || draft.lugarExpedicion || "",
+              });
+            }}
+          />
+          <p className="mt-2 text-[10.5px] text-[var(--nuvia-text-secondary)]">
+            Al leer la cédula se rellenan los campos del titular en el borrador. Pulsa <strong>Guardar cambios</strong> para persistirlos.
+          </p>
+        </div>
+      )}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-xs mb-4">
+
         <EditField label="Nombre" value={draft.nombre} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, nombre: val })} className="md:col-span-2" />
         <EditField label="Tipo doc." value={draft.tipoDocumento || ""} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, tipoDocumento: val })} />
         <EditField label="Documento" value={draft.cedula} editing={puedeEditar} onChange={(val) => setDraft({ ...draft, cedula: val.replace(/\D/g, "") })} />
