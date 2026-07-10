@@ -22,7 +22,13 @@ import {
   parseProductoComercial,
 } from "@/lib/productosBancarios";
 import { hasRealCoverageSignals, normalizeCoverageProductLabel } from "@/lib/coverageDetection";
-import { ANON_DRAFT_KEY, enqueueExtracto } from "./pendingSoportes";
+import {
+  ANON_DRAFT_KEY,
+  enqueueExtracto,
+  deriveDraftKey,
+  relabelEntryDraftKey,
+} from "./pendingSoportes";
+
 
 type Modo = "pesos" | "uvr";
 
@@ -501,6 +507,12 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   const [uploadedOriginals, setUploadedOriginals] = useState<UploadedOriginal[]>([]);
   const stagingCountRef = useRef(0);
   const uploadedOriginalsRef = useRef<UploadedOriginal[]>([]);
+  // Ids de entradas encoladas por ESTA sesión de lectura del extracto.
+  // Al aplicar (cuando ya se conoce cédula/nombre por OCR), re-etiquetamos
+  // SOLO estas entradas al scope real del cliente — simétrico a lo que
+  // hace ClientCedulaButton con la cédula del titular.
+  const pendingExtractoEntryIdsRef = useRef<Set<string>>(new Set());
+
   const { data: catalogoProductos = [] } = useProductosBancarios();
 
   useEffect(() => {
