@@ -254,12 +254,22 @@ export function buildDatosContrato(
   const propuesta: PropuestaData | Record<string, never> = (sim?.propuesta_data ?? {}) as PropuestaData | Record<string, never>;
   const p = propuesta as Partial<PropuestaData>;
 
-  // Cuotas eliminadas estimadas: cuotas pendientes originales - nuevo plazo
-  const cuotasPendientes = Number(cr.cuotasPagadas ? Number(cr.plazoOriginal) - Number(cr.cuotasPagadas) : 0) || 0;
-  const cuotasEliminadas =
-    p.añosEliminados !== undefined && p.nuevoPlazo !== undefined && cuotasPendientes > 0
-      ? Math.max(0, cuotasPendientes - Number(p.nuevoPlazo))
+  // Cuotas eliminadas: fuente única de verdad = propuesta_data.cuotasEliminadas
+  // (lo escogido en el simulador). Sólo si el caso antiguo no trae ese valor,
+  // se calcula con cuotas pendientes declaradas − nuevo plazo.
+  const cuotasPendientesDeclaradas = Math.max(0, Math.round(toNum((cr as { cuotasPendientes?: unknown }).cuotasPendientes)));
+  const cuotasPendientesCalculadas = Math.max(0, Math.round(toNum(cr.plazoOriginal) - toNum(cr.cuotasPagadas)));
+  const cuotasPendientes = cuotasPendientesDeclaradas > 0 ? cuotasPendientesDeclaradas : cuotasPendientesCalculadas;
+  const cuotasEliminadasPersistidas =
+    p.cuotasEliminadas !== undefined && p.cuotasEliminadas !== null
+      ? Math.max(0, Math.round(toNum(p.cuotasEliminadas)))
       : null;
+  const cuotasEliminadas =
+    cuotasEliminadasPersistidas !== null
+      ? cuotasEliminadasPersistidas
+      : p.nuevoPlazo !== undefined && cuotasPendientes > 0
+        ? Math.max(0, cuotasPendientes - Math.round(toNum(p.nuevoPlazo)))
+        : null;
 
   // Fuente única de verdad para honorarios a cobrar (recalculado > con descuento > base)
   const honorarios = honorariosFinalesCliente(sim ?? null);
