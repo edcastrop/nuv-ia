@@ -641,7 +641,14 @@ export function auditar(input: AuditarInput): AuditarOutput {
     mensaje: `Falta campo financiero crítico: ${campo}`,
     sugerencia: "Complete este dato desde el extracto antes de aprobar o liberar la auditoría.",
   }));
-  const incsRaw = [...incExt, ...incSim, ...incFaltantes];
+  const hpPreview = computarHallazgosBase(input, rec);
+  // Sintetiza Inconsistencias a partir de hallazgos que NO tienen equivalente
+  // en compararExtracto/compararSimulacion (TASA_FUERA_RANGO, FRECH_INCOHERENTE,
+  // UVR_SALDO_MISMATCH, PLAZO_TOTAL_ATIPICO). Sin esto, esos hallazgos vivían
+  // sólo en `veredicto.hallazgos` y NO penalizaban score → un caso con tasa
+  // fuera de rango podía terminar en 100.
+  const incHallazgos = sintetizarInconsistenciasDeHallazgos(hpPreview.hallazgos);
+  const incsRaw = [...incExt, ...incSim, ...incFaltantes, ...incHallazgos];
 
   // Reclasificación administrativa (Fase 1 y 1.5 del motor de diagnóstico):
   // ciertos hallazgos son consecuencia de abonos a capital no reflejados
