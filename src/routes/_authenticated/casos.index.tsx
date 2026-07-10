@@ -604,21 +604,148 @@ function CasosPage() {
           </div>
         ) : (
           <>
+            {grupos.map((g) => {
+              const activos = g.creditos.length;
+              const honTotal = g.creditos.reduce((s, r) => s + Number(r.honorarios_final || 0), 0);
+              const cert = g.creditos.filter((r) => CERT_ESTADOS.has((r.estado_caso ?? "") as string)).length;
+              const healths = g.creditos.map((r) => {
+                const et = computeEtapaActual({ estado_caso: r.estado_caso ?? null });
+                const niv = slaNivel(diasDesde(r.updated_at), UMBRAL_DIAS_ETAPA[et] ?? 0);
+                return r.qa_score != null
+                  ? Math.round(r.qa_score)
+                  : niv === "critico" ? 42 : niv === "atencion" ? 68 : 88;
+              });
+              const healthProm = healths.length ? Math.round(healths.reduce((s, n) => s + n, 0) / healths.length) : 0;
+              const healthColor = healthProm >= 80 ? VERDE : healthProm >= 60 ? "#F5C542" : "#FB7185";
+              const maxEt = g.creditos.reduce(
+                (max, r) => {
+                  const et = getEtapaById(computeEtapaActual({ estado_caso: r.estado_caso ?? null }));
+                  return et.numero > max.numero ? { numero: et.numero, titulo: et.titulo } : max;
+                },
+                { numero: 0, titulo: "—" },
+              );
+              const sem = grupoSemaforo(g.creditos);
+              const aColor = avatarColor(g.cliente);
+              const initial = (g.cliente || "?").trim().charAt(0).toUpperCase();
+              const open = isGroupOpen(g.key);
 
-            {filteredRows.map((r) => (
-              <TimelineCard
-                key={r.id}
-                r={r}
-                isDup={duplicateCaseKeys.has(caseDuplicateKey(r))}
-                asesor={asesores.get(r.asesor_id)}
-                licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
-                auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
-                onAudited={() => setReloadKey((k) => k + 1)}
-                isSuperAdmin={isSuperAdmin}
-                analistas={analistasList}
-                onReasignado={() => setReloadKey((k) => k + 1)}
-              />
-            ))}
+              return (
+                <div key={g.key} className="space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(g.key)}
+                    aria-expanded={open}
+                    className="w-full text-left rounded-2xl backdrop-blur-xl transition hover:-translate-y-0.5"
+                    style={{
+                      background: `linear-gradient(180deg, rgba(10,22,40,0.78), rgba(7,17,32,0.9))`,
+                      border: `1px solid ${sem.border}`,
+                      boxShadow: `0 8px 28px -14px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05)`,
+                    }}
+                  >
+                    <div
+                      className="relative grid gap-4 px-5 py-4 items-center"
+                      style={{ gridTemplateColumns: "minmax(0,1.35fr) minmax(0,1.35fr) auto" }}
+                    >
+                      <span
+                        className="absolute left-0 top-0 bottom-0 w-[3px] rounded-l-2xl"
+                        style={{ background: sem.color, boxShadow: `0 0 12px ${sem.color}88` }}
+                      />
+                      {/* IDENTIDAD */}
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div
+                          className="shrink-0 flex items-center justify-center rounded-2xl text-[19px] font-black text-white"
+                          style={{
+                            width: 54, height: 54,
+                            background: `linear-gradient(135deg, ${aColor}, ${aColor}AA)`,
+                            border: `1px solid rgba(255,255,255,0.14)`,
+                            boxShadow: `inset 0 1px 0 rgba(255,255,255,0.15)`,
+                          }}
+                        >
+                          {initial}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                            <span className="font-bold text-[15px] text-white truncate max-w-[280px]" title={g.cliente}>
+                              {g.cliente}
+                            </span>
+                            <span
+                              className="text-[9.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded"
+                              style={{ background: "rgba(68,93,163,0.15)", color: "#A5B5E0", border: `1px solid ${AZUL}44` }}
+                            >
+                              <Building2 size={9} className="inline mr-1 -mt-0.5" />
+                              {g.banco}
+                            </span>
+                          </div>
+                          <div
+                            className="mt-1.5 inline-flex items-center gap-1.5 px-2 py-[3px] rounded-full text-[10px] font-bold uppercase tracking-wider"
+                            style={{ background: sem.bg, color: sem.color, border: `1px solid ${sem.border}` }}
+                          >
+                            <span
+                              className="h-1.5 w-1.5 rounded-full"
+                              style={{ background: sem.color, boxShadow: `0 0 6px ${sem.color}` }}
+                            />
+                            {sem.label}
+                          </div>
+                          <div className="mt-1 text-[10px] uppercase tracking-wider" style={{ color: TEXT2 }}>
+                            E{maxEt.numero} · {maxEt.titulo}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* KPIs */}
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 min-w-0">
+                        <GroupStat label="Créditos activos" value={String(activos)} color="#A5B5E0" />
+                        <GroupStat label="Honorarios proy." value={formatCOP(honTotal)} color={VERDE} small />
+                        <GroupStat label="Health prom." value={`${healthProm}%`} color={healthColor} />
+                        <GroupStat label="Certificados" value={`${cert}/${activos}`} color="#CBD5E1" />
+                      </div>
+
+                      {/* CTA */}
+                      <div className="flex items-center shrink-0">
+                        <span
+                          className="inline-flex items-center gap-1.5 rounded-lg px-3 h-9 text-[10px] font-bold uppercase tracking-wider text-white whitespace-nowrap"
+                          style={{
+                            background: open
+                              ? "rgba(255,255,255,0.06)"
+                              : `linear-gradient(135deg, ${AZUL}, ${VERDE})`,
+                            border: open ? `1px solid ${BORDER_STRONG}` : "none",
+                            boxShadow: open ? "none" : `0 6px 18px -8px ${AZUL}`,
+                          }}
+                        >
+                          <ArrowRight
+                            size={11}
+                            style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform 200ms" }}
+                          />
+                          {open ? "Ocultar créditos" : `Ver créditos (${activos})`}
+                        </span>
+                      </div>
+                    </div>
+                  </button>
+
+                  {open && (
+                    <div
+                      className="space-y-2 pl-3 ml-3"
+                      style={{ borderLeft: `2px solid ${sem.color}66` }}
+                    >
+                      {g.creditos.map((r) => (
+                        <TimelineCard
+                          key={r.id}
+                          r={r}
+                          isDup={duplicateCaseKeys.has(caseDuplicateKey(r))}
+                          asesor={asesores.get(r.asesor_id)}
+                          licenciado={r.licenciado_id ? asesores.get(r.licenciado_id) : undefined}
+                          auditCode={r.qa_auditoria_id ? auditCodes.get(r.qa_auditoria_id) : undefined}
+                          onAudited={() => setReloadKey((k) => k + 1)}
+                          isSuperAdmin={isSuperAdmin}
+                          analistas={analistasList}
+                          onReasignado={() => setReloadKey((k) => k + 1)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </>
         )}
       </section>
