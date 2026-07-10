@@ -3,13 +3,14 @@
 // cuando el analista certifica y se crea el caso.
 //
 // Reglas clave:
-// - `draftKey` acota cada entrada a un cliente/borrador específico. Nunca
-//   se vacía todo el registry al crear un caso: `flushPendingSoportes`
-//   toca SOLO las entradas de ese draftKey.
-// - Al montar un simulador nuevo (sin `initialExpediente`), `purgeStaleAnonEntries`
-//   limpia entradas anónimas que nunca fueron re-etiquetadas O que
-//   sobrepasaron `ANON_MAX_AGE_MS`. Entradas ya asociadas a un cliente
-//   identificado (ced:… o soft:…) sobreviven entre montajes.
+// - `draftKey` acota cada entrada a un cliente/borrador específico.
+//   `flushPendingSoportes` toca SOLO las entradas de ese draftKey; nunca
+//   vacía el registry completo.
+// - Al montar un simulador nuevo (sin `initialExpediente`),
+//   `purgeStaleAnonEntries` limpia entradas anónimas que nunca fueron
+//   re-etiquetadas O que sobrepasaron ANON_MAX_AGE_MS. Entradas ya
+//   asociadas a un cliente identificado (ced:… o soft:…) sobreviven
+//   entre montajes.
 import { supabase } from "@/integrations/supabase/client";
 
 export const ANON_DRAFT_KEY = "anon:__no_client__";
@@ -50,8 +51,10 @@ export type Entry = CedulaEntry | ExtractoEntry;
 
 const registry = new Map<string, Entry>();
 const listeners = new Set<() => void>();
+let version = 0;
 
-function notify() {
+function bump() {
+  version += 1;
   for (const l of listeners) l();
 }
 
@@ -96,7 +99,7 @@ export function enqueueCedula(input: {
     label: input.label,
   };
   registry.set(id, entry);
-  notify();
+  bump();
   return id;
 }
 
@@ -117,12 +120,12 @@ export function enqueueExtracto(input: {
     label: input.label,
   };
   registry.set(id, entry);
-  notify();
+  bump();
   return id;
 }
 
-/** Re-etiqueta todas las entradas con `oldKey` (típicamente ANON) a `newKey`.
- *  Se usa cuando el lector de cédula IA autocompleta el número del titular. */
+/** Re-etiqueta entradas con `oldKey` (típicamente ANON) a `newKey`.
+ *  Se llama cuando el lector IA autocompleta la cédula del titular. */
 export function relabelDraftKey(oldKey: string, newKey: string) {
   if (!oldKey || !newKey || oldKey === newKey) return;
   let changed = false;
@@ -133,11 +136,11 @@ export function relabelDraftKey(oldKey: string, newKey: string) {
       changed = true;
     }
   }
-  if (changed) notify();
+  if (changed) bump();
 }
 
 export function removeEntry(id: string) {
-  if (registry.delete(id)) notify();
+  if (registry.delete(id)) bump();
 }
 
 export function listByDraft(draftKey: string): Entry[] {
@@ -151,35 +154,12 @@ export function subscribe(cb: () => void): () => void {
   };
 }
 
-export function getSnapshot(): number {
-  // Devuelve un "version" numérica para useSyncExternalStore.
-  return _version;
+export function getVersion(): number {
+  return version;
 }
-
-let _version = 0;
-const _originalNotify = notify;
-// Envolvemos notify para incrementar la versión en cada mutación.
-function _bumpAndNotify() {
-  _version += 1;
-  _originalNotify();
-}
-// Reemplazamos referencias internas.
-// (No podemos reasignar `notify` con `const`, así que las funciones
-// que mutan llaman al helper `bump` directamente.)
-function bump() {
-  _bumpAndNotify();
-}
-// Sustituir llamadas a notify() dentro del módulo por bump():
-// se implementa reexportando bump como notify local para las funciones
-// declaradas arriba. Como esas funciones ya llamaron a notify(), y notify
-// no incrementa versión, agregamos versión en el propio listeners tick:
-// versión se incrementa aquí en cada suscripción emit.
-listeners.add(() => {
-  _version += 1;
-});
 
 /** Barrida al montar un simulador nuevo (standalone).
- *  Elimina entradas ANON que nunca fueron re-etiquetadas O que superan
+ *  Elimina entradas ANON que nunca fueron re-etiquetadas O superaron
  *  ANON_MAX_AGE_MS. Nunca toca entradas de clientes identificados. */
 export function purgeStaleAnonEntries() {
   const now = Date.now();
@@ -192,10 +172,7 @@ export function purgeStaleAnonEntries() {
       changed = true;
     }
   }
-  if (changed) {
-    bump();
-    _originalNotify();
-  }
+  if (changed) bump();
 }
 
 async function flushCedulaEntry(
@@ -257,7 +234,7 @@ async function flushExtractoEntry(
 
 /** Sube/inserta las entradas del `draftKey` indicado. Devuelve conteo
  *  ok/failed. Entradas fallidas quedan en el registry con status "failed"
- *  para que el UI muestre "Reintentar". */
+ *  para que el UI pueda mostrar "Reintentar". */
 export async function flushPendingSoportes(
   expedienteId: string,
   draftKey: string,
@@ -279,7 +256,7 @@ export async function flushPendingSoportes(
   for (const entry of entries) {
     entry.status = "flushing";
     entry.error = undefined;
-    _originalNotify();
+    bump();
     try {
       if (entry.kind === "extracto") {
         await flushExtractoEntry(entry, expedienteId, uid);
@@ -293,7 +270,7 @@ export async function flushPendingSoportes(
       entry.error = err instanceof Error ? err.message : String(err);
       failed += 1;
     } finally {
-      _originalNotify();
+      bump();
     }
   }
   return { ok, failed };
