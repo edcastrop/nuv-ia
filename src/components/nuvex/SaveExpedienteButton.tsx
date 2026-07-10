@@ -109,7 +109,7 @@ export function SaveExpedienteButton({
           "No se puede guardar este caso: faltan datos mínimos del crédito.\n\n" +
             lista +
             "\n\nCompleta la ficha del cliente y del crédito antes de guardar. " +
-            "NUVIA ya no acepta expedientes sin banco, producto, cédula o número de crédito " +
+            "NUVIA ya no acepta expedientes sin banco, producto o número de crédito " +
             "porque quedan huérfanos en el tablero de Casos y bloquean la auditoría QA y honorarios.",
         );
       }
