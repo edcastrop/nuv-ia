@@ -399,6 +399,15 @@ export function SimuladorPage() {
             apoderado: emptyApoderado(),
           },
           auditoriaId: audit.auditoriaId,
+          // Honorarios ya aprobados por el analista en el simulador.
+          // Si vienen en el snapshot, el server los usa tal cual en el INSERT
+          // de `expedientes` en lugar de los ceros hardcodeados por
+          // maestroToExpediente. Sin snapshot, se mantiene el comportamiento
+          // anterior (ceros por defecto).
+          honorariosBase: certification?.snapshot?.honorariosBase ?? null,
+          honorariosFinal: certification?.snapshot?.honorariosFinal ?? null,
+          descuento: certification?.snapshot?.descuento ?? null,
+          propuestaData: certification?.snapshot?.propuesta ?? null,
         },
       })) as { maestro: ExpedienteMaestro; expediente: Expediente };
       const maestro = certResult.maestro;
