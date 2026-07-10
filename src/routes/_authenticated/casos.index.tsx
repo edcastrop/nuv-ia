@@ -188,6 +188,15 @@ function CasosPage() {
   const [analistaId, setAnalistaId] = useState<string>("");
   const [modalidad, setModalidad] = useState<string>("");
 
+  // Grupos visuales (colapsados por defecto). La agrupación es únicamente de render.
+  const [openGroups, setOpenGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (k: string) =>
+    setOpenGroups((prev) => {
+      const n = new Set(prev);
+      if (n.has(k)) n.delete(k); else n.add(k);
+      return n;
+    });
+
   useEffect(() => {
     const t = setTimeout(() => {
       if (qLocal !== search) {
