@@ -645,32 +645,176 @@ export function auditar(input: AuditarInput): AuditarOutput {
 
   // Reclasificación administrativa (Fase 1 y 1.5 del motor de diagnóstico):
   // ciertos hallazgos son consecuencia de abonos a capital no reflejados
-  // aún en la reprogramación del banco (misma causa raíz) y no deben
-  // penalizar el QA Score cuando el resto del extracto reconcilia bien.
-  // La condición se evalúa sobre `hallazgos` (misma lista que usa
-  // sevExtracto), no sobre `incs`, porque pueden existir hallazgos críticos
-  // SIN inconsistencia paralela (ej. TASA_FUERA_RANGO, FALTA_SALDO).
-  //   · Fase 1  → PLAZO_IMPLICITO_* (ver `esPlazoAdministrativo`).
-  //   · Fase 1.5 → CUOTA_VS_TEORICA (ver `esCuotaAdministrativa`).
+  // aún en la reprogramación del banco (misma causa raíz).
+  //
+  // Regla (endurecida): NO se borran inconsistencias. Se REBAJAN de severidad
+  // y se aplica un tope de score (`scoreCap`) según el tipo de conciliación:
+  //   · Reconciliada (sólo hallazgos de abono extraordinario) → tope 94.
+  //   · No conciliable (coexisten otros críticos)             → tope 85 + requiere auditoría.
+  //   · Sin admin subyacente                                  → sin cambios.
+  // Nunca puede haber score 100 si hubo `plazoAdministrativo` o
+  // `cuotaAdministrativa`.
   const hpPreview = computarHallazgosBase(input, rec);
   const plazoAdministrativo = esPlazoAdministrativo(hpPreview);
   const cuotaAdministrativa = esCuotaAdministrativa(hpPreview);
-  const incs = incsRaw.filter((i) => {
-    if (plazoAdministrativo && i.tipo === "plazo") return false;
-    // Sólo Check 6 de compararExtracto usa (tipo:"cuota", campo:"cuota").
-    // `incFaltantes` usa campo:"extracto.cuota"; `compararSimulacion` usa
-    // "ahorro_proyectado"/"nuevo_plazo". Filtro seguro.
-    if (cuotaAdministrativa && i.tipo === "cuota" && i.campo === "cuota") return false;
-    return true;
+  const { inconsistenciasAjustadas, conciliacion } = aplicarConciliacionAbonoExtraordinario({
+    inconsistencias: incsRaw,
+    hp: hpPreview,
   });
+  const incs = inconsistenciasAjustadas;
 
-  const score = calcularScore(incs, faltantes.length, tol);
+  const scoreRaw = calcularScore(incs, faltantes.length, tol);
+  const score = aplicarScoreCap(scoreRaw, conciliacion, tol);
   const veredicto = construirVeredicto(input, rec, incs, score, {
     plazoAdministrativo,
     cuotaAdministrativa,
     precomputed: hpPreview,
+    conciliacion,
   });
   return { motorVersion: QA_MOTOR_VERSION, reconstruccion: rec, inconsistencias: incs, score, faltantes, veredicto };
+}
+
+// ──────────────────────────────────────────────────────────────
+// 8.b Conciliación por abono extraordinario (reclasifica, no borra)
+// ──────────────────────────────────────────────────────────────
+export interface ConciliacionAbonoExtraordinario {
+  detectada: boolean;
+  nivel: "ninguna" | "reconciliada" | "critica_no_conciliable";
+  /** Tope máximo de score aplicable. `null` = sin tope. */
+  scoreCap: number | null;
+  requiereAuditoria: boolean;
+  hipotesis: string[];
+  recomendacionAnalista: string | null;
+}
+
+export function aplicarConciliacionAbonoExtraordinario(args: {
+  inconsistencias: Inconsistencia[];
+  hp: HallazgosBase;
+}): { inconsistenciasAjustadas: Inconsistencia[]; conciliacion: ConciliacionAbonoExtraordinario } {
+  const { inconsistencias, hp } = args;
+
+  // "Underlying" = hay hallazgo compatible con abono extraordinario
+  // (dirección correcta), independientemente de que coexistan otros críticos.
+  const tienePlazoUnderlying =
+    hp.hallazgos.some(
+      (h) => h.codigo === "PLAZO_IMPLICITO_VS_REPORTADO" || h.codigo === "PLAZO_IMPLICITO_LEVE",
+    ) && hp.desfasePlazo !== undefined && hp.desfasePlazo < 0;
+  const tieneCuotaUnderlying =
+    hp.hallazgos.some((h) => h.codigo === "CUOTA_VS_TEORICA") &&
+    hp.desfaseCuota !== undefined && hp.desfaseCuota > 0;
+
+  if (!tienePlazoUnderlying && !tieneCuotaUnderlying) {
+    return {
+      inconsistenciasAjustadas: inconsistencias,
+      conciliacion: {
+        detectada: false,
+        nivel: "ninguna",
+        scoreCap: null,
+        requiereAuditoria: false,
+        hipotesis: [],
+        recomendacionAnalista: null,
+      },
+    };
+  }
+
+  const otroCritico = hp.hallazgos.some(
+    (h) =>
+      h.severidad === "critica" &&
+      h.codigo !== "PLAZO_IMPLICITO_VS_REPORTADO" &&
+      h.codigo !== "CUOTA_VS_TEORICA",
+  );
+
+  const downgrade: Record<Severidad, Severidad> = {
+    critica: "warning",
+    warning: "info",
+    info: "info",
+  };
+  const CAUSA_TAG = "[causa_probable=abono_extraordinario_no_normalizado]";
+  const marcar = (i: Inconsistencia): Inconsistencia => ({
+    ...i,
+    severidad: downgrade[i.severidad],
+    mensaje: i.mensaje.includes(CAUSA_TAG) ? i.mensaje : `${i.mensaje} · ${CAUSA_TAG}`,
+  });
+
+  const inconsistenciasAjustadas = inconsistencias.map((i) => {
+    if (tienePlazoUnderlying && i.tipo === "plazo") return marcar(i);
+    if (tieneCuotaUnderlying && i.tipo === "cuota" && i.campo === "cuota") return marcar(i);
+    return i;
+  });
+
+  const hipotesis: string[] = [];
+  if (tienePlazoUnderlying)
+    hipotesis.push(
+      "El cliente hizo abonos extra a capital que reducen el plazo real, pero el banco aún reporta el plazo original.",
+    );
+  if (tieneCuotaUnderlying)
+    hipotesis.push(
+      "El cliente paga una cuota superior a la teórica: probablemente abonos vía cuota o cargos no reflejados en la reamortización.",
+    );
+
+  if (otroCritico) {
+    return {
+      inconsistenciasAjustadas,
+      conciliacion: {
+        detectada: true,
+        nivel: "critica_no_conciliable",
+        scoreCap: 85,
+        requiereAuditoria: true,
+        hipotesis,
+        recomendacionAnalista:
+          "Coexisten hallazgos críticos independientes del abono extraordinario. Solicite proyecciones oficiales al banco y escale a Dirección QA antes de certificar.",
+      },
+    };
+  }
+
+  return {
+    inconsistenciasAjustadas,
+    conciliacion: {
+      detectada: true,
+      nivel: "reconciliada",
+      scoreCap: 94,
+      requiereAuditoria: false,
+      hipotesis,
+      recomendacionAnalista:
+        "Confirme con el cliente los abonos a capital realizados y solicite al banco la proyección oficial actualizada antes de emitir la propuesta.",
+    },
+  };
+}
+
+function aplicarScoreCap(
+  score: ScoreResultado,
+  conciliacion: ConciliacionAbonoExtraordinario,
+  tol: Tolerancias,
+): ScoreResultado {
+  if (conciliacion.scoreCap === null) return score;
+  if (score.score <= conciliacion.scoreCap) return score;
+
+  const capped = Math.round(conciliacion.scoreCap * 100) / 100;
+  const crit = score.penalizaciones.some((p) => p.tipo === "inconsistencias_critica" && p.valor > 0);
+
+  let dictamen: Dictamen;
+  if (crit) dictamen = "rechazado";
+  else if (capped >= tol.umbScoreExcelente) dictamen = "aprobado";
+  else if (capped >= tol.umbScoreAprobado) dictamen = "aprobado_obs";
+  else if (capped >= tol.umbScoreRevisar) dictamen = "requiere_revision";
+  else dictamen = "rechazado";
+
+  let categoria: Categoria;
+  if (dictamen === "rechazado") categoria = "rechazado";
+  else if (capped >= tol.umbScoreExcelente) categoria = "excelente";
+  else if (capped >= tol.umbScoreAprobado) categoria = "aprobado";
+  else if (capped >= tol.umbScoreRevisar) categoria = "revisar";
+  else categoria = "rechazado";
+
+  return {
+    score: capped,
+    categoria,
+    dictamen,
+    penalizaciones: [
+      ...score.penalizaciones,
+      { tipo: `score_cap_${conciliacion.nivel}`, valor: Math.max(0, score.score - capped) },
+    ],
+  };
 }
 
 
