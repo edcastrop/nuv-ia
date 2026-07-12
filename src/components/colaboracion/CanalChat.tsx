@@ -295,7 +295,7 @@ function MensajeItem({ m, esMio, meMencionan, persona, mencionados }: { m: Mensa
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 text-[11px]" style={{ color: "var(--nuvia-text-secondary)" }}>
           <span className="font-semibold" style={{ color: "var(--nuvia-text-primary)" }}>{esMio ? "Tú" : (persona?.nombre ?? "Colaborador")}</span>
-          <span>{new Date(m.created_at).toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" })}</span>
+          <span>{new Date(m.created_at).toLocaleString("es-CO", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</span>
           {meMencionan && (
             <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(59,130,246,0.18)", color: "var(--nuvia-accent-blue)" }}>
               <AtSign size={10} /> Te mencionaron
