@@ -86,6 +86,7 @@ interface AlertItem {
   detalle: string;
   descripcion: string;
   minutos: number;
+  fechaReferencia: string | null;
   priority: Priority;
   risk: RiskTier;
   monto?: number;
