@@ -267,6 +267,9 @@ function NotificacionesPage() {
     else if (tab === "honorarios") list = list.filter((i) => i.kind === "honorario");
     else if (tab === "criticos") list = list.filter((i) => i.priority === "critica");
     if (banco) list = list.filter((i) => i.banco === banco);
+    if (rango !== "todos") {
+      list = list.filter((i) => isInDateRange(new Date(now - i.minutos * 60_000).toISOString(), rango));
+    }
     if (q.trim()) {
       const t = q.toLowerCase();
       list = list.filter((i) =>
@@ -278,7 +281,7 @@ function NotificacionesPage() {
     }
     const order: Record<Priority, number> = { critica: 0, alta: 1, media: 2, baja: 3 };
     return [...list].sort((a, b) => (order[a.priority] - order[b.priority]) || (b.minutos - a.minutos));
-  }, [items, tab, q, banco]);
+  }, [items, tab, q, banco, rango, now]);
 
   const counts = useMemo(() => ({
     todos: items.length,
