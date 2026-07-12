@@ -125,6 +125,7 @@ function isInDateRange(iso: string | null | undefined, rango: DateRangeKey): boo
 
 function NotificacionesPage() {
   const [tab, setTab] = useState<TabKey>("todos");
+  const [rango, setRango] = useState<DateRangeKey>("todos");
   const [q, setQ] = useState("");
   const [banco, setBanco] = useState("");
   const [alertas, setAlertas] = useState<Alerta[]>([]);
