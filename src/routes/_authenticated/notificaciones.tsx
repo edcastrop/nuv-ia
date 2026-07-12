@@ -98,8 +98,34 @@ interface AlertItem {
   onLeida?: () => Promise<void>;
 }
 
+type DateRangeKey = "hoy" | "ayer" | "7d" | "30d" | "todos";
+
+const DATE_RANGE_OPTIONS: { k: DateRangeKey; label: string }[] = [
+  { k: "hoy", label: "Hoy" },
+  { k: "ayer", label: "Ayer" },
+  { k: "7d", label: "Últimos 7 días" },
+  { k: "30d", label: "Últimos 30 días" },
+  { k: "todos", label: "Todos" },
+];
+
+function isInDateRange(iso: string | null | undefined, rango: DateRangeKey): boolean {
+  if (rango === "todos") return true;
+  if (!iso) return false;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const t = d.getTime();
+  if (rango === "hoy") return t >= startToday;
+  if (rango === "ayer") return t >= startToday - 86_400_000 && t < startToday;
+  if (rango === "7d") return t >= now.getTime() - 7 * 86_400_000;
+  if (rango === "30d") return t >= now.getTime() - 30 * 86_400_000;
+  return true;
+}
+
 function NotificacionesPage() {
   const [tab, setTab] = useState<TabKey>("todos");
+  const [rango, setRango] = useState<DateRangeKey>("todos");
   const [q, setQ] = useState("");
   const [banco, setBanco] = useState("");
   const [alertas, setAlertas] = useState<Alerta[]>([]);
@@ -241,6 +267,9 @@ function NotificacionesPage() {
     else if (tab === "honorarios") list = list.filter((i) => i.kind === "honorario");
     else if (tab === "criticos") list = list.filter((i) => i.priority === "critica");
     if (banco) list = list.filter((i) => i.banco === banco);
+    if (rango !== "todos") {
+      list = list.filter((i) => isInDateRange(new Date(now - i.minutos * 60_000).toISOString(), rango));
+    }
     if (q.trim()) {
       const t = q.toLowerCase();
       list = list.filter((i) =>
@@ -252,7 +281,7 @@ function NotificacionesPage() {
     }
     const order: Record<Priority, number> = { critica: 0, alta: 1, media: 2, baja: 3 };
     return [...list].sort((a, b) => (order[a.priority] - order[b.priority]) || (b.minutos - a.minutos));
-  }, [items, tab, q, banco]);
+  }, [items, tab, q, banco, rango, now]);
 
   const counts = useMemo(() => ({
     todos: items.length,
@@ -509,6 +538,27 @@ function NotificacionesPage() {
           <option value="" style={{ background: C.bg }}>Todos los bancos</option>
           {bancos.map((b) => (<option key={b} value={b} style={{ background: C.bg }}>{b}</option>))}
         </select>
+      </div>
+
+      {/* DATE RANGE QUICK FILTER */}
+      <div className="flex items-center gap-2 flex-wrap mt-2">
+        <span style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "rgba(231,236,245,.55)" }}>Rango</span>
+        {DATE_RANGE_OPTIONS.map((o) => {
+          const active = rango === o.k;
+          return (
+            <button
+              key={o.k}
+              onClick={() => setRango(o.k)}
+              className="nvx-chip"
+              style={{
+                padding: "5px 10px", borderRadius: 999, fontSize: 11, cursor: "pointer",
+                ...(active ? { boxShadow: `0 0 14px ${C.blue}55, inset 0 0 0 1px ${C.blue}aa`, borderColor: C.blue } : {}),
+              }}
+            >
+              {o.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ============ ALERT CARDS (expediente style) ============ */}
