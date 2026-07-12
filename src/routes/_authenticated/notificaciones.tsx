@@ -86,6 +86,7 @@ interface AlertItem {
   detalle: string;
   descripcion: string;
   minutos: number;
+  fechaReferencia: string | null;
   priority: Priority;
   risk: RiskTier;
   monto?: number;
@@ -194,7 +195,7 @@ function NotificacionesPage() {
         expedienteId: q.expediente_id,
         detalle: `QA pendiente ${fmtHours(mins)}`,
         descripcion: "Dictamen NUVIA en espera. Bloquea liberación a radicación.",
-        minutos: mins, priority: p, risk,
+        minutos: mins, fechaReferencia: q.solicitada_at ?? null, priority: p, risk,
         phase: "QA", blocked: true, recovery,
         href: "/qa-ai", hrefParams: {}, cta: "Auditar",
       });
@@ -213,7 +214,7 @@ function NotificacionesPage() {
         expedienteId: a.expediente_id,
         detalle: `Caso estancado ${a.dias_estancado}d`,
         descripcion: `Sin movimiento operativo en ${labelEstado(exp?.estado_caso ?? null)}.`,
-        minutos: mins, priority: p, risk,
+        minutos: mins, fechaReferencia: a.created_at ?? null, priority: p, risk,
         phase: phaseFromEstado(exp?.estado_caso), blocked: true, recovery,
         href: "/casos/$id", hrefParams: { id: a.expediente_id }, cta: "Abrir",
         onLeida: () => marcarLeida(a.id),
@@ -231,7 +232,7 @@ function NotificacionesPage() {
         expedienteId: e.id,
         detalle: `Sin contacto ${dias}d`,
         descripcion: `Requiere seguimiento en fase ${labelEstado(e.estado_caso)}.`,
-        minutos: dias * 1440, priority: p, risk,
+        minutos: dias * 1440, fechaReferencia: e.updated_at ?? null, priority: p, risk,
         phase: phaseFromEstado(e.estado_caso), blocked: false, recovery,
         href: "/casos/$id", hrefParams: { id: e.id }, cta: "Abrir",
       });
@@ -247,6 +248,7 @@ function NotificacionesPage() {
         detalle: `Honorario ${dias >= 15 ? "vencido" : "pendiente"} ${dias}d`,
         descripcion: `${labelEstado(e.estado_caso)} · recuperación de honorarios NUVIA.`,
         minutos: Math.floor((now - new Date(e.updated_at).getTime()) / 60_000),
+        fechaReferencia: e.updated_at ?? null,
         priority: dias >= 15 ? "alta" : "media",
         risk: dias >= 15 ? "alto" : "oportunidad",
         monto: e.honorarios_final ?? undefined,
@@ -268,7 +270,7 @@ function NotificacionesPage() {
     else if (tab === "criticos") list = list.filter((i) => i.priority === "critica");
     if (banco) list = list.filter((i) => i.banco === banco);
     if (rango !== "todos") {
-      list = list.filter((i) => isInDateRange(new Date(now - i.minutos * 60_000).toISOString(), rango));
+      list = list.filter((i) => isInDateRange(i.fechaReferencia, rango));
     }
     if (q.trim()) {
       const t = q.toLowerCase();
