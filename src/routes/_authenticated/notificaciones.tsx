@@ -540,6 +540,27 @@ function NotificacionesPage() {
         </select>
       </div>
 
+      {/* DATE RANGE QUICK FILTER */}
+      <div className="flex items-center gap-2 flex-wrap mt-2">
+        <span style={{ fontSize: 10, letterSpacing: 1, textTransform: "uppercase", color: "rgba(231,236,245,.55)" }}>Rango</span>
+        {DATE_RANGE_OPTIONS.map((o) => {
+          const active = rango === o.k;
+          return (
+            <button
+              key={o.k}
+              onClick={() => setRango(o.k)}
+              className="nvx-chip"
+              style={{
+                padding: "5px 10px", borderRadius: 999, fontSize: 11, cursor: "pointer",
+                ...(active ? { boxShadow: `0 0 14px ${C.blue}55, inset 0 0 0 1px ${C.blue}aa`, borderColor: C.blue } : {}),
+              }}
+            >
+              {o.label}
+            </button>
+          );
+        })}
+      </div>
+
       {/* ============ ALERT CARDS (expediente style) ============ */}
       <div className="mt-3 flex flex-col gap-2" style={{ paddingBottom: 100 }}>
         {loading ? (
