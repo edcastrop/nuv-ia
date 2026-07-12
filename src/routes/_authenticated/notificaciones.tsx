@@ -98,6 +98,31 @@ interface AlertItem {
   onLeida?: () => Promise<void>;
 }
 
+type DateRangeKey = "hoy" | "ayer" | "7d" | "30d" | "todos";
+
+const DATE_RANGE_OPTIONS: { k: DateRangeKey; label: string }[] = [
+  { k: "hoy", label: "Hoy" },
+  { k: "ayer", label: "Ayer" },
+  { k: "7d", label: "Últimos 7 días" },
+  { k: "30d", label: "Últimos 30 días" },
+  { k: "todos", label: "Todos" },
+];
+
+function isInDateRange(iso: string | null | undefined, rango: DateRangeKey): boolean {
+  if (rango === "todos") return true;
+  if (!iso) return false;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return false;
+  const now = new Date();
+  const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const t = d.getTime();
+  if (rango === "hoy") return t >= startToday;
+  if (rango === "ayer") return t >= startToday - 86_400_000 && t < startToday;
+  if (rango === "7d") return t >= now.getTime() - 7 * 86_400_000;
+  if (rango === "30d") return t >= now.getTime() - 30 * 86_400_000;
+  return true;
+}
+
 function NotificacionesPage() {
   const [tab, setTab] = useState<TabKey>("todos");
   const [q, setQ] = useState("");
