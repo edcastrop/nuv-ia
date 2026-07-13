@@ -197,7 +197,7 @@ export function CommandCenter(props: {
       />
 
       {/* ROW 5 · Review Queue compact */}
-      <ReviewQueue rows={filtered} />
+      <ReviewQueue rows={filtered} showCreateCaseCTA={props.showCreateCaseCTA} />
     </div>
   );
 }
