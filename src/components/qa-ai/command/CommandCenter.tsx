@@ -91,6 +91,7 @@ function applyFilters(rows: CCRow[], f: Filters): CCRow[] {
 export function CommandCenter(props: {
   rows: CCRow[]; bancos: CCBank[]; analistas: CCAnalista[]; topErrores: CCError[]; tendencia: CCTrend[]; prioridad: Record<string, number>;
   globalQ?: string;
+  showCreateCaseCTA?: boolean;
 }) {
   const [f, setF] = useState<Filters>(EMPTY_FILTERS);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
@@ -196,7 +197,7 @@ export function CommandCenter(props: {
       />
 
       {/* ROW 5 · Review Queue compact */}
-      <ReviewQueue rows={filtered} />
+      <ReviewQueue rows={filtered} showCreateCaseCTA={props.showCreateCaseCTA} />
     </div>
   );
 }
@@ -1217,7 +1218,7 @@ function HolographicBrain() {
 
 
 /* ═══════════════════ REVIEW QUEUE (Top 5) ═══════════════════ */
-function ReviewQueue({ rows }: { rows: CCRow[] }) {
+function ReviewQueue({ rows, showCreateCaseCTA }: { rows: CCRow[]; showCreateCaseCTA?: boolean }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const score = (s: number) => s >= 95 ? C.success : s >= 85 ? C.warning : C.danger;
   const dictamen: Record<string, { label: string; color: string }> = {
@@ -1417,10 +1418,25 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                         background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
                       }}>{d.label}</span>
                       {r.auditor_aprobado_at && (
-                        <span title="Aprobada por auditor" style={{
-                          padding: "2px 7px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
-                          background: `${C.success}1f`, color: C.success, border: `1px solid ${C.success}55`,
-                        }}>✓ Auditor</span>
+                        showCreateCaseCTA && !r.expediente_id ? (
+                          <Link
+                            to="/herramientas/simulador"
+                            search={{ auditoriaId: r.id }}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ textDecoration: "none" }}
+                          >
+                            <span title="Aprobada por auditor — continúa en el simulador para crear el caso" style={{
+                              padding: "2px 8px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
+                              background: `${C.success}2f`, color: C.success, border: `1px solid ${C.success}77`,
+                              whiteSpace: "nowrap", cursor: "pointer",
+                            }}>✓ Aprobada · Crear caso</span>
+                          </Link>
+                        ) : (
+                          <span title="Aprobada por auditor" style={{
+                            padding: "2px 7px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
+                            background: `${C.success}1f`, color: C.success, border: `1px solid ${C.success}55`,
+                          }}>✓ Auditor</span>
+                        )
                       )}
                     </div>
                     <div style={{
