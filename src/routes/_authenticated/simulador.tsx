@@ -119,11 +119,21 @@ export function SimuladorPage() {
               try { exp = await getExpediente(expIdAud); } catch { /* puede ser auditoría sin expediente operativo */ }
             }
             if (auditoria && inputs) {
-              exp = overlayAuditInputs(exp ?? expedienteFromAudit(auditoria, inputs), inputs);
-              try {
-                clearSimulatorDraft("pesos", exp.id);
-                clearSimulatorDraft("uvr", exp.id);
-              } catch { /* noop */ }
+              if (exp) {
+                exp = overlayAuditInputs(exp, inputs);
+                try {
+                  clearSimulatorDraft("pesos", exp.id);
+                  clearSimulatorDraft("uvr", exp.id);
+                } catch { /* noop */ }
+              } else if (draftMode) {
+                writeStandaloneDraftFromAudit(auditoria, inputs);
+              } else {
+                exp = overlayAuditInputs(expedienteFromAudit(auditoria, inputs), inputs);
+                try {
+                  clearSimulatorDraft("pesos", exp.id);
+                  clearSimulatorDraft("uvr", exp.id);
+                } catch { /* noop */ }
+              }
             }
             const modAud = typeof auditoria?.modalidad === "string" ? auditoria.modalidad : inputs?.modalidad;
             if (modAud === "uvr") setMode("uvr");
@@ -461,10 +471,69 @@ export function SimuladorPage() {
   };
 
 
-  if (maestroId && loadingMaestro) {
+  const writeStandaloneDraftFromAudit = (
+    auditoria: Record<string, unknown>,
+    inputs: Record<string, unknown>,
+  ) => {
+    if (typeof window === "undefined") return;
+    const rec = asRecord(inputs.reconstruccion);
+    const ext = asRecord(inputs.extracto);
+    const modalidad = String(inputs.modalidad ?? auditoria.modalidad ?? "");
+    const modeFromAudit: "pesos" | "uvr" = modalidad === "uvr" ? "uvr" : "pesos";
+    const text = (...values: unknown[]) => firstClean(...values);
+    const cliente = {
+      nombre: text(ext.cliente, ext.titular, auditoria.cliente_nombre),
+      cedula: text(ext.cedula, ext.documento, ext.identificacion),
+      numeroCredito: text(ext.numeroCredito, ext.numero_credito, ext.numeroObligacion, ext.obligacion),
+      banco: text(ext.banco, auditoria.banco),
+      tipoProducto: text(ext.producto, auditoria.producto, modalidad === "uvr" ? "Crédito UVR" : "Crédito en pesos"),
+      productoBancarioId: null,
+      asesor: "",
+      plazoInicial: text(ext.plazoInicial, rec.plazoInicial),
+      cuotasPagadas: text(rec.cuotasPagadas, ext.cuotasPagadas),
+      cuotasPendientes: text(rec.cuotasPendientes, ext.cuotasPendientes),
+      porcentajeHonorarios: "6",
+      correo: "",
+      celular: "",
+      fechaDesembolso: text(ext.fechaDesembolso),
+      lugarExpedicionCedula: "",
+      expedidaEn: "",
+      lugarExpedicionDepartamento: "",
+      lugarExpedicionCiudad: "",
+      lugarExpedicionMunicipio: "",
+      fechaExpedicionCedula: "",
+      fechaExpedicion: "",
+      tipoDocumento: "CC",
+      direccion: "",
+      departamento: "",
+      ciudad: "",
+      municipio: "",
+      perfil: {},
+      ingresos: { tipoCredito: "NoVIS", ocupaciones: [], fuentes: [] },
+    };
+    const baseDraft = {
+      client: cliente,
+      valorDesembolsado: text(rec.valorDesembolsado, ext.valorDesembolsado),
+      saldoCapital: text(rec.saldoCapital, ext.saldoCapital),
+      saldoPesos: text(rec.saldoCapital, ext.saldoCapital),
+      saldoUVR: text(rec.saldoUVR, ext.saldoUVR),
+      valorUVR: text(rec.valorUVR, ext.valorUVR),
+      cuotaActual: text(rec.cuotaBaseSinSubsidio, ext.cuota),
+      cuotaActualPesos: text(rec.cuotaBaseSinSubsidio, ext.cuota),
+      seguros: text(rec.seguros, ext.seguros),
+      tea: text(rec.tasaEa, ext.tasaEa),
+      teaCobrada: text(rec.tasaEaPactada, rec.tasaEa, ext.tasaEa),
+      variacionUVR: text(rec.variacionUvrEa, ext.variacionUvrEa),
+    };
+    try {
+      sessionStorage.setItem(`nuvex.simulatorDraft.${modeFromAudit}.standalone`, JSON.stringify(baseDraft));
+    } catch { /* storage best-effort */ }
+  };
+
+  if ((maestroId || auditoriaId) && loadingMaestro) {
     return (
       <div className="p-12 text-center text-sm text-white/60">
-        Cargando datos del expediente maestro…
+        {auditoriaId ? "Cargando datos de la auditoría…" : "Cargando datos del expediente maestro…"}
       </div>
     );
   }
