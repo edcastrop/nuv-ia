@@ -1418,7 +1418,7 @@ function ReviewQueue({ rows, showCreateCaseCTA }: { rows: CCRow[]; showCreateCas
                         background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
                       }}>{d.label}</span>
                       {r.auditor_aprobado_at && (
-                        props.showCreateCaseCTA && !r.expediente_id ? (
+                        showCreateCaseCTA && !r.expediente_id ? (
                           <Link
                             to="/herramientas/simulador"
                             search={{ auditoriaId: r.id }}
