@@ -91,6 +91,7 @@ function applyFilters(rows: CCRow[], f: Filters): CCRow[] {
 export function CommandCenter(props: {
   rows: CCRow[]; bancos: CCBank[]; analistas: CCAnalista[]; topErrores: CCError[]; tendencia: CCTrend[]; prioridad: Record<string, number>;
   globalQ?: string;
+  showCreateCaseCTA?: boolean;
 }) {
   const [f, setF] = useState<Filters>(EMPTY_FILTERS);
   const [priorityFilter, setPriorityFilter] = useState<string | null>(null);
