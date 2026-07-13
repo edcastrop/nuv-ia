@@ -213,6 +213,7 @@ function MisAuditoriasPage() {
           tendencia={data.tendencia}
           prioridad={data.prioridad}
           globalQ={globalQ}
+          showCreateCaseCTA
         />
       )}
 
