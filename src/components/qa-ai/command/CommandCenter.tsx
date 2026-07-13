@@ -1218,7 +1218,7 @@ function HolographicBrain() {
 
 
 /* ═══════════════════ REVIEW QUEUE (Top 5) ═══════════════════ */
-function ReviewQueue({ rows }: { rows: CCRow[] }) {
+function ReviewQueue({ rows, showCreateCaseCTA }: { rows: CCRow[]; showCreateCaseCTA?: boolean }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const score = (s: number) => s >= 95 ? C.success : s >= 85 ? C.warning : C.danger;
   const dictamen: Record<string, { label: string; color: string }> = {
