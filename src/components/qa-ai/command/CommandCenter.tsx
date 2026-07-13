@@ -1381,6 +1381,7 @@ function ReviewQueue({ rows, showCreateCaseCTA }: { rows: CCRow[]; showCreateCas
               const p = prioridad(r);
               const d = dictamen[r.dictamen] ?? { label: r.dictamen, color: C.textSec };
               const scoreCol = score(r.qa_score);
+              const canCreateCaseFromApprovedAudit = showCreateCaseCTA && !!r.auditor_aprobado_at && !r.expediente_id;
               const iniciales = (r.cliente_nombre ?? "?").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]!.toUpperCase()).join("") || "·";
               const fecha = r.ejecutado_at
                 ? new Date(r.ejecutado_at).toLocaleString("es-CO", { day: "2-digit", month: "short", year: "2-digit", hour: "2-digit", minute: "2-digit" })
@@ -1418,10 +1419,10 @@ function ReviewQueue({ rows, showCreateCaseCTA }: { rows: CCRow[]; showCreateCas
                         background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
                       }}>{d.label}</span>
                       {r.auditor_aprobado_at && (
-                        showCreateCaseCTA && !r.expediente_id ? (
+                        canCreateCaseFromApprovedAudit ? (
                           <Link
                             to="/herramientas/simulador"
-                            search={{ auditoriaId: r.id }}
+                            search={{ auditoriaId: r.id, modo: r.modalidad === "uvr" ? "uvr" : "pesos" }}
                             onClick={(e) => e.stopPropagation()}
                             style={{ textDecoration: "none" }}
                           >
@@ -1504,13 +1505,24 @@ function ReviewQueue({ rows, showCreateCaseCTA }: { rows: CCRow[]; showCreateCas
                         borderRadius: 8, background: `${C.primary}1a`, color: C.primary,
                         border: `1px solid ${C.primary}44`, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
                       }}>Ver <ArrowRight size={11} /></Link>
-                      <Link
-                        to="/simulador" search={{ auditoriaId: r.id, modo: r.modalidad === "uvr" ? "uvr" : "pesos" } as never}
-                        title="Reconstruir caso" style={{
-                          display: "inline-flex", alignItems: "center", gap: 3, padding: "5px 10px",
-                          borderRadius: 8, background: `${C.secondary}1a`, color: C.secondary,
-                          border: `1px solid ${C.secondary}44`, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
-                        }}><FileSearch size={11} /> Recons.</Link>
+                      {canCreateCaseFromApprovedAudit ? (
+                        <Link
+                          to="/herramientas/simulador"
+                          search={{ auditoriaId: r.id, modo: r.modalidad === "uvr" ? "uvr" : "pesos" }}
+                          title="Crear caso desde auditoría aprobada" style={{
+                            display: "inline-flex", alignItems: "center", gap: 3, padding: "5px 10px",
+                            borderRadius: 8, background: `${C.success}1f`, color: C.success,
+                            border: `1px solid ${C.success}55`, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
+                          }}><FileSearch size={11} /> Crear caso</Link>
+                      ) : (
+                        <Link
+                          to="/simulador" search={{ auditoriaId: r.id, modo: r.modalidad === "uvr" ? "uvr" : "pesos" } as never}
+                          title="Reconstruir caso" style={{
+                            display: "inline-flex", alignItems: "center", gap: 3, padding: "5px 10px",
+                            borderRadius: 8, background: `${C.secondary}1a`, color: C.secondary,
+                            border: `1px solid ${C.secondary}44`, fontSize: 11, fontWeight: 600, whiteSpace: "nowrap",
+                          }}><FileSearch size={11} /> Recons.</Link>
+                      )}
                       {r.extracto_path && (
                         <button onClick={() => openExtracto(r.extracto_path!)} title="Abrir extracto" style={{
                           padding: "5px 8px", borderRadius: 8, background: "transparent",
