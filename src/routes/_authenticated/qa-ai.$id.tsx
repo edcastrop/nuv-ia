@@ -770,6 +770,40 @@ function ResultadoQaAi() {
         auditorOverride={auditorOverride}
       />
 
+      {/* Banner permanente: auditoría aprobada sin caso creado — red de seguridad
+          para llegadas directas o notificaciones viejas sin ?from=simulador. */}
+      {yaAprobadaAuditor && !expedienteIdCert && !puedeVolverAlSimulador && (
+        <div
+          className="rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center gap-3"
+          style={{
+            background: "rgba(31,210,134,0.10)",
+            border: "1px solid rgba(31,210,134,0.42)",
+            boxShadow: "0 8px 24px -14px rgba(31,210,134,0.45)",
+          }}
+        >
+          <CheckCircle2 size={18} style={{ color: "var(--nuvia-success)", flexShrink: 0 }} />
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div className="text-[13px] font-semibold" style={{ color: "var(--nuvia-success)" }}>
+              Esta auditoría fue aprobada.
+            </div>
+            <div className="text-[12px]" style={{ color: "var(--nuvia-text-secondary)" }}>
+              Continúa en el simulador para certificar y crear el caso en el ERP.
+            </div>
+          </div>
+          <Link to="/herramientas/simulador" search={{ auditoriaId: id }}>
+            <button
+              className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+              style={{
+                background: "var(--nuvia-success)", color: "#0B1220", border: "none",
+                cursor: "pointer", boxShadow: "0 8px 20px -10px rgba(31,210,134,0.6)",
+              }}
+            >
+              <Rocket size={14} /> Ir al simulador
+            </button>
+          </Link>
+        </div>
+      )}
+
 
       {/* VISTA RÁPIDA · Ficha compacta para ubicar el caso al instante */}
       {(() => {
