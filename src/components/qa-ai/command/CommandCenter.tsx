@@ -1418,10 +1418,25 @@ function ReviewQueue({ rows }: { rows: CCRow[] }) {
                         background: `${d.color}22`, color: d.color, border: `1px solid ${d.color}44`, whiteSpace: "nowrap",
                       }}>{d.label}</span>
                       {r.auditor_aprobado_at && (
-                        <span title="Aprobada por auditor" style={{
-                          padding: "2px 7px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
-                          background: `${C.success}1f`, color: C.success, border: `1px solid ${C.success}55`,
-                        }}>✓ Auditor</span>
+                        props.showCreateCaseCTA && !r.expediente_id ? (
+                          <Link
+                            to="/herramientas/simulador"
+                            search={{ auditoriaId: r.id }}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ textDecoration: "none" }}
+                          >
+                            <span title="Aprobada por auditor — continúa en el simulador para crear el caso" style={{
+                              padding: "2px 8px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
+                              background: `${C.success}2f`, color: C.success, border: `1px solid ${C.success}77`,
+                              whiteSpace: "nowrap", cursor: "pointer",
+                            }}>✓ Aprobada · Crear caso</span>
+                          </Link>
+                        ) : (
+                          <span title="Aprobada por auditor" style={{
+                            padding: "2px 7px", borderRadius: 999, fontSize: 9.5, fontWeight: 700,
+                            background: `${C.success}1f`, color: C.success, border: `1px solid ${C.success}55`,
+                          }}>✓ Auditor</span>
+                        )
                       )}
                     </div>
                     <div style={{
