@@ -76,6 +76,7 @@ export function SimuladorPage() {
   } | null>(null);
   const certifyDraftAudit = useServerFn(certificarSimulacionDraft);
   const certificarExpediente = useServerFn(certificarExpedienteServer);
+  const fetchAprobacionServer = useServerFn(estadoAprobacionAuditoria);
 
 
 
