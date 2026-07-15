@@ -1133,7 +1133,7 @@ export const estadoAprobacionAuditoria = createServerFn({ method: "POST" })
       origen: r.origen,
       expedienteId: r.expediente_id,
       perteneceAlUsuario,
-      devueltaAlAnalista: !noDevuelta,
+      devueltaAlAnalista: devueltaDiag,
       auditorReal,
       aprobacionAutomatica: scoreAuto,
     };
