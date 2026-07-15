@@ -1071,29 +1071,64 @@ export const estadoAprobacionAuditoria = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { supabase } = context;
+    const { supabase, userId } = context;
     const { data: row, error } = await supabase
       .from("qa_auditorias")
       .select(
-        "id,codigo,origen,dictamen,qa_score,auditor_aprobado_at,auditor_aprobado_by,auditor_override,auditor_override_justificacion,expediente_id",
+        "id,codigo,origen,dictamen,categoria,qa_score,auditor_aprobado_at,auditor_aprobado_by,auditor_override,auditor_override_justificacion,expediente_id,analista_id,devuelto_al_analista_at",
       )
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
-    if (!row) return { aprobada: false as const };
-    const aprobadoAt = (row as { auditor_aprobado_at: string | null }).auditor_aprobado_at;
+    if (!row) return { aprobada: false as const, motivo: "no_encontrada" as const };
+    const r = row as {
+      auditor_aprobado_at: string | null;
+      auditor_aprobado_by: string | null;
+      auditor_override: boolean | null;
+      auditor_override_justificacion: string | null;
+      dictamen: string | null;
+      categoria: string | null;
+      qa_score: number | null;
+      codigo: string | null;
+      origen: string | null;
+      expediente_id: string | null;
+      analista_id: string | null;
+      devuelto_al_analista_at: string | null;
+    };
+
+    // Fuente de verdad server-side de "aprobación vigente".
+    // Reglas (exigidas por el gate de crear caso):
+    //   • auditor_aprobado_at + auditor_aprobado_by presentes
+    //   • no fue devuelta al analista después
+    //   • el analista autenticado es el dueño de la auditoría
+    //   • la auditoría todavía no está vinculada a otro expediente
+    const perteneceAlUsuario = !!r.analista_id && r.analista_id === userId;
+    const noDevuelta = r.devuelto_al_analista_at === null;
+    const auditorReal = !!r.auditor_aprobado_at && !!r.auditor_aprobado_by;
+    const sinExpedienteVinculado = r.expediente_id === null;
+    const scoreAuto =
+      (r.dictamen === "aprobado" || r.dictamen === "aprobado_obs") &&
+      (r.categoria === "excelente" || r.categoria === "aprobado") &&
+      Number(r.qa_score ?? 0) >= 85;
+    const aprobada =
+      perteneceAlUsuario && noDevuelta && sinExpedienteVinculado && (auditorReal || scoreAuto);
+
     return {
-      aprobada: !!aprobadoAt,
-      aprobadoAt: aprobadoAt ?? null,
-      aprobadoPor: (row as { auditor_aprobado_by: string | null }).auditor_aprobado_by ?? null,
-      override: !!(row as { auditor_override: boolean | null }).auditor_override,
-      overrideJustificacion:
-        (row as { auditor_override_justificacion: string | null }).auditor_override_justificacion ?? null,
-      dictamen: (row as { dictamen: string | null }).dictamen ?? null,
-      score: (row as { qa_score: number | null }).qa_score ?? 0,
-      codigo: (row as { codigo: string | null }).codigo ?? null,
-      origen: (row as { origen: string | null }).origen ?? null,
-      expedienteId: (row as { expediente_id: string | null }).expediente_id ?? null,
+      aprobada,
+      aprobadoAt: r.auditor_aprobado_at,
+      aprobadoPor: r.auditor_aprobado_by,
+      override: !!r.auditor_override,
+      overrideJustificacion: r.auditor_override_justificacion,
+      dictamen: r.dictamen,
+      categoria: r.categoria,
+      score: r.qa_score ?? 0,
+      codigo: r.codigo,
+      origen: r.origen,
+      expedienteId: r.expediente_id,
+      perteneceAlUsuario,
+      devueltaAlAnalista: !noDevuelta,
+      auditorReal,
+      aprobacionAutomatica: scoreAuto,
     };
   });
 
