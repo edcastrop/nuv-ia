@@ -68,6 +68,81 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
     const p = data.maestro;
 
     // ─────────────────────────────────────────────────────────────
+    // GATE server-side: si viene auditoriaId, re-consulta la fuente
+    // de verdad (Supabase) y exige integridad completa antes de
+    // proseguir. El frontend puede habilitar el botón visualmente,
+    // pero la autorización REAL vive aquí, con el userId del JWT.
+    //
+    // Reglas verificadas contra columnas reales:
+    //   • qa.analista_id === userId (autenticado del JWT)
+    //   • auditor_aprobado_at IS NOT NULL con auditor_aprobado_by real
+    //     O aprobación automática (score/dictamen/categoría)
+    //   • devuelto_al_analista_at IS NULL (no fue reabierta al analista)
+    //   • expediente_id IS NULL (no vinculada aún a otro expediente)
+    // ─────────────────────────────────────────────────────────────
+    if (data.auditoriaId) {
+      const { data: qa, error: qaErr } = await supabase
+        .from("qa_auditorias")
+        .select(
+          "id,analista_id,dictamen,categoria,qa_score,auditor_aprobado_at,auditor_aprobado_by,devuelto_al_analista_at,expediente_id",
+        )
+        .eq("id", data.auditoriaId)
+        .maybeSingle();
+      const gateInfo = {
+        auditoriaId: data.auditoriaId,
+        userId,
+        found: !!qa,
+        ownerMatch: qa?.analista_id === userId,
+        auditorAprobado: !!(qa?.auditor_aprobado_at && qa?.auditor_aprobado_by),
+        automatico:
+          (qa?.dictamen === "aprobado" || qa?.dictamen === "aprobado_obs") &&
+          (qa?.categoria === "excelente" || qa?.categoria === "aprobado") &&
+          Number(qa?.qa_score ?? 0) >= 85,
+        devuelta: qa?.devuelto_al_analista_at !== null && qa?.devuelto_al_analista_at !== undefined,
+        yaVinculada: !!qa?.expediente_id,
+      };
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[QA_CREATE_CASE_GATE]", gateInfo);
+      }
+      if (qaErr) throw new Error(`No se pudo verificar la auditoría: ${qaErr.message}`);
+      if (!qa) throw new Error("La auditoría vinculada no existe o no es visible para este usuario.");
+      if (!gateInfo.ownerMatch) {
+        throw new Error("Esta auditoría pertenece a otro analista; no puedes crear el caso desde aquí.");
+      }
+      if (gateInfo.devuelta) {
+        throw new Error("La auditoría fue devuelta al analista para corrección; no puede crear caso hasta reaprobación.");
+      }
+      if (gateInfo.yaVinculada) {
+        // Idempotencia: la auditoría ya fue usada; devolvemos ese expediente.
+        const { data: existente, error: expErr } = await supabase
+          .from("expedientes")
+          .select("*")
+          .eq("qa_auditoria_id", data.auditoriaId)
+          .maybeSingle();
+        if (expErr) throw new Error(expErr.message);
+        if (existente) {
+          const { data: maestroExistente } = await supabase
+            .from("expediente_maestro")
+            .select("*")
+            .eq("id", (existente as { id: string }).id)
+            .maybeSingle();
+          return JSON.parse(
+            JSON.stringify({
+              maestro: maestroExistente ?? { id: (existente as { id: string }).id },
+              expediente: existente,
+              yaExistia: true,
+            }),
+          );
+        }
+      }
+      if (!gateInfo.auditorAprobado && !gateInfo.automatico) {
+        throw new Error("La auditoría aún no está aprobada por el Director QA ni cumple el score automático.");
+      }
+    }
+
+
+
+    // ─────────────────────────────────────────────────────────────
     // 1) UPSERT expediente_maestro con dedup por huella completa.
     //    Mismo comportamiento que `upsertMaestro` cliente, pero
     //    `asesor_id = userId` (JWT server-side, inmutable).
@@ -233,12 +308,23 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
       .single();
 
     if (insertError) {
-      const { data: raced } = await supabase
+      // Carrera (doble clic, doble submit): buscar por id del maestro Y por
+      // qa_auditoria_id — el índice único parcial expedientes_qa_auditoria_id_unique
+      // puede haber ganado la carrera con otro request paralelo.
+      const { data: racedById } = await supabase
         .from("expedientes")
         .select("*")
         .eq("id", maestro.id)
         .maybeSingle();
-      if (raced) return JSON.parse(JSON.stringify({ maestro, expediente: raced }));
+      if (racedById) return JSON.parse(JSON.stringify({ maestro, expediente: racedById, yaExistia: true }));
+      if (data.auditoriaId) {
+        const { data: racedByAud } = await supabase
+          .from("expedientes")
+          .select("*")
+          .eq("qa_auditoria_id", data.auditoriaId)
+          .maybeSingle();
+        if (racedByAud) return JSON.parse(JSON.stringify({ maestro, expediente: racedByAud, yaExistia: true }));
+      }
       throw insertError;
     }
 

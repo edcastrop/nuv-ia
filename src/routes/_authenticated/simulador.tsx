@@ -27,7 +27,7 @@ import { obtenerAuditoriaQA } from "@/lib/qaAI.functions";
 import { clearSimulatorDraft } from "@/components/nuvex/useSimulatorDraft";
 import { getExpediente, type Expediente } from "@/lib/expedientes";
 import { overlayAuditInputs, expedienteFromAudit } from "@/lib/qaReviewExpediente";
-import { certificarSimulacionDraft, type DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
+import { certificarSimulacionDraft, estadoAprobacionAuditoria, type DraftAuditResult } from "@/lib/simuladorDraftQA.functions";
 import { deriveDraftKey, flushPendingSoportes } from "@/components/nuvex/pendingSoportes";
 
 
@@ -76,6 +76,7 @@ export function SimuladorPage() {
   } | null>(null);
   const certifyDraftAudit = useServerFn(certificarSimulacionDraft);
   const certificarExpediente = useServerFn(certificarExpedienteServer);
+  const fetchAprobacionServer = useServerFn(estadoAprobacionAuditoria);
 
 
 
@@ -390,7 +391,31 @@ export function SimuladorPage() {
         ciudad: clean(draftClient.ciudad || draftClient.municipio),
         departamento: clean(draftClient.departamento),
       };
-      const audit = await certifyDraftAudit({ data: { snapshot: certification.snapshot } });
+      // ─────────────────────────────────────────────────────────────
+      // Ruta 1: Auditoría YA aprobada por el Director QA en el back.
+      //   → NO re-ejecutar certificarSimulacionDraft (evita crear otra
+      //     auditoría paralela y evita recalcular score/dictamen).
+      //   → Usar la auditoría persistida como soporte del expediente.
+      //   → Re-verificar server-side que sigue aprobada y pertenece
+      //     al analista autenticado (fuente de verdad = backend).
+      //
+      // Ruta 2: Simulación libre sin auditoría aprobada previa.
+      //   → Comportamiento actual: certificarSimulacionDraft crea la
+      //     auditoría a partir del snapshot y devuelve su id.
+      // ─────────────────────────────────────────────────────────────
+      let auditoriaIdParaExpediente: string | null = null;
+      if (auditoriaId) {
+        try {
+          const estado = await fetchAprobacionServer({ data: { id: auditoriaId } });
+          if (estado.aprobada && estado.perteneceAlUsuario) {
+            auditoriaIdParaExpediente = auditoriaId;
+          }
+        } catch { /* fallback abajo */ }
+      }
+      if (!auditoriaIdParaExpediente) {
+        const audit = await certifyDraftAudit({ data: { snapshot: certification.snapshot } });
+        auditoriaIdParaExpediente = audit.auditoriaId;
+      }
 
       // ÚNICO punto de entrada del flujo de certificación:
       // JWT validado una sola vez server-side; asesor_id inmutable = context.userId
@@ -408,7 +433,7 @@ export function SimuladorPage() {
             licenciado: emptyLicenciado(),
             apoderado: emptyApoderado(),
           },
-          auditoriaId: audit.auditoriaId,
+          auditoriaId: auditoriaIdParaExpediente,
           // Honorarios ya aprobados por el analista en el simulador.
           // Si vienen en el snapshot, el server los usa tal cual en el INSERT
           // de `expedientes` en lugar de los ceros hardcodeados por
@@ -454,7 +479,11 @@ export function SimuladorPage() {
       // datos residuales del cliente anterior (nombre, cédula, banco…).
       clearSimulatorDraft("pesos");
       clearSimulatorDraft("uvr");
-      toast.success("Caso creado. Continúa completando el expediente.");
+      if ((certResult as { yaExistia?: boolean }).yaExistia) {
+        toast.success("Este caso ya había sido creado previamente. Continúa completando el expediente.");
+      } else {
+        toast.success("Caso creado. Continúa completando el expediente.");
+      }
       setSaveOpen(false);
       navigate({
         to: "/simulador",
