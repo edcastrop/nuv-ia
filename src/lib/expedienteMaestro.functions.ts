@@ -308,12 +308,23 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
       .single();
 
     if (insertError) {
-      const { data: raced } = await supabase
+      // Carrera (doble clic, doble submit): buscar por id del maestro Y por
+      // qa_auditoria_id — el índice único parcial expedientes_qa_auditoria_id_unique
+      // puede haber ganado la carrera con otro request paralelo.
+      const { data: racedById } = await supabase
         .from("expedientes")
         .select("*")
         .eq("id", maestro.id)
         .maybeSingle();
-      if (raced) return JSON.parse(JSON.stringify({ maestro, expediente: raced }));
+      if (racedById) return JSON.parse(JSON.stringify({ maestro, expediente: racedById, yaExistia: true }));
+      if (data.auditoriaId) {
+        const { data: racedByAud } = await supabase
+          .from("expedientes")
+          .select("*")
+          .eq("qa_auditoria_id", data.auditoriaId)
+          .maybeSingle();
+        if (racedByAud) return JSON.parse(JSON.stringify({ maestro, expediente: racedByAud, yaExistia: true }));
+      }
       throw insertError;
     }
 
