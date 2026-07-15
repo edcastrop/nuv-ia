@@ -1505,6 +1505,23 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
+    // ── GUARDARRAÍL: una auditoría formalmente aprobada por el Director
+    //    (auditor_aprobado_at ≠ NULL) NO puede ser reejecutada automática
+    //    ni manualmente. Eso protege el score/dictamen aprobado contra
+    //    autosync, foco de pestaña y recálculos posteriores.
+    //    Si el negocio necesita reabrir, debe hacerse por una acción
+    //    explícita separada (devolver al analista, no aquí).
+    if ((aud as { auditor_aprobado_at: string | null }).auditor_aprobado_at) {
+      return {
+        ok: false as const,
+        bloqueada: true as const,
+        motivo: "auditoria_aprobada_por_auditor",
+        score: (aud as { qa_score: number }).qa_score,
+        dictamen: (aud as { dictamen: string }).dictamen,
+      };
+    }
+
+
     const inputs = (aud.inputs ?? {}) as Record<string, unknown>;
     const rec = (inputs.reconstruccion ?? {}) as Record<string, unknown>;
     const extSnap = (inputs.extracto ?? {}) as Record<string, unknown>;
