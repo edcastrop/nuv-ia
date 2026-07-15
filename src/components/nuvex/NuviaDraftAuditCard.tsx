@@ -161,21 +161,55 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
       const detail = (e as CustomEvent<DraftRawSnapshot>).detail;
       if (!detail || !detail.datos) return;
       const prevSnap = snapshotRef.current;
+      const isFirst = !prevSnap;
       const sameSnapshot =
         !!prevSnap && hashSnapshot(prevSnap) === hashSnapshot(detail);
       snapshotRef.current = detail;
-      if (sameSnapshot) {
-        // Re-emisión idéntica: no tocar el estado. Si ya estaba "done" con
-        // certificable=true, el botón sigue activo.
+      if (sameSnapshot) return;
+      if (isFirst) {
+        // Primer snapshot tras montar: es hidratación inicial, NO edición del
+        // analista. No debe invalidar una aprobación formal del Director QA
+        // ya cargada. El efecto de "promoción" se encarga de fijar "done".
+        // Solo pasamos a "ready" si aún no estamos en "done".
+        setState((s) => (s.kind === "done" ? s : { kind: "ready" }));
         return;
       }
-      // Cambio real de inputs: la auditoría anterior queda invalidada.
+      // Cambio real de inputs por parte del analista: invalida aprobación.
       setDirectorApproval(null);
       setState({ kind: "ready" });
     };
     window.addEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
   }, []);
+
+  // Re-consulta la aprobación cuando la pestaña vuelve al foco o el
+  // documento se hace visible: si Realtime falla o no llega, la fuente
+  // de verdad (backend) se vuelve a leer y el botón queda habilitado.
+  useEffect(() => {
+    if (!auditoriaId) return;
+    const refetch = async () => {
+      try {
+        const res = await fetchAprobacion({ data: { id: auditoriaId } });
+        if (res.aprobada && res.aprobadoAt) {
+          setDirectorApproval({
+            aprobadoAt: res.aprobadoAt,
+            override: !!res.override,
+            overrideJustificacion: res.overrideJustificacion ?? null,
+            score: res.score ?? 0,
+            codigo: res.codigo ?? null,
+          });
+        }
+      } catch { /* silencioso */ }
+    };
+    const onFocus = () => { void refetch(); };
+    const onVisible = () => { if (document.visibilityState === "visible") void refetch(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [auditoriaId, fetchAprobacion]);
 
   // Cuando existe aprobación formal del Director QA y hay snapshot listo,
   // promovemos el panel a "done" sintético con certificable=true para saltar
