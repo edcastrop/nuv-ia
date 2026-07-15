@@ -151,79 +151,72 @@ export function buildWhatsAppMessage(p: {
   const cierre = genero === "M" ? "Quedo atento." : "Quedo atenta.";
 
   const lines: string[] = [];
-  lines.push(`Hola ${nombre} 👋`);
-  lines.push("");
-  if (asesor) {
-    lines.push(`Soy *${nombreAnalista(asesor)}*, tu ${analistaRol} en *NUVEX*.`);
-  } else {
-    lines.push(`Te escribo desde *NUVEX*, soy tu ${analistaRol}.`);
-  }
-  lines.push("");
-  lines.push(`Revisé tu crédito con *${banco}* y tengo *muy buenas noticias* para ti 🎉`);
+
+  lines.push(
+    asesor
+      ? `Hola ${nombre} 👋 Soy ${nombreAnalista(asesor)}, tu ${analistaRol.replace(/^analista.*/, "analista")} en *NUVEX*.`
+      : `Hola ${nombre} 👋 Te escribo desde *NUVEX*, tu equipo de optimización de crédito.`
+  );
   lines.push("");
 
   if (total > 1) {
-    lines.push(`📊 *Panorama general de tu caso:*`);
+    lines.push(
+      `Ya revisé tu crédito con *${banco}* y sí, hay buenas noticias: podemos eliminar entre *${añosRange}* de tu crédito, lo que se traduce en un ahorro de *${ahorroRange}* en intereses y seguros. Todo con un proceso jurídico-financiero, subiendo tu cuota entre *${incRange}* al mes.`
+    );
     lines.push("");
-    lines.push(`Encontramos la posibilidad de que puedas *eliminar de tu crédito entre ${añosRange}*, lo que representaría un ahorro aproximado de entre *${ahorroRange}* en intereses y seguros, dependiendo de la alternativa que decidas tomar.`);
-    lines.push("");
-    lines.push(`Lo anterior lo lograremos con un proceso *jurídico-financiero*, incrementando tu cuota entre *${incRange}* mensuales.`);
-    lines.push("");
-    lines.push(`Preparé *${total} escenarios diferentes* para ti y hay uno en particular que considero el más conveniente 👇`);
-    lines.push("");
+    lines.push(`Armé *${total} escenarios* posibles, pero el que más me gusta para tu caso es este:`);
   } else {
-    lines.push(`Te preparé una propuesta de optimización pensada para tu caso 👇`);
-    lines.push("");
+    lines.push(
+      `Ya revisé tu crédito con *${banco}* y sí, hay buenas noticias. Te preparé una propuesta de optimización pensada para tu caso:`
+    );
   }
+  lines.push("");
 
   if (recomendada) {
-    lines.push(`⭐ *Propuesta sugerida por NUVEX*`);
-    lines.push("");
-    if (incRecomendado > 0) lines.push(`• Incremento mensual: *${formatCOP(incRecomendado)}*`);
-    if (añosRecomendado > 0) lines.push(`• Tiempo eliminado: *${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}*`);
-    if (ahorroRecomendado > 0) lines.push(`• Ahorro proyectado: *${millonesCOP(ahorroRecomendado)}*`);
-    lines.push("");
+    const partes: string[] = [];
+    if (incRecomendado > 0) partes.push(`Cuota +${formatCOP(incRecomendado)}/mes`);
+    if (añosRecomendado > 0) partes.push(`eliminas ${añosRecomendado === 1 ? "1 año" : `${añosRecomendado} años`}`);
+    if (ahorroRecomendado > 0) partes.push(`ahorras ${millonesCOP(ahorroRecomendado)}`);
+    if (partes.length) {
+      lines.push(`⭐ ${partes.join(" → ")}`);
+      lines.push("");
+    }
   }
 
   if (tieneHonorarios && recomendada && honBaseRecomendado > 0) {
-    const honFinalRecomendado = typeof recomendada.honorariosFinal === "number" && recomendada.honorariosFinal > 0
-      ? recomendada.honorariosFinal
-      : honBaseRecomendado;
+    const honFinalRecomendado =
+      typeof recomendada.honorariosFinal === "number" && recomendada.honorariosFinal > 0
+        ? recomendada.honorariosFinal
+        : honBaseRecomendado;
     const ahorroHon = Math.max(0, honBaseRecomendado - honFinalRecomendado);
     const pctDescuento = ahorroHon > 0 ? Math.round((ahorroHon / honBaseRecomendado) * 100) : 0;
 
-    lines.push(`💰 *Honorarios a éxito NUVEX*`);
-    lines.push("");
     if (ahorroHon > 0) {
-      lines.push(`Tarifa estándar: *${formatCOP(honBaseRecomendado)}*`);
-      lines.push(`Descuento comercial aplicado: *−${formatCOP(ahorroHon)}* (${pctDescuento}%)`);
-      lines.push(`👉 Honorarios finales: *${formatCOP(honFinalRecomendado)}*`);
+      lines.push(
+        `💰 Honorarios: ${formatCOP(honBaseRecomendado)}, con ${pctDescuento}% de descuento quedan en *${formatCOP(honFinalRecomendado)}* (solo se cobran si el banco aprueba el resultado; si no, no pagas nada).`
+      );
     } else {
-      lines.push(`Honorarios finales: *${formatCOP(honFinalRecomendado)}*`);
+      lines.push(
+        `💰 Honorarios: *${formatCOP(honFinalRecomendado)}* (solo se cobran si el banco aprueba el resultado; si no, no pagas nada).`
+      );
     }
     lines.push("");
-    lines.push(`Nuestros honorarios solo se generan si obtenemos el resultado aprobado por el banco. Si no logramos la optimización, *no pagas nada*. Todo queda respaldado por contrato.`);
-    lines.push("");
   }
 
-
-  if (total > 1) {
-    lines.push(`Si alguna de las otras alternativas te resulta más atractiva, también podemos revisarla juntos durante la llamada.`);
-    lines.push("");
-  }
-
-  lines.push(`⏱ *Tiempo estimado del proceso con ${banco}:* entre ${tiempo}.`);
+  lines.push(
+    total > 1
+      ? `Te mando el PDF con el detalle de las ${total} alternativas para que las compares con calma. El proceso con ${banco} toma cerca de ${tiempo}.`
+      : `Te mando el PDF con el detalle completo de la propuesta. El proceso con ${banco} toma cerca de ${tiempo}.`
+  );
   lines.push("");
-  lines.push(`📎 Te envío el PDF con el detalle completo de las propuestas.`);
-  lines.push("");
-  lines.push(`Lo más difícil ya está hecho: encontrar la oportunidad. Ahora solo queda decidir si quieres aprovecharla y cuántos millones quieres eliminar.`);
-  lines.push("");
-  lines.push(`¿Agendamos?`);
-  lines.push("");
-  lines.push(cierre);
+  lines.push(`¿Te cuadra una llamada corta esta semana para revisarlo juntos? Cuéntame qué día te sirve más 😊`);
   lines.push("");
   lines.push(asesor ? `${nombreAnalista(asesor)}` : `Equipo NUVEX`);
-  lines.push(`NUVEX Finanzas Inteligentes`);
+  lines.push(`NUVEX`);
+
+  // Referencias para evitar warnings de variables sin uso directo en el nuevo texto.
+  void cierre;
+  void genero;
 
   return lines.join("\n");
 }
