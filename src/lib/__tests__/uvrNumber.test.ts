@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, it, expect } from "bun:test";
 import {
   UVR_COHERENCE_TOLERANCE_PCT,
   parseUVRNumber,
