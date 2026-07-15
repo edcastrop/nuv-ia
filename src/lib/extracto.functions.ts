@@ -6,6 +6,7 @@ import {
   formatMontoExtracto,
   parseMontoExtracto,
 } from "@/lib/cuotaBase";
+import { parseUVRNumber } from "@/lib/uvrNumber";
 import { parseBancolombiaText } from "@/lib/motorExtractos/bancolombiaParser";
 import { parseBancoBogotaText } from "@/lib/motorExtractos/bancoBogotaParser";
 import { parseDaviviendaLeasingText } from "@/lib/motorExtractos/daviviendaLeasingParser";
