@@ -490,8 +490,13 @@ function ResultadoQaAi() {
   // Auto-sync: este hook DEBE vivir antes de cualquier return condicional.
   // Si queda después del estado "Cargando", React cambia el número de hooks entre renders.
   useEffect(() => {
-    const auditoria = data?.auditoria as (Record<string, unknown> & { qa_score?: number; dictamen?: string; motor_version?: string }) | null | undefined;
+    const auditoria = data?.auditoria as (Record<string, unknown> & { qa_score?: number; dictamen?: string; motor_version?: string; auditor_aprobado_at?: string | null }) | null | undefined;
     if (!auditoria || !recomputo) return;
+
+    // Auditoría formalmente aprobada por el Director: NO reejecutar bajo
+    // ningún gatillo automático (autosync, cambio de foco, re-render).
+    // La reejecución debe permanecer únicamente bajo acción explícita.
+    if (auditoria.auditor_aprobado_at) return;
 
     const storedScore = Number(auditoria.qa_score ?? 0);
     const storedDictamen = String(auditoria.dictamen ?? "");
