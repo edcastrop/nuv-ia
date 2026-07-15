@@ -630,10 +630,11 @@ export const extractStatement = createServerFn({ method: "POST" })
           let interes = 0;
           let saldo = 0;
           if (moneda === "UVR") {
-            // intentar UVR puro primero
+            // intentar UVR puro primero — usar parser UVR-safe para no
+            // corromper valores con 4 decimales tipo "385,4321".
             interes = num("interesCuota");
-            saldo = num("saldoUVR");
-            const vUVR = num("valorUVR");
+            saldo = parseUVRNumber(parsed.saldoUVR) ?? 0;
+            const vUVR = parseUVRNumber(parsed.valorUVR) ?? 0;
             // si interesCuota viene en pesos, convertir a UVR
             if (interes > 0 && saldo > 0 && vUVR > 0 && interes > saldo) {
               interes = interes / vUVR;
