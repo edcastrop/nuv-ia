@@ -22,6 +22,11 @@ import {
   pmt,
   type UVRInput,
 } from "../../lib/finance";
+import {
+  parseUVRNumberCandidates,
+  resolveUVRByCoherence,
+  validateUVRCoherence,
+} from "../../lib/uvrNumber";
 
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
