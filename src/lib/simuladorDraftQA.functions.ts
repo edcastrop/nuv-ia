@@ -163,8 +163,8 @@ export const auditarSimulacionDraft = createServerFn({ method: "POST" })
     const frech = parseNum(d.tasaCobertura);
     const frechValorMensual = parseNum(d.valorCobertura) ?? parseNum(d.valorSubsidioGobierno);
     const desemb = parseNum(d.valorDesembolsado);
-    const saldoUVR = parseNum(d.saldoUVR);
-    const valorUVR = parseNum(d.valorUVR);
+    const saldoUVR = parseUVRNumber(d.saldoUVR);
+    const valorUVR = parseUVRNumber(d.valorUVR);
     const cuotaBaseSinSubsidio =
       parseNum(d.cuotaSinSubsidio) ?? parseNum(d.cuotaBaseSimulacion) ?? parseNum(d.cuotaActual);
     const cuotaFinancieraSinSeguros =
