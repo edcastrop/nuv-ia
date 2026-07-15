@@ -479,7 +479,11 @@ export function SimuladorPage() {
       // datos residuales del cliente anterior (nombre, cédula, banco…).
       clearSimulatorDraft("pesos");
       clearSimulatorDraft("uvr");
-      toast.success("Caso creado. Continúa completando el expediente.");
+      if ((certResult as { yaExistia?: boolean }).yaExistia) {
+        toast.success("Este caso ya había sido creado previamente. Continúa completando el expediente.");
+      } else {
+        toast.success("Caso creado. Continúa completando el expediente.");
+      }
       setSaveOpen(false);
       navigate({
         to: "/simulador",
