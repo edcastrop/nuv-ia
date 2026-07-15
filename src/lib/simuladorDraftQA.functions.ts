@@ -1099,11 +1099,17 @@ export const estadoAprobacionAuditoria = createServerFn({ method: "POST" })
     // Fuente de verdad server-side de "aprobación vigente".
     // Reglas (exigidas por el gate de crear caso):
     //   • auditor_aprobado_at + auditor_aprobado_by presentes
-    //   • no fue devuelta al analista después
+    //     (o aprobación automática por score/dictamen/categoría)
     //   • el analista autenticado es el dueño de la auditoría
     //   • la auditoría todavía no está vinculada a otro expediente
+    //
+    // `devuelto_al_analista_at` hoy no es escrito por ningún flujo
+    // (TS ni SQL); se expone solo como diagnóstico y NO participa
+    // en el cálculo de `aprobada` para mantener paridad con el gate
+    // server-side de certificarExpedienteServer y con el trigger
+    // validate_expediente_operativo_completo.
     const perteneceAlUsuario = !!r.analista_id && r.analista_id === userId;
-    const noDevuelta = r.devuelto_al_analista_at === null;
+    const devueltaDiag = r.devuelto_al_analista_at !== null;
     const auditorReal = !!r.auditor_aprobado_at && !!r.auditor_aprobado_by;
     const sinExpedienteVinculado = r.expediente_id === null;
     const scoreAuto =
@@ -1111,7 +1117,8 @@ export const estadoAprobacionAuditoria = createServerFn({ method: "POST" })
       (r.categoria === "excelente" || r.categoria === "aprobado") &&
       Number(r.qa_score ?? 0) >= 85;
     const aprobada =
-      perteneceAlUsuario && noDevuelta && sinExpedienteVinculado && (auditorReal || scoreAuto);
+      perteneceAlUsuario && sinExpedienteVinculado && (auditorReal || scoreAuto);
+
 
     return {
       aprobada,
