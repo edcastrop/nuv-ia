@@ -77,9 +77,17 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
     //   • qa.analista_id === userId (autenticado del JWT)
     //   • auditor_aprobado_at IS NOT NULL con auditor_aprobado_by real
     //     O aprobación automática (score/dictamen/categoría)
-    //   • devuelto_al_analista_at IS NULL (no fue reabierta al analista)
     //   • expediente_id IS NULL (no vinculada aún a otro expediente)
-    // ─────────────────────────────────────────────────────────────
+    //
+    // NOTA sobre `devuelto_al_analista_at`: el campo existe en
+    // qa_auditorias pero HOY ningún flujo (TS ni SQL) lo escribe,
+    // y su semántica prevista ("Director devuelve al analista con
+    // ajustes pendientes" — inferida por vecindad con
+    // devolucion_notas/devolucion_ajustes) es ortogonal a la
+    // aprobación formal. Por lo tanto NO lo usamos como bloqueo por
+    // sí solo: si el Director aprobó (auditor_aprobado_at), el
+    // analista puede crear el caso. Lo reportamos solo como
+    // diagnóstico en gateInfo.
     if (data.auditoriaId) {
       const { data: qa, error: qaErr } = await supabase
         .from("qa_auditorias")
@@ -98,7 +106,7 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
           (qa?.dictamen === "aprobado" || qa?.dictamen === "aprobado_obs") &&
           (qa?.categoria === "excelente" || qa?.categoria === "aprobado") &&
           Number(qa?.qa_score ?? 0) >= 85,
-        devuelta: qa?.devuelto_al_analista_at !== null && qa?.devuelto_al_analista_at !== undefined,
+        devueltaDiag: qa?.devuelto_al_analista_at !== null && qa?.devuelto_al_analista_at !== undefined,
         yaVinculada: !!qa?.expediente_id,
       };
       if (process.env.NODE_ENV !== "production") {
@@ -109,9 +117,7 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
       if (!gateInfo.ownerMatch) {
         throw new Error("Esta auditoría pertenece a otro analista; no puedes crear el caso desde aquí.");
       }
-      if (gateInfo.devuelta) {
-        throw new Error("La auditoría fue devuelta al analista para corrección; no puede crear caso hasta reaprobación.");
-      }
+
       if (gateInfo.yaVinculada) {
         // Idempotencia: la auditoría ya fue usada; devolvemos ese expediente.
         const { data: existente, error: expErr } = await supabase
