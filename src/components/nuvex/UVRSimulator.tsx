@@ -759,6 +759,74 @@ export function UVRSimulator({
               }
               toast.warning("Aplicando extracto Pesos en simulador UVR. Revisa los resultados.");
             }
+
+            // ─── VALIDACIÓN DE COHERENCIA UVR (bloqueo previo a mutar estado) ───
+            // No permitimos aplicar datos al formulario sin validar que los tres
+            // valores críticos existan, sean válidos y sean matemáticamente
+            // coherentes: saldoUVR × valorUVR ≈ saldoCapital en pesos (±1 %).
+            const saldoUvrCands = parseUVRNumberCandidates(p.uvr?.saldoUVR);
+            const valorUvrCands = parseUVRNumberCandidates(p.uvr?.valorUVR);
+            const saldoPesosCands = parseUVRNumberCandidates(p.uvr?.saldoPesos);
+            let saldoUvrN: number | undefined = saldoUvrCands.length === 1 ? saldoUvrCands[0] : undefined;
+            let valorUvrN: number | undefined = valorUvrCands.length === 1 ? valorUvrCands[0] : undefined;
+            const saldoPesosN: number | undefined = saldoPesosCands.length === 1 ? saldoPesosCands[0] : undefined;
+            let resueltoPorCoherencia = false;
+
+            if (
+              (saldoUvrN === undefined || valorUvrN === undefined) &&
+              saldoPesosN !== undefined &&
+              saldoUvrCands.length > 0 &&
+              valorUvrCands.length > 0
+            ) {
+              const r = resolveUVRByCoherence({
+                saldoUVRCandidates: saldoUvrN !== undefined ? [saldoUvrN] : saldoUvrCands,
+                valorUVRCandidates: valorUvrN !== undefined ? [valorUvrN] : valorUvrCands,
+                saldoPesos: saldoPesosN,
+              });
+              if (r.resolved) {
+                saldoUvrN = r.saldoUVR;
+                valorUvrN = r.valorUVR;
+                resueltoPorCoherencia = true;
+              }
+            }
+
+            const coh = validateUVRCoherence(saldoUvrN, valorUvrN, saldoPesosN);
+            if (!coh.ejecutable) {
+              toast.error(
+                "No fue posible validar la coherencia UVR porque faltan o son inválidos uno o más datos críticos. Revisa el saldo a capital en UVR, el valor de la UVR y el saldo a capital en pesos antes de continuar.",
+                {
+                  duration: 10000,
+                  action: {
+                    label: "Revisar valores",
+                    onClick: () => {
+                      /* el analista puede corregir los campos y reejecutar */
+                    },
+                  },
+                },
+              );
+              return;
+            }
+            if (!coh.isCoherent) {
+              const diff = ((coh.diffPct ?? 0) * 100).toFixed(2);
+              toast.error(
+                `Discrepancia UVR: saldoUVR × valorUVR = ${formatCOP(coh.productoPesos ?? 0)} vs saldo a capital en pesos = ${formatCOP(coh.saldoPesos ?? 0)} (diferencia ${diff}% > 1%). Corrige los valores antes de aplicar.`,
+                {
+                  duration: 12000,
+                  action: {
+                    label: "Revisar valores",
+                    onClick: () => {
+                      /* bloqueo hasta que el analista corrija */
+                    },
+                  },
+                },
+              );
+              return;
+            }
+            if (resueltoPorCoherencia) {
+              toast.info("Formato UVR interpretado mediante validación de coherencia.");
+            }
+            // ─── FIN VALIDACIÓN ───
+
             if (p.archivoPath) setExtractoArchivoPath(p.archivoPath);
             setClient((prev) => ({
               ...prev,
@@ -772,9 +840,11 @@ export function UVRSimulator({
               cuotasPagadas: p.cliente.cuotasPagadas || prev.cuotasPagadas,
               cuotasPendientes: p.cliente.cuotasPendientes || prev.cuotasPendientes,
             }));
-            if (p.uvr?.saldoUVR) setSaldoUVR(p.uvr.saldoUVR);
-            if (p.uvr?.valorUVR) setValorUVR(p.uvr.valorUVR);
-            if (p.uvr?.saldoPesos) setSaldoPesos(p.uvr.saldoPesos);
+            // Escribimos valores UVR normalizados (los resueltos por el parser)
+            // en lugar del raw, para que parseDecimal downstream sea determinista.
+            setSaldoUVR(String(saldoUvrN));
+            setValorUVR(String(valorUvrN));
+            setSaldoPesos(String(saldoPesosN));
             if (p.uvr && "valorDesembolsado" in p.uvr)
               setValorDesembolsado(p.uvr.valorDesembolsado || "");
             if (p.uvr?.cuotaActualPesos) setCuotaActualPesos(p.uvr.cuotaActualPesos);
