@@ -711,28 +711,33 @@ export function UVRSimulator({
     emitDraftRawReady(currentQaSnapshot);
   }, [init?.id, currentQaSnapshot]);
 
-  // Modo expediente: disparo controlado del Auto-QA con token + hash.
+  // Modo expediente: disparo controlado del Auto-QA con INTENCIÓN pegajosa.
   // Requiere completitud UVR (`currentQaSnapshot` no nulo) + variaciones UVR.
   useEffect(() => {
     if (!init?.id) return;
-    if (!pendingAutoQAToken) return;
+    if (!autoQAIntent) return;
     if (!currentQaSnapshot) return;
     if (!uvrVarsReady) return;
     const snapshot: typeof currentQaSnapshot = {
       ...currentQaSnapshot,
-      archivoPath: pendingAutoQAToken.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
-      archivoNombre: pendingAutoQAToken.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
+      archivoPath: autoQAIntent.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
+      archivoNombre: autoQAIntent.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
     };
     const hash = hashQaSnapshot(snapshot);
-    if (!hash) return;
-    if (inflightHashRef.current === hash) return;
-    if (lastSuccessfulHashRef.current === hash) {
-      setPendingAutoQAToken(null);
+    const decision = decideAutoQADispatch({
+      hasIntent: true,
+      currentHash: hash,
+      inflightHash: inflightHashRef.current,
+      successHash: lastSuccessfulHashRef.current,
+      failedHash: lastFailedHashRef.current,
+    });
+    if (decision.kind === "skip") return;
+    if (decision.kind === "clear-intent") {
+      setAutoQAIntent(null);
       return;
     }
     inflightHashRef.current = hash;
     lastAttemptedHashRef.current = hash;
-    setPendingAutoQAToken(null);
     void triggerSimuladorAutoQA({
       expedienteId: init.id,
       raw: {
@@ -746,20 +751,30 @@ export function UVRSimulator({
       onStart: () => {
         setAutoQALoading(true);
         setAutoQA(null);
+        setAutoQAError(null);
       },
       onResult: (r) => {
         setAutoQALoading(false);
-        if (inflightHashRef.current !== hash) return;
+        const rec = decideAutoQAResult({ resultHash: hash, inflightHash: inflightHashRef.current });
+        if (rec.kind === "obsolete") return;
         lastSuccessfulHashRef.current = hash;
         inflightHashRef.current = null;
         setAutoQA(r);
       },
-      onError: () => {
+      onError: (e) => {
         setAutoQALoading(false);
         if (inflightHashRef.current === hash) inflightHashRef.current = null;
+        lastFailedHashRef.current = hash;
+        setAutoQAError(e instanceof Error ? e.message : "Error al ejecutar Auto-QA.");
       },
     });
-  }, [init?.id, pendingAutoQAToken, currentQaSnapshot, uvrVarsReady]);
+  }, [init?.id, autoQAIntent, currentQaSnapshot, uvrVarsReady]);
+
+  const retryAutoQA = () => {
+    lastFailedHashRef.current = null;
+    setAutoQAError(null);
+    setAutoQAIntent((prev) => (prev ? { ...prev } : prev));
+  };
 
 
 
