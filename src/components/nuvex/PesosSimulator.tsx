@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildPesosQaSnapshot, hashQaSnapshot } from "@/lib/nuviaQaSnapshot";
 import { useServerFn } from "@tanstack/react-start";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
