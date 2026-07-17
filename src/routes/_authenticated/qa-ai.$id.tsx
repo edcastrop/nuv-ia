@@ -1278,7 +1278,7 @@ function ResultadoQaAi() {
                 const dictamenBloquea = dictamenEfectivo === "rechazado" || dictamenEfectivo === "requiere_revision";
                 const categoriaBloquea = categoriaEfectiva === "rechazado" || categoriaEfectiva === "revisar";
                 const noCertificable = scoreInsuficiente || dictamenBloquea || categoriaBloquea;
-                const bloqueado = uvrPendienteVariables || noCertificable;
+                const bloqueado = uvrPendienteVariables || noCertificable || isAnulada;
                 const razonNoCertificable = noCertificable
                   ? `Certificación ${Math.round(Number(score ?? 0))}/100 (${categoriaEfectiva || dictamenEfectivo}). NUVIA exige score ≥ 85 y dictamen APROBADO / APROBADO CON OBSERVACIONES. Devuelva al analista para corregir y reauditar.`
                   : null;
@@ -1288,7 +1288,9 @@ function ResultadoQaAi() {
                 onClick={handleAprobar}
                 disabled={aprobando || yaAprobadaAuditor || bloqueado}
                 title={
-                  uvrPendienteVariables
+                  isAnulada
+                    ? "Auditoría anulada: no se puede aprobar."
+                    : uvrPendienteVariables
                     ? "NUVIA no puede liberar: falta Variación UVR EA en la reconstrucción del analista (> 0%)."
                     : razonNoCertificable
                     ? razonNoCertificable
@@ -1311,7 +1313,9 @@ function ResultadoQaAi() {
                 }}
               >
                 <CheckCircle2 size={14} />
-                {uvrPendienteVariables
+                {isAnulada
+                  ? "⛔ Auditoría anulada"
+                  : uvrPendienteVariables
                   ? "⏸ Pendiente variables UVR"
                   : noCertificable
                   ? `🚫 No certificable (${Math.round(Number(score ?? 0))}/100)`
@@ -1320,9 +1324,8 @@ function ResultadoQaAi() {
 
               {/* Override manual: solo Dirección Financiera QA / Super Admin,
                   solo cuando el guardarraíl bloquea y la auditoría aún no
-                  está aprobada. Visualmente ámbar + ShieldAlert para que no
-                  se confunda con la aprobación normal. */}
-              {bloqueado && !yaAprobadaAuditor && puedeOverride && !overrideOpen && (
+                  está aprobada. Nunca disponible sobre auditorías anuladas. */}
+              {bloqueado && !yaAprobadaAuditor && !isAnulada && puedeOverride && !overrideOpen && (
                 <button
                   type="button"
                   onClick={() => setOverrideOpen(true)}
