@@ -190,38 +190,18 @@ export function UVRSimulator({
     const prop = parsePercentage(variacionUVRPropuestas);
     return Number.isFinite(hist) && hist > 0 && Number.isFinite(prop) && prop > 0;
   }, [variacionUVR, variacionUVRPropuestas]);
-  const [pendingAutoQARaw, setPendingAutoQARaw] = useState<{
-    raw: Parameters<typeof triggerSimuladorAutoQA>[0]["raw"];
+  // ── Auto-QA de expediente (modo `init?.id`) ────────────────────────
+  // Control determinístico por token + hash. Ver PesosSimulator para
+  // descripción canónica. En UVR, además, se exige `uvrVarsReady` y
+  // completitud UVR (saldoUVR y valorUVR > 0).
+  const [pendingAutoQAToken, setPendingAutoQAToken] = useState<{
+    archivoPath?: string | null;
+    archivoNombre?: string | null;
   } | null>(null);
-  const autoQAFiredRef = useRef(false);
+  const inflightHashRef = useRef<string | null>(null);
+  const lastAttemptedHashRef = useRef<string | null>(null);
+  const lastSuccessfulHashRef = useRef<string | null>(null);
 
-  // Dispara la auto-QA UVR pendiente cuando el analista completa las dos
-  // variaciones UVR (histórica + propuestas). Garantiza que NUVIA sólo emita
-  // dictamen cuando la matemática de corrección monetaria está completa.
-  useEffect(() => {
-    if (!init?.id) return;
-    if (!pendingAutoQARaw) return;
-    if (!uvrVarsReady) return;
-    if (autoQAFiredRef.current) return;
-    autoQAFiredRef.current = true;
-    void triggerSimuladorAutoQA({
-      expedienteId: init.id,
-      raw: pendingAutoQARaw.raw,
-      onStart: () => {
-        setAutoQALoading(true);
-        setAutoQA(null);
-      },
-      onResult: (r) => {
-        setAutoQA(r);
-        setAutoQALoading(false);
-        setPendingAutoQARaw(null);
-      },
-      onError: () => {
-        setAutoQALoading(false);
-        autoQAFiredRef.current = false;
-      },
-    });
-  }, [init?.id, pendingAutoQARaw, uvrVarsReady]);
 
 
   const handleClientChange = (next: ClientData) => {
