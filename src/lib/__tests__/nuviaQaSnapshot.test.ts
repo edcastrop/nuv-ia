@@ -108,3 +108,79 @@ describe("hashQaSnapshot — identidad canónica", () => {
     expect(hashQaSnapshot(null)).toBe("");
   });
 });
+
+describe("decideAutoQADispatch — control de re-programación", () => {
+  const base = {
+    hasIntent: true,
+    currentHash: "A",
+    inflightHash: null as string | null,
+    successHash: null as string | null,
+    failedHash: null as string | null,
+  };
+
+  it("sin intención → skip", () => {
+    expect(decideAutoQADispatch({ ...base, hasIntent: false }).kind).toBe("skip");
+  });
+
+  it("sin hash → skip", () => {
+    expect(decideAutoQADispatch({ ...base, currentHash: "" }).kind).toBe("skip");
+  });
+
+  it("hash actual ya exitoso → clear-intent (no re-ejecuta)", () => {
+    const r = decideAutoQADispatch({ ...base, successHash: "A" });
+    expect(r.kind).toBe("clear-intent");
+  });
+
+  it("hash actual falló → skip (espera retry manual, no reintento infinito)", () => {
+    const r = decideAutoQADispatch({ ...base, failedHash: "A" });
+    expect(r.kind).toBe("skip");
+    if (r.kind === "skip") expect(r.reason).toBe("failed-waiting-retry");
+  });
+
+  it("hash A en vuelo y snapshot cambia a B → skip hasta liberar inflight", () => {
+    const r = decideAutoQADispatch({ ...base, currentHash: "B", inflightHash: "A" });
+    expect(r.kind).toBe("skip");
+  });
+
+  it("hash actual en vuelo → skip (evita doble dispatch)", () => {
+    const r = decideAutoQADispatch({ ...base, inflightHash: "A" });
+    expect(r.kind).toBe("skip");
+  });
+
+  it("hash nuevo, sin inflight, sin fallos → dispatch", () => {
+    const r = decideAutoQADispatch(base);
+    expect(r.kind).toBe("dispatch");
+    if (r.kind === "dispatch") expect(r.hash).toBe("A");
+  });
+
+  it("A → B → C: sólo C se despacha cuando A libera inflight", () => {
+    // Fase 1: efecto ve intent+A, inflight null → dispatch A
+    const d1 = decideAutoQADispatch({ ...base, currentHash: "A" });
+    expect(d1.kind).toBe("dispatch");
+    // Fase 2: snapshot cambia a B; A sigue inflight → skip
+    const d2 = decideAutoQADispatch({ ...base, currentHash: "B", inflightHash: "A" });
+    expect(d2.kind).toBe("skip");
+    // Fase 3: snapshot ahora C; A sigue inflight → skip
+    const d3 = decideAutoQADispatch({ ...base, currentHash: "C", inflightHash: "A" });
+    expect(d3.kind).toBe("skip");
+    // Fase 4: A libera (resultado obsoleto descarta y limpia inflight);
+    // efecto vuelve a correr con snapshot actual C → dispatch C
+    const d4 = decideAutoQADispatch({ ...base, currentHash: "C", inflightHash: null });
+    expect(d4.kind).toBe("dispatch");
+    if (d4.kind === "dispatch") expect(d4.hash).toBe("C");
+  });
+});
+
+describe("decideAutoQAResult — reconciliación de resultado", () => {
+  it("inflight coincide con resultado → apply", () => {
+    expect(decideAutoQAResult({ resultHash: "A", inflightHash: "A" }).kind).toBe("apply");
+  });
+
+  it("inflight cambió a otro hash (edición durante await) → obsolete", () => {
+    expect(decideAutoQAResult({ resultHash: "A", inflightHash: "B" }).kind).toBe("obsolete");
+  });
+
+  it("inflight limpio (superado y liberado) → obsolete", () => {
+    expect(decideAutoQAResult({ resultHash: "A", inflightHash: null }).kind).toBe("obsolete");
+  });
+});
