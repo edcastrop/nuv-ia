@@ -57,7 +57,7 @@ describe("evaluateSnapshotTransition", () => {
     expect(r.kind).toBe("ready");
   });
 
-  it("desde invalidated con snapshot nuevo → ready", () => {
+  it("desde invalidated con snapshot nuevo → stay-invalidated (persistente)", () => {
     const r = evaluateSnapshotTransition({
       prevKind: "invalidated",
       doneHash: null,
@@ -65,7 +65,26 @@ describe("evaluateSnapshotTransition", () => {
       newHash: "cccc",
       wasFirst: false,
     });
-    expect(r.kind).toBe("ready");
+    expect(r.kind).toBe("stay-invalidated");
+  });
+
+  it("desde invalidated, múltiples ediciones consecutivas → siempre stay-invalidated", () => {
+    const r1 = evaluateSnapshotTransition({
+      prevKind: "invalidated",
+      doneHash: null,
+      lastEmittedHash: "aaaa",
+      newHash: "bbbb",
+      wasFirst: false,
+    });
+    const r2 = evaluateSnapshotTransition({
+      prevKind: "invalidated",
+      doneHash: null,
+      lastEmittedHash: "bbbb",
+      newHash: "cccc",
+      wasFirst: false,
+    });
+    expect(r1.kind).toBe("stay-invalidated");
+    expect(r2.kind).toBe("stay-invalidated");
   });
 
   it("hash vacío → ignore", () => {
