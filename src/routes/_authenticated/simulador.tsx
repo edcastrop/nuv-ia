@@ -123,6 +123,8 @@ export function SimuladorPage() {
               try { exp = await getExpediente(expIdAud); } catch { /* puede ser auditoría sin expediente operativo */ }
             }
             if (auditoria && inputs) {
+              const snap = (auditoria as { simulador_snapshot?: DraftRawSnapshot | null }).simulador_snapshot ?? null;
+              if (snap) setAuditedSnapshot(snap);
               if (exp) {
                 exp = overlayAuditInputs(exp, inputs);
                 try {
