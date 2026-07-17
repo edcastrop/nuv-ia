@@ -151,14 +151,19 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   // La versión del snapshot dicta cómo comparar hashes: v1 se degrada a v1
   // para no invalidarlo cuando el formulario emita snapshots v2 nuevos.
   const auditedSnapshotInitializedRef = useRef<boolean>(false);
+  // Versión efectiva del contrato de la auditoría original. Cuando es v1
+  // (o legacy sin escenarios), los snapshots que emita el formulario deben
+  // degradarse a v1 antes de calcular el hash para no invalidar una
+  // auditoría v1 sólo porque el simulador ahora emite v2. Sólo una edición
+  // financiera real cambia el hash v1.
+  const auditedIsV2Ref = useRef<boolean>(true);
   useEffect(() => {
     if (auditedSnapshotInitializedRef.current) return;
     if (!auditedSnapshot) return;
     const contract = validateAuditSnapshotContract(auditedSnapshot);
-    const compareSnapshot =
-      contract.kind === "historico_persistido"
-        ? auditedSnapshot
-        : downgradeToV1(auditedSnapshot);
+    const isV2 = contract.kind === "historico_persistido";
+    auditedIsV2Ref.current = isV2;
+    const compareSnapshot = isV2 ? auditedSnapshot : downgradeToV1(auditedSnapshot);
     doneHashRef.current = hashQaSnapshot(compareSnapshot);
     auditedSnapshotInitializedRef.current = true;
   }, [auditedSnapshot]);
