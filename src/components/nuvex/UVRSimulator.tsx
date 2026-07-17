@@ -197,16 +197,19 @@ export function UVRSimulator({
     return Number.isFinite(hist) && hist > 0 && Number.isFinite(prop) && prop > 0;
   }, [variacionUVR, variacionUVRPropuestas]);
   // ── Auto-QA de expediente (modo `init?.id`) ────────────────────────
-  // Control determinístico por token + hash. Ver PesosSimulator para
-  // descripción canónica. En UVR, además, se exige `uvrVarsReady` y
-  // completitud UVR (saldoUVR y valorUVR > 0).
-  const [pendingAutoQAToken, setPendingAutoQAToken] = useState<{
+  // Control determinístico por INTENCIÓN pegajosa + hash. Ver
+  // PesosSimulator para la descripción canónica. En UVR exigimos además
+  // `uvrVarsReady` y completitud UVR (saldoUVR y valorUVR > 0). Retry
+  // manual mediante `retryAutoQA` cuando ocurre un error.
+  const [autoQAIntent, setAutoQAIntent] = useState<{
     archivoPath?: string | null;
     archivoNombre?: string | null;
   } | null>(null);
+  const [autoQAError, setAutoQAError] = useState<string | null>(null);
   const inflightHashRef = useRef<string | null>(null);
   const lastAttemptedHashRef = useRef<string | null>(null);
   const lastSuccessfulHashRef = useRef<string | null>(null);
+  const lastFailedHashRef = useRef<string | null>(null);
 
 
 
