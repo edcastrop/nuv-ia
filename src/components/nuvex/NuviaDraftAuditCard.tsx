@@ -123,6 +123,12 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   const [escalarOpen, setEscalarOpen] = useState(false);
   const [directorApproval, setDirectorApproval] = useState<DirectorApproval | null>(null);
   const snapshotRef = useRef<DraftRawSnapshot | null>(null);
+  // Hash del snapshot con el que se resolvió `done` (aprobación local o server).
+  const doneHashRef = useRef<string | null>(null);
+  // Último hash emitido para deduplicar re-emisiones idénticas.
+  const lastEmittedHashRef = useRef<string | null>(null);
+  const firstSnapshotReceivedRef = useRef<boolean>(false);
+
 
   const runAudit = useServerFn(auditarSimulacionDraft);
   const fetchAprobacion = useServerFn(estadoAprobacionAuditoria);
