@@ -810,6 +810,34 @@ function ResultadoQaAi() {
         auditorOverride={auditorOverride}
       />
 
+      {isAnulada && (
+        <div
+          className="rounded-2xl border p-4 mb-4"
+          style={{
+            background: "rgba(220,38,38,0.10)",
+            borderColor: "rgba(220,38,38,0.35)",
+            color: "#FCA5A5",
+          }}
+          role="status"
+        >
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <div className="text-[13px] font-semibold" style={{ color: "#FECACA" }}>
+                Auditoría ANULADA · fuera del flujo operativo
+              </div>
+              <div className="text-[12px] mt-1 leading-relaxed" style={{ color: "#FCA5A5" }}>
+                Esta auditoría permanece en el historial pero no puede utilizarse
+                para crear un caso. Anulada
+                {anuladaAt ? ` el ${new Date(anuladaAt).toLocaleString("es-CO")}` : ""}.
+                {motivoAnulacion ? <><br /><span style={{ opacity: 0.85 }}>Motivo:</span> <em>{motivoAnulacion}</em></> : null}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {/* Banner permanente: auditoría aprobada sin caso creado — red de seguridad
           para llegadas directas o notificaciones viejas sin ?from=simulador. */}
       {yaAprobadaAuditor && !expedienteIdCert && !puedeVolverAlSimulador && (
