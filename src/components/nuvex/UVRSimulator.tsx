@@ -720,6 +720,7 @@ export function UVRSimulator({
     recomendada,
     discount,
     manualValido,
+    propuestasComercialesSnapshot,
   ]);
 
   // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).
