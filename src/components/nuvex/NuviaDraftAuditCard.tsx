@@ -74,6 +74,7 @@ export type SnapshotTransition =
   | { kind: "ignore" }
   | { kind: "hydrate" }
   | { kind: "invalidate" }
+  | { kind: "stay-invalidated" }
   | { kind: "ready" };
 
 export function evaluateSnapshotTransition(args: {
@@ -91,7 +92,10 @@ export function evaluateSnapshotTransition(args: {
     if (doneHash && doneHash === newHash) return { kind: "ignore" };
     return { kind: "invalidate" };
   }
-  if (prevKind === "invalidated") return { kind: "ready" };
+  // Regla de persistencia: una vez invalidado, cualquier edición posterior
+  // mantiene el estado `invalidated`. Sólo una nueva auditoría exitosa
+  // (que promueva el panel a `done`) puede sacar al usuario de aquí.
+  if (prevKind === "invalidated") return { kind: "stay-invalidated" };
   return { kind: "ready" };
 }
 
