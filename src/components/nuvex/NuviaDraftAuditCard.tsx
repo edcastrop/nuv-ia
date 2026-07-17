@@ -538,9 +538,12 @@ function renderStatusMessage(state: PanelState, hasMode: boolean) {
       if (state.result.certificable)
         return "Auditoría matemática aprobada. Puedes certificar y crear el caso para generar la propuesta comercial.";
       return state.result.motivoBloqueo ?? "La auditoría reporta observaciones.";
+    case "invalidated":
+      return "La simulación fue modificada. Debe ejecutar nuevamente la Auditoría NUVIA.";
     case "error":
       return `Error al auditar: ${state.message}`;
   }
+
 }
 
 function HallazgoRow({ h }: { h: DraftAuditHallazgo }) {
