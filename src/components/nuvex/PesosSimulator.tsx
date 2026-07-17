@@ -522,26 +522,27 @@ export function PesosSimulator({
   };
 
   // ── Auto-QA de expediente (modo `init?.id`) ────────────────────────
-  // Control determinístico por token + hash: `onApply` NO dispara la
-  // auditoría; sólo registra intención vía `pendingAutoQAToken`. Cuando
-  // React reconcilia todos los setState del formulario, el efecto de
-  // abajo construye el snapshot con `buildPesosQaSnapshot` y ejecuta
-  // `triggerSimuladorAutoQA` únicamente si:
-  //   1) el snapshot está completo y validado,
-  //   2) el hash no está en vuelo (inflight) ni marcado como completado
-  //      exitosamente (lastSuccessful).
+  // Control determinístico por INTENCIÓN + hash. `autoQAIntent` es
+  // pegajoso: se establece en `onApply` y sólo se limpia cuando el
+  // hash del snapshot actual ha sido auditado exitosamente. Si el
+  // analista edita durante el `await`, el resultado obsoleto se
+  // descarta (por hash) y el efecto se re-ejecuta automáticamente
+  // con el snapshot nuevo — sin setTimeouts, sin recargas.
   //
-  // `lastAttemptedHashRef` documenta el último intento; `lastSuccessfulHashRef`
-  // sólo se fija cuando el trigger resuelve OK. Si falla o si el snapshot
-  // cambia durante el await, el resultado se descarta y el hash queda
-  // disponible para reintento controlado.
-  const [pendingAutoQAToken, setPendingAutoQAToken] = useState<{
+  // Reintento tras error: NO es automático. Ante `onError` marcamos
+  // `lastFailedHashRef` con el hash fallido para que el efecto NO
+  // vuelva a dispararlo. El analista dispara `retryAutoQA()` (botón),
+  // que limpia `lastFailedHashRef` y re-arma la intención para forzar
+  // una nueva evaluación del efecto. Esto evita bucles infinitos.
+  const [autoQAIntent, setAutoQAIntent] = useState<{
     archivoPath?: string | null;
     archivoNombre?: string | null;
   } | null>(null);
+  const [autoQAError, setAutoQAError] = useState<string | null>(null);
   const inflightHashRef = useRef<string | null>(null);
   const lastAttemptedHashRef = useRef<string | null>(null);
   const lastSuccessfulHashRef = useRef<string | null>(null);
+  const lastFailedHashRef = useRef<string | null>(null);
 
   // Snapshot canónico desde el estado del formulario (form-source-of-truth).
   const currentQaSnapshot = useMemo(() => {
