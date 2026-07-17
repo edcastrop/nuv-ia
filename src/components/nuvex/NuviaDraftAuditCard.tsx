@@ -264,8 +264,10 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
       certificable: true,
       hashCalculo: "",
     };
+    doneHashRef.current = snapshotRef.current ? hashQaSnapshot(snapshotRef.current) : null;
     setState({ kind: "done", result: synthetic });
   }, [directorApproval, state.kind]);
+
 
 
   // 2. Ejecutar auditoría dry-run
