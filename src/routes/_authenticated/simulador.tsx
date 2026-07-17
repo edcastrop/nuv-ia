@@ -602,6 +602,7 @@ export function SimuladorPage() {
         <NuviaDraftAuditCard
           mode={mode}
           auditoriaId={auditoriaId}
+          auditedSnapshot={auditedSnapshot}
 
           onCertificar={(payload) => {
             if (!mode) {
