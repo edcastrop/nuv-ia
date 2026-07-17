@@ -287,6 +287,7 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
           datos: snap.datos as Record<string, unknown>,
         },
       });
+      doneHashRef.current = hashQaSnapshot(snap);
       setState({ kind: "done", result });
       setShowHallazgos(result.totalHallazgos > 0);
       if (result.certificable) {
