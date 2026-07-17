@@ -616,27 +616,31 @@ export function PesosSimulator({
     emitDraftRawReady(currentQaSnapshot);
   }, [init?.id, currentQaSnapshot]);
 
-  // Modo expediente: disparo controlado del Auto-QA.
+  // Modo expediente: disparo controlado del Auto-QA con INTENCIÓN pegajosa.
   useEffect(() => {
     if (!init?.id) return;
-    if (!pendingAutoQAToken) return;
+    if (!autoQAIntent) return;
     if (!currentQaSnapshot) return;
     const snapshot: typeof currentQaSnapshot = {
       ...currentQaSnapshot,
-      archivoPath: pendingAutoQAToken.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
-      archivoNombre: pendingAutoQAToken.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
+      archivoPath: autoQAIntent.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
+      archivoNombre: autoQAIntent.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
     };
     const hash = hashQaSnapshot(snapshot);
-    if (!hash) return;
-    if (inflightHashRef.current === hash) return;
-    if (lastSuccessfulHashRef.current === hash) {
-      // Ya se auditó exitosamente este snapshot; consumimos el token sin re-disparar.
-      setPendingAutoQAToken(null);
+    const decision = decideAutoQADispatch({
+      hasIntent: true,
+      currentHash: hash,
+      inflightHash: inflightHashRef.current,
+      successHash: lastSuccessfulHashRef.current,
+      failedHash: lastFailedHashRef.current,
+    });
+    if (decision.kind === "skip") return;
+    if (decision.kind === "clear-intent") {
+      setAutoQAIntent(null);
       return;
     }
     inflightHashRef.current = hash;
     lastAttemptedHashRef.current = hash;
-    setPendingAutoQAToken(null);
     void triggerSimuladorAutoQA({
       expedienteId: init.id,
       raw: {
@@ -650,21 +654,37 @@ export function PesosSimulator({
       onStart: () => {
         setAutoQALoading(true);
         setAutoQA(null);
+        setAutoQAError(null);
       },
       onResult: (r) => {
         setAutoQALoading(false);
-        if (inflightHashRef.current !== hash) return; // resultado obsoleto
+        const rec = decideAutoQAResult({ resultHash: hash, inflightHash: inflightHashRef.current });
+        if (rec.kind === "obsolete") return; // snapshot superado; el efecto re-disparará
         lastSuccessfulHashRef.current = hash;
         inflightHashRef.current = null;
         setAutoQA(r);
+        // La intención se limpia en la próxima re-evaluación del efecto
+        // (decideAutoQADispatch → "clear-intent") si el snapshot actual
+        // sigue siendo idéntico. Si cambió, el efecto disparará el nuevo hash.
       },
-      onError: () => {
+      onError: (e) => {
         setAutoQALoading(false);
         if (inflightHashRef.current === hash) inflightHashRef.current = null;
-        // No marcar lastSuccessful → reintento posible tras nueva intención.
+        lastFailedHashRef.current = hash;
+        setAutoQAError(e instanceof Error ? e.message : "Error al ejecutar Auto-QA.");
+        // Intent se conserva para permitir retry manual; el efecto NO
+        // volverá a dispararse mientras `lastFailedHashRef === hash`.
       },
     });
-  }, [init?.id, pendingAutoQAToken, currentQaSnapshot]);
+  }, [init?.id, autoQAIntent, currentQaSnapshot]);
+
+  const retryAutoQA = () => {
+    lastFailedHashRef.current = null;
+    setAutoQAError(null);
+    // Fuerza nueva referencia para re-ejecutar el efecto aunque
+    // `autoQAIntent` conserve los mismos valores.
+    setAutoQAIntent((prev) => (prev ? { ...prev } : prev));
+  };
 
 
 
