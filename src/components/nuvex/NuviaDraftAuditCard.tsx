@@ -143,6 +143,27 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   const stateRef = useRef<PanelState>({ kind: mode ? "waiting" : "idle" });
   useEffect(() => { stateRef.current = state; }, [state]);
 
+  // Hidratación de `doneHashRef` desde el snapshot ORIGINAL de la auditoría.
+  // Regla obligatoria: al abrir una auditoría existente, el hash base debe
+  // provenir del `simulador_snapshot` guardado, NO del primer snapshot que
+  // reconstruya el formulario. Esto evita que la hidratación local promueva
+  // el panel a `invalidated` por diferencias triviales de reconstrucción.
+  // La versión del snapshot dicta cómo comparar hashes: v1 se degrada a v1
+  // para no invalidarlo cuando el formulario emita snapshots v2 nuevos.
+  const auditedSnapshotInitializedRef = useRef<boolean>(false);
+  useEffect(() => {
+    if (auditedSnapshotInitializedRef.current) return;
+    if (!auditedSnapshot) return;
+    const contract = validateAuditSnapshotContract(auditedSnapshot);
+    const compareSnapshot =
+      contract.kind === "historico_persistido"
+        ? auditedSnapshot
+        : downgradeToV1(auditedSnapshot);
+    doneHashRef.current = hashQaSnapshot(compareSnapshot);
+    auditedSnapshotInitializedRef.current = true;
+  }, [auditedSnapshot]);
+
+
 
 
 
