@@ -323,6 +323,10 @@ export function ReconstruccionAuditorBlock({
             onValidated={onValidated}
           />
 
+          {/* Escenarios financieros del expediente (auditor · solo lectura) */}
+          <EscenariosAuditor auditoria={auditoria} inputs={inputs} modo={modo} />
+
+
 
 
           {/* Simulador embebido */}
