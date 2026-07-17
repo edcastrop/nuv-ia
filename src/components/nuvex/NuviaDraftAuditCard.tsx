@@ -111,6 +111,14 @@ type Props = {
    * local del motor y habilitar directamente "Certificar y crear caso".
    */
   auditoriaId?: string;
+  /**
+   * Snapshot original persistido en `qa_auditorias.simulador_snapshot` cuando
+   * el analista aterriza en una auditoría existente. Se usa exclusivamente
+   * para inicializar `doneHashRef` con el hash del contrato original y
+   * evitar que la hidratación local del formulario invalide una auditoría
+   * v1/v2 sin edición real.
+   */
+  auditedSnapshot?: DraftRawSnapshot | null;
 };
 
 type DirectorApproval = {
