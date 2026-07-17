@@ -128,3 +128,106 @@ export function snapshotInputsAnalista(inputs: Record<string, unknown>): Array<{
     { label: "Valor UVR", value: fmtN(rec.valorUVR) },
   ].filter((r) => r.value !== "—");
 }
+
+// ─── Escenarios financieros del auditor ──────────────────────────────
+//
+// Fuente única para materializar los cuatro escenarios financieros que
+// verá el auditor. Consume el contrato de snapshot centralizado en
+// `nuviaQaSnapshot.validateAuditSnapshotContract` para evitar
+// validaciones duplicadas. Precedencia UVR: el `simulador_snapshot`
+// (contrato original del analista al momento del OCR) prima sobre
+// `inputs.reconstruccion` cuando ambos difieren.
+
+import {
+  validateAuditSnapshotContract,
+  reconstructLegacyUvrScenarios,
+  type SnapshotEscenario,
+  type AuditSnapshotContract,
+} from "@/lib/nuviaQaSnapshot";
+import type { DraftRawSnapshot } from "@/components/nuvex/NuviaDraftAuditCard";
+
+export type EscenariosOrigen =
+  | "historico_persistido"
+  | "reconstruido_legacy"
+  | null;
+
+export type EscenariosAuditor = {
+  origen: EscenariosOrigen;
+  escenarios: SnapshotEscenario[];
+  contract: AuditSnapshotContract;
+  /** Mensaje diagnóstico cuando `origen=null`. */
+  reason?: string;
+  /** Conflicto de variación UVR entre snapshot e inputs (cuando aplica). */
+  uvrVariationConflict?: null | { snapshotValue: number; inputsValue: number; chosen: number };
+};
+
+function num(v: unknown): number {
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  if (typeof v === "string") { const n = Number(v); return Number.isFinite(n) ? n : 0; }
+  return 0;
+}
+
+export function escenariosFromAudit(
+  auditoria: Record<string, unknown>,
+  inputs: Record<string, unknown>,
+): EscenariosAuditor {
+  const snapshotObj = (auditoria.simulador_snapshot ?? null) as DraftRawSnapshot | null;
+  const contract = validateAuditSnapshotContract(snapshotObj);
+  if (contract.kind === "historico_persistido") {
+    return { origen: "historico_persistido", escenarios: contract.escenarios, contract };
+  }
+  if (contract.kind === "invalido_v2") {
+    return {
+      origen: null,
+      escenarios: [],
+      contract,
+      reason: `Snapshot v2 inválido (${contract.reason}). La reconstrucción legacy queda deshabilitada; el analista debe re-auditar.`,
+    };
+  }
+  if (contract.kind === "version_desconocida") {
+    return {
+      origen: null,
+      escenarios: [],
+      contract,
+      reason: `Versión de snapshot desconocida: ${contract.version}.`,
+    };
+  }
+  // Legacy (v1) o sin_snapshot → intentamos reconstrucción determinística.
+  const rec = (inputs?.reconstruccion ?? {}) as Record<string, unknown>;
+  const datosSnap = (snapshotObj?.datos ?? {}) as Record<string, unknown>;
+  // Precedencia UVR: snapshot.datos.variacionUVR prima sobre inputs.reconstruccion.variacionUvrEa.
+  const varUvrSnap = num(datosSnap.variacionUVR);
+  const varUvrInp = num(rec.variacionUvrEa);
+  const variacionUVR = varUvrSnap > 0 ? varUvrSnap : varUvrInp;
+  const reconstructed = reconstructLegacyUvrScenarios(
+    {
+      saldoUVR: num(datosSnap.saldoUVR ?? rec.saldoUVR),
+      valorUVR: num(datosSnap.valorUVR ?? rec.valorUVR),
+      cuotaActualPesos: num(datosSnap.cuotaActualPesos ?? datosSnap.cuotaActual ?? rec.cuotaBaseSinSubsidio),
+      teaCobrada: num(datosSnap.teaCobrada ?? datosSnap.tasaEA ?? rec.tasaEaPactada ?? rec.tasaEa),
+      variacionUVR,
+      plazoInicial: num(datosSnap.plazoInicial ?? rec.plazoInicial),
+      cuotasPendientes: num(datosSnap.cuotasPendientes ?? rec.cuotasPendientes),
+      seguros: num(datosSnap.seguros ?? rec.seguros),
+      variacionUVRPropuestas: num(datosSnap.variacionUVRPropuestas),
+    },
+    varUvrSnap > 0 && varUvrInp > 0
+      ? { snapshotValue: varUvrSnap, inputsValue: varUvrInp }
+      : null,
+  );
+  if (!reconstructed) {
+    return {
+      origen: null,
+      escenarios: [],
+      contract,
+      reason:
+        "Datos insuficientes para reconstruir escenarios (faltan saldo, cuota, plazo, tea, uvr o variación).",
+    };
+  }
+  return {
+    origen: "reconstruido_legacy",
+    escenarios: reconstructed.escenarios,
+    contract,
+    uvrVariationConflict: reconstructed.uvrVariationConflict,
+  };
+}

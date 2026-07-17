@@ -44,14 +44,16 @@ export interface PropuestasComercialesSnapshot extends PropuestasComercialesDraf
   propuestas: PropuestaComercialPdfRow[];
 }
 
-type Common = {
+// Contrato de solo lectura (auditor): callbacks bloqueados a nivel de tipos.
+// Se usa una unión discriminada por `readOnly` para que el compilador
+// prohíba pasar callbacks interactivos al usar el componente en un flujo
+// de auditoría / revisión.
+type InteractiveCommon = {
+  readOnly?: false;
   cuotasPendientes: number;
-  baseCredito: number; // para "veces pagado" (desembolsado o, en su defecto, saldo actual)
-  /** Dinero ya pagado a la fecha. Solo se suma cuando la base es el valor desembolsado. */
+  baseCredito: number;
   dineroPagado?: number;
-  /** Perfil opcional del cliente para personalizar las analogías. */
   perfilCliente?: PerfilCliente;
-  /** Ingresos capturados en vivo durante la llamada (para validar capacidad 30%/40%). */
   ingresos?: IngresosCliente;
   onIngresosChange?: (v: IngresosCliente) => void;
   initialState?: PropuestasComercialesDraft;
@@ -59,19 +61,54 @@ type Common = {
   onRecomendadaChange: (r: RecomendadaSeleccionada | null) => void;
 };
 
-type PesosProps = Common & {
+type AuditorCommon = {
+  readOnly: true;
+  cuotasPendientes: number;
+  baseCredito: number;
+  dineroPagado?: number;
+  perfilCliente?: PerfilCliente;
+  ingresos?: never;
+  onIngresosChange?: never;
+  initialState?: PropuestasComercialesDraft;
+  onStateChange?: never;
+  onRecomendadaChange?: never;
+  /** Escenarios ya materializados (histórico persistido o legacy reconstruido). */
+  auditorEscenarios: Array<{
+    index: number;
+    cuotasEliminadas: number;
+    añosEliminados: number;
+    nuevoPlazo: number;
+    nuevaCuota: number;
+    ahorroTotal: number;
+    honorarios: number;
+  }>;
+  /** Índice del escenario resaltado como recomendado (0..3). */
+  auditorRecomendadaIdx?: number;
+  /** Banner literal a mostrar cuando `origen==='reconstruido_legacy'`. */
+  auditorBannerLegacy?: string | null;
+  /** Aviso de conflicto de variación UVR. */
+  auditorUvrVariationConflict?: null | { snapshotValue: number; inputsValue: number; chosen: number };
+};
+
+type Common = InteractiveCommon | AuditorCommon;
+
+type PesosProps = InteractiveCommon & {
   mode: "pesos";
   input: PesosInput;
 };
 
-type UVRProps = Common & {
+type UVRProps = InteractiveCommon & {
   mode: "uvr";
   input: UVRInput;
   escenarioActual: UVREscenarioActual;
   plazoInicial: number;
 };
 
-type Props = PesosProps | UVRProps;
+type AuditorProps = AuditorCommon & {
+  mode: "pesos" | "uvr";
+};
+
+type Props = PesosProps | UVRProps | AuditorProps;
 
 interface PropuestaCalc {
   valid: boolean;

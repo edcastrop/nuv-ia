@@ -16,6 +16,30 @@
 // `hashQaSnapshot` desde aquí para evitar criterios divergentes.
 
 import type { DraftRawSnapshot } from "@/components/nuvex/NuviaDraftAuditCard";
+import {
+  calculateUVRProjection,
+  type UVRInput,
+} from "@/lib/finance";
+
+// Versión actual del contrato de snapshot NUVIA. v2 introduce persistencia
+// de los cuatro escenarios financieros en `datos.propuestasComerciales`.
+// Ausencia del campo `snapshotVersion` (o valor 1) implica contrato legacy.
+export const SNAPSHOT_VERSION = 2 as const;
+
+export type SnapshotEscenario = {
+  index: number;
+  cuotasEliminadas: number;
+  añosEliminados: number;
+  nuevoPlazo: number;
+  nuevaCuota: number;
+  ahorroIntereses: number;
+  ahorroSeguros: number;
+  ahorroTotal: number;
+  honorarios: number;
+  totalProyectado: number;
+  incrementoMensual: number;
+  fuente: "manual" | "automatica";
+};
 
 // ─── Tipos de entrada (estado del formulario ya parseado) ────────────
 
@@ -85,6 +109,8 @@ export type UvrSnapshotInput = {
   propuesta?: SnapshotPropuesta;
   archivoPath?: string | null;
   archivoNombre?: string | null;
+  /** Cuatro escenarios financieros (v2). Persistencia obligatoria en UVR. */
+  escenarios?: SnapshotEscenario[] | null;
 };
 
 // ─── Utilidades internas ─────────────────────────────────────────────
@@ -175,6 +201,15 @@ export function buildUvrQaSnapshot(input: UvrSnapshotInput): DraftRawSnapshot {
     tasaCobertura: numOrUndef(input.tasaCobertura),
     valorCobertura: numOrUndef(input.valorCobertura),
     beneficioFrechMensual: numOrUndef(input.beneficioFrechMensual),
+    // v2 — persistencia de los cuatro escenarios financieros y versionado
+    // explícito del contrato. Consumidores deben usar
+    // `validateAuditSnapshotContract` para decidir si reutilizan estos
+    // escenarios o si reconstruyen legacy.
+    snapshotVersion: SNAPSHOT_VERSION,
+    propuestasComerciales:
+      Array.isArray(input.escenarios) && input.escenarios.length > 0
+        ? input.escenarios.map((e) => ({ ...e }))
+        : null,
   };
   return {
     banco: orNull(input.banco),
@@ -253,18 +288,23 @@ function fnv1a(input: string): string {
 }
 
 /**
- * Hash canónico del snapshot (identidad financiera).
- * - Dos snapshots equivalentes → mismo hash aunque provengan de archivos
- *   distintos o momentos distintos.
- * - Cambios en archivoPath / archivoNombre / timestamps NO afectan el hash.
- * - Un cambio real en cualquier campo de `HASH_FIELDS` sí lo modifica.
- * - `tipoCredito` participa implícitamente vía `modalidad`/`moneda`.
+ * Hash canónico del snapshot (identidad financiera). Versionado:
+ *   v1 (legacy): sólo campos de `HASH_FIELDS`. Se preserva estable para no
+ *                invalidar auditorías históricas.
+ *   v2: v1 + huella de `datos.propuestasComerciales` (los cuatro
+ *       escenarios). Un cambio en la lista de escenarios modifica el hash.
+ * La versión se toma de `datos.snapshotVersion`; ausente → v1.
  */
 export function hashQaSnapshot(snapshot: DraftRawSnapshot | null | undefined): string {
   if (!snapshot) return "";
   const datos = (snapshot.datos ?? {}) as Record<string, unknown>;
+  const version = Number(datos.snapshotVersion) === 2 ? 2 : 1;
+  return version === 2 ? hashV2(snapshot) : hashV1(snapshot);
+}
+
+function hashV1(snapshot: DraftRawSnapshot): string {
+  const datos = (snapshot.datos ?? {}) as Record<string, unknown>;
   const canonical: Record<string, unknown> = {};
-  // Encabezado — banco/producto/moneda pueden venir en el snapshot o dentro de datos.
   canonical.banco = normalizeHashValue(datos.banco ?? snapshot.banco ?? null);
   canonical.producto = normalizeHashValue(datos.producto ?? snapshot.producto ?? null);
   canonical.moneda = normalizeHashValue(datos.moneda ?? snapshot.moneda ?? null);
@@ -273,11 +313,44 @@ export function hashQaSnapshot(snapshot: DraftRawSnapshot | null | undefined): s
     if (key in canonical) continue;
     canonical[key] = normalizeHashValue(datos[key]);
   }
-  // Orden estable de claves.
   const sortedKeys = Object.keys(canonical).sort();
   const payload = JSON.stringify(sortedKeys.map((k) => [k, canonical[k]]));
   return fnv1a(payload);
 }
+
+function hashV2(snapshot: DraftRawSnapshot): string {
+  const base = hashV1(snapshot);
+  const datos = (snapshot.datos ?? {}) as Record<string, unknown>;
+  const escenarios = Array.isArray(datos.propuestasComerciales)
+    ? (datos.propuestasComerciales as SnapshotEscenario[])
+    : [];
+  const canonicalEsc = escenarios
+    .map((e) => [
+      normalizeHashValue(e.cuotasEliminadas),
+      normalizeHashValue(e.nuevaCuota),
+      normalizeHashValue(e.nuevoPlazo),
+      normalizeHashValue(e.ahorroTotal),
+      normalizeHashValue(e.honorarios),
+    ])
+    // Los índices ordenan por `cuotasEliminadas` para estabilidad canónica
+    .sort((a, b) => String(a[0]).localeCompare(String(b[0])));
+  return fnv1a(`v2:${base}:${JSON.stringify(canonicalEsc)}`);
+}
+
+/**
+ * Devuelve una copia del snapshot con `snapshotVersion` retirado para forzar
+ * hash v1 al comparar contra auditorías legacy. Uso: al hidratar una
+ * auditoría v1 el card debe comparar hash actual (retrotraído a v1) contra
+ * el hash reconstruido del `simulador_snapshot` original.
+ */
+export function downgradeToV1(snapshot: DraftRawSnapshot | null | undefined): DraftRawSnapshot | null {
+  if (!snapshot) return null;
+  const datos = { ...(snapshot.datos ?? {}) } as Record<string, unknown>;
+  delete datos.snapshotVersion;
+  delete datos.propuestasComerciales;
+  return { ...snapshot, datos };
+}
+
 
 // ─── Decisores puros de dispatch Auto-QA ─────────────────────────────
 //
@@ -339,4 +412,189 @@ export function decideAutoQAResult(input: {
 }): AutoQAResultReconcile {
   if (input.inflightHash !== input.resultHash) return { kind: "obsolete" };
   return { kind: "apply" };
+}
+
+// ─── Contrato de auditoría (fuente única) ────────────────────────────
+//
+// Toda la validación del contrato del snapshot de una auditoría vive
+// aquí. `validateAuditSnapshotContract(snapshot)` es la única función
+// pública que consumidores (`writeStandaloneDraftFromAudit`,
+// `qaReviewExpediente.escenariosFromAudit`, `NuviaDraftAuditCard`) deben
+// invocar para clasificar el origen de los escenarios y bloquear v2
+// corruptos ANTES de caer al reconstruidor legacy.
+
+export type AuditSnapshotContract =
+  | {
+      kind: "historico_persistido";
+      version: 2;
+      escenarios: SnapshotEscenario[];
+    }
+  | {
+      kind: "reconstruido_legacy";
+      version: 1;
+      reason: "v1_sin_escenarios";
+    }
+  | {
+      kind: "invalido_v2";
+      version: 2;
+      reason:
+        | "v2_sin_propuestas"
+        | "v2_menos_de_cuatro"
+        | "v2_mas_de_cuatro"
+        | "v2_forma_invalida";
+    }
+  | {
+      kind: "version_desconocida";
+      version: number;
+    }
+  | {
+      kind: "sin_snapshot";
+    };
+
+const REQUIRED_ESC_KEYS: Array<keyof SnapshotEscenario> = [
+  "cuotasEliminadas",
+  "nuevaCuota",
+  "nuevoPlazo",
+  "ahorroTotal",
+  "honorarios",
+];
+
+function isValidEscenario(x: unknown): x is SnapshotEscenario {
+  if (!x || typeof x !== "object") return false;
+  const o = x as Record<string, unknown>;
+  return REQUIRED_ESC_KEYS.every((k) => {
+    const v = o[k];
+    return typeof v === "number" && Number.isFinite(v);
+  });
+}
+
+export function validateAuditSnapshotContract(
+  snapshot: DraftRawSnapshot | null | undefined,
+): AuditSnapshotContract {
+  if (!snapshot || !snapshot.datos) return { kind: "sin_snapshot" };
+  const datos = snapshot.datos as Record<string, unknown>;
+  const rawVersion = datos.snapshotVersion;
+  const version =
+    rawVersion === undefined || rawVersion === null
+      ? 1
+      : Number(rawVersion);
+  if (version === 1) {
+    return { kind: "reconstruido_legacy", version: 1, reason: "v1_sin_escenarios" };
+  }
+  if (version === 2) {
+    const raw = datos.propuestasComerciales;
+    if (raw === null || raw === undefined) {
+      return { kind: "invalido_v2", version: 2, reason: "v2_sin_propuestas" };
+    }
+    if (!Array.isArray(raw)) {
+      return { kind: "invalido_v2", version: 2, reason: "v2_forma_invalida" };
+    }
+    if (raw.length < 4) {
+      return { kind: "invalido_v2", version: 2, reason: "v2_menos_de_cuatro" };
+    }
+    if (raw.length > 4) {
+      return { kind: "invalido_v2", version: 2, reason: "v2_mas_de_cuatro" };
+    }
+    if (!raw.every(isValidEscenario)) {
+      return { kind: "invalido_v2", version: 2, reason: "v2_forma_invalida" };
+    }
+    return { kind: "historico_persistido", version: 2, escenarios: raw as SnapshotEscenario[] };
+  }
+  return { kind: "version_desconocida", version };
+}
+
+// ─── Reconstrucción legacy determinística (v1) ───────────────────────
+//
+// Sólo se invoca cuando `validateAuditSnapshotContract` clasifica como
+// `reconstruido_legacy`. Utiliza el motor financiero canónico
+// (`calculateUVRProjection`) y las 4 opciones estándar
+// (`getUVRReductionOptions`). Devuelve `null` si faltan campos
+// matemáticos obligatorios (saldo, cuota, plazo, tea, uvrActual,
+// variacion) — sin fallback ambiguo.
+
+export type LegacyReconstructionInput = {
+  saldoUVR: number;
+  valorUVR: number;
+  cuotaActualPesos: number;
+  teaCobrada: number;
+  variacionUVR: number;
+  plazoInicial: number;
+  cuotasPendientes: number;
+  seguros?: number;
+  variacionUVRPropuestas?: number;
+  honorariosPct?: number;
+};
+
+export type LegacyReconstructionResult = {
+  escenarios: SnapshotEscenario[];
+  uvrVariationConflict: null | {
+    snapshotValue: number;
+    inputsValue: number;
+    chosen: number;
+  };
+};
+
+/**
+ * Precedencia UVR EA: cuando snapshot y inputs discrepan, prima el valor
+ * del snapshot original (contrato del analista al momento del OCR). Se
+ * expone `uvrVariationConflict` para que la UI lo comunique.
+ */
+export function reconstructLegacyUvrScenarios(
+  input: LegacyReconstructionInput | null,
+  conflict?: { snapshotValue: number; inputsValue: number } | null,
+): LegacyReconstructionResult | null {
+  if (!input) return null;
+  const {
+    saldoUVR, valorUVR, cuotaActualPesos, teaCobrada, variacionUVR,
+    plazoInicial, cuotasPendientes,
+  } = input;
+  if (
+    !(saldoUVR > 0) || !(valorUVR > 0) || !(cuotaActualPesos > 0) ||
+    !(teaCobrada > 0) || !(variacionUVR > 0) ||
+    !(plazoInicial > 0) || !(cuotasPendientes > 0)
+  ) {
+    return null;
+  }
+  const seguros = input.seguros ?? 0;
+  // Motor financiero: `variacionUVR` y `teaCobrada` viajan como porcentaje
+  // (ej. 6 y 12.5) y `porcentajeHonorarios` como fracción (0.06).
+  const uvrInput: UVRInput = {
+    valorDesembolsado: saldoUVR * valorUVR,
+    saldoPesos: saldoUVR * valorUVR,
+    saldoUVR,
+    valorUVR,
+    cuotaActualPesos,
+    cuotaSinSeguros: Math.max(0, cuotaActualPesos - seguros),
+    seguros,
+    teaCobrada,
+    variacionUVR,
+    variacionUVRPropuestas: input.variacionUVRPropuestas ?? variacionUVR,
+    plazoInicial,
+    cuotasPendientes,
+    porcentajeHonorarios: input.honorariosPct ?? 0.06,
+  };
+  const projection = calculateUVRProjection(uvrInput);
+  const escenarios: SnapshotEscenario[] = projection.propuestas
+    .slice(0, 4)
+    .map((p, idx) => ({
+      index: idx,
+      cuotasEliminadas: p.cuotasEliminadas,
+      añosEliminados: p.añosEliminados,
+      nuevoPlazo: p.nuevoPlazo,
+      nuevaCuota: p.nuevaCuotaConSeguroAprox,
+      ahorroIntereses: p.ahorroIntereses,
+      ahorroSeguros: p.ahorroSeguros,
+      ahorroTotal: p.ahorroTotal,
+      honorarios: p.honorariosNuvex,
+      totalProyectado: p.totalPagoPropuesta,
+      incrementoMensual: p.abonoAdicionalMensual,
+      fuente: "automatica",
+    }));
+  if (escenarios.length === 0) return null;
+  const uvrVariationConflict =
+    conflict && Number.isFinite(conflict.snapshotValue) && Number.isFinite(conflict.inputsValue)
+      && Math.abs(conflict.snapshotValue - conflict.inputsValue) > 1e-6
+      ? { ...conflict, chosen: conflict.snapshotValue }
+      : null;
+  return { escenarios, uvrVariationConflict };
 }
