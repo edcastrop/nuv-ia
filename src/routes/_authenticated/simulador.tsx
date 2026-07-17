@@ -63,6 +63,9 @@ export function SimuladorPage() {
   const [loadingMaestro, setLoadingMaestro] = useState<boolean>(!!maestroId || !!auditoriaId);
   const [creating, setCreating] = useState<boolean>(false);
   const [maestroErr, setMaestroErr] = useState<string | null>(null);
+  // Snapshot original de la auditoría cargada (para hidratar el hash base
+  // en `NuviaDraftAuditCard` y evitar invalidaciones falsas).
+  const [auditedSnapshot, setAuditedSnapshot] = useState<DraftRawSnapshot | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   // Guarda síncrona contra doble clic / doble disparo del certificador.
   // `setSavingDraft` es async y no evita que un segundo click entre a
