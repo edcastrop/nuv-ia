@@ -785,7 +785,7 @@ export const listAlertasQA = createServerFn({ method: "POST" })
     const expIds = Array.from(new Set((alertas ?? []).map((a) => a.expediente_id).filter(Boolean))) as string[];
     const [auds, exps] = await Promise.all([
       audIds.length
-        ? context.supabase.from("qa_auditorias").select("id,qa_score,dictamen,modalidad,analista_id").in("id", audIds)
+        ? context.supabase.from("qa_auditorias").select("id,qa_score,dictamen,modalidad,analista_id").eq("estado_registro", "activa").in("id", audIds)
         : Promise.resolve({ data: [] as Array<{ id: string; qa_score: number; dictamen: string; modalidad: string; analista_id: string | null }> }),
       expIds.length
         ? context.supabase.from("expedientes").select("id,codigo,cliente_nombre,banco,asesor_id").in("id", expIds)
@@ -1773,6 +1773,7 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     let audQuery = supabase
       .from("qa_auditorias")
       .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by,origen,banco,producto,cliente_nombre")
+      .eq("estado_registro", "activa")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (data.mineOnly) {
@@ -2482,17 +2483,17 @@ export function normalizarMotivoAnulacionQA(input: string): string {
 }
 
 export type AnulacionQACode =
-  | "cancelled"
+  | "ok"
   | "already_cancelled"
   | "not_found"
   | "invalid_reason"
   | "linked_to_expediente"
   | "not_owner"
   | "approved_by_director"
-  | "unauthenticated";
+  | "forbidden_role";
 
 export const MENSAJE_ANULACION_QA: Record<AnulacionQACode, string> = {
-  cancelled: "Auditoría anulada correctamente.",
+  ok: "Auditoría anulada correctamente.",
   already_cancelled: "Esta auditoría ya estaba anulada.",
   not_found: "La auditoría no existe o no es visible.",
   invalid_reason: "El motivo debe tener entre 3 y 1000 caracteres.",
@@ -2502,7 +2503,8 @@ export const MENSAJE_ANULACION_QA: Record<AnulacionQACode, string> = {
     "No autorizado: solo el analista propietario puede anular esta auditoría.",
   approved_by_director:
     "No autorizado: la auditoría fue aprobada por el Director. Solicite a Dirección QA la anulación.",
-  unauthenticated: "Sesión expirada. Vuelva a iniciar sesión.",
+  forbidden_role:
+    "No autorizado: su rol no puede anular auditorías. Solicite apoyo a Dirección QA.",
 };
 
 export const anularAuditoriaServer = createServerFn({ method: "POST" })
@@ -2520,11 +2522,10 @@ export const anularAuditoriaServer = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: rpc, error } = await (supabase as any).rpc(
-      "anular_qa_auditoria",
-      { _auditoria_id: data.auditoriaId, _motivo: data.motivo },
-    );
+    const { data: rpc, error } = await supabase.rpc("anular_qa_auditoria", {
+      _auditoria_id: data.auditoriaId,
+      _motivo: data.motivo,
+    });
     if (error) throw new Error(error.message);
     const res = (rpc ?? {}) as {
       ok?: boolean;
