@@ -172,50 +172,45 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   }, [mode]);
 
   useEffect(() => {
-    // Hash estable del snapshot para detectar cambios REALES vs re-emisiones
-    // idénticas. PesosSimulator/UVRSimulator disparan `nuvia:draftRawReady`
-    // dentro de un useEffect que se re-ejecuta en muchos re-renders; sin este
-    // filtro, cada re-emisión reseteaba el estado "done" (auditoría aprobada)
-    // a "ready", deshabilitando el botón "Certificar y crear caso" aunque
-    // matemáticamente la simulación ya estaba certificable. Le pasaba a
-    // cualquier analista tras editar cualquier campo o al re-render por foco.
-    const hashSnapshot = (s: DraftRawSnapshot): string => {
-      try {
-        return JSON.stringify({
-          banco: s.banco ?? null,
-          producto: s.producto ?? null,
-          moneda: s.moneda ?? null,
-          tipoCredito: s.tipoCredito ?? null,
-          datos: s.datos ?? null,
-        });
-      } catch {
-        return "";
-      }
-    };
+    // Utiliza el hash CANÓNICO compartido con los simuladores para que
+    // ambos lados decidan igual qué es "el mismo snapshot" y qué es una
+    // edición real del analista.
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<DraftRawSnapshot>).detail;
       if (!detail || !detail.datos) return;
-      const prevSnap = snapshotRef.current;
-      const isFirst = !prevSnap;
-      const sameSnapshot =
-        !!prevSnap && hashSnapshot(prevSnap) === hashSnapshot(detail);
+      const newHash = hashQaSnapshot(detail);
+      const wasFirst = !firstSnapshotReceivedRef.current;
+      const decision = evaluateSnapshotTransition({
+        prevKind: stateRef.current.kind,
+        doneHash: doneHashRef.current,
+        lastEmittedHash: lastEmittedHashRef.current,
+        newHash,
+        wasFirst,
+      });
+      firstSnapshotReceivedRef.current = true;
       snapshotRef.current = detail;
-      if (sameSnapshot) return;
-      if (isFirst) {
-        // Primer snapshot tras montar: es hidratación inicial, NO edición del
-        // analista. No debe invalidar una aprobación formal del Director QA
-        // ya cargada. El efecto de "promoción" se encarga de fijar "done".
-        // Solo pasamos a "ready" si aún no estamos en "done".
+      if (decision.kind === "ignore") return;
+      lastEmittedHashRef.current = newHash;
+      if (decision.kind === "hydrate") {
+        // Primer snapshot tras montar: hidratación. No invalidar aprobaciones.
         setState((s) => (s.kind === "done" ? s : { kind: "ready" }));
         return;
       }
-      // Cambio real de inputs por parte del analista: invalida aprobación.
-      setDirectorApproval(null);
+      if (decision.kind === "invalidate") {
+        // El analista editó datos después de un dictamen exitoso: invalida
+        // aprobación local y muestra banner de re-auditoría obligatoria.
+        setDirectorApproval(null);
+        doneHashRef.current = null;
+        setState({ kind: "invalidated" });
+        return;
+      }
+      // ready
       setState({ kind: "ready" });
     };
     window.addEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
   }, []);
+
 
   // Re-consulta la aprobación cuando la pestaña vuelve al foco o el
   // documento se hace visible: si Realtime falla o no llega, la fuente
