@@ -125,7 +125,7 @@ interface PropuestaCalc {
   incrementoMensual: number;
 }
 
-function computePropuesta(props: Props, cuotasEliminadas: number): PropuestaCalc {
+function computePropuesta(props: PesosProps | UVRProps, cuotasEliminadas: number): PropuestaCalc {
   if (props.mode === "pesos") {
     const r = calculatePesosManualByCuotas(props.input, cuotasEliminadas);
     return {
@@ -160,12 +160,12 @@ function computePropuesta(props: Props, cuotasEliminadas: number): PropuestaCalc
   };
 }
 
-function defaultCuotas(props: Props): number[] {
+function defaultCuotas(props: PesosProps | UVRProps): number[] {
   if (props.mode === "uvr") return getUVRReductionOptions(props.plazoInicial);
   return [12, 24, 36, 48];
 }
 
-function propsSeed(props: Props): string {
+function propsSeed(props: PesosProps | UVRProps): string {
   return `${props.mode}::${props.mode === "uvr" ? props.plazoInicial : "p"}::${props.cuotasPendientes}`;
 }
 
