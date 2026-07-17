@@ -508,9 +508,12 @@ function StatusBadge({ state }: { state: PanelState }) {
           return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · RECHAZADA · ${scoreTxt}/100` };
         return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · HALLAZGOS · ${scoreTxt}/100` };
       }
+      case "invalidated":
+        return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: "NUVIA · Requiere re-auditoría" };
       case "error":
         return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: "Error" };
     }
+
   })();
   return (
     <span
