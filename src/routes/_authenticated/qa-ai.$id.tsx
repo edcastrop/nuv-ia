@@ -1239,9 +1239,10 @@ function ResultadoQaAi() {
                 style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: "pointer" }}>
                 <FileDown size={14} /> Exportar PDF
               </button>
-              <button onClick={handleReejecutar} disabled={reloading}
+              <button onClick={handleReejecutar} disabled={reloading || isAnulada}
+                title={isAnulada ? "Auditoría anulada: reauditar deshabilitado" : undefined}
                 className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
-                style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.5 : 1 }}>
+                style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: (reloading || isAnulada) ? "not-allowed" : "pointer", opacity: (reloading || isAnulada) ? 0.5 : 1 }}>
                 <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reauditando…" : "Reauditar"}
               </button>
               {puedeAnular && (
