@@ -187,6 +187,84 @@ function toPdfRow(c: PropuestaCalc, index: number, fuente: "automatica" | "manua
 }
 
 export function PropuestasComerciales(props: Props) {
+  if (props.readOnly) return <PropuestasComercialesReadOnly {...props} />;
+  return <PropuestasComercialesInteractive {...(props as PesosProps | UVRProps)} />;
+}
+
+function PropuestasComercialesReadOnly(props: AuditorProps) {
+  const {
+    auditorEscenarios,
+    auditorRecomendadaIdx = 0,
+    auditorBannerLegacy,
+    auditorUvrVariationConflict,
+  } = props;
+  return (
+    <Card>
+      <SectionTitle sub="Escenarios financieros del expediente (solo lectura, vista del auditor).">
+        Propuestas comerciales
+      </SectionTitle>
+      {auditorBannerLegacy && (
+        <div className="mb-3">
+          <Alert tone="warning">
+            <span className="font-semibold">Escenarios reconstruidos por retrocompatibilidad.</span>{" "}
+            {auditorBannerLegacy}
+          </Alert>
+        </div>
+      )}
+      {auditorUvrVariationConflict && (
+        <div className="mb-3">
+          <Alert tone="warning">
+            Conflicto de Variación UVR EA: snapshot={auditorUvrVariationConflict.snapshotValue}% ·
+            inputs={auditorUvrVariationConflict.inputsValue}% · aplicado={auditorUvrVariationConflict.chosen}%.
+          </Alert>
+        </div>
+      )}
+      <div className="overflow-x-auto">
+        <table className="w-full text-[12px]" style={{ color: "var(--nuvia-text-primary)" }}>
+          <thead>
+            <tr style={{ color: "var(--nuvia-text-muted)" }}>
+              <th className="text-left px-2 py-2" style={{ color: "var(--nuvia-text-muted)" }}>#</th>
+              <th className="text-right px-2 py-2" style={{ color: "var(--nuvia-text-muted)" }}>Cuotas eliminadas</th>
+              <th className="text-right px-2 py-2" style={{ color: "var(--nuvia-text-muted)" }}>Nuevo plazo</th>
+              <th className="text-right px-2 py-2" style={{ color: "var(--nuvia-text-muted)" }}>Nueva cuota</th>
+              <th className="text-right px-2 py-2" style={{ color: "var(--nuvia-text-muted)" }}>Ahorro total</th>
+              <th className="text-right px-2 py-2" style={{ color: "var(--nuvia-text-muted)" }}>Honorarios</th>
+            </tr>
+          </thead>
+          <tbody>
+            {auditorEscenarios.map((e, i) => {
+              const isRec = i === auditorRecomendadaIdx;
+              return (
+                <tr key={e.index} style={{
+                  background: isRec ? "rgba(132,185,143,0.12)" : "transparent",
+                  color: "var(--nuvia-text-primary)",
+                }}>
+                  <td className="px-2 py-2" style={{ color: "var(--nuvia-text-primary)" }}>
+                    {isRec ? <Star size={12} style={{ color: "#F5C77E" }} /> : e.index + 1}
+                  </td>
+                  <td className="px-2 py-2 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{e.cuotasEliminadas}</td>
+                  <td className="px-2 py-2 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{e.nuevoPlazo}</td>
+                  <td className="px-2 py-2 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(e.nuevaCuota)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(e.ahorroTotal)}</td>
+                  <td className="px-2 py-2 text-right tabular-nums" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(e.honorarios)}</td>
+                </tr>
+              );
+            })}
+            {auditorEscenarios.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-2 py-3 text-center" style={{ color: "var(--nuvia-text-muted)" }}>
+                  Sin escenarios disponibles.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+function PropuestasComercialesInteractive(props: PesosProps | UVRProps) {
   const [revision, setRevision] = useState(0);
   const [cuotasList, setCuotasList] = useState<number[]>(() =>
     props.initialState?.cuotasList?.length ? props.initialState.cuotasList : defaultCuotas(props),
