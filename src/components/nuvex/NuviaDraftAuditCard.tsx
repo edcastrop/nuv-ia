@@ -128,6 +128,10 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   // Último hash emitido para deduplicar re-emisiones idénticas.
   const lastEmittedHashRef = useRef<string | null>(null);
   const firstSnapshotReceivedRef = useRef<boolean>(false);
+  const stateRef = useRef<PanelState>({ kind: mode ? "waiting" : "idle" });
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+
 
 
   const runAudit = useServerFn(auditarSimulacionDraft);
