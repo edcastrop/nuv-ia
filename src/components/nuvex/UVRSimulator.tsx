@@ -902,28 +902,24 @@ export function UVRSimulator({
             setInteresMensualExtracto(parseOcrMoney(p.extracto?.interesMensual));
             setCapitalMensualExtracto(parseOcrMoney(p.extracto?.capitalMensual));
             setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
-            // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
-            // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
-            // GATE UVR: si faltan las variaciones UVR (histórica + propuestas)
-            // dejamos la lectura "pendiente" y NUVIA no emite veredicto aún.
-            if (init?.id && p.raw) {
-              setPendingAutoQARaw({ raw: { ...p.raw, archivoPath: p.archivoPath ?? null } });
-              autoQAFiredRef.current = false;
-              setAutoQA(null);
-            } else if (!init?.id && p.raw) {
-              emitDraftRawReady({
-                banco: p.raw.banco ?? null,
-                producto: p.raw.producto ?? null,
-                moneda: p.raw.moneda ?? "UVR",
-                tipoCredito: "uvr",
-                datos: (p.raw.datos ?? {}) as Record<string, unknown>,
-                archivoPath: p.archivoPath ?? extractoArchivoPath ?? null,
-                archivoNombre: p.raw.archivoNombre ?? null,
+            // Auto-QA / snapshot: NO se dispara desde `onApply`. Registramos
+            // sólo la INTENCIÓN (`pendingAutoQAToken`) para que, tras que
+            // React aplique todos los setState del formulario, el efecto
+            // dedicado construya el snapshot con `buildUvrQaSnapshot` y —
+            // sólo si `uvrVarsReady` — ejecute la auditoría. En modo
+            // standalone, el useEffect emisor reemite `nuvia:draftRawReady`
+            // con el snapshot canónico del formulario (nunca `p.raw`).
+            if (init?.id) {
+              setPendingAutoQAToken({
+                archivoPath: p.archivoPath ?? null,
+                archivoNombre: p.raw?.archivoNombre ?? null,
               });
+              setAutoQA(null);
             }
           }}
         />}
-        {!qaEmbedded && init?.id && pendingAutoQARaw && !uvrVarsReady && (
+        {!qaEmbedded && init?.id && pendingAutoQAToken && !uvrVarsReady && (
+
           <Card>
             <div
               className="rounded-lg px-4 py-3 text-[13px] leading-snug"
