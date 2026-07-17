@@ -65,7 +65,35 @@ type PanelState =
   | { kind: "ready" }
   | { kind: "loading" }
   | { kind: "done"; result: DraftAuditResult }
+  | { kind: "invalidated" }
   | { kind: "error"; message: string };
+
+// Pura, testeable: dado el estado anterior y los hashes, decide la transición
+// que provoca la llegada de un snapshot.
+export type SnapshotTransition =
+  | { kind: "ignore" }
+  | { kind: "hydrate" }
+  | { kind: "invalidate" }
+  | { kind: "ready" };
+
+export function evaluateSnapshotTransition(args: {
+  prevKind: PanelState["kind"];
+  doneHash: string | null;
+  lastEmittedHash: string | null;
+  newHash: string;
+  wasFirst: boolean;
+}): SnapshotTransition {
+  const { prevKind, doneHash, lastEmittedHash, newHash, wasFirst } = args;
+  if (!newHash) return { kind: "ignore" };
+  if (lastEmittedHash === newHash) return { kind: "ignore" };
+  if (wasFirst) return { kind: "hydrate" };
+  if (prevKind === "done") {
+    if (doneHash && doneHash === newHash) return { kind: "ignore" };
+    return { kind: "invalidate" };
+  }
+  if (prevKind === "invalidated") return { kind: "ready" };
+  return { kind: "ready" };
+}
 
 type Props = {
   mode: "pesos" | "uvr" | null;
