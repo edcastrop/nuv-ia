@@ -785,7 +785,7 @@ export const listAlertasQA = createServerFn({ method: "POST" })
     const expIds = Array.from(new Set((alertas ?? []).map((a) => a.expediente_id).filter(Boolean))) as string[];
     const [auds, exps] = await Promise.all([
       audIds.length
-        ? context.supabase.from("qa_auditorias").select("id,qa_score,dictamen,modalidad,analista_id").in("id", audIds)
+        ? context.supabase.from("qa_auditorias").select("id,qa_score,dictamen,modalidad,analista_id").eq("estado_registro", "activa").in("id", audIds)
         : Promise.resolve({ data: [] as Array<{ id: string; qa_score: number; dictamen: string; modalidad: string; analista_id: string | null }> }),
       expIds.length
         ? context.supabase.from("expedientes").select("id,codigo,cliente_nombre,banco,asesor_id").in("id", expIds)
