@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { buildPesosQaSnapshot, hashQaSnapshot } from "@/lib/nuviaQaSnapshot";
 import { useServerFn } from "@tanstack/react-start";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
@@ -515,43 +516,55 @@ export function PesosSimulator({
     }
   };
 
-  // Modo manual (sin extracto): en /herramientas/simulador no hay expediente
-  // asociado. Si el analista diligencia a mano saldo, cuota y tasa, emitimos
-  // el snapshot para que NUVIA pueda auditar y luego certificar el caso.
-  useEffect(() => {
-    if (init?.id) return;
+  // ── Auto-QA de expediente (modo `init?.id`) ────────────────────────
+  // Control determinístico por token + hash: `onApply` NO dispara la
+  // auditoría; sólo registra intención vía `pendingAutoQAToken`. Cuando
+  // React reconcilia todos los setState del formulario, el efecto de
+  // abajo construye el snapshot con `buildPesosQaSnapshot` y ejecuta
+  // `triggerSimuladorAutoQA` únicamente si:
+  //   1) el snapshot está completo y validado,
+  //   2) el hash no está en vuelo (inflight) ni marcado como completado
+  //      exitosamente (lastSuccessful).
+  //
+  // `lastAttemptedHashRef` documenta el último intento; `lastSuccessfulHashRef`
+  // sólo se fija cuando el trigger resuelve OK. Si falla o si el snapshot
+  // cambia durante el await, el resultado se descarta y el hash queda
+  // disponible para reintento controlado.
+  const [pendingAutoQAToken, setPendingAutoQAToken] = useState<{
+    archivoPath?: string | null;
+    archivoNombre?: string | null;
+  } | null>(null);
+  const inflightHashRef = useRef<string | null>(null);
+  const lastAttemptedHashRef = useRef<string | null>(null);
+  const lastSuccessfulHashRef = useRef<string | null>(null);
+
+  // Snapshot canónico desde el estado del formulario (form-source-of-truth).
+  const currentQaSnapshot = useMemo(() => {
     const saldoN = parseCurrency(saldoCapital);
     const cuotaN = parseCurrency(cuotaActual);
     const teaN = parsePercentage(tea);
-    if (!(saldoN > 0 && cuotaN > 0 && teaN > 0)) return;
+    if (!(saldoN > 0 && cuotaN > 0 && teaN > 0)) return null;
     const d = recomendada ? computeDiscount(recomendada.honorarios, discount) : null;
-    emitDraftRawReady({
+    return buildPesosQaSnapshot({
       banco: client.banco || null,
       producto: client.tipoProducto || null,
-      moneda: "COP",
-      tipoCredito: "pesos",
-      datos: {
-        banco: client.banco || "",
-        producto: client.tipoProducto || "",
-        cedula: client.cedula || "",
-        numeroCredito: client.numeroCredito || "",
-        cliente: client.nombre || "",
-        titular: client.nombre || "",
-        saldoCapital: saldoN,
-        cuotaActual: cuotaN,
-        seguros: parseCurrency(seguros) || 0,
-        tasaEA: teaN,
-        teaCobrada: teaN,
-        valorDesembolsado: parseCurrency(valorDesembolsado) || undefined,
-        plazoInicial,
-        cuotasPagadas,
-        cuotasPendientes,
-        tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
-        valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
-      },
-      honorariosBase: recomendada ? recomendada.honorarios : undefined,
-      honorariosFinal: d ? d.final : undefined,
-      descuento: d ? d.descuento : undefined,
+      cedula: client.cedula || null,
+      numeroCredito: client.numeroCredito || null,
+      cliente: client.nombre || null,
+      saldoCapital: saldoN,
+      cuotaActual: cuotaN,
+      seguros: parseCurrency(seguros) || 0,
+      tea: teaN,
+      valorDesembolsado: parseCurrency(valorDesembolsado) || undefined,
+      plazoInicial,
+      cuotasPagadas,
+      cuotasPendientes,
+      tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
+      valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
+      beneficioFrechMensual: beneficioFrechMensualExtracto ?? undefined,
+      honorariosBase: recomendada ? recomendada.honorarios : null,
+      honorariosFinal: d ? d.final : null,
+      descuento: d ? d.descuento : null,
       propuesta: recomendada
         ? {
             index: recomendada.index,
@@ -566,10 +579,9 @@ export function PesosSimulator({
             totalProyectado: recomendada.totalProyectado,
             fuente: manualValido ? "manual" : "automatica",
           }
-        : undefined,
+        : null,
     });
   }, [
-    init?.id,
     client.banco,
     client.tipoProducto,
     client.cedula,
@@ -585,10 +597,69 @@ export function PesosSimulator({
     cuotasPendientes,
     cobertura.tasaCobertura,
     cobertura.valorCobertura,
+    beneficioFrechMensualExtracto,
     recomendada,
     discount,
     manualValido,
   ]);
+
+  // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).
+  useEffect(() => {
+    if (init?.id) return;
+    if (!currentQaSnapshot) return;
+    emitDraftRawReady(currentQaSnapshot);
+  }, [init?.id, currentQaSnapshot]);
+
+  // Modo expediente: disparo controlado del Auto-QA.
+  useEffect(() => {
+    if (!init?.id) return;
+    if (!pendingAutoQAToken) return;
+    if (!currentQaSnapshot) return;
+    const snapshot: typeof currentQaSnapshot = {
+      ...currentQaSnapshot,
+      archivoPath: pendingAutoQAToken.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
+      archivoNombre: pendingAutoQAToken.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
+    };
+    const hash = hashQaSnapshot(snapshot);
+    if (!hash) return;
+    if (inflightHashRef.current === hash) return;
+    if (lastSuccessfulHashRef.current === hash) {
+      // Ya se auditó exitosamente este snapshot; consumimos el token sin re-disparar.
+      setPendingAutoQAToken(null);
+      return;
+    }
+    inflightHashRef.current = hash;
+    lastAttemptedHashRef.current = hash;
+    setPendingAutoQAToken(null);
+    void triggerSimuladorAutoQA({
+      expedienteId: init.id,
+      raw: {
+        banco: snapshot.banco ?? null,
+        producto: snapshot.producto ?? null,
+        moneda: snapshot.moneda ?? null,
+        datos: (snapshot.datos ?? {}) as Record<string, unknown>,
+        archivoPath: snapshot.archivoPath ?? null,
+        archivoNombre: snapshot.archivoNombre ?? null,
+      },
+      onStart: () => {
+        setAutoQALoading(true);
+        setAutoQA(null);
+      },
+      onResult: (r) => {
+        setAutoQALoading(false);
+        if (inflightHashRef.current !== hash) return; // resultado obsoleto
+        lastSuccessfulHashRef.current = hash;
+        inflightHashRef.current = null;
+        setAutoQA(r);
+      },
+      onError: () => {
+        setAutoQALoading(false);
+        if (inflightHashRef.current === hash) inflightHashRef.current = null;
+        // No marcar lastSuccessful → reintento posible tras nueva intención.
+      },
+    });
+  }, [init?.id, pendingAutoQAToken, currentQaSnapshot]);
+
 
 
 
@@ -673,35 +744,19 @@ export function PesosSimulator({
             setInteresMensualExtracto(parseOcrMoney(p.extracto?.interesMensual));
             setCapitalMensualExtracto(parseOcrMoney(p.extracto?.capitalMensual));
             setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
-            // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
-            // Expediente Maestro (init?.id). En modo standalone/draft no se ejecuta,
-            // pero emitimos el snapshot para que NuviaDraftAuditCard pueda auditar
-            // en memoria sin persistir nada.
-            if (init?.id && p.raw) {
-              void triggerSimuladorAutoQA({
-                expedienteId: init.id,
-                raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
-                onStart: () => {
-                  setAutoQALoading(true);
-                  setAutoQA(null);
-                },
-                onResult: (r) => {
-                  setAutoQA(r);
-                  setAutoQALoading(false);
-                },
-                onError: () => setAutoQALoading(false),
-              });
-            } else if (!init?.id && p.raw) {
-              emitDraftRawReady({
-                banco: p.raw.banco ?? null,
-                producto: p.raw.producto ?? null,
-                moneda: p.raw.moneda ?? null,
-                tipoCredito: "pesos",
-                datos: (p.raw.datos ?? {}) as Record<string, unknown>,
-                archivoPath: p.archivoPath ?? extractoArchivoPath ?? null,
-                archivoNombre: p.raw.archivoNombre ?? null,
+            // Auto-QA / snapshot: NO se dispara desde `onApply`. Registramos
+            // sólo la INTENCIÓN (`pendingAutoQAToken`) para que, tras que
+            // React aplique todos los setState del formulario, el efecto
+            // dedicado construya el snapshot con `buildPesosQaSnapshot` y
+            // ejecute la auditoría (modo expediente) o el emisor standalone
+            // reemita `nuvia:draftRawReady`. Nunca viaja `p.raw`.
+            if (init?.id) {
+              setPendingAutoQAToken({
+                archivoPath: p.archivoPath ?? null,
+                archivoNombre: p.raw?.archivoNombre ?? null,
               });
             }
+
           }}
         />}
         {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (

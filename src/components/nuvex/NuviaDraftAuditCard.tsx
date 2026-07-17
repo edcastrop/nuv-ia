@@ -27,6 +27,7 @@ import {
   type DraftAuditResult,
   type DraftAuditHallazgo,
 } from "@/lib/simuladorDraftQA.functions";
+import { hashQaSnapshot } from "@/lib/nuviaQaSnapshot";
 
 
 // ─────────────────────────────────────────────────────────────
@@ -64,7 +65,35 @@ type PanelState =
   | { kind: "ready" }
   | { kind: "loading" }
   | { kind: "done"; result: DraftAuditResult }
+  | { kind: "invalidated" }
   | { kind: "error"; message: string };
+
+// Pura, testeable: dado el estado anterior y los hashes, decide la transición
+// que provoca la llegada de un snapshot.
+export type SnapshotTransition =
+  | { kind: "ignore" }
+  | { kind: "hydrate" }
+  | { kind: "invalidate" }
+  | { kind: "ready" };
+
+export function evaluateSnapshotTransition(args: {
+  prevKind: PanelState["kind"];
+  doneHash: string | null;
+  lastEmittedHash: string | null;
+  newHash: string;
+  wasFirst: boolean;
+}): SnapshotTransition {
+  const { prevKind, doneHash, lastEmittedHash, newHash, wasFirst } = args;
+  if (!newHash) return { kind: "ignore" };
+  if (lastEmittedHash === newHash) return { kind: "ignore" };
+  if (wasFirst) return { kind: "hydrate" };
+  if (prevKind === "done") {
+    if (doneHash && doneHash === newHash) return { kind: "ignore" };
+    return { kind: "invalidate" };
+  }
+  if (prevKind === "invalidated") return { kind: "ready" };
+  return { kind: "ready" };
+}
 
 type Props = {
   mode: "pesos" | "uvr" | null;
@@ -94,6 +123,16 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   const [escalarOpen, setEscalarOpen] = useState(false);
   const [directorApproval, setDirectorApproval] = useState<DirectorApproval | null>(null);
   const snapshotRef = useRef<DraftRawSnapshot | null>(null);
+  // Hash del snapshot con el que se resolvió `done` (aprobación local o server).
+  const doneHashRef = useRef<string | null>(null);
+  // Último hash emitido para deduplicar re-emisiones idénticas.
+  const lastEmittedHashRef = useRef<string | null>(null);
+  const firstSnapshotReceivedRef = useRef<boolean>(false);
+  const stateRef = useRef<PanelState>({ kind: mode ? "waiting" : "idle" });
+  useEffect(() => { stateRef.current = state; }, [state]);
+
+
+
 
   const runAudit = useServerFn(auditarSimulacionDraft);
   const fetchAprobacion = useServerFn(estadoAprobacionAuditoria);
@@ -137,50 +176,45 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   }, [mode]);
 
   useEffect(() => {
-    // Hash estable del snapshot para detectar cambios REALES vs re-emisiones
-    // idénticas. PesosSimulator/UVRSimulator disparan `nuvia:draftRawReady`
-    // dentro de un useEffect que se re-ejecuta en muchos re-renders; sin este
-    // filtro, cada re-emisión reseteaba el estado "done" (auditoría aprobada)
-    // a "ready", deshabilitando el botón "Certificar y crear caso" aunque
-    // matemáticamente la simulación ya estaba certificable. Le pasaba a
-    // cualquier analista tras editar cualquier campo o al re-render por foco.
-    const hashSnapshot = (s: DraftRawSnapshot): string => {
-      try {
-        return JSON.stringify({
-          banco: s.banco ?? null,
-          producto: s.producto ?? null,
-          moneda: s.moneda ?? null,
-          tipoCredito: s.tipoCredito ?? null,
-          datos: s.datos ?? null,
-        });
-      } catch {
-        return "";
-      }
-    };
+    // Utiliza el hash CANÓNICO compartido con los simuladores para que
+    // ambos lados decidan igual qué es "el mismo snapshot" y qué es una
+    // edición real del analista.
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<DraftRawSnapshot>).detail;
       if (!detail || !detail.datos) return;
-      const prevSnap = snapshotRef.current;
-      const isFirst = !prevSnap;
-      const sameSnapshot =
-        !!prevSnap && hashSnapshot(prevSnap) === hashSnapshot(detail);
+      const newHash = hashQaSnapshot(detail);
+      const wasFirst = !firstSnapshotReceivedRef.current;
+      const decision = evaluateSnapshotTransition({
+        prevKind: stateRef.current.kind,
+        doneHash: doneHashRef.current,
+        lastEmittedHash: lastEmittedHashRef.current,
+        newHash,
+        wasFirst,
+      });
+      firstSnapshotReceivedRef.current = true;
       snapshotRef.current = detail;
-      if (sameSnapshot) return;
-      if (isFirst) {
-        // Primer snapshot tras montar: es hidratación inicial, NO edición del
-        // analista. No debe invalidar una aprobación formal del Director QA
-        // ya cargada. El efecto de "promoción" se encarga de fijar "done".
-        // Solo pasamos a "ready" si aún no estamos en "done".
+      if (decision.kind === "ignore") return;
+      lastEmittedHashRef.current = newHash;
+      if (decision.kind === "hydrate") {
+        // Primer snapshot tras montar: hidratación. No invalidar aprobaciones.
         setState((s) => (s.kind === "done" ? s : { kind: "ready" }));
         return;
       }
-      // Cambio real de inputs por parte del analista: invalida aprobación.
-      setDirectorApproval(null);
+      if (decision.kind === "invalidate") {
+        // El analista editó datos después de un dictamen exitoso: invalida
+        // aprobación local y muestra banner de re-auditoría obligatoria.
+        setDirectorApproval(null);
+        doneHashRef.current = null;
+        setState({ kind: "invalidated" });
+        return;
+      }
+      // ready
       setState({ kind: "ready" });
     };
     window.addEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
   }, []);
+
 
   // Re-consulta la aprobación cuando la pestaña vuelve al foco o el
   // documento se hace visible: si Realtime falla o no llega, la fuente
@@ -230,8 +264,10 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
       certificable: true,
       hashCalculo: "",
     };
+    doneHashRef.current = snapshotRef.current ? hashQaSnapshot(snapshotRef.current) : null;
     setState({ kind: "done", result: synthetic });
   }, [directorApproval, state.kind]);
+
 
 
   // 2. Ejecutar auditoría dry-run
@@ -251,6 +287,7 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
           datos: snap.datos as Record<string, unknown>,
         },
       });
+      doneHashRef.current = hashQaSnapshot(snap);
       setState({ kind: "done", result });
       setShowHallazgos(result.totalHallazgos > 0);
       if (result.certificable) {
@@ -474,9 +511,12 @@ function StatusBadge({ state }: { state: PanelState }) {
           return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: `NUVIA · RECHAZADA · ${scoreTxt}/100` };
         return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: `NUVIA · HALLAZGOS · ${scoreTxt}/100` };
       }
+      case "invalidated":
+        return { bg: "bg-amber-400/15", br: "border-amber-400/40", tx: "text-amber-100", label: "NUVIA · Requiere re-auditoría" };
       case "error":
         return { bg: "bg-rose-400/15", br: "border-rose-400/40", tx: "text-rose-100", label: "Error" };
     }
+
   })();
   return (
     <span
@@ -501,9 +541,12 @@ function renderStatusMessage(state: PanelState, hasMode: boolean) {
       if (state.result.certificable)
         return "Auditoría matemática aprobada. Puedes certificar y crear el caso para generar la propuesta comercial.";
       return state.result.motivoBloqueo ?? "La auditoría reporta observaciones.";
+    case "invalidated":
+      return "La simulación fue modificada. Debe ejecutar nuevamente la Auditoría NUVIA.";
     case "error":
       return `Error al auditar: ${state.message}`;
   }
+
 }
 
 function HallazgoRow({ h }: { h: DraftAuditHallazgo }) {

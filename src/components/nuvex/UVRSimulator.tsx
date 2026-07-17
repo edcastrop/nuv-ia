@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { buildUvrQaSnapshot, hashQaSnapshot } from "@/lib/nuviaQaSnapshot";
 import { useServerFn } from "@tanstack/react-start";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
@@ -190,38 +191,18 @@ export function UVRSimulator({
     const prop = parsePercentage(variacionUVRPropuestas);
     return Number.isFinite(hist) && hist > 0 && Number.isFinite(prop) && prop > 0;
   }, [variacionUVR, variacionUVRPropuestas]);
-  const [pendingAutoQARaw, setPendingAutoQARaw] = useState<{
-    raw: Parameters<typeof triggerSimuladorAutoQA>[0]["raw"];
+  // ── Auto-QA de expediente (modo `init?.id`) ────────────────────────
+  // Control determinístico por token + hash. Ver PesosSimulator para
+  // descripción canónica. En UVR, además, se exige `uvrVarsReady` y
+  // completitud UVR (saldoUVR y valorUVR > 0).
+  const [pendingAutoQAToken, setPendingAutoQAToken] = useState<{
+    archivoPath?: string | null;
+    archivoNombre?: string | null;
   } | null>(null);
-  const autoQAFiredRef = useRef(false);
+  const inflightHashRef = useRef<string | null>(null);
+  const lastAttemptedHashRef = useRef<string | null>(null);
+  const lastSuccessfulHashRef = useRef<string | null>(null);
 
-  // Dispara la auto-QA UVR pendiente cuando el analista completa las dos
-  // variaciones UVR (histórica + propuestas). Garantiza que NUVIA sólo emita
-  // dictamen cuando la matemática de corrección monetaria está completa.
-  useEffect(() => {
-    if (!init?.id) return;
-    if (!pendingAutoQARaw) return;
-    if (!uvrVarsReady) return;
-    if (autoQAFiredRef.current) return;
-    autoQAFiredRef.current = true;
-    void triggerSimuladorAutoQA({
-      expedienteId: init.id,
-      raw: pendingAutoQARaw.raw,
-      onStart: () => {
-        setAutoQALoading(true);
-        setAutoQA(null);
-      },
-      onResult: (r) => {
-        setAutoQA(r);
-        setAutoQALoading(false);
-        setPendingAutoQARaw(null);
-      },
-      onError: () => {
-        setAutoQALoading(false);
-        autoQAFiredRef.current = false;
-      },
-    });
-  }, [init?.id, pendingAutoQARaw, uvrVarsReady]);
 
 
   const handleClientChange = (next: ClientData) => {
@@ -639,51 +620,40 @@ export function UVRSimulator({
     }
   };
 
-  // Modo manual (sin extracto): en /herramientas/simulador no hay expediente
-  // asociado. Si el analista diligencia a mano los datos UVR mínimos, emitimos
-  // el snapshot para que NUVIA pueda auditar y luego certificar el caso.
-  useEffect(() => {
-    if (init?.id) return;
+  // ── Snapshot canónico UVR desde el estado del formulario ─────────
+  const currentQaSnapshot = useMemo(() => {
     const saldoUVRN = parseDecimal(saldoUVR);
     const valorUVRN = parseDecimal(valorUVR);
     const saldoPesosN = parseCurrency(saldoPesos);
     const cuotaN = parseCurrency(cuotaActualPesos);
     const teaN = parsePercentage(teaCobrada);
-    if (!(cuotaN > 0 && teaN > 0)) return;
-    if (!(saldoUVRN > 0 || saldoPesosN > 0)) return;
+    if (!(cuotaN > 0 && teaN > 0)) return null;
+    if (!(saldoUVRN > 0 && valorUVRN > 0)) return null;
     const d = recomendada ? computeDiscount(recomendada.honorarios, discount) : null;
-    emitDraftRawReady({
+    return buildUvrQaSnapshot({
       banco: client.banco || null,
       producto: client.tipoProducto || null,
-      moneda: "UVR",
-      tipoCredito: "uvr",
-      datos: {
-        banco: client.banco || "",
-        producto: client.tipoProducto || "",
-        cedula: client.cedula || "",
-        numeroCredito: client.numeroCredito || "",
-        cliente: client.nombre || "",
-        titular: client.nombre || "",
-        saldoCapital: saldoPesosN || (saldoUVRN * valorUVRN) || 0,
-        saldoPesos: saldoPesosN || undefined,
-        saldoUVR: saldoUVRN || undefined,
-        valorUVR: valorUVRN || undefined,
-        cuotaActual: cuotaN,
-        cuotaActualPesos: cuotaN,
-        seguros: parseCurrency(seguros) || 0,
-        tasaEA: teaN,
-        teaCobrada: teaN,
-        valorDesembolsado: parseCurrency(valorDesembolsado) || undefined,
-        variacionUVR: parsePercentage(variacionUVR) || undefined,
-        plazoInicial,
-        cuotasPagadas,
-        cuotasPendientes,
-        tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
-        valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
-      },
-      honorariosBase: recomendada ? recomendada.honorarios : undefined,
-      honorariosFinal: d ? d.final : undefined,
-      descuento: d ? d.descuento : undefined,
+      cedula: client.cedula || null,
+      numeroCredito: client.numeroCredito || null,
+      cliente: client.nombre || null,
+      saldoUVR: saldoUVRN,
+      valorUVR: valorUVRN,
+      saldoPesos: saldoPesosN > 0 ? saldoPesosN : undefined,
+      cuotaActualPesos: cuotaN,
+      seguros: parseCurrency(seguros) || 0,
+      teaCobrada: teaN,
+      valorDesembolsado: parseCurrency(valorDesembolsado) || undefined,
+      variacionUVR: parsePercentage(variacionUVR) || undefined,
+      variacionUVRPropuestas: parsePercentage(variacionUVRPropuestas) || undefined,
+      plazoInicial,
+      cuotasPagadas,
+      cuotasPendientes,
+      tasaCobertura: parsePercentage(cobertura.tasaCobertura) || undefined,
+      valorCobertura: parseCurrency(cobertura.valorCobertura) || undefined,
+      beneficioFrechMensual: beneficioFrechMensualExtracto ?? undefined,
+      honorariosBase: recomendada ? recomendada.honorarios : null,
+      honorariosFinal: d ? d.final : null,
+      descuento: d ? d.descuento : null,
       propuesta: recomendada
         ? {
             index: recomendada.index,
@@ -698,10 +668,9 @@ export function UVRSimulator({
             totalProyectado: recomendada.totalProyectado,
             fuente: manualValido ? "manual" : "automatica",
           }
-        : undefined,
+        : null,
     });
   }, [
-    init?.id,
     client.banco,
     client.tipoProducto,
     client.cedula,
@@ -714,16 +683,76 @@ export function UVRSimulator({
     seguros,
     teaCobrada,
     variacionUVR,
+    variacionUVRPropuestas,
     valorDesembolsado,
     plazoInicial,
     cuotasPagadas,
     cuotasPendientes,
     cobertura.tasaCobertura,
     cobertura.valorCobertura,
+    beneficioFrechMensualExtracto,
     recomendada,
     discount,
     manualValido,
   ]);
+
+  // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).
+  useEffect(() => {
+    if (init?.id) return;
+    if (!currentQaSnapshot) return;
+    emitDraftRawReady(currentQaSnapshot);
+  }, [init?.id, currentQaSnapshot]);
+
+  // Modo expediente: disparo controlado del Auto-QA con token + hash.
+  // Requiere completitud UVR (`currentQaSnapshot` no nulo) + variaciones UVR.
+  useEffect(() => {
+    if (!init?.id) return;
+    if (!pendingAutoQAToken) return;
+    if (!currentQaSnapshot) return;
+    if (!uvrVarsReady) return;
+    const snapshot: typeof currentQaSnapshot = {
+      ...currentQaSnapshot,
+      archivoPath: pendingAutoQAToken.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
+      archivoNombre: pendingAutoQAToken.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
+    };
+    const hash = hashQaSnapshot(snapshot);
+    if (!hash) return;
+    if (inflightHashRef.current === hash) return;
+    if (lastSuccessfulHashRef.current === hash) {
+      setPendingAutoQAToken(null);
+      return;
+    }
+    inflightHashRef.current = hash;
+    lastAttemptedHashRef.current = hash;
+    setPendingAutoQAToken(null);
+    void triggerSimuladorAutoQA({
+      expedienteId: init.id,
+      raw: {
+        banco: snapshot.banco ?? null,
+        producto: snapshot.producto ?? null,
+        moneda: snapshot.moneda ?? null,
+        datos: (snapshot.datos ?? {}) as Record<string, unknown>,
+        archivoPath: snapshot.archivoPath ?? null,
+        archivoNombre: snapshot.archivoNombre ?? null,
+      },
+      onStart: () => {
+        setAutoQALoading(true);
+        setAutoQA(null);
+      },
+      onResult: (r) => {
+        setAutoQALoading(false);
+        if (inflightHashRef.current !== hash) return;
+        lastSuccessfulHashRef.current = hash;
+        inflightHashRef.current = null;
+        setAutoQA(r);
+      },
+      onError: () => {
+        setAutoQALoading(false);
+        if (inflightHashRef.current === hash) inflightHashRef.current = null;
+      },
+    });
+  }, [init?.id, pendingAutoQAToken, currentQaSnapshot, uvrVarsReady]);
+
 
 
 
@@ -873,28 +902,24 @@ export function UVRSimulator({
             setInteresMensualExtracto(parseOcrMoney(p.extracto?.interesMensual));
             setCapitalMensualExtracto(parseOcrMoney(p.extracto?.capitalMensual));
             setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
-            // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
-            // Expediente Maestro (init?.id). En modo standalone no se ejecuta.
-            // GATE UVR: si faltan las variaciones UVR (histórica + propuestas)
-            // dejamos la lectura "pendiente" y NUVIA no emite veredicto aún.
-            if (init?.id && p.raw) {
-              setPendingAutoQARaw({ raw: { ...p.raw, archivoPath: p.archivoPath ?? null } });
-              autoQAFiredRef.current = false;
-              setAutoQA(null);
-            } else if (!init?.id && p.raw) {
-              emitDraftRawReady({
-                banco: p.raw.banco ?? null,
-                producto: p.raw.producto ?? null,
-                moneda: p.raw.moneda ?? "UVR",
-                tipoCredito: "uvr",
-                datos: (p.raw.datos ?? {}) as Record<string, unknown>,
-                archivoPath: p.archivoPath ?? extractoArchivoPath ?? null,
-                archivoNombre: p.raw.archivoNombre ?? null,
+            // Auto-QA / snapshot: NO se dispara desde `onApply`. Registramos
+            // sólo la INTENCIÓN (`pendingAutoQAToken`) para que, tras que
+            // React aplique todos los setState del formulario, el efecto
+            // dedicado construya el snapshot con `buildUvrQaSnapshot` y —
+            // sólo si `uvrVarsReady` — ejecute la auditoría. En modo
+            // standalone, el useEffect emisor reemite `nuvia:draftRawReady`
+            // con el snapshot canónico del formulario (nunca `p.raw`).
+            if (init?.id) {
+              setPendingAutoQAToken({
+                archivoPath: p.archivoPath ?? null,
+                archivoNombre: p.raw?.archivoNombre ?? null,
               });
+              setAutoQA(null);
             }
           }}
         />}
-        {!qaEmbedded && init?.id && pendingAutoQARaw && !uvrVarsReady && (
+        {!qaEmbedded && init?.id && pendingAutoQAToken && !uvrVarsReady && (
+
           <Card>
             <div
               className="rounded-lg px-4 py-3 text-[13px] leading-snug"
