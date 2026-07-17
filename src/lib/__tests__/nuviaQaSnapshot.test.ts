@@ -184,3 +184,116 @@ describe("decideAutoQAResult — reconciliación de resultado", () => {
     expect(decideAutoQAResult({ resultHash: "A", inflightHash: null }).kind).toBe("obsolete");
   });
 });
+
+// ─── v2 contract, downgrade y reconstrucción legacy ─────────────────
+import {
+  SNAPSHOT_VERSION,
+  downgradeToV1,
+  validateAuditSnapshotContract,
+  reconstructLegacyUvrScenarios,
+  type SnapshotEscenario,
+} from "@/lib/nuviaQaSnapshot";
+
+const mkEscenarios = (n = 4): SnapshotEscenario[] =>
+  Array.from({ length: n }, (_, i) => ({
+    index: i,
+    cuotasEliminadas: 12 * (i + 1),
+    añosEliminados: i + 1,
+    nuevoPlazo: 240 - 12 * (i + 1),
+    nuevaCuota: 1_600_000 + i * 50_000,
+    ahorroIntereses: 10_000_000 * (i + 1),
+    ahorroSeguros: 500_000 * (i + 1),
+    ahorroTotal: 10_500_000 * (i + 1),
+    honorarios: 800_000 * (i + 1),
+    totalProyectado: 12_000_000 * (i + 1),
+    incrementoMensual: 20_000 * (i + 1),
+    fuente: "automatica",
+  }));
+
+describe("Snapshot v2 · contrato, hash y downgrade", () => {
+  it("buildUvrQaSnapshot marca snapshotVersion=2 y persiste escenarios", () => {
+    const snap = buildUvrQaSnapshot({ ...baseUvr(), escenarios: mkEscenarios() });
+    const d = snap.datos!;
+    expect(d.snapshotVersion).toBe(SNAPSHOT_VERSION);
+    expect(Array.isArray(d.propuestasComerciales)).toBe(true);
+    expect((d.propuestasComerciales as unknown[]).length).toBe(4);
+  });
+
+  it("validateAuditSnapshotContract clasifica v2 → historico_persistido", () => {
+    const snap = buildUvrQaSnapshot({ ...baseUvr(), escenarios: mkEscenarios() });
+    const c = validateAuditSnapshotContract(snap);
+    expect(c.kind).toBe("historico_persistido");
+    if (c.kind === "historico_persistido") expect(c.escenarios.length).toBe(4);
+  });
+
+  it("clasifica v1 legacy (sin propuestas) → reconstruido_legacy", () => {
+    const snap = buildUvrQaSnapshot(baseUvr());
+    // simular v1: quitar version y propuestas
+    delete (snap.datos as any).snapshotVersion;
+    delete (snap.datos as any).propuestasComerciales;
+    const c = validateAuditSnapshotContract(snap);
+    expect(c.kind).toBe("reconstruido_legacy");
+  });
+
+  it("clasifica v2 sin propuestas → invalido_v2", () => {
+    const snap = buildUvrQaSnapshot({ ...baseUvr(), escenarios: [] });
+    (snap.datos as any).snapshotVersion = 2;
+    (snap.datos as any).propuestasComerciales = null;
+    const c = validateAuditSnapshotContract(snap);
+    expect(c.kind).toBe("invalido_v2");
+  });
+
+  it("downgradeToV1 elimina snapshotVersion y propuestas → hash estable v1", () => {
+    const withEsc = buildUvrQaSnapshot({ ...baseUvr(), escenarios: mkEscenarios() });
+    const noEsc = buildUvrQaSnapshot(baseUvr());
+    // Sin degradar, los hashes difieren (v2 vs v1 legacy).
+    expect(hashQaSnapshot(withEsc)).not.toBe(hashQaSnapshot(noEsc));
+    // Degradados, ambos colapsan al mismo hash v1.
+    expect(hashQaSnapshot(downgradeToV1(withEsc))).toBe(hashQaSnapshot(downgradeToV1(noEsc)));
+  });
+
+  it("una edición financiera real cambia el hash incluso tras downgrade v1", () => {
+    const a = downgradeToV1(buildUvrQaSnapshot({ ...baseUvr(), escenarios: mkEscenarios() }));
+    const b = downgradeToV1(buildUvrQaSnapshot({ ...baseUvr({ saldoUVR: 260_000 }), escenarios: mkEscenarios() }));
+    expect(hashQaSnapshot(a)).not.toBe(hashQaSnapshot(b));
+  });
+});
+
+describe("reconstructLegacyUvrScenarios · precedencia snapshot sobre inputs", () => {
+  it("devuelve 4 escenarios cuando hay datos suficientes", () => {
+    const r = reconstructLegacyUvrScenarios({
+      saldoUVR: 250_000,
+      valorUVR: 400,
+      cuotaActualPesos: 1_800_000,
+      teaCobrada: 11.98,
+      variacionUVR: 6,
+      plazoInicial: 180,
+      cuotasPendientes: 150,
+      seguros: 60_000,
+    }, null);
+    expect(r).not.toBeNull();
+    expect(r!.escenarios.length).toBe(4);
+  });
+
+  it("prima la variación UVR del snapshot cuando difiere de inputs", () => {
+    const r = reconstructLegacyUvrScenarios({
+      saldoUVR: 250_000,
+      valorUVR: 400,
+      cuotaActualPesos: 1_800_000,
+      teaCobrada: 11.98,
+      variacionUVR: 6,
+      plazoInicial: 180,
+      cuotasPendientes: 150,
+      seguros: 60_000,
+    }, { snapshotValue: 6, inputsValue: 5.2 });
+    expect(r!.uvrVariationConflict).toEqual({ snapshotValue: 6, inputsValue: 5.2, chosen: 6 });
+  });
+
+  it("devuelve null cuando faltan variables críticas", () => {
+    const r = reconstructLegacyUvrScenarios({
+      saldoUVR: 0, valorUVR: 0, cuotaActualPesos: 0, teaCobrada: 0,
+      variacionUVR: 0, plazoInicial: 0, cuotasPendientes: 0, seguros: 0,
+    }, null);
+    expect(r).toBeNull();
+  });
+});

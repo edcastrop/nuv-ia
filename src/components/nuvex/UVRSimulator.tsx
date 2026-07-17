@@ -677,6 +677,24 @@ export function UVRSimulator({
             fuente: manualValido ? "manual" : "automatica",
           }
         : null,
+      // v2: persistimos los cuatro escenarios financieros calculados por
+      // `PropuestasComerciales` (contrato PDF). Sin escenarios no hay
+      // v2 real; el builder marcará `propuestasComerciales: null` y el
+      // consumidor decidirá reconstruir legacy.
+      escenarios: propuestasComercialesSnapshot?.propuestas?.map((p) => ({
+        index: p.index,
+        cuotasEliminadas: p.cuotasEliminadas,
+        añosEliminados: p.añosEliminados,
+        nuevoPlazo: p.nuevoPlazo,
+        nuevaCuota: p.nuevaCuota,
+        ahorroIntereses: p.ahorroIntereses,
+        ahorroSeguros: p.ahorroSeguros,
+        ahorroTotal: p.ahorroTotal,
+        honorarios: p.honorarios,
+        totalProyectado: p.totalProyectado,
+        incrementoMensual: p.incrementoMensual,
+        fuente: p.fuente,
+      })) ?? null,
     });
   }, [
     client.banco,
@@ -702,6 +720,7 @@ export function UVRSimulator({
     recomendada,
     discount,
     manualValido,
+    propuestasComercialesSnapshot,
   ]);
 
   // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).

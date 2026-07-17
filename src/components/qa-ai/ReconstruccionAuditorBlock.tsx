@@ -9,6 +9,8 @@ import {
   expedienteFromAudit,
   snapshotInputsAnalista,
 } from "@/lib/qaReviewExpediente";
+import { escenariosFromAudit } from "@/lib/qaReviewExpediente";
+import { PropuestasComerciales } from "@/components/nuvex/PropuestasComerciales";
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
 import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
@@ -321,6 +323,10 @@ export function ReconstruccionAuditorBlock({
             onValidated={onValidated}
           />
 
+          {/* Escenarios financieros del expediente (auditor · solo lectura) */}
+          <EscenariosAuditor auditoria={auditoria} inputs={inputs} modo={modo} />
+
+
 
 
           {/* Simulador embebido */}
@@ -370,3 +376,64 @@ export function ReconstruccionAuditorBlock({
     </NCard>
   );
 }
+
+/**
+ * Bloque de solo lectura que materializa los cuatro escenarios financieros
+ * del expediente auditado. Prioriza histórico persistido (v2) y, en su
+ * ausencia, reconstruye legacy (v1) con precedencia de snapshot sobre
+ * inputs para Variación UVR EA. Cuando la reconstrucción es imposible
+ * muestra un banner explicativo.
+ */
+function EscenariosAuditor({
+  auditoria,
+  inputs,
+  modo,
+}: {
+  auditoria: Record<string, unknown>;
+  inputs: Record<string, unknown>;
+  modo: "pesos" | "uvr";
+}) {
+  const data = useMemo(() => escenariosFromAudit(auditoria, inputs), [auditoria, inputs]);
+  if (data.origen === null) {
+    return (
+      <div
+        className="px-5 py-4"
+        style={{ borderTop: "1px solid var(--nuvia-border)" }}
+      >
+        <div
+          className="rounded-lg px-3 py-2 text-[12px]"
+          style={{
+            background: "rgba(245,199,126,0.10)",
+            border: "1px solid rgba(245,199,126,0.28)",
+            color: "var(--nuvia-text-secondary)",
+          }}
+        >
+          <b style={{ color: "#F5C77E" }}>Escenarios no disponibles.</b>{" "}
+          {data.reason}
+        </div>
+      </div>
+    );
+  }
+  const legacyBanner =
+    data.origen === "reconstruido_legacy"
+      ? "El snapshot original no incluye escenarios (v1). Se muestran reconstruidos con el motor financiero canónico usando los inputs y datos del snapshot."
+      : null;
+  return (
+    <div
+      className="px-5 py-4"
+      style={{ borderTop: "1px solid var(--nuvia-border)" }}
+    >
+      <PropuestasComerciales
+        readOnly
+        mode={modo}
+        cuotasPendientes={0}
+        baseCredito={0}
+        auditorEscenarios={data.escenarios}
+        auditorRecomendadaIdx={0}
+        auditorBannerLegacy={legacyBanner}
+        auditorUvrVariationConflict={data.uvrVariationConflict ?? null}
+      />
+    </div>
+  );
+}
+

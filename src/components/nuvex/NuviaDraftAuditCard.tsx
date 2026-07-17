@@ -27,7 +27,7 @@ import {
   type DraftAuditResult,
   type DraftAuditHallazgo,
 } from "@/lib/simuladorDraftQA.functions";
-import { hashQaSnapshot } from "@/lib/nuviaQaSnapshot";
+import { hashQaSnapshot, downgradeToV1, validateAuditSnapshotContract } from "@/lib/nuviaQaSnapshot";
 
 
 // ─────────────────────────────────────────────────────────────
@@ -111,6 +111,14 @@ type Props = {
    * local del motor y habilitar directamente "Certificar y crear caso".
    */
   auditoriaId?: string;
+  /**
+   * Snapshot original persistido en `qa_auditorias.simulador_snapshot` cuando
+   * el analista aterriza en una auditoría existente. Se usa exclusivamente
+   * para inicializar `doneHashRef` con el hash del contrato original y
+   * evitar que la hidratación local del formulario invalide una auditoría
+   * v1/v2 sin edición real.
+   */
+  auditedSnapshot?: DraftRawSnapshot | null;
 };
 
 type DirectorApproval = {
@@ -121,7 +129,7 @@ type DirectorApproval = {
   codigo: string | null;
 };
 
-export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion, auditoriaId }: Props) {
+export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion, auditoriaId, auditedSnapshot }: Props) {
   const [state, setState] = useState<PanelState>({ kind: mode ? "waiting" : "idle" });
   const [showHallazgos, setShowHallazgos] = useState(false);
   const [escalarOpen, setEscalarOpen] = useState(false);
@@ -134,6 +142,32 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
   const firstSnapshotReceivedRef = useRef<boolean>(false);
   const stateRef = useRef<PanelState>({ kind: mode ? "waiting" : "idle" });
   useEffect(() => { stateRef.current = state; }, [state]);
+
+  // Hidratación de `doneHashRef` desde el snapshot ORIGINAL de la auditoría.
+  // Regla obligatoria: al abrir una auditoría existente, el hash base debe
+  // provenir del `simulador_snapshot` guardado, NO del primer snapshot que
+  // reconstruya el formulario. Esto evita que la hidratación local promueva
+  // el panel a `invalidated` por diferencias triviales de reconstrucción.
+  // La versión del snapshot dicta cómo comparar hashes: v1 se degrada a v1
+  // para no invalidarlo cuando el formulario emita snapshots v2 nuevos.
+  const auditedSnapshotInitializedRef = useRef<boolean>(false);
+  // Versión efectiva del contrato de la auditoría original. Cuando es v1
+  // (o legacy sin escenarios), los snapshots que emita el formulario deben
+  // degradarse a v1 antes de calcular el hash para no invalidar una
+  // auditoría v1 sólo porque el simulador ahora emite v2. Sólo una edición
+  // financiera real cambia el hash v1.
+  const auditedIsV2Ref = useRef<boolean>(true);
+  useEffect(() => {
+    if (auditedSnapshotInitializedRef.current) return;
+    if (!auditedSnapshot) return;
+    const contract = validateAuditSnapshotContract(auditedSnapshot);
+    const isV2 = contract.kind === "historico_persistido";
+    auditedIsV2Ref.current = isV2;
+    const compareSnapshot = isV2 ? auditedSnapshot : downgradeToV1(auditedSnapshot);
+    doneHashRef.current = hashQaSnapshot(compareSnapshot);
+    auditedSnapshotInitializedRef.current = true;
+  }, [auditedSnapshot]);
+
 
 
 
@@ -186,7 +220,12 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<DraftRawSnapshot>).detail;
       if (!detail || !detail.datos) return;
-      const newHash = hashQaSnapshot(detail);
+      // Coherencia de versiones: si la auditoría original es v1, degradamos
+      // el snapshot entrante a v1 antes de hashear. Así ediciones puramente
+      // "estructurales" (aparición de `propuestasComerciales`) no invalidan
+      // una auditoría v1 previamente aprobada.
+      const detailForHash = auditedIsV2Ref.current ? detail : downgradeToV1(detail);
+      const newHash = hashQaSnapshot(detailForHash);
       const wasFirst = !firstSnapshotReceivedRef.current;
       const decision = evaluateSnapshotTransition({
         prevKind: stateRef.current.kind,
