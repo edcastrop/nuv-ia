@@ -2482,17 +2482,17 @@ export function normalizarMotivoAnulacionQA(input: string): string {
 }
 
 export type AnulacionQACode =
-  | "cancelled"
+  | "ok"
   | "already_cancelled"
   | "not_found"
   | "invalid_reason"
   | "linked_to_expediente"
   | "not_owner"
   | "approved_by_director"
-  | "unauthenticated";
+  | "forbidden_role";
 
 export const MENSAJE_ANULACION_QA: Record<AnulacionQACode, string> = {
-  cancelled: "Auditoría anulada correctamente.",
+  ok: "Auditoría anulada correctamente.",
   already_cancelled: "Esta auditoría ya estaba anulada.",
   not_found: "La auditoría no existe o no es visible.",
   invalid_reason: "El motivo debe tener entre 3 y 1000 caracteres.",
@@ -2502,7 +2502,8 @@ export const MENSAJE_ANULACION_QA: Record<AnulacionQACode, string> = {
     "No autorizado: solo el analista propietario puede anular esta auditoría.",
   approved_by_director:
     "No autorizado: la auditoría fue aprobada por el Director. Solicite a Dirección QA la anulación.",
-  unauthenticated: "Sesión expirada. Vuelva a iniciar sesión.",
+  forbidden_role:
+    "No autorizado: su rol no puede anular auditorías. Solicite apoyo a Dirección QA.",
 };
 
 export const anularAuditoriaServer = createServerFn({ method: "POST" })
