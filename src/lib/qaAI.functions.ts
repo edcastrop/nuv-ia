@@ -2521,11 +2521,10 @@ export const anularAuditoriaServer = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: rpc, error } = await (supabase as any).rpc(
-      "anular_qa_auditoria",
-      { _auditoria_id: data.auditoriaId, _motivo: data.motivo },
-    );
+    const { data: rpc, error } = await supabase.rpc("anular_qa_auditoria", {
+      _auditoria_id: data.auditoriaId,
+      _motivo: data.motivo,
+    });
     if (error) throw new Error(error.message);
     const res = (rpc ?? {}) as {
       ok?: boolean;
