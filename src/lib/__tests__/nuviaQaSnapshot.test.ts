@@ -213,9 +213,10 @@ const mkEscenarios = (n = 4): SnapshotEscenario[] =>
 describe("Snapshot v2 · contrato, hash y downgrade", () => {
   it("buildUvrQaSnapshot marca snapshotVersion=2 y persiste escenarios", () => {
     const snap = buildUvrQaSnapshot({ ...baseUvr(), escenarios: mkEscenarios() });
-    expect(snap.datos.snapshotVersion).toBe(SNAPSHOT_VERSION);
-    expect(Array.isArray(snap.datos.propuestasComerciales)).toBe(true);
-    expect((snap.datos.propuestasComerciales as unknown[]).length).toBe(4);
+    const d = snap.datos!;
+    expect(d.snapshotVersion).toBe(SNAPSHOT_VERSION);
+    expect(Array.isArray(d.propuestasComerciales)).toBe(true);
+    expect((d.propuestasComerciales as unknown[]).length).toBe(4);
   });
 
   it("validateAuditSnapshotContract clasifica v2 → historico_persistido", () => {
