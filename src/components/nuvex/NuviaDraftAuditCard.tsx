@@ -27,7 +27,7 @@ import {
   type DraftAuditResult,
   type DraftAuditHallazgo,
 } from "@/lib/simuladorDraftQA.functions";
-import { hashQaSnapshot } from "@/lib/nuviaQaSnapshot";
+import { hashQaSnapshot, downgradeToV1, validateAuditSnapshotContract } from "@/lib/nuviaQaSnapshot";
 
 
 // ─────────────────────────────────────────────────────────────
