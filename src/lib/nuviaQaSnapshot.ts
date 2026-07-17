@@ -278,3 +278,65 @@ export function hashQaSnapshot(snapshot: DraftRawSnapshot | null | undefined): s
   const payload = JSON.stringify(sortedKeys.map((k) => [k, canonical[k]]));
   return fnv1a(payload);
 }
+
+// ─── Decisores puros de dispatch Auto-QA ─────────────────────────────
+//
+// Estos helpers permiten que los simuladores gestionen re-programación
+// determinística sin lógica ad-hoc: si el snapshot cambia durante el
+// `await`, el resultado obsoleto se descarta y el efecto vuelve a
+// disparar con el hash actual. Ver `PesosSimulator` / `UVRSimulator`
+// para el consumo canónico.
+
+export type AutoQADispatchDecision =
+  | { kind: "skip"; reason: "no-intent" | "no-hash" | "inflight" | "failed-waiting-retry" }
+  | { kind: "clear-intent"; reason: "already-successful" }
+  | { kind: "dispatch"; hash: string };
+
+/**
+ * Decide si el efecto debe disparar Auto-QA para el snapshot actual.
+ * - Si el hash actual ya fue auditado exitosamente → limpia la intención.
+ * - Si el hash actual falló → NO reintenta automáticamente; espera acción
+ *   explícita del analista (retry manual limpia `failedHash`).
+ * - Si otro hash está en vuelo → salta; el efecto se re-evaluará cuando
+ *   `inflightHash` se libere.
+ */
+export function decideAutoQADispatch(input: {
+  hasIntent: boolean;
+  currentHash: string;
+  inflightHash: string | null;
+  successHash: string | null;
+  failedHash: string | null;
+}): AutoQADispatchDecision {
+  if (!input.hasIntent) return { kind: "skip", reason: "no-intent" };
+  if (!input.currentHash) return { kind: "skip", reason: "no-hash" };
+  if (input.successHash === input.currentHash) {
+    return { kind: "clear-intent", reason: "already-successful" };
+  }
+  if (input.inflightHash !== null && input.inflightHash !== input.currentHash) {
+    return { kind: "skip", reason: "inflight" };
+  }
+  if (input.inflightHash === input.currentHash) {
+    return { kind: "skip", reason: "inflight" };
+  }
+  if (input.failedHash === input.currentHash) {
+    return { kind: "skip", reason: "failed-waiting-retry" };
+  }
+  return { kind: "dispatch", hash: input.currentHash };
+}
+
+export type AutoQAResultReconcile =
+  | { kind: "obsolete" }
+  | { kind: "apply" };
+
+/**
+ * Reconcilia un resultado que llega tras el await. Si el `inflightHash`
+ * ya no coincide con el hash del resultado, el resultado corresponde a
+ * un snapshot superado por una edición posterior y debe descartarse.
+ */
+export function decideAutoQAResult(input: {
+  resultHash: string;
+  inflightHash: string | null;
+}): AutoQAResultReconcile {
+  if (input.inflightHash !== input.resultHash) return { kind: "obsolete" };
+  return { kind: "apply" };
+}
