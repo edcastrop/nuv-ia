@@ -1773,6 +1773,7 @@ export const qaCommandCenter = createServerFn({ method: "POST" })
     let audQuery = supabase
       .from("qa_auditorias")
       .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,motor_version,qa_score,categoria,dictamen,ejecutado_at,updated_at,alertas,inputs,auditor_aprobado_at,auditor_aprobado_by,origen,banco,producto,cliente_nombre")
+      .eq("estado_registro", "activa")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (data.mineOnly) {
