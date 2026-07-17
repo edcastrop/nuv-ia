@@ -9,6 +9,8 @@ import {
   expedienteFromAudit,
   snapshotInputsAnalista,
 } from "@/lib/qaReviewExpediente";
+import { escenariosFromAudit } from "@/lib/qaReviewExpediente";
+import { PropuestasComerciales } from "@/components/nuvex/PropuestasComerciales";
 import { getCanalDeAuditoria, enviarMensaje } from "@/lib/colaboracion";
 import { useUserRole, isDirectorQA } from "@/hooks/useUserRole";
 import { ComparativaAnalistaAuditor } from "./ComparativaAnalistaAuditor";
