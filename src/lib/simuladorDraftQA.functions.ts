@@ -1076,7 +1076,7 @@ export const estadoAprobacionAuditoria = createServerFn({ method: "POST" })
     const { data: row, error } = await supabase
       .from("qa_auditorias")
       .select(
-        "id,codigo,origen,dictamen,categoria,qa_score,auditor_aprobado_at,auditor_aprobado_by,auditor_override,auditor_override_justificacion,expediente_id,analista_id,devuelto_al_analista_at",
+        "id,codigo,origen,dictamen,categoria,qa_score,auditor_aprobado_at,auditor_aprobado_by,auditor_override,auditor_override_justificacion,expediente_id,analista_id,devuelto_al_analista_at,estado_registro",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -1095,7 +1095,14 @@ export const estadoAprobacionAuditoria = createServerFn({ method: "POST" })
       expediente_id: string | null;
       analista_id: string | null;
       devuelto_al_analista_at: string | null;
+      estado_registro: string | null;
     };
+
+    // Una auditoría anulada nunca es aprobada operativamente.
+    if (r.estado_registro === "anulada") {
+      return { aprobada: false as const, motivo: "anulada" as const };
+    }
+
 
     // Fuente de verdad server-side de "aprobación vigente".
     // Reglas (exigidas por el gate de crear caso):

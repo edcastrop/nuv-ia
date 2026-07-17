@@ -4,7 +4,9 @@ import { z } from "zod";
 import { PageLayout, NCard, SectionHeader } from "@/components/nuvia";
 import { useServerFn } from "@tanstack/react-start";
 import { obtenerAuditoriaQA, reejecutarAuditoriaQA, aprobarAuditoriaPorAuditor, aprobarAuditoriaConOverride } from "@/lib/qaAI.functions";
+import { CancelarAuditoriaDialog } from "@/components/qa-ai/CancelarAuditoriaDialog";
 import { useUserRole, canOverrideQA } from "@/hooks/useUserRole";
+import { useAuth } from "@/hooks/useAuth";
 import { auditar, reconstruir, QA_MOTOR_VERSION, type AuditarInput } from "@/lib/qaMath";
 import { exportarDictamenPDF } from "@/lib/qaPdf";
 import { CopilotoQADrawer } from "@/components/qa-ai/CopilotoQADrawer";
@@ -415,6 +417,7 @@ function ResultadoQaAi() {
   const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const doAprobarOverride = useServerFn(aprobarAuditoriaConOverride);
   const { roles } = useUserRole();
+  const { user } = useAuth();
   const puedeOverride = canOverrideQA(roles);
   const [data, setData] = useState<{
     auditoria: Record<string, unknown> | null;
@@ -430,6 +433,8 @@ function ResultadoQaAi() {
   const [overrideOpen, setOverrideOpen] = useState(false);
   const [overrideText, setOverrideText] = useState("");
   const [overrideEnviando, setOverrideEnviando] = useState(false);
+  const [cancelarOpen, setCancelarOpen] = useState(false);
+
 
   useEffect(() => { (async () => setData(await fetchAud({ data: { id } }) as {
     auditoria: Record<string, unknown> | null;
@@ -529,6 +534,36 @@ function ResultadoQaAi() {
     qa_score: number; categoria: string; dictamen: string; modalidad: string;
     motor_version: string; ejecutado_at: string; outputs: Record<string, number | unknown[]>;
   };
+
+  // ── Anulación lógica: la auditoría existe en historial pero está fuera del
+  //    flujo operativo. Bloqueamos toda acción y mostramos un banner claro.
+  const estadoRegistro = String((a as { estado_registro?: string }).estado_registro ?? "activa");
+  const isAnulada = estadoRegistro === "anulada";
+  const motivoAnulacion = String((a as { motivo_anulacion?: string }).motivo_anulacion ?? "");
+  const anuladaAt = (a as { anulada_at?: string | null }).anulada_at ?? null;
+
+  // ── ¿Puede el usuario actual anular esta auditoría?
+  //    - Analista propietario: solo si sigue activa, sin expediente vinculado
+  //      y sin aprobación del Director.
+  //    - Director QA / Super Admin: puede anular incluso las aprobadas
+  //      SIEMPRE que no haya expediente vinculado.
+  //    El servidor (RPC SECURITY DEFINER) es la fuente de verdad final; la UI
+  //    solo evita mostrar el botón cuando sabemos que no aplica.
+  const analistaIdAud = typeof (a as unknown as { analista_id?: string }).analista_id === "string"
+    ? (a as unknown as { analista_id: string }).analista_id
+    : null;
+  const auditorAprobadoAt = (a as unknown as { auditor_aprobado_at?: string | null }).auditor_aprobado_at ?? null;
+  const yaVinculada = !!(a as unknown as { expediente_id?: string | null }).expediente_id;
+  const esPropietario = !!user?.id && analistaIdAud === user.id;
+  const esRolSuperior =
+    roles.includes("director_financiero_qa" as never) ||
+    roles.includes("gerencia" as never) ||
+    roles.includes("super_admin" as never);
+  const puedeAnular =
+    !isAnulada &&
+    !yaVinculada &&
+    (esRolSuperior || (esPropietario && !auditorAprobadoAt));
+
   const o = ({ ...(a.outputs ?? {}), ...(recomputo?.reconstruccion ? {
     cuotaTeorica: recomputo.reconstruccion.cuotaTeorica,
     cuotaConSubsidio: recomputo.reconstruccion.cuotaConSubsidio,
@@ -1181,6 +1216,21 @@ function ResultadoQaAi() {
                 style={{ background: "rgba(255,255,255,0.06)", color: "var(--nuvia-text-primary)", border: "1px solid var(--nuvia-border)", cursor: reloading ? "not-allowed" : "pointer", opacity: reloading ? 0.5 : 1 }}>
                 <RefreshCw size={14} className={reloading ? "animate-spin" : ""} /> {reloading ? "Reauditando…" : "Reauditar"}
               </button>
+              {puedeAnular && (
+                <button
+                  onClick={() => setCancelarOpen(true)}
+                  title="Anular esta auditoría (irreversible desde esta pantalla)"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-[12.5px] font-semibold transition hover:opacity-90"
+                  style={{
+                    background: "rgba(220,38,38,0.12)",
+                    color: "#FCA5A5",
+                    border: "1px solid rgba(220,38,38,0.35)",
+                    cursor: "pointer",
+                  }}
+                >
+                  <AlertTriangle size={14} /> Anular auditoría
+                </button>
+              )}
               {expedienteIdCert ? (
                 <Link
                   to="/simulador"
@@ -1988,6 +2038,13 @@ function ResultadoQaAi() {
       </Accordion>
 
       <CopilotoQADrawer open={copilotoOpen} onClose={() => setCopilotoOpen(false)} auditoriaId={id} expedienteId={expedienteIdCert} />
+
+      <CancelarAuditoriaDialog
+        auditoriaId={id}
+        open={cancelarOpen}
+        onClose={() => setCancelarOpen(false)}
+        onCancelled={() => { void fetchAud({ data: { auditoriaId: id } }).then((d) => setData(d as never)); }}
+      />
     </PageLayout>
   );
 }
