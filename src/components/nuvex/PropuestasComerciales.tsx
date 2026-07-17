@@ -205,7 +205,7 @@ function PropuestasComercialesReadOnly(props: AuditorProps) {
       </SectionTitle>
       {auditorBannerLegacy && (
         <div className="mb-3">
-          <Alert tone="warning">
+          <Alert tone="warn">
             <span className="font-semibold">Escenarios reconstruidos por retrocompatibilidad.</span>{" "}
             {auditorBannerLegacy}
           </Alert>
@@ -213,7 +213,7 @@ function PropuestasComercialesReadOnly(props: AuditorProps) {
       )}
       {auditorUvrVariationConflict && (
         <div className="mb-3">
-          <Alert tone="warning">
+          <Alert tone="warn">
             Conflicto de Variación UVR EA: snapshot={auditorUvrVariationConflict.snapshotValue}% ·
             inputs={auditorUvrVariationConflict.inputsValue}% · aplicado={auditorUvrVariationConflict.chosen}%.
           </Alert>
