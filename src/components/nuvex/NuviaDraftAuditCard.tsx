@@ -220,7 +220,12 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<DraftRawSnapshot>).detail;
       if (!detail || !detail.datos) return;
-      const newHash = hashQaSnapshot(detail);
+      // Coherencia de versiones: si la auditoría original es v1, degradamos
+      // el snapshot entrante a v1 antes de hashear. Así ediciones puramente
+      // "estructurales" (aparición de `propuestasComerciales`) no invalidan
+      // una auditoría v1 previamente aprobada.
+      const detailForHash = auditedIsV2Ref.current ? detail : downgradeToV1(detail);
+      const newHash = hashQaSnapshot(detailForHash);
       const wasFirst = !firstSnapshotReceivedRef.current;
       const decision = evaluateSnapshotTransition({
         prevKind: stateRef.current.kind,
