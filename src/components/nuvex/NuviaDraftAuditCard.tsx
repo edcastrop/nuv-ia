@@ -129,7 +129,7 @@ type DirectorApproval = {
   codigo: string | null;
 };
 
-export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion, auditoriaId }: Props) {
+export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimulacion, auditoriaId, auditedSnapshot }: Props) {
   const [state, setState] = useState<PanelState>({ kind: mode ? "waiting" : "idle" });
   const [showHallazgos, setShowHallazgos] = useState(false);
   const [escalarOpen, setEscalarOpen] = useState(false);
