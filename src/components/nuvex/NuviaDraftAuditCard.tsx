@@ -212,6 +212,12 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
         setState({ kind: "invalidated" });
         return;
       }
+      if (decision.kind === "stay-invalidated") {
+        // Persistente: cualquier edición mantiene el banner de re-auditoría
+        // hasta que una nueva auditoría exitosa promueva a `done`. Sólo
+        // actualizamos `lastEmittedHashRef` (ya hecho) para deduplicar.
+        return;
+      }
       // ready
       setState({ kind: "ready" });
     };
