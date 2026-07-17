@@ -2043,7 +2043,7 @@ function ResultadoQaAi() {
         auditoriaId={id}
         open={cancelarOpen}
         onClose={() => setCancelarOpen(false)}
-        onCancelled={() => { void fetchAud({ data: { auditoriaId: id } }).then((d) => setData(d as never)); }}
+        onCancelled={() => { void fetchAud({ data: { id } }).then((d) => setData(d as never)); }}
       />
     </PageLayout>
   );
