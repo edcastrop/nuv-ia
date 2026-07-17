@@ -3,6 +3,8 @@ import {
   buildPesosQaSnapshot,
   buildUvrQaSnapshot,
   hashQaSnapshot,
+  decideAutoQADispatch,
+  decideAutoQAResult,
   type PesosSnapshotInput,
   type UvrSnapshotInput,
 } from "@/lib/nuviaQaSnapshot";
