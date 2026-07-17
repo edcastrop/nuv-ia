@@ -16,6 +16,7 @@ export function QABadge({
   size = "sm",
   className = "",
   asLink = true,
+  anulada = false,
 }: {
   categoria: QACategoria;
   score?: number | null;
@@ -23,7 +24,21 @@ export function QABadge({
   size?: "xs" | "sm" | "md";
   className?: string;
   asLink?: boolean;
+  /** Cuando la auditoría fue anulada lógicamente, el badge lo comunica y
+   *  se muestra en tono neutro para que no compita con estados operativos. */
+  anulada?: boolean;
 }) {
+  if (anulada) {
+    return (
+      <span
+        className={`inline-flex items-center gap-1 rounded-full border px-2 py-[2px] text-[10px] font-semibold ${className}`}
+        style={{ background: "#F1F5F9", color: "#64748B", borderColor: "#CBD5E1", textDecoration: "line-through" }}
+        title="Auditoría anulada"
+      >
+        ⛔ QA ANULADA
+      </span>
+    );
+  }
   if (!categoria) {
     return (
       <span

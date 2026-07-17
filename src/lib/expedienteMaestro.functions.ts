@@ -92,7 +92,7 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
       const { data: qa, error: qaErr } = await supabase
         .from("qa_auditorias")
         .select(
-          "id,analista_id,dictamen,categoria,qa_score,auditor_aprobado_at,auditor_aprobado_by,devuelto_al_analista_at,expediente_id",
+          "id,analista_id,dictamen,categoria,qa_score,auditor_aprobado_at,auditor_aprobado_by,devuelto_al_analista_at,expediente_id,estado_registro",
         )
         .eq("id", data.auditoriaId)
         .maybeSingle();
@@ -108,15 +108,20 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
           Number(qa?.qa_score ?? 0) >= 85,
         devueltaDiag: qa?.devuelto_al_analista_at !== null && qa?.devuelto_al_analista_at !== undefined,
         yaVinculada: !!qa?.expediente_id,
+        anulada: (qa as { estado_registro?: string } | null)?.estado_registro === "anulada",
       };
       if (process.env.NODE_ENV !== "production") {
         console.log("[QA_CREATE_CASE_GATE]", gateInfo);
       }
       if (qaErr) throw new Error(`No se pudo verificar la auditoría: ${qaErr.message}`);
       if (!qa) throw new Error("La auditoría vinculada no existe o no es visible para este usuario.");
+      if (gateInfo.anulada) {
+        throw new Error("Esta auditoría fue anulada. No se puede crear un caso a partir de ella.");
+      }
       if (!gateInfo.ownerMatch) {
         throw new Error("Esta auditoría pertenece a otro analista; no puedes crear el caso desde aquí.");
       }
+
 
       if (gateInfo.yaVinculada) {
         // Idempotencia: la auditoría ya fue usada; devolvemos ese expediente.

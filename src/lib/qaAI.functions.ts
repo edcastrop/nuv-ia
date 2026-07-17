@@ -320,6 +320,8 @@ export const listAuditoriasQA = createServerFn({ method: "POST" })
     const { data: rows, error } = await context.supabase
       .from("qa_auditorias")
       .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,auditor_aprobado_at,auditor_aprobado_by")
+      // Bandeja operativa: nunca listar auditorías anuladas.
+      .eq("estado_registro", "activa")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
@@ -377,6 +379,8 @@ export const listAuditoriasAprobadas = createServerFn({ method: "POST" })
       .from("qa_auditorias")
       .select("id,codigo,expediente_id,analista_id,extracto_id,modalidad,qa_score,categoria,dictamen,ejecutado_at,auditor_aprobado_at,auditor_aprobado_by")
       .in("dictamen", ["aprobado", "aprobado_obs"])
+      // Bandeja operativa: excluir anuladas.
+      .eq("estado_registro", "activa")
       .order("ejecutado_at", { ascending: false })
       .limit(data.limit);
     if (error) throw new Error(error.message);
@@ -712,6 +716,8 @@ export const qaKpis = createServerFn({ method: "POST" })
     const { data: rows } = await context.supabase
       .from("qa_auditorias")
       .select("qa_score,dictamen,ejecutado_at")
+      // KPIs operativos: excluir anuladas.
+      .eq("estado_registro", "activa")
       .order("ejecutado_at", { ascending: false })
       .limit(500);
     const r = rows ?? [];
@@ -1471,6 +1477,8 @@ export const ultimaAuditoriaQAPorExpediente = createServerFn({ method: "POST" })
       .from("qa_auditorias")
       .select("id,qa_score,categoria,dictamen,ejecutado_at,ejecutado_by,auto_ejecutada,modalidad")
       .eq("expediente_id", data.expedienteId)
+      // Bloque de expediente: solo mostrar la última auditoría vigente.
+      .eq("estado_registro", "activa")
       .order("ejecutado_at", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -1504,6 +1512,18 @@ export const reejecutarAuditoriaQA = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .single();
     if (error) throw new Error(error.message);
+
+    // Auditoría anulada: nunca reejecutar.
+    if ((aud as { estado_registro?: string }).estado_registro === "anulada") {
+      return {
+        ok: false as const,
+        bloqueada: true as const,
+        motivo: "auditoria_anulada",
+        score: (aud as { qa_score: number }).qa_score,
+        dictamen: (aud as { dictamen: string }).dictamen,
+      };
+    }
+
 
     // ── GUARDARRAÍL: una auditoría formalmente aprobada por el Director
     //    (auditor_aprobado_at ≠ NULL) NO puede ser reejecutada automática
@@ -2148,11 +2168,14 @@ export const aprobarAuditoriaPorAuditor = createServerFn({ method: "POST" })
 
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
-      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,categoria,auditor_aprobado_at")
+      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,categoria,auditor_aprobado_at,estado_registro")
       .eq("id", data.auditoriaId)
       .maybeSingle();
     if (errAud) throw new Error(errAud.message);
     if (!aud) throw new Error("Auditoría no encontrada");
+    if ((aud as { estado_registro?: string }).estado_registro === "anulada") {
+      throw new Error("Esta auditoría fue anulada y no puede ser aprobada.");
+    }
 
     const yaAprobada = !!aud.auditor_aprobado_at;
 
@@ -2248,11 +2271,14 @@ export const aprobarAuditoriaConOverride = createServerFn({ method: "POST" })
 
     const { data: aud, error: errAud } = await supabase
       .from("qa_auditorias")
-      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,categoria,auditor_aprobado_at")
+      .select("id,codigo,analista_id,expediente_id,qa_score,dictamen,categoria,auditor_aprobado_at,estado_registro")
       .eq("id", data.auditoriaId)
       .maybeSingle();
     if (errAud) throw new Error(errAud.message);
     if (!aud) throw new Error("Auditoría no encontrada");
+    if ((aud as { estado_registro?: string }).estado_registro === "anulada") {
+      throw new Error("Esta auditoría fue anulada y no puede ser aprobada con override.");
+    }
 
     const yaAprobada = !!aud.auditor_aprobado_at;
     if (yaAprobada) {
@@ -2326,6 +2352,11 @@ export const validarReconstruccionAuditor = createServerFn({ method: "POST" })
       .eq("id", data.auditoriaId)
       .single();
     if (error) throw new Error(error.message);
+    if ((aud as { estado_registro?: string }).estado_registro === "anulada") {
+      throw new Error("Esta auditoría fue anulada. Reconstrucción bloqueada.");
+    }
+
+
 
     const inputs = (aud.inputs ?? {}) as Record<string, unknown>;
     const rec = { ...(inputs.reconstruccion ?? {}) } as Record<string, unknown>;
@@ -2426,6 +2457,88 @@ export const validarReconstruccionAuditor = createServerFn({ method: "POST" })
       veredicto: result.veredicto,
       inconsistencias: result.inconsistencias.length,
       criticas: result.inconsistencias.filter((i) => i.severidad === "critica").length,
+    };
+  });
+
+// ─────────────────────────────────────────────────────────────
+// NUVIA · Anulación lógica de auditoría QA
+// ─────────────────────────────────────────────────────────────
+//
+// Envuelve la RPC `public.anular_qa_auditoria(_auditoria_id, _motivo)`,
+// única vía autorizada para pasar `estado_registro` de 'activa' a 'anulada'.
+//
+// - La normalización del motivo debe ser IDÉNTICA en las 3 capas
+//   (UI, wrapper, RPC): trim + colapso de espacios y longitud 3..1000.
+// - Idempotente: si ya estaba anulada, la RPC responde
+//   `already_cancelled` (ok=true, idempotent=true).
+// - Códigos de negocio expuestos al front:
+//     `cancelled` | `already_cancelled` | `not_found` | `invalid_reason`
+//     | `linked_to_expediente` | `not_owner` | `approved_by_director`
+//     | `unauthenticated`
+// - Reglas de autorización y bloqueos por vínculo con expediente viven
+//   en la RPC (SECURITY DEFINER) — este wrapper NO decide, solo traduce.
+export function normalizarMotivoAnulacionQA(input: string): string {
+  return String(input ?? "").trim().replace(/\s+/g, " ");
+}
+
+export type AnulacionQACode =
+  | "cancelled"
+  | "already_cancelled"
+  | "not_found"
+  | "invalid_reason"
+  | "linked_to_expediente"
+  | "not_owner"
+  | "approved_by_director"
+  | "unauthenticated";
+
+export const MENSAJE_ANULACION_QA: Record<AnulacionQACode, string> = {
+  cancelled: "Auditoría anulada correctamente.",
+  already_cancelled: "Esta auditoría ya estaba anulada.",
+  not_found: "La auditoría no existe o no es visible.",
+  invalid_reason: "El motivo debe tener entre 3 y 1000 caracteres.",
+  linked_to_expediente:
+    "No se puede anular: la auditoría ya está vinculada a un expediente.",
+  not_owner:
+    "No autorizado: solo el analista propietario puede anular esta auditoría.",
+  approved_by_director:
+    "No autorizado: la auditoría fue aprobada por el Director. Solicite a Dirección QA la anulación.",
+  unauthenticated: "Sesión expirada. Vuelva a iniciar sesión.",
+};
+
+export const anularAuditoriaServer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({
+      auditoriaId: z.string().uuid(),
+      motivo: z
+        .string()
+        .transform((s) => s.trim().replace(/\s+/g, " "))
+        .refine((s) => s.length >= 3 && s.length <= 1000, {
+          message: "El motivo debe tener entre 3 y 1000 caracteres.",
+        }),
+    }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: rpc, error } = await (supabase as any).rpc(
+      "anular_qa_auditoria",
+      { _auditoria_id: data.auditoriaId, _motivo: data.motivo },
+    );
+    if (error) throw new Error(error.message);
+    const res = (rpc ?? {}) as {
+      ok?: boolean;
+      code?: AnulacionQACode;
+      idempotent?: boolean;
+      auditoria_id?: string;
+      anulada_at?: string;
+    };
+    return {
+      ok: !!res.ok,
+      code: (res.code ?? "not_found") as AnulacionQACode,
+      idempotent: !!res.idempotent,
+      auditoriaId: res.auditoria_id ?? data.auditoriaId,
+      anuladaAt: res.anulada_at ?? null,
     };
   });
 

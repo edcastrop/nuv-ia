@@ -5008,6 +5008,8 @@ export type Database = {
         Row: {
           alertas: Json
           analista_id: string | null
+          anulada_at: string | null
+          anulada_by: string | null
           auditor_aprobado_at: string | null
           auditor_aprobado_by: string | null
           auditor_notas: string | null
@@ -5029,12 +5031,14 @@ export type Database = {
           diferencias: Json
           ejecutado_at: string
           ejecutado_by: string | null
+          estado_registro: string
           expediente_id: string | null
           extracto_archivo: Json | null
           extracto_id: string | null
           id: string
           inputs: Json
           modalidad: Database["public"]["Enums"]["qa_modalidad"]
+          motivo_anulacion: string | null
           motor_version: string
           notas_analista_al_auditor: string | null
           origen: string
@@ -5048,6 +5052,8 @@ export type Database = {
         Insert: {
           alertas?: Json
           analista_id?: string | null
+          anulada_at?: string | null
+          anulada_by?: string | null
           auditor_aprobado_at?: string | null
           auditor_aprobado_by?: string | null
           auditor_notas?: string | null
@@ -5069,12 +5075,14 @@ export type Database = {
           diferencias?: Json
           ejecutado_at?: string
           ejecutado_by?: string | null
+          estado_registro?: string
           expediente_id?: string | null
           extracto_archivo?: Json | null
           extracto_id?: string | null
           id?: string
           inputs?: Json
           modalidad: Database["public"]["Enums"]["qa_modalidad"]
+          motivo_anulacion?: string | null
           motor_version?: string
           notas_analista_al_auditor?: string | null
           origen?: string
@@ -5088,6 +5096,8 @@ export type Database = {
         Update: {
           alertas?: Json
           analista_id?: string | null
+          anulada_at?: string | null
+          anulada_by?: string | null
           auditor_aprobado_at?: string | null
           auditor_aprobado_by?: string | null
           auditor_notas?: string | null
@@ -5109,12 +5119,14 @@ export type Database = {
           diferencias?: Json
           ejecutado_at?: string
           ejecutado_by?: string | null
+          estado_registro?: string
           expediente_id?: string | null
           extracto_archivo?: Json | null
           extracto_id?: string | null
           id?: string
           inputs?: Json
           modalidad?: Database["public"]["Enums"]["qa_modalidad"]
+          motivo_anulacion?: string | null
           motor_version?: string
           notas_analista_al_auditor?: string | null
           origen?: string
@@ -6209,6 +6221,10 @@ export type Database = {
       academia_rol_del_usuario: {
         Args: { _uid: string }
         Returns: Database["public"]["Enums"]["academia_rol"]
+      }
+      anular_qa_auditoria: {
+        Args: { _auditoria_id: string; _motivo: string }
+        Returns: Json
       }
       calcular_etapa_onboarding: { Args: { _user_id: string }; Returns: string }
       can_access_expediente: {
