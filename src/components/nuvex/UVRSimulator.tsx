@@ -933,7 +933,7 @@ export function UVRSimulator({
             // standalone, el useEffect emisor reemite `nuvia:draftRawReady`
             // con el snapshot canónico del formulario (nunca `p.raw`).
             if (init?.id) {
-              setPendingAutoQAToken({
+              setAutoQAIntent({
                 archivoPath: p.archivoPath ?? null,
                 archivoNombre: p.raw?.archivoNombre ?? null,
               });
@@ -941,7 +941,7 @@ export function UVRSimulator({
             }
           }}
         />}
-        {!qaEmbedded && init?.id && pendingAutoQAToken && !uvrVarsReady && (
+        {!qaEmbedded && init?.id && autoQAIntent && !uvrVarsReady && (
 
           <Card>
             <div
@@ -959,8 +959,32 @@ export function UVRSimulator({
             </div>
           </Card>
         )}
-        {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (
-          <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
+        {!qaEmbedded && init?.id && (autoQALoading || autoQA || autoQAError) && (
+          <>
+            <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
+            {autoQAError && !autoQALoading && (
+              <div
+                className="rounded-lg px-4 py-3 text-[13px] leading-snug flex items-center justify-between gap-3"
+                style={{
+                  background: "rgba(248,113,113,0.08)",
+                  border: "1px solid rgba(248,113,113,0.45)",
+                  color: "#7F1D1D",
+                }}
+              >
+                <div>
+                  <div className="font-semibold mb-0.5">Auto-QA no pudo ejecutarse</div>
+                  <div className="opacity-80">{autoQAError}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={retryAutoQA}
+                  className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                >
+                  Reintentar Auditoría NUVIA
+                </button>
+              </div>
+            )}
+          </>
         )}
         {!qaEmbedded && <Card>
           <div id="datos-cliente-card" />
