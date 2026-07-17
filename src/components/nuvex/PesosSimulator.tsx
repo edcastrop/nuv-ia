@@ -744,35 +744,19 @@ export function PesosSimulator({
             setInteresMensualExtracto(parseOcrMoney(p.extracto?.interesMensual));
             setCapitalMensualExtracto(parseOcrMoney(p.extracto?.capitalMensual));
             setBeneficioFrechMensualExtracto(parseOcrMoney(p.extracto?.beneficioFrechMensual));
-            // Auto-QA condicional: sólo cuando el simulador fue abierto desde un
-            // Expediente Maestro (init?.id). En modo standalone/draft no se ejecuta,
-            // pero emitimos el snapshot para que NuviaDraftAuditCard pueda auditar
-            // en memoria sin persistir nada.
-            if (init?.id && p.raw) {
-              void triggerSimuladorAutoQA({
-                expedienteId: init.id,
-                raw: { ...p.raw, archivoPath: p.archivoPath ?? null },
-                onStart: () => {
-                  setAutoQALoading(true);
-                  setAutoQA(null);
-                },
-                onResult: (r) => {
-                  setAutoQA(r);
-                  setAutoQALoading(false);
-                },
-                onError: () => setAutoQALoading(false),
-              });
-            } else if (!init?.id && p.raw) {
-              emitDraftRawReady({
-                banco: p.raw.banco ?? null,
-                producto: p.raw.producto ?? null,
-                moneda: p.raw.moneda ?? null,
-                tipoCredito: "pesos",
-                datos: (p.raw.datos ?? {}) as Record<string, unknown>,
-                archivoPath: p.archivoPath ?? extractoArchivoPath ?? null,
-                archivoNombre: p.raw.archivoNombre ?? null,
+            // Auto-QA / snapshot: NO se dispara desde `onApply`. Registramos
+            // sólo la INTENCIÓN (`pendingAutoQAToken`) para que, tras que
+            // React aplique todos los setState del formulario, el efecto
+            // dedicado construya el snapshot con `buildPesosQaSnapshot` y
+            // ejecute la auditoría (modo expediente) o el emisor standalone
+            // reemita `nuvia:draftRawReady`. Nunca viaja `p.raw`.
+            if (init?.id) {
+              setPendingAutoQAToken({
+                archivoPath: p.archivoPath ?? null,
+                archivoNombre: p.raw?.archivoNombre ?? null,
               });
             }
+
           }}
         />}
         {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (
