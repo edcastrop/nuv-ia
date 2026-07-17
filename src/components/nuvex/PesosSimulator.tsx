@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { buildPesosQaSnapshot, hashQaSnapshot } from "@/lib/nuviaQaSnapshot";
+import {
+  buildPesosQaSnapshot,
+  hashQaSnapshot,
+  decideAutoQADispatch,
+  decideAutoQAResult,
+} from "@/lib/nuviaQaSnapshot";
 import { useServerFn } from "@tanstack/react-start";
 import { Alert, Card, SectionTitle, TextField } from "./ui";
 import { SituacionActualBlock } from "./SituacionActualBlock";
@@ -517,26 +522,27 @@ export function PesosSimulator({
   };
 
   // ── Auto-QA de expediente (modo `init?.id`) ────────────────────────
-  // Control determinístico por token + hash: `onApply` NO dispara la
-  // auditoría; sólo registra intención vía `pendingAutoQAToken`. Cuando
-  // React reconcilia todos los setState del formulario, el efecto de
-  // abajo construye el snapshot con `buildPesosQaSnapshot` y ejecuta
-  // `triggerSimuladorAutoQA` únicamente si:
-  //   1) el snapshot está completo y validado,
-  //   2) el hash no está en vuelo (inflight) ni marcado como completado
-  //      exitosamente (lastSuccessful).
+  // Control determinístico por INTENCIÓN + hash. `autoQAIntent` es
+  // pegajoso: se establece en `onApply` y sólo se limpia cuando el
+  // hash del snapshot actual ha sido auditado exitosamente. Si el
+  // analista edita durante el `await`, el resultado obsoleto se
+  // descarta (por hash) y el efecto se re-ejecuta automáticamente
+  // con el snapshot nuevo — sin setTimeouts, sin recargas.
   //
-  // `lastAttemptedHashRef` documenta el último intento; `lastSuccessfulHashRef`
-  // sólo se fija cuando el trigger resuelve OK. Si falla o si el snapshot
-  // cambia durante el await, el resultado se descarta y el hash queda
-  // disponible para reintento controlado.
-  const [pendingAutoQAToken, setPendingAutoQAToken] = useState<{
+  // Reintento tras error: NO es automático. Ante `onError` marcamos
+  // `lastFailedHashRef` con el hash fallido para que el efecto NO
+  // vuelva a dispararlo. El analista dispara `retryAutoQA()` (botón),
+  // que limpia `lastFailedHashRef` y re-arma la intención para forzar
+  // una nueva evaluación del efecto. Esto evita bucles infinitos.
+  const [autoQAIntent, setAutoQAIntent] = useState<{
     archivoPath?: string | null;
     archivoNombre?: string | null;
   } | null>(null);
+  const [autoQAError, setAutoQAError] = useState<string | null>(null);
   const inflightHashRef = useRef<string | null>(null);
   const lastAttemptedHashRef = useRef<string | null>(null);
   const lastSuccessfulHashRef = useRef<string | null>(null);
+  const lastFailedHashRef = useRef<string | null>(null);
 
   // Snapshot canónico desde el estado del formulario (form-source-of-truth).
   const currentQaSnapshot = useMemo(() => {
@@ -610,27 +616,31 @@ export function PesosSimulator({
     emitDraftRawReady(currentQaSnapshot);
   }, [init?.id, currentQaSnapshot]);
 
-  // Modo expediente: disparo controlado del Auto-QA.
+  // Modo expediente: disparo controlado del Auto-QA con INTENCIÓN pegajosa.
   useEffect(() => {
     if (!init?.id) return;
-    if (!pendingAutoQAToken) return;
+    if (!autoQAIntent) return;
     if (!currentQaSnapshot) return;
     const snapshot: typeof currentQaSnapshot = {
       ...currentQaSnapshot,
-      archivoPath: pendingAutoQAToken.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
-      archivoNombre: pendingAutoQAToken.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
+      archivoPath: autoQAIntent.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
+      archivoNombre: autoQAIntent.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
     };
     const hash = hashQaSnapshot(snapshot);
-    if (!hash) return;
-    if (inflightHashRef.current === hash) return;
-    if (lastSuccessfulHashRef.current === hash) {
-      // Ya se auditó exitosamente este snapshot; consumimos el token sin re-disparar.
-      setPendingAutoQAToken(null);
+    const decision = decideAutoQADispatch({
+      hasIntent: true,
+      currentHash: hash,
+      inflightHash: inflightHashRef.current,
+      successHash: lastSuccessfulHashRef.current,
+      failedHash: lastFailedHashRef.current,
+    });
+    if (decision.kind === "skip") return;
+    if (decision.kind === "clear-intent") {
+      setAutoQAIntent(null);
       return;
     }
     inflightHashRef.current = hash;
     lastAttemptedHashRef.current = hash;
-    setPendingAutoQAToken(null);
     void triggerSimuladorAutoQA({
       expedienteId: init.id,
       raw: {
@@ -644,21 +654,37 @@ export function PesosSimulator({
       onStart: () => {
         setAutoQALoading(true);
         setAutoQA(null);
+        setAutoQAError(null);
       },
       onResult: (r) => {
         setAutoQALoading(false);
-        if (inflightHashRef.current !== hash) return; // resultado obsoleto
+        const rec = decideAutoQAResult({ resultHash: hash, inflightHash: inflightHashRef.current });
+        if (rec.kind === "obsolete") return; // snapshot superado; el efecto re-disparará
         lastSuccessfulHashRef.current = hash;
         inflightHashRef.current = null;
         setAutoQA(r);
+        // La intención se limpia en la próxima re-evaluación del efecto
+        // (decideAutoQADispatch → "clear-intent") si el snapshot actual
+        // sigue siendo idéntico. Si cambió, el efecto disparará el nuevo hash.
       },
-      onError: () => {
+      onError: (e) => {
         setAutoQALoading(false);
         if (inflightHashRef.current === hash) inflightHashRef.current = null;
-        // No marcar lastSuccessful → reintento posible tras nueva intención.
+        lastFailedHashRef.current = hash;
+        setAutoQAError(e instanceof Error ? e.message : "Error al ejecutar Auto-QA.");
+        // Intent se conserva para permitir retry manual; el efecto NO
+        // volverá a dispararse mientras `lastFailedHashRef === hash`.
       },
     });
-  }, [init?.id, pendingAutoQAToken, currentQaSnapshot]);
+  }, [init?.id, autoQAIntent, currentQaSnapshot]);
+
+  const retryAutoQA = () => {
+    lastFailedHashRef.current = null;
+    setAutoQAError(null);
+    // Fuerza nueva referencia para re-ejecutar el efecto aunque
+    // `autoQAIntent` conserve los mismos valores.
+    setAutoQAIntent((prev) => (prev ? { ...prev } : prev));
+  };
 
 
 
@@ -751,7 +777,7 @@ export function PesosSimulator({
             // ejecute la auditoría (modo expediente) o el emisor standalone
             // reemita `nuvia:draftRawReady`. Nunca viaja `p.raw`.
             if (init?.id) {
-              setPendingAutoQAToken({
+              setAutoQAIntent({
                 archivoPath: p.archivoPath ?? null,
                 archivoNombre: p.raw?.archivoNombre ?? null,
               });
@@ -759,8 +785,32 @@ export function PesosSimulator({
 
           }}
         />}
-        {!qaEmbedded && init?.id && (autoQALoading || autoQA) && (
-          <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
+        {!qaEmbedded && init?.id && (autoQALoading || autoQA || autoQAError) && (
+          <>
+            <AutoQAPanel loading={autoQALoading} result={autoQA} simuladorReturn={simuladorReturn} />
+            {autoQAError && !autoQALoading && (
+              <div
+                className="rounded-lg px-4 py-3 text-[13px] leading-snug flex items-center justify-between gap-3"
+                style={{
+                  background: "rgba(248,113,113,0.08)",
+                  border: "1px solid rgba(248,113,113,0.45)",
+                  color: "#7F1D1D",
+                }}
+              >
+                <div>
+                  <div className="font-semibold mb-0.5">Auto-QA no pudo ejecutarse</div>
+                  <div className="opacity-80">{autoQAError}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={retryAutoQA}
+                  className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-50"
+                >
+                  Reintentar Auditoría NUVIA
+                </button>
+              </div>
+            )}
+          </>
         )}
         {!qaEmbedded && <Card>
           <div id="datos-cliente-card" />
