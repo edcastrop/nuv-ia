@@ -358,31 +358,37 @@ export type ExtractoResponse = { error: string | null; data: ExtractoData | null
 
 /**
  * Clasifica la moneda de un crédito FNA basándose ÚNICAMENTE en evidencia
- * numérica dura (`saldoUVR`/`valorUVR`). Menciones textuales o descriptivas
- * de "UVR" en `producto`/`moneda` cruda del LLM son insuficientes: los
- * extractos FNA en pesos con frecuencia contienen boilerplate legal que
- * menciona UVR, y basarse en esas cadenas produce falsos positivos que
- * disparan el diálogo de mismatch de moneda incorrectamente.
+ * numérica dura de `saldoUVR` (saldo a capital del crédito expresado en UVR).
+ *
+ * Contexto FNA: los extractos FNA imprimen "Cotización UVR: X.XXXX" incluso
+ * en créditos pesos, como dato informativo del día. El LLM mapea ese valor
+ * a `valorUVR` (schema: "Valor de la UVR del día"). Por tanto `valorUVR`
+ * NO puede clasificar por sí solo — sólo `saldoUVR` demuestra que el saldo
+ * del crédito está expresado en UVR.
  *
  * Reglas:
- * - `moneda = "UVR"` sólo si `saldoUVR > 0` o `valorUVR > 0` (ambos con
- *   `Number.isFinite`). Cualquier otro caso (undefined, null, NaN,
- *   ±Infinity, cero, negativo) se trata como ausencia de evidencia UVR.
- * - `moneda = "PESOS"` en cualquier otro caso.
+ * - `moneda = "UVR"` sólo si `saldoUVR > 0` (con `Number.isFinite`).
+ * - `valorUVR` es una cotización informativa: NO clasifica por sí solo.
+ * - undefined, null, NaN, ±Infinity, cero y negativos en `saldoUVR` se
+ *   tratan como ausencia de evidencia UVR → `moneda = "PESOS"`.
+ * - `valorUVR` se mantiene en la firma por compatibilidad con callers,
+ *   pero se ignora en la decisión.
  * - `producto` se reconstruye de forma consistente con la moneda decidida.
  */
 export function classifyFnaMoneda(input: {
   saldoUVR: number;
   valorUVR: number;
 }): { moneda: "UVR" | "PESOS"; producto: string } {
+  void input.valorUVR; // ignorado a propósito: es cotización informativa en FNA
   const isEvidence = (v: number): boolean => Number.isFinite(v) && v > 0;
-  const evidenciaUvr = isEvidence(input.saldoUVR) || isEvidence(input.valorUVR);
+  const evidenciaUvr = isEvidence(input.saldoUVR);
   const moneda: "UVR" | "PESOS" = evidenciaUvr ? "UVR" : "PESOS";
   const producto = evidenciaUvr
     ? "Crédito Hipotecario FNA en UVR"
     : "Crédito Hipotecario FNA en pesos";
   return { moneda, producto };
 }
+
 
 const EXTRACTO_FIELDS = [
   "banco", "cliente", "cedula", "numeroCredito", "producto", "tipoCredito", "moneda",
@@ -1080,19 +1086,28 @@ export const extractStatement = createServerFn({ method: "POST" })
         // ----- FNA: evitar confundir BASE DE CALCULO 360 (días) con plazo -----
         parsed.banco = "FNA";
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
-        // Clasificación de moneda FNA basada en evidencia numérica dura
-        // (saldoUVR/valorUVR). Menciones textuales de "UVR" en
-        // parsed.moneda / parsed.producto no bastan: producían falsos
-        // positivos para créditos en pesos con boilerplate legal UVR.
+        // Clasificación de moneda FNA basada en evidencia numérica dura de
+        // `saldoUVR`. `valorUVR` (la Cotización UVR del día) NO clasifica
+        // por sí sola: FNA la imprime también en créditos pesos.
         // Nota: esta normalización sobrescribe parsed.moneda y
         // parsed.producto in-place; los valores originales devueltos por
         // el LLM no se conservan (sólo permanece disponible data.rawText).
+
         const fnaMonedaResult = classifyFnaMoneda({
           saldoUVR: monto("saldoUVR"),
           valorUVR: monto("valorUVR"),
         });
         parsed.moneda = fnaMonedaResult.moneda;
         parsed.producto = fnaMonedaResult.producto;
+        if (fnaMonedaResult.moneda === "PESOS") {
+          // FNA imprime "Cotización UVR" también en créditos pesos. Si el
+          // LLM la capturó en valorUVR, el cliente re-derivaría UVR desde
+          // ese valor. Limpiamos ambos campos UVR para dejar el objeto
+          // coherente con la clasificación PESOS.
+          parsed.valorUVR = "";
+          parsed.saldoUVR = "";
+        }
+
         parsed.tieneCobertura = "no";
         parsed.valorCobertura = "";
         parsed.tasaCobertura = "";

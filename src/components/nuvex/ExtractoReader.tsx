@@ -1391,20 +1391,8 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       sistemaDicePesos,
     });
 
-    // [DIAGNÓSTICO TEMPORAL — FNA moneda] Autorizado por el usuario. Sin PII.
-    // Se eliminará en la corrección definitiva.
-    console.info("[FNA moneda diagnóstico]", {
-      bancoDetectado: bancoCanon || bancoFinal,
-      parsedBanco: get("banco"),
-      parsedMoneda: get("moneda"),
-      parsedProducto: get("producto"),
-      saldoUvrRaw,
-      valorUvrRaw,
-      saldoUvrParsed: parseMontoExtracto(saldoUvrRaw),
-      valorUvrParsed: parseMontoExtracto(valorUvrRaw),
-      tieneDatosUvr,
-      monedaDetectada,
-    });
+
+
 
 
 
