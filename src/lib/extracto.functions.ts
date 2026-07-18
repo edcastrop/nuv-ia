@@ -358,31 +358,37 @@ export type ExtractoResponse = { error: string | null; data: ExtractoData | null
 
 /**
  * Clasifica la moneda de un crédito FNA basándose ÚNICAMENTE en evidencia
- * numérica dura (`saldoUVR`/`valorUVR`). Menciones textuales o descriptivas
- * de "UVR" en `producto`/`moneda` cruda del LLM son insuficientes: los
- * extractos FNA en pesos con frecuencia contienen boilerplate legal que
- * menciona UVR, y basarse en esas cadenas produce falsos positivos que
- * disparan el diálogo de mismatch de moneda incorrectamente.
+ * numérica dura de `saldoUVR` (saldo a capital del crédito expresado en UVR).
+ *
+ * Contexto FNA: los extractos FNA imprimen "Cotización UVR: X.XXXX" incluso
+ * en créditos pesos, como dato informativo del día. El LLM mapea ese valor
+ * a `valorUVR` (schema: "Valor de la UVR del día"). Por tanto `valorUVR`
+ * NO puede clasificar por sí solo — sólo `saldoUVR` demuestra que el saldo
+ * del crédito está expresado en UVR.
  *
  * Reglas:
- * - `moneda = "UVR"` sólo si `saldoUVR > 0` o `valorUVR > 0` (ambos con
- *   `Number.isFinite`). Cualquier otro caso (undefined, null, NaN,
- *   ±Infinity, cero, negativo) se trata como ausencia de evidencia UVR.
- * - `moneda = "PESOS"` en cualquier otro caso.
+ * - `moneda = "UVR"` sólo si `saldoUVR > 0` (con `Number.isFinite`).
+ * - `valorUVR` es una cotización informativa: NO clasifica por sí solo.
+ * - undefined, null, NaN, ±Infinity, cero y negativos en `saldoUVR` se
+ *   tratan como ausencia de evidencia UVR → `moneda = "PESOS"`.
+ * - `valorUVR` se mantiene en la firma por compatibilidad con callers,
+ *   pero se ignora en la decisión.
  * - `producto` se reconstruye de forma consistente con la moneda decidida.
  */
 export function classifyFnaMoneda(input: {
   saldoUVR: number;
   valorUVR: number;
 }): { moneda: "UVR" | "PESOS"; producto: string } {
+  void input.valorUVR; // ignorado a propósito: es cotización informativa en FNA
   const isEvidence = (v: number): boolean => Number.isFinite(v) && v > 0;
-  const evidenciaUvr = isEvidence(input.saldoUVR) || isEvidence(input.valorUVR);
+  const evidenciaUvr = isEvidence(input.saldoUVR);
   const moneda: "UVR" | "PESOS" = evidenciaUvr ? "UVR" : "PESOS";
   const producto = evidenciaUvr
     ? "Crédito Hipotecario FNA en UVR"
     : "Crédito Hipotecario FNA en pesos";
   return { moneda, producto };
 }
+
 
 const EXTRACTO_FIELDS = [
   "banco", "cliente", "cedula", "numeroCredito", "producto", "tipoCredito", "moneda",
