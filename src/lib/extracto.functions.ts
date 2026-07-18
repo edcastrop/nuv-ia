@@ -1084,8 +1084,9 @@ export const extractStatement = createServerFn({ method: "POST" })
         // (saldoUVR/valorUVR). Menciones textuales de "UVR" en
         // parsed.moneda / parsed.producto no bastan: producían falsos
         // positivos para créditos en pesos con boilerplate legal UVR.
-        // Los valores crudos del LLM (parsed originales) permanecen
-        // intactos en `raw` para auditoría.
+        // Nota: esta normalización sobrescribe parsed.moneda y
+        // parsed.producto in-place; los valores originales devueltos por
+        // el LLM no se conservan (sólo permanece disponible data.rawText).
         const fnaMonedaResult = classifyFnaMoneda({
           saldoUVR: monto("saldoUVR"),
           valorUVR: monto("valorUVR"),
