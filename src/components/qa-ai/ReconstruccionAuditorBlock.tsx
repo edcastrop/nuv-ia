@@ -384,7 +384,7 @@ export function ReconstruccionAuditorBlock({
  * inputs para Variación UVR EA. Cuando la reconstrucción es imposible
  * muestra un banner explicativo.
  */
-function EscenariosAuditor({
+export function EscenariosAuditor({
   auditoria,
   inputs,
   modo,
