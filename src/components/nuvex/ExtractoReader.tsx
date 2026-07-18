@@ -1812,7 +1812,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       {/* Modal */}
       {open && portalReady && createPortal(
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+          className="fixed inset-0 z-40 flex items-center justify-center p-4"
           style={{ background: "rgba(5,8,20,0.78)", backdropFilter: "blur(8px)" }}
           onClick={() => stage !== "reading" && setOpen(false)}
         >
