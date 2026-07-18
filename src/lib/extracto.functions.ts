@@ -1080,8 +1080,18 @@ export const extractStatement = createServerFn({ method: "POST" })
         // ----- FNA: evitar confundir BASE DE CALCULO 360 (días) con plazo -----
         parsed.banco = "FNA";
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
-        parsed.moneda = /\buvr\b/i.test(`${parsed.moneda ?? ""} ${parsed.producto ?? ""}`) ? "UVR" : "PESOS";
-        parsed.producto = `Crédito Hipotecario FNA en ${parsed.moneda === "UVR" ? "UVR" : "pesos"}`;
+        // Clasificación de moneda FNA basada en evidencia numérica dura
+        // (saldoUVR/valorUVR). Menciones textuales de "UVR" en
+        // parsed.moneda / parsed.producto no bastan: producían falsos
+        // positivos para créditos en pesos con boilerplate legal UVR.
+        // Los valores crudos del LLM (parsed originales) permanecen
+        // intactos en `raw` para auditoría.
+        const fnaMonedaResult = classifyFnaMoneda({
+          saldoUVR: monto("saldoUVR"),
+          valorUVR: monto("valorUVR"),
+        });
+        parsed.moneda = fnaMonedaResult.moneda;
+        parsed.producto = fnaMonedaResult.producto;
         parsed.tieneCobertura = "no";
         parsed.valorCobertura = "";
         parsed.tasaCobertura = "";
