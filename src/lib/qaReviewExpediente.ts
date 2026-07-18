@@ -149,13 +149,20 @@ import type { DraftRawSnapshot } from "@/components/nuvex/NuviaDraftAuditCard";
 export type EscenariosOrigen =
   | "historico_persistido"
   | "reconstruido_legacy"
+  | "inconsistente"
   | null;
 
 export type EscenariosAuditor = {
   origen: EscenariosOrigen;
   escenarios: SnapshotEscenario[];
   contract: AuditSnapshotContract;
-  /** Mensaje diagnóstico cuando `origen=null`. */
+  /**
+   * Índice histórico del escenario recomendado, 0..3. `null` cuando no
+   * puede determinarse con certeza (sin persistencia y sin coincidencia
+   * inequívoca por `cuotasEliminadas`). Nunca hay fallback a 0.
+   */
+  recommendedIndex: number | null;
+  /** Mensaje diagnóstico cuando `origen=null` o `origen="inconsistente"`. */
   reason?: string;
   /** Conflicto de variación UVR entre snapshot e inputs (cuando aplica). */
   uvrVariationConflict?: null | { snapshotValue: number; inputsValue: number; chosen: number };
@@ -167,6 +174,37 @@ function num(v: unknown): number {
   return 0;
 }
 
+/**
+ * Deriva el índice del escenario recomendado desde el snapshot histórico.
+ *
+ * Reglas estrictas (sin fallback):
+ *   1. Si `snapshot.propuesta.index` es entero en [0, escenarios.length-1]
+ *      → se usa ese valor.
+ *   2. Si no, y `snapshot.propuesta.cuotasEliminadas` coincide de forma
+ *      INEQUÍVOCA con exactamente un escenario → se usa ese índice.
+ *   3. En cualquier otro caso → `null` (ambigüedad o ausencia).
+ */
+function deriveRecommendedIndex(
+  snapshotObj: DraftRawSnapshot | null,
+  escenarios: SnapshotEscenario[],
+): number | null {
+  if (!snapshotObj || escenarios.length !== 4) return null;
+  const propuesta = (snapshotObj.propuesta ?? null) as Record<string, unknown> | null;
+  if (!propuesta) return null;
+  const rawIdx = propuesta.index;
+  if (typeof rawIdx === "number" && Number.isInteger(rawIdx) && rawIdx >= 0 && rawIdx < escenarios.length) {
+    return rawIdx;
+  }
+  const rawCuotas = Number(propuesta.cuotasEliminadas);
+  if (Number.isFinite(rawCuotas) && rawCuotas > 0) {
+    const matches = escenarios
+      .map((e, i) => (e.cuotasEliminadas === rawCuotas ? i : -1))
+      .filter((i) => i >= 0);
+    if (matches.length === 1) return matches[0];
+  }
+  return null;
+}
+
 export function escenariosFromAudit(
   auditoria: Record<string, unknown>,
   inputs: Record<string, unknown>,
@@ -174,13 +212,30 @@ export function escenariosFromAudit(
   const snapshotObj = (auditoria.simulador_snapshot ?? null) as DraftRawSnapshot | null;
   const contract = validateAuditSnapshotContract(snapshotObj);
   if (contract.kind === "historico_persistido") {
-    return { origen: "historico_persistido", escenarios: contract.escenarios, contract };
+    // El validador ya garantiza length === 4; se refuerza aquí como red de
+    // seguridad frente a un futuro cambio del validador.
+    if (contract.escenarios.length !== 4) {
+      return {
+        origen: "inconsistente",
+        escenarios: [],
+        contract,
+        recommendedIndex: null,
+        reason: "Snapshot v2 histórico con cantidad de escenarios distinta de 4.",
+      };
+    }
+    return {
+      origen: "historico_persistido",
+      escenarios: contract.escenarios,
+      contract,
+      recommendedIndex: deriveRecommendedIndex(snapshotObj, contract.escenarios),
+    };
   }
   if (contract.kind === "invalido_v2") {
     return {
       origen: null,
       escenarios: [],
       contract,
+      recommendedIndex: null,
       reason: `Snapshot v2 inválido (${contract.reason}). La reconstrucción legacy queda deshabilitada; el analista debe re-auditar.`,
     };
   }
@@ -189,13 +244,13 @@ export function escenariosFromAudit(
       origen: null,
       escenarios: [],
       contract,
+      recommendedIndex: null,
       reason: `Versión de snapshot desconocida: ${contract.version}.`,
     };
   }
   // Legacy (v1) o sin_snapshot → intentamos reconstrucción determinística.
   const rec = (inputs?.reconstruccion ?? {}) as Record<string, unknown>;
   const datosSnap = (snapshotObj?.datos ?? {}) as Record<string, unknown>;
-  // Precedencia UVR: snapshot.datos.variacionUVR prima sobre inputs.reconstruccion.variacionUvrEa.
   const varUvrSnap = num(datosSnap.variacionUVR);
   const varUvrInp = num(rec.variacionUvrEa);
   const variacionUVR = varUvrSnap > 0 ? varUvrSnap : varUvrInp;
@@ -220,14 +275,29 @@ export function escenariosFromAudit(
       origen: null,
       escenarios: [],
       contract,
+      recommendedIndex: null,
       reason:
         "Datos insuficientes para reconstruir escenarios (faltan saldo, cuota, plazo, tea, uvr o variación).",
+    };
+  }
+  // Invariante: reconstrucción legacy debe producir EXACTAMENTE 4 escenarios.
+  // Cualquier otra cantidad se marca como inconsistente y NO se renderizan
+  // tarjetas parciales.
+  if (reconstructed.escenarios.length !== 4) {
+    return {
+      origen: "inconsistente",
+      escenarios: [],
+      contract,
+      recommendedIndex: null,
+      reason: `Reconstrucción legacy incompleta (${reconstructed.escenarios.length} de 4 escenarios). No se muestran tarjetas parciales.`,
+      uvrVariationConflict: reconstructed.uvrVariationConflict,
     };
   }
   return {
     origen: "reconstruido_legacy",
     escenarios: reconstructed.escenarios,
     contract,
+    recommendedIndex: deriveRecommendedIndex(snapshotObj, reconstructed.escenarios),
     uvrVariationConflict: reconstructed.uvrVariationConflict,
   };
 }
