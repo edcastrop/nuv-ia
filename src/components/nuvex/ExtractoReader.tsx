@@ -2501,15 +2501,17 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                     EDITAR CUOTA BASE
                   </button>
                   <button
+                    type="button"
                     onClick={handleConfirm}
-                    className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
+                    disabled={isApplying}
+                    className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                     style={{
                       background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))",
                       boxShadow: "0 10px 28px -14px rgba(132,185,143,0.42)",
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    APLICAR AL SIMULADOR
+                    {isApplying ? "APLICANDO…" : "APLICAR AL SIMULADOR"}
                   </button>
                 </div>
               </div>
