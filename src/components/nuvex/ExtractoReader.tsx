@@ -513,6 +513,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   // SOLO estas entradas al scope real del cliente — simétrico a lo que
   // hace ClientCedulaButton con la cédula del titular.
   const pendingExtractoEntryIdsRef = useRef<Set<string>>(new Set());
+  // Guarda síncrona contra doble-clic en "APLICAR AL SIMULADOR".
+  // `applyingRef` bloquea de inmediato antes de que React aplique `setIsApplying`.
+  const applyingRef = useRef(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   const { data: catalogoProductos = [] } = useProductosBancarios();
 
