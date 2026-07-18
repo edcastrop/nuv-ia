@@ -1099,6 +1099,15 @@ export const extractStatement = createServerFn({ method: "POST" })
         });
         parsed.moneda = fnaMonedaResult.moneda;
         parsed.producto = fnaMonedaResult.producto;
+        if (fnaMonedaResult.moneda === "PESOS") {
+          // FNA imprime "Cotización UVR" también en créditos pesos. Si el
+          // LLM la capturó en valorUVR, el cliente re-derivaría UVR desde
+          // ese valor. Limpiamos ambos campos UVR para dejar el objeto
+          // coherente con la clasificación PESOS.
+          parsed.valorUVR = "";
+          parsed.saldoUVR = "";
+        }
+
         parsed.tieneCobertura = "no";
         parsed.valorCobertura = "";
         parsed.tasaCobertura = "";
