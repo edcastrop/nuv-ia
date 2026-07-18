@@ -356,6 +356,34 @@ REGLAS ESTRICTAS:
 export type ExtractoData = Record<string, string | Record<string, string>>;
 export type ExtractoResponse = { error: string | null; data: ExtractoData | null };
 
+/**
+ * Clasifica la moneda de un crédito FNA basándose ÚNICAMENTE en evidencia
+ * numérica dura (`saldoUVR`/`valorUVR`). Menciones textuales o descriptivas
+ * de "UVR" en `producto`/`moneda` cruda del LLM son insuficientes: los
+ * extractos FNA en pesos con frecuencia contienen boilerplate legal que
+ * menciona UVR, y basarse en esas cadenas produce falsos positivos que
+ * disparan el diálogo de mismatch de moneda incorrectamente.
+ *
+ * Reglas:
+ * - `moneda = "UVR"` sólo si `saldoUVR > 0` o `valorUVR > 0` (ambos con
+ *   `Number.isFinite`). Cualquier otro caso (undefined, null, NaN,
+ *   ±Infinity, cero, negativo) se trata como ausencia de evidencia UVR.
+ * - `moneda = "PESOS"` en cualquier otro caso.
+ * - `producto` se reconstruye de forma consistente con la moneda decidida.
+ */
+export function classifyFnaMoneda(input: {
+  saldoUVR: number;
+  valorUVR: number;
+}): { moneda: "UVR" | "PESOS"; producto: string } {
+  const isEvidence = (v: number): boolean => Number.isFinite(v) && v > 0;
+  const evidenciaUvr = isEvidence(input.saldoUVR) || isEvidence(input.valorUVR);
+  const moneda: "UVR" | "PESOS" = evidenciaUvr ? "UVR" : "PESOS";
+  const producto = evidenciaUvr
+    ? "Crédito Hipotecario FNA en UVR"
+    : "Crédito Hipotecario FNA en pesos";
+  return { moneda, producto };
+}
+
 const EXTRACTO_FIELDS = [
   "banco", "cliente", "cedula", "numeroCredito", "producto", "tipoCredito", "moneda",
   "saldoCapital", "valorDesembolsado", "cuotaMensual", "seguros", "cuotaSinSeguros",
