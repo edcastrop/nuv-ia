@@ -1504,13 +1504,28 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       pendingExtractoEntryIdsRef.current = new Set();
     }
     const applied = await onApply(payload);
-    if (applied === false) return;
+    if (applied === false) {
+      setStage("review");
+      return;
+    }
 
     setStage("applied");
     setOpen(false);
     setTimeout(() => {
       reset();
     }, 250);
+    } catch (error) {
+      console.error("[ExtractoReader] Error aplicando extracto", error);
+      setErrorMsg(
+        error instanceof Error
+          ? `No fue posible aplicar el extracto: ${error.message}`
+          : "No fue posible aplicar el extracto.",
+      );
+      setStage("review");
+    } finally {
+      applyingRef.current = false;
+      setIsApplying(false);
+    }
   };
 
   // Campos a mostrar según modo
