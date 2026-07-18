@@ -1256,7 +1256,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
 
 
   const handleConfirm = async () => {
+    if (applyingRef.current) return;
     if (!parsed) return;
+    applyingRef.current = true;
+    setIsApplying(true);
+    try {
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
     // Alias: algunos parsers emiten `titular` en lugar de `cliente` (formato AI/LLM
     // y perfiles nuevos). Preferimos `cliente` (heredado) y caemos a `titular`.
