@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AlertTriangle, X } from "lucide-react";
 import {
   AlertDialog,
@@ -29,6 +29,14 @@ export function useMonedaMismatchAlert() {
   const resolverRef = useRef<ResolverFn | null>(null);
 
   const confirm = useCallback((a: Args): Promise<boolean> => {
+    // Invariante: toda Promise creada por confirm() se resuelve exactamente
+    // una vez. Si ya existe un resolver pendiente, se resuelve con `false`
+    // ANTES de registrar el nuevo, para no dejar promesas huérfanas.
+    const previousResolver = resolverRef.current;
+    resolverRef.current = null;
+    if (previousResolver) {
+      previousResolver(false);
+    }
     setArgs(a);
     setOpen(true);
     return new Promise<boolean>((resolve) => {
@@ -37,10 +45,24 @@ export function useMonedaMismatchAlert() {
   }, []);
 
   const handleResolve = useCallback((value: boolean) => {
-    setOpen(false);
-    const r = resolverRef.current;
+    const resolver = resolverRef.current;
     resolverRef.current = null;
-    if (r) r(value);
+    setOpen(false);
+    if (resolver) {
+      resolver(value);
+    }
+  }, []);
+
+  // Al desmontar: resolver cualquier promesa pendiente con `false` para no
+  // dejar consumidores esperando indefinidamente.
+  useEffect(() => {
+    return () => {
+      const resolver = resolverRef.current;
+      resolverRef.current = null;
+      if (resolver) {
+        resolver(false);
+      }
+    };
   }, []);
 
   const detectada = args?.detectada ?? "uvr";

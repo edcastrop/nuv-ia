@@ -513,6 +513,10 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
   // SOLO estas entradas al scope real del cliente — simétrico a lo que
   // hace ClientCedulaButton con la cédula del titular.
   const pendingExtractoEntryIdsRef = useRef<Set<string>>(new Set());
+  // Guarda síncrona contra doble-clic en "APLICAR AL SIMULADOR".
+  // `applyingRef` bloquea de inmediato antes de que React aplique `setIsApplying`.
+  const applyingRef = useRef(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   const { data: catalogoProductos = [] } = useProductosBancarios();
 
@@ -1252,7 +1256,11 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
 
 
   const handleConfirm = async () => {
+    if (applyingRef.current) return;
     if (!parsed) return;
+    applyingRef.current = true;
+    setIsApplying(true);
+    try {
     const get = (k: string) => (typeof parsed[k] === "string" ? (parsed[k] as string) : "");
     // Alias: algunos parsers emiten `titular` en lugar de `cliente` (formato AI/LLM
     // y perfiles nuevos). Preferimos `cliente` (heredado) y caemos a `titular`.
@@ -1496,13 +1504,28 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       pendingExtractoEntryIdsRef.current = new Set();
     }
     const applied = await onApply(payload);
-    if (applied === false) return;
+    if (applied === false) {
+      setStage("review");
+      return;
+    }
 
     setStage("applied");
     setOpen(false);
     setTimeout(() => {
       reset();
     }, 250);
+    } catch (error) {
+      console.error("[ExtractoReader] Error aplicando extracto", error);
+      setErrorMsg(
+        error instanceof Error
+          ? `No fue posible aplicar el extracto: ${error.message}`
+          : "No fue posible aplicar el extracto.",
+      );
+      setStage("review");
+    } finally {
+      applyingRef.current = false;
+      setIsApplying(false);
+    }
   };
 
   // Campos a mostrar según modo
@@ -1789,7 +1812,7 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       {/* Modal */}
       {open && portalReady && createPortal(
         <div
-          className="fixed inset-0 z-[80] flex items-center justify-center p-4"
+          className="fixed inset-0 z-40 flex items-center justify-center p-4"
           style={{ background: "rgba(5,8,20,0.78)", backdropFilter: "blur(8px)" }}
           onClick={() => stage !== "reading" && setOpen(false)}
         >
@@ -2478,15 +2501,17 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
                     EDITAR CUOTA BASE
                   </button>
                   <button
+                    type="button"
                     onClick={handleConfirm}
-                    className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
+                    disabled={isApplying}
+                    className="inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white transition-transform hover:scale-[1.02] disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:scale-100"
                     style={{
                       background: "linear-gradient(135deg, rgba(68,93,163,0.56), rgba(132,185,143,0.48))",
                       boxShadow: "0 10px 28px -14px rgba(132,185,143,0.42)",
                     }}
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    APLICAR AL SIMULADOR
+                    {isApplying ? "APLICANDO…" : "APLICAR AL SIMULADOR"}
                   </button>
                 </div>
               </div>

@@ -711,7 +711,7 @@ export function PesosSimulator({
           existingArchivoPath={extractoArchivoPath}
           expedienteId={init?.id}
           draftKey={draftScopeKey}
-          onApply={async (p: ExtractoApplyPayload) => {
+          onApply={async (p: ExtractoApplyPayload): Promise<boolean> => {
             // Alerta crítica: bloquear si el extracto está en UVR pero estamos en simulador de Pesos.
             if (p.monedaDetectada && p.monedaDetectada !== "pesos") {
               const continuar = await monedaAlerta.confirm({
@@ -723,7 +723,7 @@ export function PesosSimulator({
                   "Carga cancelada: el extracto es UVR pero el simulador es Pesos. Usa el simulador UVR.",
                   { duration: 6000 },
                 );
-                return;
+                return false;
               }
               toast.warning("Aplicando extracto UVR en simulador de Pesos. Revisa los resultados.");
             }
@@ -783,6 +783,7 @@ export function PesosSimulator({
               });
             }
 
+            return true;
           }}
         />}
         {!qaEmbedded && init?.id && (autoQALoading || autoQA || autoQAError) && (
