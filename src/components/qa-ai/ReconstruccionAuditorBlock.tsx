@@ -394,7 +394,8 @@ export function EscenariosAuditor({
   modo: "pesos" | "uvr";
 }) {
   const data = useMemo(() => escenariosFromAudit(auditoria, inputs), [auditoria, inputs]);
-  if (data.origen === null) {
+  // Origen null o "inconsistente" → NO se renderizan tarjetas parciales.
+  if (data.origen === null || data.origen === "inconsistente") {
     return (
       <div
         className="px-5 py-4"
@@ -408,7 +409,11 @@ export function EscenariosAuditor({
             color: "var(--nuvia-text-secondary)",
           }}
         >
-          <b style={{ color: "#F5C77E" }}>Escenarios no disponibles.</b>{" "}
+          <b style={{ color: "#F5C77E" }}>
+            {data.origen === "inconsistente"
+              ? "Escenarios inconsistentes."
+              : "Escenarios no disponibles."}
+          </b>{" "}
           {data.reason}
         </div>
       </div>
@@ -429,7 +434,7 @@ export function EscenariosAuditor({
         cuotasPendientes={0}
         baseCredito={0}
         auditorEscenarios={data.escenarios}
-        auditorRecomendadaIdx={0}
+        auditorRecomendadaIdx={data.recommendedIndex}
         auditorBannerLegacy={legacyBanner}
         auditorUvrVariationConflict={data.uvrVariationConflict ?? null}
       />
