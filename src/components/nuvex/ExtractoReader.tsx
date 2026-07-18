@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { NuviaReadingAnimation } from "./NuviaReadingAnimation";
 import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
 import { parseMontoExtracto } from "@/lib/cuotaBase";
+import { resolveMonedaDetectada } from "@/lib/extractoReaderMoneda";
 import {
   useProductosBancarios,
   buscarProductoComercial,
@@ -1374,12 +1375,13 @@ export function ExtractoReader({ modo, onApply, existingArchivoPath, expedienteI
       /\buvr[- ]?(vis|vivda|vivienda)/.test(productoLower);
     // PESOS explícito gana sobre cualquier otra señal débil.
     const sistemaDicePesos = /\ben\s+pesos\b/.test(sistemaAmortLower);
-    const señalUvrFuerte =
-      !sistemaDicePesos && (parsedAttrs.esUVR || tieneDatosUvr || uvrEnTexto);
-    const monedaDetectada: "uvr" | "pesos" =
-      señalUvrFuerte || (monedaUpper === "UVR" && tieneDatosUvr && !sistemaDicePesos)
-        ? "uvr"
-        : "pesos";
+    const monedaDetectada: "uvr" | "pesos" = resolveMonedaDetectada({
+      banco: bancoCanon || bancoFinal,
+      parsedEsUVR: parsedAttrs.esUVR,
+      tieneDatosUvr,
+      uvrEnTexto,
+      sistemaDicePesos,
+    });
 
 
     // Solo exigimos campos UVR si el EXTRACTO detectado es UVR.
