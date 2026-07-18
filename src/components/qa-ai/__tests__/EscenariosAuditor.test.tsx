@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 // Cobertura de render para `EscenariosAuditor` (bloque interno de
 // `ReconstruccionAuditorBlock`). El componente clasifica el snapshot con
 // `escenariosFromAudit` y renderiza `PropuestasComerciales` en modo

@@ -1,3 +1,4 @@
+/// <reference types="@testing-library/jest-dom" />
 // Cobertura de render para `PropuestasComerciales` en modo `readOnly` (vista
 // del auditor). Verifica que el subcomponente `PropuestasComercialesReadOnly`
 // nunca renderiza controles interactivos ni ejecuta los callbacks del
@@ -22,13 +23,10 @@ const ESC = [
 
 // Input mínimo para el modo interactivo Pesos (no se ejercita numéricamente).
 const PESOS_INPUT: PesosInput = {
-  valorDesembolsado: 100_000_000,
-  saldoPesos: 90_000_000,
-  cuotaActualPesos: 1_800_000,
-  cuotaSinSeguros: 1_700_000,
+  saldoCapital: 90_000_000,
+  cuotaActual: 1_800_000,
   seguros: 100_000,
-  teaCobrada: 14,
-  plazoInicial: 240,
+  tea: 14,
   cuotasPendientes: 180,
   porcentajeHonorarios: 0.06,
 };
