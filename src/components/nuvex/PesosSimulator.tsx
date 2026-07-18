@@ -783,6 +783,7 @@ export function PesosSimulator({
               });
             }
 
+            return true;
           }}
         />}
         {!qaEmbedded && init?.id && (autoQALoading || autoQA || autoQAError) && (
