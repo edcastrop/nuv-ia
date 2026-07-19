@@ -716,7 +716,6 @@ function LabView() {
     const norm = normalizarExtracto(data as unknown as Record<string, unknown>);
     setInput(norm);
     // Clasificación inicial usada como estado editable
-    const { clasificarVariables } = require("@/lib/reconstructor/lab/clasificador") as typeof import("@/lib/reconstructor/lab/clasificador");
     const { variables: vs } = clasificarVariables(norm);
     setVariables(vs);
     setTab("variables");
@@ -740,7 +739,7 @@ function LabView() {
     );
 
   const activasFiltradas = variables.filter((v) => !v.excluida);
-  const lab = input ? runLab({ ...input }, activasFiltradas) : null;
+  const lab = input ? runLab(input, { variables: activasFiltradas }) : null;
 
   return (
     <div className="space-y-4">
