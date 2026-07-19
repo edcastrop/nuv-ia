@@ -73,6 +73,7 @@ import { Route as AuthenticatedQaAiAprobadosRouteImport } from './routes/_authen
 import { Route as AuthenticatedQaAiAlertasRouteImport } from './routes/_authenticated/qa-ai.alertas'
 import { Route as AuthenticatedQaAiIdRouteImport } from './routes/_authenticated/qa-ai.$id'
 import { Route as AuthenticatedHerramientasSimuladorRouteImport } from './routes/_authenticated/herramientas.simulador'
+import { Route as AuthenticatedHerramientasReconstructorRouteImport } from './routes/_authenticated/herramientas.reconstructor'
 import { Route as AuthenticatedHerramientasProyeccionRouteImport } from './routes/_authenticated/herramientas.proyeccion'
 import { Route as AuthenticatedHerramientasCapacidadPagoRouteImport } from './routes/_authenticated/herramientas.capacidad-pago'
 import { Route as AuthenticatedHerramientasAmortizacionRouteImport } from './routes/_authenticated/herramientas.amortizacion'
@@ -472,6 +473,12 @@ const AuthenticatedHerramientasSimuladorRoute =
     path: '/simulador',
     getParentRoute: () => AuthenticatedHerramientasRoute,
   } as any)
+const AuthenticatedHerramientasReconstructorRoute =
+  AuthenticatedHerramientasReconstructorRouteImport.update({
+    id: '/reconstructor',
+    path: '/reconstructor',
+    getParentRoute: () => AuthenticatedHerramientasRoute,
+  } as any)
 const AuthenticatedHerramientasProyeccionRoute =
   AuthenticatedHerramientasProyeccionRouteImport.update({
     id: '/proyeccion',
@@ -820,6 +827,7 @@ export interface FileRoutesByFullPath {
   '/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
+  '/herramientas/reconstructor': typeof AuthenticatedHerramientasReconstructorRoute
   '/herramientas/simulador': typeof AuthenticatedHerramientasSimuladorRoute
   '/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
   '/qa-ai/alertas': typeof AuthenticatedQaAiAlertasRoute
@@ -929,6 +937,7 @@ export interface FileRoutesByTo {
   '/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
+  '/herramientas/reconstructor': typeof AuthenticatedHerramientasReconstructorRoute
   '/herramientas/simulador': typeof AuthenticatedHerramientasSimuladorRoute
   '/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
   '/qa-ai/alertas': typeof AuthenticatedQaAiAlertasRoute
@@ -1044,6 +1053,7 @@ export interface FileRoutesById {
   '/_authenticated/herramientas/amortizacion': typeof AuthenticatedHerramientasAmortizacionRoute
   '/_authenticated/herramientas/capacidad-pago': typeof AuthenticatedHerramientasCapacidadPagoRoute
   '/_authenticated/herramientas/proyeccion': typeof AuthenticatedHerramientasProyeccionRoute
+  '/_authenticated/herramientas/reconstructor': typeof AuthenticatedHerramientasReconstructorRoute
   '/_authenticated/herramientas/simulador': typeof AuthenticatedHerramientasSimuladorRoute
   '/_authenticated/qa-ai/$id': typeof AuthenticatedQaAiIdRoute
   '/_authenticated/qa-ai/alertas': typeof AuthenticatedQaAiAlertasRoute
@@ -1159,6 +1169,7 @@ export interface FileRouteTypes {
     | '/herramientas/amortizacion'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
+    | '/herramientas/reconstructor'
     | '/herramientas/simulador'
     | '/qa-ai/$id'
     | '/qa-ai/alertas'
@@ -1268,6 +1279,7 @@ export interface FileRouteTypes {
     | '/herramientas/amortizacion'
     | '/herramientas/capacidad-pago'
     | '/herramientas/proyeccion'
+    | '/herramientas/reconstructor'
     | '/herramientas/simulador'
     | '/qa-ai/$id'
     | '/qa-ai/alertas'
@@ -1382,6 +1394,7 @@ export interface FileRouteTypes {
     | '/_authenticated/herramientas/amortizacion'
     | '/_authenticated/herramientas/capacidad-pago'
     | '/_authenticated/herramientas/proyeccion'
+    | '/_authenticated/herramientas/reconstructor'
     | '/_authenticated/herramientas/simulador'
     | '/_authenticated/qa-ai/$id'
     | '/_authenticated/qa-ai/alertas'
@@ -1907,6 +1920,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedHerramientasSimuladorRouteImport
       parentRoute: typeof AuthenticatedHerramientasRoute
     }
+    '/_authenticated/herramientas/reconstructor': {
+      id: '/_authenticated/herramientas/reconstructor'
+      path: '/reconstructor'
+      fullPath: '/herramientas/reconstructor'
+      preLoaderRoute: typeof AuthenticatedHerramientasReconstructorRouteImport
+      parentRoute: typeof AuthenticatedHerramientasRoute
+    }
     '/_authenticated/herramientas/proyeccion': {
       id: '/_authenticated/herramientas/proyeccion'
       path: '/proyeccion'
@@ -2349,6 +2369,7 @@ interface AuthenticatedHerramientasRouteChildren {
   AuthenticatedHerramientasAmortizacionRoute: typeof AuthenticatedHerramientasAmortizacionRoute
   AuthenticatedHerramientasCapacidadPagoRoute: typeof AuthenticatedHerramientasCapacidadPagoRoute
   AuthenticatedHerramientasProyeccionRoute: typeof AuthenticatedHerramientasProyeccionRoute
+  AuthenticatedHerramientasReconstructorRoute: typeof AuthenticatedHerramientasReconstructorRoute
   AuthenticatedHerramientasSimuladorRoute: typeof AuthenticatedHerramientasSimuladorRoute
   AuthenticatedHerramientasIndexRoute: typeof AuthenticatedHerramientasIndexRoute
 }
@@ -2362,6 +2383,8 @@ const AuthenticatedHerramientasRouteChildren: AuthenticatedHerramientasRouteChil
       AuthenticatedHerramientasCapacidadPagoRoute,
     AuthenticatedHerramientasProyeccionRoute:
       AuthenticatedHerramientasProyeccionRoute,
+    AuthenticatedHerramientasReconstructorRoute:
+      AuthenticatedHerramientasReconstructorRoute,
     AuthenticatedHerramientasSimuladorRoute:
       AuthenticatedHerramientasSimuladorRoute,
     AuthenticatedHerramientasIndexRoute: AuthenticatedHerramientasIndexRoute,
@@ -2539,13 +2562,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

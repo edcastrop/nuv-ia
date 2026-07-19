@@ -17,7 +17,9 @@ import {
   Users,
   GitBranch,
   Rocket,
+  Wrench,
 } from "lucide-react";
+
 
 import { NUVEX } from "@/components/nuvex/constants";
 
@@ -304,6 +306,17 @@ function HerramientasLanding() {
             features={["OCR financiero", "Escenarios comparativos", "Ahorro proyectado"]}
             accent="#7B61FF"
           />
+          <ToolCard
+            to="/herramientas/reconstructor"
+            Icon={Wrench}
+            badge="RECONSTRUCCIÓN FINANCIERA"
+            title="Reconstructor Financiero NUVIA"
+            description="Halla, reconstruye y valida saldo, cuota, TEA y plazo de créditos hipotecarios y leasing en pesos o UVR."
+            features={["Hallar variables faltantes", "Auditoría de coherencia", "Cálculo por rangos"]}
+            accent={NUVEX.azul}
+          />
+
+
 
         </motion.div>
 
