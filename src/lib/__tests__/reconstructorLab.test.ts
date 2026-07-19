@@ -167,8 +167,6 @@ describe("generarHipotesisTEA — ambigüedad y selección", () => {
       V("SALDO_PESOS", saldo),
       V("PLAZO_RESTANTE", n, "CUOTAS"),
       V("CUOTA_FINANCIERA", cuota),
-      V("TOTAL_A_PAGAR", cuota + 700_000),
-      V("SEGURO", 500_000),
     ];
     const hs = generarHipotesisTEA(vars, { saldo, plazoRestante: n, moneda: "PESOS" });
     const sel = hs.find((h) => h.seleccionada);
