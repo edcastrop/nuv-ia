@@ -7,7 +7,7 @@
 // resultado OCR. Todo transitorio en memoria del componente.
 // ─────────────────────────────────────────────────────────────
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { FileText, Loader2, Lock, UploadCloud } from "lucide-react";
 import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
@@ -119,12 +119,48 @@ export function LabDropzone({ onData, onError, onReset }: LabDropzoneProps) {
     onReset();
   };
 
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const prevent = (e: DragEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("dragover", prevent);
+    window.addEventListener("drop", prevent);
+    return () => {
+      window.removeEventListener("dragover", prevent);
+      window.removeEventListener("drop", prevent);
+    };
+  }, []);
+
+
+  const onDrop = (e: React.DragEvent<HTMLLabelElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    const f = e.dataTransfer.files?.[0];
+    if (!f) return;
+    if (f.type && f.type !== "application/pdf") {
+      onError("El archivo debe ser un PDF.");
+      return;
+    }
+    onPick(f);
+  };
+
   return (
     <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 backdrop-blur-xl">
-      <label className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] p-6 text-center transition hover:border-white/30">
+      <label
+        onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+        onDragEnter={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); }}
+        onDragLeave={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); }}
+        onDrop={onDrop}
+        className={`flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed p-6 text-center transition ${
+          isDragging ? "border-white/50 bg-white/[0.06]" : "border-white/15 bg-white/[0.02] hover:border-white/30"
+        }`}
+      >
         <UploadCloud className="h-6 w-6 text-white/60" />
         <span className="text-[13px] text-white/80">
-          {file ? file.name : "Selecciona el PDF del extracto (hipotecario o leasing)"}
+          {file ? file.name : "Arrastra o selecciona el PDF del extracto (hipotecario o leasing)"}
         </span>
         <span className="text-[11px] text-white/50">
           Sin persistencia · Sin almacenamiento · Todo el análisis ocurre en tu navegador
