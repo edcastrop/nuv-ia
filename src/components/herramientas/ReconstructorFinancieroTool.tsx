@@ -11,7 +11,14 @@ import type {
   TipoCredito,
 } from "@/lib/reconstructor/types";
 import { NUVEX } from "@/components/nuvex/constants";
-import { LabView } from "@/components/herramientas/lab/LabView";
+import { LabDropzone } from "@/components/herramientas/lab/LabDropzone";
+import { LabExtractoTab } from "@/components/herramientas/lab/LabExtractoTab";
+import { LabVariablesTab } from "@/components/herramientas/lab/LabVariablesTab";
+import { LabReconstruccionTab } from "@/components/herramientas/lab/LabReconstruccionTab";
+import { LabAuditoriaTab } from "@/components/herramientas/lab/LabAuditoriaTab";
+import { LabDiagnosticoTab } from "@/components/herramientas/lab/LabDiagnosticoTab";
+import { normalizarExtracto, runLab } from "@/lib/reconstructor/lab/pipeline";
+import type { ExtractoLabInput, LabResult, VariableDetectada } from "@/lib/reconstructor/lab/types";
 
 // ─────────────────────────────────────────────────────────────
 // UI del Reconstructor Financiero NUVIA.
