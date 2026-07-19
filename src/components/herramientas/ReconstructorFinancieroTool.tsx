@@ -694,3 +694,114 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
     </div>
   );
 }
+
+// ─────────────────────────────────────────────────────────────
+// LABORATORIO FINANCIERO NUVIA (Fase 2) · contenedor con 5 pestañas
+// Reutiliza el server fn `extractStatement` sin modificarlo.
+// Sin persistencia, sin PII en logs.
+// ─────────────────────────────────────────────────────────────
+
+type LabTab = "extracto" | "variables" | "reconstruccion" | "auditoria" | "diagnostico";
+
+function LabView() {
+  const [input, setInput] = useState<ExtractoLabInput | null>(null);
+  const [variables, setVariables] = useState<VariableDetectada[]>([]);
+  const [labError, setLabError] = useState<string | null>(null);
+  const [tab, setTab] = useState<LabTab>("extracto");
+
+  const onData = (data: ExtractoData) => {
+    setLabError(null);
+    const norm = normalizarExtracto(data as unknown as Record<string, unknown>);
+    setInput(norm);
+    // Clasificación inicial usada como estado editable
+    const { clasificarVariables } = require("@/lib/reconstructor/lab/clasificador") as typeof import("@/lib/reconstructor/lab/clasificador");
+    const { variables: vs } = clasificarVariables(norm);
+    setVariables(vs);
+    setTab("variables");
+  };
+
+  const onReset = () => {
+    setInput(null);
+    setVariables([]);
+    setLabError(null);
+    setTab("extracto");
+  };
+
+  const toggleExcluir = (id: string) =>
+    setVariables((prev) => prev.map((v) => (v.id === id ? { ...v, excluida: !v.excluida } : v)));
+
+  const editarValor = (id: string, nuevo: number | null) =>
+    setVariables((prev) =>
+      prev.map((v) =>
+        v.id === id ? { ...v, valor: nuevo, fuente: "CORREGIDA_ANALISTA", confianzaExtraccion: "ALTA" } : v,
+      ),
+    );
+
+  const activasFiltradas = variables.filter((v) => !v.excluida);
+  const lab = input ? runLab({ ...input }, activasFiltradas) : null;
+
+  return (
+    <div className="space-y-4">
+      <LabDropzone onData={onData} onError={setLabError} onReset={onReset} />
+
+      {labError && (
+        <div className="rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-[12.5px] text-red-200">
+          {labError}
+        </div>
+      )}
+
+      {input && (
+        <>
+          <div
+            role="tablist"
+            aria-label="Pestañas del Laboratorio"
+            className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1"
+          >
+            {(
+              [
+                ["extracto", "Extracto"],
+                ["variables", "Variables"],
+                ["reconstruccion", "Reconstrucción"],
+                ["auditoria", "Auditoría"],
+                ["diagnostico", "Diagnóstico"],
+              ] as [LabTab, string][]
+            ).map(([k, label]) => (
+              <button
+                key={k}
+                role="tab"
+                aria-selected={tab === k}
+                onClick={() => setTab(k)}
+                className={`rounded-xl px-3 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition ${
+                  tab === k ? "bg-white/10 text-white" : "text-white/60 hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            {tab === "extracto" && <LabExtractoTab input={input} />}
+            {tab === "variables" && (
+              <LabVariablesTab
+                variables={variables}
+                onToggleExcluir={toggleExcluir}
+                onEditarValor={editarValor}
+              />
+            )}
+            {tab === "reconstruccion" && lab && (
+              <LabReconstruccionTab
+                faltantes={lab.faltantes}
+                reconstrucciones={lab.reconstrucciones}
+                hipotesis={lab.hipotesis}
+                identificabilidad={lab.identificabilidad}
+              />
+            )}
+            {tab === "auditoria" && lab && <LabAuditoriaTab coherencia={lab.coherencia} />}
+            {tab === "diagnostico" && lab && <LabDiagnosticoTab diagnostico={lab.diagnostico} />}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
