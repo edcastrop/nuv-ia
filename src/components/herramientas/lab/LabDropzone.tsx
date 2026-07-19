@@ -7,7 +7,7 @@
 // resultado OCR. Todo transitorio en memoria del componente.
 // ─────────────────────────────────────────────────────────────
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { FileText, Loader2, Lock, UploadCloud } from "lucide-react";
 import { extractStatement, type ExtractoData } from "@/lib/extracto.functions";
