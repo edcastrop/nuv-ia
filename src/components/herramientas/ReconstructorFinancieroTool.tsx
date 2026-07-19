@@ -11,6 +11,16 @@ import type {
   TipoCredito,
 } from "@/lib/reconstructor/types";
 import { NUVEX } from "@/components/nuvex/constants";
+import { LabDropzone } from "@/components/herramientas/lab/LabDropzone";
+import { LabExtractoTab } from "@/components/herramientas/lab/LabExtractoTab";
+import { LabVariablesTab } from "@/components/herramientas/lab/LabVariablesTab";
+import { LabReconstruccionTab } from "@/components/herramientas/lab/LabReconstruccionTab";
+import { LabAuditoriaTab } from "@/components/herramientas/lab/LabAuditoriaTab";
+import { LabDiagnosticoTab } from "@/components/herramientas/lab/LabDiagnosticoTab";
+import { normalizarExtracto, runLab } from "@/lib/reconstructor/lab/pipeline";
+import { clasificarVariables } from "@/lib/reconstructor/lab/clasificador";
+import type { ExtractoLabInput, VariableDetectada } from "@/lib/reconstructor/lab/types";
+import type { ExtractoData } from "@/lib/extracto.functions";
 
 // ─────────────────────────────────────────────────────────────
 // UI del Reconstructor Financiero NUVIA.
@@ -133,6 +143,36 @@ const fmtNum = (n: number, dec = 4) =>
 const fmtPct = (n: number, dec = 2) => `${(n * 100).toFixed(dec)} %`;
 
 export function ReconstructorFinancieroTool() {
+  const [mode, setMode] = useState<"manual" | "lab">("manual");
+  return (
+    <div className="space-y-5">
+      <div
+        role="tablist"
+        aria-label="Modo del Reconstructor"
+        className="inline-flex rounded-2xl border border-white/10 bg-white/[0.03] p-1 backdrop-blur-xl"
+      >
+        {(["manual", "lab"] as const).map((k) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={mode === k}
+            onClick={() => setMode(k)}
+            className={`rounded-xl px-4 py-1.5 text-[12px] font-semibold uppercase tracking-[0.16em] transition ${
+              mode === k
+                ? "bg-white/10 text-white"
+                : "text-white/60 hover:text-white"
+            }`}
+          >
+            {k === "manual" ? "Manual" : "Laboratorio"}
+          </button>
+        ))}
+      </div>
+      {mode === "manual" ? <ManualView /> : <LabView />}
+    </div>
+  );
+}
+
+function ManualView() {
   const [draft, setDraft] = useState<Draft>(DRAFT_INICIAL);
   const [result, setResult] = useState<ReconstructorOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -653,6 +693,116 @@ function Kpi({ label, value, sub }: { label: string; value: string; sub?: string
       <div className="text-[10.5px] uppercase tracking-[0.18em] text-white/50">{label}</div>
       <div className="mt-1 text-[15px] font-semibold text-white break-words">{value}</div>
       {sub && <div className="mt-1 text-[10.5px] italic text-white/40">{sub}</div>}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// LABORATORIO FINANCIERO NUVIA (Fase 2) · contenedor con 5 pestañas
+// Reutiliza el server fn `extractStatement` sin modificarlo.
+// Sin persistencia, sin PII en logs.
+// ─────────────────────────────────────────────────────────────
+
+type LabTab = "extracto" | "variables" | "reconstruccion" | "auditoria" | "diagnostico";
+
+function LabView() {
+  const [input, setInput] = useState<ExtractoLabInput | null>(null);
+  const [variables, setVariables] = useState<VariableDetectada[]>([]);
+  const [labError, setLabError] = useState<string | null>(null);
+  const [tab, setTab] = useState<LabTab>("extracto");
+
+  const onData = (data: ExtractoData) => {
+    setLabError(null);
+    const norm = normalizarExtracto(data as unknown as Record<string, unknown>);
+    setInput(norm);
+    // Clasificación inicial usada como estado editable
+    const { variables: vs } = clasificarVariables(norm);
+    setVariables(vs);
+    setTab("variables");
+  };
+
+  const onReset = () => {
+    setInput(null);
+    setVariables([]);
+    setLabError(null);
+    setTab("extracto");
+  };
+
+  const toggleExcluir = (id: string) =>
+    setVariables((prev) => prev.map((v) => (v.id === id ? { ...v, excluida: !v.excluida } : v)));
+
+  const editarValor = (id: string, nuevo: number | null) =>
+    setVariables((prev) =>
+      prev.map((v) =>
+        v.id === id ? { ...v, valor: nuevo, fuente: "CORREGIDA_ANALISTA", confianzaExtraccion: "ALTA" } : v,
+      ),
+    );
+
+  const activasFiltradas = variables.filter((v) => !v.excluida);
+  const lab = input ? runLab(input, { variables: activasFiltradas }) : null;
+
+  return (
+    <div className="space-y-4">
+      <LabDropzone onData={onData} onError={setLabError} onReset={onReset} />
+
+      {labError && (
+        <div className="rounded-xl border border-red-400/30 bg-red-400/10 p-3 text-[12.5px] text-red-200">
+          {labError}
+        </div>
+      )}
+
+      {input && (
+        <>
+          <div
+            role="tablist"
+            aria-label="Pestañas del Laboratorio"
+            className="flex flex-wrap gap-1 rounded-2xl border border-white/10 bg-white/[0.03] p-1"
+          >
+            {(
+              [
+                ["extracto", "Extracto"],
+                ["variables", "Variables"],
+                ["reconstruccion", "Reconstrucción"],
+                ["auditoria", "Auditoría"],
+                ["diagnostico", "Diagnóstico"],
+              ] as [LabTab, string][]
+            ).map(([k, label]) => (
+              <button
+                key={k}
+                role="tab"
+                aria-selected={tab === k}
+                onClick={() => setTab(k)}
+                className={`rounded-xl px-3 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] transition ${
+                  tab === k ? "bg-white/10 text-white" : "text-white/60 hover:text-white"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            {tab === "extracto" && <LabExtractoTab input={input} />}
+            {tab === "variables" && (
+              <LabVariablesTab
+                variables={variables}
+                onToggleExcluir={toggleExcluir}
+                onEditarValor={editarValor}
+              />
+            )}
+            {tab === "reconstruccion" && lab && (
+              <LabReconstruccionTab
+                faltantes={lab.faltantes}
+                reconstrucciones={lab.reconstrucciones}
+                hipotesis={lab.hipotesis}
+                identificabilidad={lab.identificabilidad}
+              />
+            )}
+            {tab === "auditoria" && lab && <LabAuditoriaTab coherencia={lab.coherencia} />}
+            {tab === "diagnostico" && lab && <LabDiagnosticoTab diagnostico={lab.diagnostico} />}
+          </div>
+        </>
+      )}
     </div>
   );
 }
