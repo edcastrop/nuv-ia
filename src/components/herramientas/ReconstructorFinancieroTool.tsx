@@ -18,7 +18,9 @@ import { LabReconstruccionTab } from "@/components/herramientas/lab/LabReconstru
 import { LabAuditoriaTab } from "@/components/herramientas/lab/LabAuditoriaTab";
 import { LabDiagnosticoTab } from "@/components/herramientas/lab/LabDiagnosticoTab";
 import { normalizarExtracto, runLab } from "@/lib/reconstructor/lab/pipeline";
-import type { ExtractoLabInput, LabResult, VariableDetectada } from "@/lib/reconstructor/lab/types";
+import { clasificarVariables } from "@/lib/reconstructor/lab/clasificador";
+import type { ExtractoLabInput, VariableDetectada } from "@/lib/reconstructor/lab/types";
+import type { ExtractoData } from "@/lib/extracto.functions";
 
 // ─────────────────────────────────────────────────────────────
 // UI del Reconstructor Financiero NUVIA.
