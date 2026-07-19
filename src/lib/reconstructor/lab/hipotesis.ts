@@ -112,22 +112,23 @@ export function generarHipotesisTEA(
 
   const hips: HipotesisReconstruccion[] = candidatas.map((c) => {
     const r = bisectTem(ctx.saldo, c.cuota, ctx.plazoRestante);
+    const residuoRel = Number.isFinite(r.residuo) ? r.residuo / c.cuota : Infinity;
     let ev: EvidenciaVariable | null = null;
-    if (r.temDecimal !== null) {
-      const tea = temToTea(r.temDecimal);
+    if (r.ok) {
+      const tea = temToTea(r.tem);
       ev = {
         categoria: "TEA",
         estado: "CALCULADA",
         valor: tea,
         unidad: "PORCENTAJE",
-        confianzaMatematica: r.residuoRel <= 1e-6 ? "ALTA" : r.residuoRel <= 1e-3 ? "MEDIA" : "BAJA",
+        confianzaMatematica: residuoRel <= 1e-6 ? "ALTA" : residuoRel <= 1e-3 ? "MEDIA" : "BAJA",
         formula: `bisección PMT(saldo=${ctx.saldo.toFixed(2)}, cuota=${c.cuota.toFixed(2)}, n=${ctx.plazoRestante})`,
         datosUsados: ["SALDO_PESOS", "PLAZO_RESTANTE"],
         variablesInferidas: [],
         supuestos: [`Composición cuota: ${c.composicion.join(" + ")}`],
-        residuoAbs: r.residuoAbs,
-        residuoPct: r.residuoRel,
-        advertencias: r.temDecimal === null ? ["Sin convergencia"] : [],
+        residuoAbs: r.residuo,
+        residuoPct: residuoRel,
+        advertencias: [],
       };
     }
     return {
@@ -135,7 +136,7 @@ export function generarHipotesisTEA(
       descripcion: c.descripcion,
       composicionCuota: c.composicion,
       resultado: ev,
-      error: r.residuoRel ?? null,
+      error: r.ok ? residuoRel : null,
       seleccionada: false,
       descartada: false,
     };

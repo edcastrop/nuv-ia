@@ -218,10 +218,10 @@ export function reconstruirCadena(
       const c = firstVal(vars, "CUOTA_FINANCIERA");
       const t = firstVal(vars, "TEA");
       if (s && c && t !== null && t >= 0) {
-        const n = calcularPlazoDesdeCuota(s, c, teaToTem(t));
-        if (n !== null) {
+        const res = calcularPlazoDesdeCuota(s, c, teaToTem(t));
+        if (Number.isFinite(res.plazo)) {
           anadir(
-            ev("PLAZO_RESTANTE", n, "CUOTAS", "n = log(c/(c−iS))/log(1+i)", [
+            ev("PLAZO_RESTANTE", res.plazo, "CUOTAS", "n = log(c/(c−iS))/log(1+i)", [
               "SALDO_PESOS",
               "CUOTA_FINANCIERA",
               "TEA",

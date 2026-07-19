@@ -86,10 +86,12 @@ function parseValor(cat: CategoriaFinanciera, raw: string): number | null {
     const n = parseUVRNumber(trimmed);
     return typeof n === "number" && Number.isFinite(n) ? n : null;
   }
-  if (cat === "FECHA" || cat === "TEXTO" || cat === "INFORMATIVO" || cat === "OTRO") return null;
+  if (cat === "FECHA" || cat === "INFORMATIVO" || cat === "OTRO" || cat === "NUMERO_CREDITO") return null;
   // Pesos
   const n = parseMontoExtracto(trimmed);
-  return Number.isFinite(n) && n !== 0 ? n : trimmed === "0" ? 0 : n === 0 ? null : n;
+  if (!Number.isFinite(n)) return null;
+  if (n === 0) return trimmed === "0" ? 0 : null;
+  return n;
 }
 
 function detectarMoneda(banco: Banco, plano: Plano): MonedaLab {
@@ -152,8 +154,7 @@ export function clasificarVariables(input: ExtractoLabInput): {
   for (const campo of input.camposDetectados) {
     const cat = categoriaPara(campo.etiquetaOriginal, input.banco);
     if (cat === "OTRO" || cat === "INFORMATIVO") continue;
-    const conf: Confianza =
-      cat === "OTRO" ? "BAJA" : campo.confianzaExtraccion === "NULA" ? "BAJA" : "ALTA";
+    const conf: Confianza = campo.confianzaExtraccion === "NULA" ? "BAJA" : "ALTA";
     const v: VariableDetectada = {
       id: `${cat}:${campo.etiquetaOriginal}`,
       categoria: cat,
