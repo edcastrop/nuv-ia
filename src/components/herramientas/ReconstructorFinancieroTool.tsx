@@ -11,6 +11,7 @@ import type {
   TipoCredito,
 } from "@/lib/reconstructor/types";
 import { NUVEX } from "@/components/nuvex/constants";
+import { LabView } from "@/components/herramientas/lab/LabView";
 
 // ─────────────────────────────────────────────────────────────
 // UI del Reconstructor Financiero NUVIA.
@@ -133,6 +134,36 @@ const fmtNum = (n: number, dec = 4) =>
 const fmtPct = (n: number, dec = 2) => `${(n * 100).toFixed(dec)} %`;
 
 export function ReconstructorFinancieroTool() {
+  const [mode, setMode] = useState<"manual" | "lab">("manual");
+  return (
+    <div className="space-y-5">
+      <div
+        role="tablist"
+        aria-label="Modo del Reconstructor"
+        className="inline-flex rounded-2xl border border-white/10 bg-white/[0.03] p-1 backdrop-blur-xl"
+      >
+        {(["manual", "lab"] as const).map((k) => (
+          <button
+            key={k}
+            role="tab"
+            aria-selected={mode === k}
+            onClick={() => setMode(k)}
+            className={`rounded-xl px-4 py-1.5 text-[12px] font-semibold uppercase tracking-[0.16em] transition ${
+              mode === k
+                ? "bg-white/10 text-white"
+                : "text-white/60 hover:text-white"
+            }`}
+          >
+            {k === "manual" ? "Manual" : "Laboratorio"}
+          </button>
+        ))}
+      </div>
+      {mode === "manual" ? <ManualView /> : <LabView />}
+    </div>
+  );
+}
+
+function ManualView() {
   const [draft, setDraft] = useState<Draft>(DRAFT_INICIAL);
   const [result, setResult] = useState<ReconstructorOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
