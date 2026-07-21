@@ -358,7 +358,15 @@ export function SimuladorPage() {
       variacionUVR: firstClean(draft?.variacionUVR, snapshotDatos.variacionUVR),
       cuotasPagadas: firstClean(draftClient.cuotasPagadas, snapshotDatos.cuotasPagadas),
       cuotasPendientes: firstClean(draftClient.cuotasPendientes, snapshotDatos.cuotasPendientes),
+      // Persistimos las 4 propuestas dentro del credito para que el
+      // expediente reabierto las recupere sin depender de sessionStorage.
+      // El valor se validará como length === 4 más abajo (Opción A).
+      propuestasComerciales:
+        Array.isArray(snapshotDatos.propuestasComerciales)
+          ? JSON.stringify(snapshotDatos.propuestasComerciales)
+          : "",
     };
+
     const faltantes = [
       ["Banco", credito.banco],
       ["Producto", credito.tipoProducto],
