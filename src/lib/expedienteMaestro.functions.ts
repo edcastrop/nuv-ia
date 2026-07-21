@@ -257,6 +257,21 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
     if (existingError) throw existingError;
 
     const exp = maestroToExpediente(maestro, maestro.id) as unknown as Expediente;
+    // Inyección explícita de las 4 propuestas en `credito_data`. Se hace
+    // ANTES del mergeMeaningful/INSERT para que el arreglo sobreviva a
+    // ambas rutas (crear/actualizar) sin depender del serializador
+    // maestroToExpediente ni de la persistencia previa.
+    if (Array.isArray(data.propuestasComerciales) && data.propuestasComerciales.length === 4) {
+      const creditoData = (exp.credito_data ?? {}) as Record<string, unknown>;
+      creditoData.propuestasComerciales = data.propuestasComerciales;
+      (exp as unknown as { credito_data: Record<string, unknown> }).credito_data = creditoData;
+      // También lo estampamos en el maestro para que la reapertura desde
+      // `expediente_maestro.credito.propuestasComerciales` funcione.
+      const credito = (maestro.credito ?? {}) as Record<string, unknown>;
+      credito.propuestasComerciales = data.propuestasComerciales;
+      (maestro as unknown as { credito: Record<string, unknown> }).credito = credito;
+    }
+
 
     if (existing) {
       const patch = {
