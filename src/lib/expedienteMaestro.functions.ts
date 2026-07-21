@@ -267,10 +267,11 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
       (exp as unknown as { credito_data: Record<string, unknown> }).credito_data = creditoData;
       // También lo estampamos en el maestro para que la reapertura desde
       // `expediente_maestro.credito.propuestasComerciales` funcione.
-      const credito = (maestro.credito ?? {}) as Record<string, unknown>;
+      const credito = ((maestro.credito ?? {}) as unknown) as Record<string, unknown>;
       credito.propuestasComerciales = data.propuestasComerciales;
       (maestro as unknown as { credito: Record<string, unknown> }).credito = credito;
     }
+
 
 
     if (existing) {
