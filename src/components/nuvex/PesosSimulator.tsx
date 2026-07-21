@@ -648,7 +648,8 @@ export function PesosSimulator({
     if (!init?.id) return;
     if (!autoQAIntent) return;
     if (!currentQaSnapshot) return;
-    const snapshot: typeof currentQaSnapshot = {
+    if (!scenariosReady) return;
+
       ...currentQaSnapshot,
       archivoPath: autoQAIntent.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
       archivoNombre: autoQAIntent.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
@@ -703,7 +704,7 @@ export function PesosSimulator({
         // volverá a dispararse mientras `lastFailedHashRef === hash`.
       },
     });
-  }, [init?.id, autoQAIntent, currentQaSnapshot]);
+  }, [init?.id, autoQAIntent, currentQaSnapshot, scenariosReady]);
 
   const retryAutoQA = () => {
     lastFailedHashRef.current = null;
