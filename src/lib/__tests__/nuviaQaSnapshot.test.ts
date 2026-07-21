@@ -259,6 +259,61 @@ describe("Snapshot v2 · contrato, hash y downgrade", () => {
   });
 });
 
+describe("Opción A · sellado v2 sólo con EXACTAMENTE 4 escenarios", () => {
+  it("UVR sin escenarios → NO estampa snapshotVersion ni propuestasComerciales", () => {
+    const s = buildUvrQaSnapshot(baseUvr());
+    const d = s.datos as Record<string, unknown>;
+    expect(d.snapshotVersion).toBeUndefined();
+    expect(d.propuestasComerciales).toBeUndefined();
+  });
+
+  it("UVR con 3 escenarios → NO sella v2 (queda en v1 provisional)", () => {
+    const s = buildUvrQaSnapshot({ ...baseUvr(), escenarios: mkEscenarios(3) });
+    const d = s.datos as Record<string, unknown>;
+    expect(d.snapshotVersion).toBeUndefined();
+    expect(d.propuestasComerciales).toBeUndefined();
+  });
+
+  it("UVR con 4 escenarios → sella v2 con las 4 propuestas", () => {
+    const s = buildUvrQaSnapshot({ ...baseUvr(), escenarios: mkEscenarios(4) });
+    const d = s.datos as Record<string, unknown>;
+    expect(d.snapshotVersion).toBe(SNAPSHOT_VERSION);
+    expect(Array.isArray(d.propuestasComerciales)).toBe(true);
+    expect((d.propuestasComerciales as unknown[]).length).toBe(4);
+  });
+
+  it("Pesos sin escenarios → NO estampa snapshotVersion", () => {
+    const s = buildPesosQaSnapshot(basePesos());
+    const d = s.datos as Record<string, unknown>;
+    expect(d.snapshotVersion).toBeUndefined();
+    expect(d.propuestasComerciales).toBeUndefined();
+  });
+
+  it("Pesos con 4 escenarios → sella v2 con las 4 propuestas", () => {
+    const s = buildPesosQaSnapshot({ ...basePesos(), escenarios: mkEscenarios(4) });
+    const d = s.datos as Record<string, unknown>;
+    expect(d.snapshotVersion).toBe(SNAPSHOT_VERSION);
+    expect(Array.isArray(d.propuestasComerciales)).toBe(true);
+    expect((d.propuestasComerciales as unknown[]).length).toBe(4);
+    // Pesos v2 mantiene tipoCredito=pesos y moneda=COP.
+    expect(s.tipoCredito).toBe("pesos");
+    expect(s.moneda).toBe("COP");
+  });
+
+  it("Pesos con 5 escenarios → NO sella v2 (excede el contrato)", () => {
+    const s = buildPesosQaSnapshot({ ...basePesos(), escenarios: mkEscenarios(5) });
+    const d = s.datos as Record<string, unknown>;
+    expect(d.snapshotVersion).toBeUndefined();
+  });
+
+  it("Hash Pesos v2 es determinístico entre dos snapshots equivalentes con escenarios", () => {
+    const a = buildPesosQaSnapshot({ ...basePesos(), escenarios: mkEscenarios(4) });
+    const b = buildPesosQaSnapshot({ ...basePesos(), escenarios: mkEscenarios(4) });
+    expect(hashQaSnapshot(a)).toBe(hashQaSnapshot(b));
+  });
+});
+
+
 describe("reconstructLegacyUvrScenarios · precedencia snapshot sobre inputs", () => {
   it("devuelve 4 escenarios cuando hay datos suficientes", () => {
     const r = reconstructLegacyUvrScenarios({
