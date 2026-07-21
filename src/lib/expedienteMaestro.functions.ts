@@ -50,7 +50,12 @@ export interface CertificarExpedienteInput {
   honorariosFinal?: number | null;
   descuento?: number | null;
   propuestaData?: Record<string, unknown> | null;
+  // Cuatro propuestas comerciales calculadas por PropuestasComerciales.
+  // Persistencia obligatoria en `credito_data.propuestasComerciales` para
+  // que la reapertura del caso no dependa de sessionStorage.
+  propuestasComerciales?: Record<string, unknown>[] | null;
 }
+
 
 export interface CertificarExpedienteResult {
   maestro: ExpedienteMaestro;
