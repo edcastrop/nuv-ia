@@ -649,8 +649,9 @@ export function PesosSimulator({
     if (!autoQAIntent) return;
     if (!currentQaSnapshot) return;
     if (!scenariosReady) return;
-
+    const snapshot: typeof currentQaSnapshot = {
       ...currentQaSnapshot,
+
       archivoPath: autoQAIntent.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
       archivoNombre: autoQAIntent.archivoNombre ?? currentQaSnapshot.archivoNombre ?? null,
     };
