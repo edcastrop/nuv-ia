@@ -379,6 +379,19 @@ export function SimuladorPage() {
       savingRef.current = false;
       return;
     }
+    // Bloqueo estricto Opción A: certificar sólo con EXACTAMENTE 4 propuestas.
+    const escenariosSnapshot = Array.isArray(snapshotDatos.propuestasComerciales)
+      ? (snapshotDatos.propuestasComerciales as unknown[])
+      : [];
+    if (escenariosSnapshot.length !== 4) {
+      toast.error(
+        "Esperando el cálculo de las 4 propuestas comerciales… No se puede crear el caso sin las cuatro proyecciones.",
+        { duration: 7000 },
+      );
+      savingRef.current = false;
+      return;
+    }
+
     setSavingDraft(true);
     try {
       const readKey = (mo: "pesos" | "uvr") => `nuvex.simulatorDraft.${mo}.standalone`;
