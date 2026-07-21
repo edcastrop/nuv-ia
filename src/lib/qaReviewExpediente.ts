@@ -248,7 +248,32 @@ export function escenariosFromAudit(
       reason: `Versión de snapshot desconocida: ${contract.version}.`,
     };
   }
-  // Legacy (v1) o sin_snapshot → intentamos reconstrucción determinística.
+  // Legacy (v1) o sin_snapshot → sólo se intenta reconstrucción para UVR.
+  // Bifurcación por modalidad (Opción A · bloqueo estricto):
+  //   • UVR: motor determinístico `reconstructLegacyUvrScenarios`.
+  //   • Pesos: NO existe reconstructor legacy y no se inventan escenarios.
+  //     El caso queda no certificable y el analista debe re-auditar.
+  const modalidadFromSnapshot =
+    (snapshotObj?.tipoCredito as string | undefined) ??
+    (snapshotObj?.moneda === "UVR" ? "uvr" : undefined);
+  const modalidad = String(
+    (auditoria?.modalidad as string | undefined) ??
+      (inputs?.modalidad as string | undefined) ??
+      modalidadFromSnapshot ??
+      "",
+  ).toLowerCase();
+
+
+  if (modalidad !== "uvr") {
+    return {
+      origen: null,
+      escenarios: [],
+      contract,
+      recommendedIndex: null,
+      reason:
+        "Caso legacy en modalidad Pesos sin propuestas persistidas. No se reconstruyen escenarios (Opción A: no inventar datos). El analista debe re-auditar para materializar las 4 propuestas comerciales.",
+    };
+  }
   const rec = (inputs?.reconstruccion ?? {}) as Record<string, unknown>;
   const datosSnap = (snapshotObj?.datos ?? {}) as Record<string, unknown>;
   const varUvrSnap = num(datosSnap.variacionUVR);
@@ -270,6 +295,7 @@ export function escenariosFromAudit(
       ? { snapshotValue: varUvrSnap, inputsValue: varUvrInp }
       : null,
   );
+
   if (!reconstructed) {
     return {
       origen: null,

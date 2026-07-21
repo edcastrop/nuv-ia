@@ -358,7 +358,15 @@ export function SimuladorPage() {
       variacionUVR: firstClean(draft?.variacionUVR, snapshotDatos.variacionUVR),
       cuotasPagadas: firstClean(draftClient.cuotasPagadas, snapshotDatos.cuotasPagadas),
       cuotasPendientes: firstClean(draftClient.cuotasPendientes, snapshotDatos.cuotasPendientes),
+      // Persistimos las 4 propuestas dentro del credito para que el
+      // expediente reabierto las recupere sin depender de sessionStorage.
+      // El valor se validará como length === 4 más abajo (Opción A).
+      propuestasComerciales:
+        Array.isArray(snapshotDatos.propuestasComerciales)
+          ? JSON.stringify(snapshotDatos.propuestasComerciales)
+          : "",
     };
+
     const faltantes = [
       ["Banco", credito.banco],
       ["Producto", credito.tipoProducto],
@@ -379,6 +387,19 @@ export function SimuladorPage() {
       savingRef.current = false;
       return;
     }
+    // Bloqueo estricto Opción A: certificar sólo con EXACTAMENTE 4 propuestas.
+    const escenariosSnapshot = Array.isArray(snapshotDatos.propuestasComerciales)
+      ? (snapshotDatos.propuestasComerciales as unknown[])
+      : [];
+    if (escenariosSnapshot.length !== 4) {
+      toast.error(
+        "Esperando el cálculo de las 4 propuestas comerciales… No se puede crear el caso sin las cuatro proyecciones.",
+        { duration: 7000 },
+      );
+      savingRef.current = false;
+      return;
+    }
+
     setSavingDraft(true);
     try {
       const readKey = (mo: "pesos" | "uvr") => `nuvex.simulatorDraft.${mo}.standalone`;
@@ -448,6 +469,10 @@ export function SimuladorPage() {
           honorariosFinal: certification?.snapshot?.honorariosFinal ?? null,
           descuento: certification?.snapshot?.descuento ?? null,
           propuestaData: certification?.snapshot?.propuesta ?? null,
+          // Las cuatro propuestas comerciales viajan al server como array
+          // tipado para que se persistan explícitamente en `credito_data`.
+          propuestasComerciales: escenariosSnapshot as Record<string, unknown>[],
+
         },
       })) as { maestro: ExpedienteMaestro; expediente: Expediente };
       const maestro = certResult.maestro;

@@ -80,7 +80,14 @@ export type PesosSnapshotInput = {
   propuesta?: SnapshotPropuesta;
   archivoPath?: string | null;
   archivoNombre?: string | null;
+  /**
+   * Cuatro escenarios financieros (v2). Persistencia obligatoria: sin
+   * exactamente 4 el snapshot queda en v1 (no se estampa snapshotVersion
+   * ni propuestasComerciales) para evitar sellos v2 corruptos.
+   */
+  escenarios?: SnapshotEscenario[] | null;
 };
+
 
 export type UvrSnapshotInput = {
   banco?: string | null;
@@ -134,6 +141,21 @@ const roundFin = (n: number | null | undefined): number | null => {
 
 // ─── Builders ────────────────────────────────────────────────────────
 
+// Regla de sellado v2 (Opción A · bloqueo estricto):
+// Sólo se estampa `snapshotVersion=2` + `propuestasComerciales=[…4…]`
+// cuando existen EXACTAMENTE cuatro escenarios financieros válidos.
+// Con cualquier otra cantidad (0, 1, 2, 3, >4) el snapshot queda en v1
+// (sin `snapshotVersion` ni `propuestasComerciales`). El consumidor
+// clasificará entonces como `reconstruido_legacy` o `sin_snapshot` y
+// nunca podrá persistir un v2 corrupto ni certificar parcial.
+function hasExactlyFourScenarios(escenarios: SnapshotEscenario[] | null | undefined): boolean {
+  return Array.isArray(escenarios) && escenarios.length === 4;
+}
+
+function mapEscenarios(escenarios: SnapshotEscenario[]): SnapshotEscenario[] {
+  return escenarios.map((e) => ({ ...e }));
+}
+
 export function buildPesosQaSnapshot(input: PesosSnapshotInput): DraftRawSnapshot {
   const datos: Record<string, unknown> = {
     banco: strOrEmpty(input.banco),
@@ -155,6 +177,10 @@ export function buildPesosQaSnapshot(input: PesosSnapshotInput): DraftRawSnapsho
     valorCobertura: numOrUndef(input.valorCobertura),
     beneficioFrechMensual: numOrUndef(input.beneficioFrechMensual),
   };
+  if (hasExactlyFourScenarios(input.escenarios)) {
+    datos.snapshotVersion = SNAPSHOT_VERSION;
+    datos.propuestasComerciales = mapEscenarios(input.escenarios as SnapshotEscenario[]);
+  }
   return {
     banco: orNull(input.banco),
     producto: orNull(input.producto),
@@ -201,16 +227,14 @@ export function buildUvrQaSnapshot(input: UvrSnapshotInput): DraftRawSnapshot {
     tasaCobertura: numOrUndef(input.tasaCobertura),
     valorCobertura: numOrUndef(input.valorCobertura),
     beneficioFrechMensual: numOrUndef(input.beneficioFrechMensual),
-    // v2 — persistencia de los cuatro escenarios financieros y versionado
-    // explícito del contrato. Consumidores deben usar
-    // `validateAuditSnapshotContract` para decidir si reutilizan estos
-    // escenarios o si reconstruyen legacy.
-    snapshotVersion: SNAPSHOT_VERSION,
-    propuestasComerciales:
-      Array.isArray(input.escenarios) && input.escenarios.length > 0
-        ? input.escenarios.map((e) => ({ ...e }))
-        : null,
   };
+  // v2 estricto: exige exactamente 4 escenarios. Sin ellos, el snapshot
+  // permanece en v1 (sin snapshotVersion ni propuestasComerciales) y el
+  // consumidor no puede sellar auditoría v2 parcial ni certificar.
+  if (hasExactlyFourScenarios(input.escenarios)) {
+    datos.snapshotVersion = SNAPSHOT_VERSION;
+    datos.propuestasComerciales = mapEscenarios(input.escenarios as SnapshotEscenario[]);
+  }
   return {
     banco: orNull(input.banco),
     producto: orNull(input.producto),
@@ -225,6 +249,7 @@ export function buildUvrQaSnapshot(input: UvrSnapshotInput): DraftRawSnapshot {
     propuesta: (input.propuesta ?? null) as Record<string, unknown> | null,
   };
 }
+
 
 // ─── Hash canónico ───────────────────────────────────────────────────
 

@@ -50,7 +50,12 @@ export interface CertificarExpedienteInput {
   honorariosFinal?: number | null;
   descuento?: number | null;
   propuestaData?: Record<string, unknown> | null;
+  // Cuatro propuestas comerciales calculadas por PropuestasComerciales.
+  // Persistencia obligatoria en `credito_data.propuestasComerciales` para
+  // que la reapertura del caso no dependa de sessionStorage.
+  propuestasComerciales?: Record<string, unknown>[] | null;
 }
+
 
 export interface CertificarExpedienteResult {
   maestro: ExpedienteMaestro;
@@ -252,6 +257,22 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
     if (existingError) throw existingError;
 
     const exp = maestroToExpediente(maestro, maestro.id) as unknown as Expediente;
+    // Inyección explícita de las 4 propuestas en `credito_data`. Se hace
+    // ANTES del mergeMeaningful/INSERT para que el arreglo sobreviva a
+    // ambas rutas (crear/actualizar) sin depender del serializador
+    // maestroToExpediente ni de la persistencia previa.
+    if (Array.isArray(data.propuestasComerciales) && data.propuestasComerciales.length === 4) {
+      const creditoData = (exp.credito_data ?? {}) as Record<string, unknown>;
+      creditoData.propuestasComerciales = data.propuestasComerciales;
+      (exp as unknown as { credito_data: Record<string, unknown> }).credito_data = creditoData;
+      // También lo estampamos en el maestro para que la reapertura desde
+      // `expediente_maestro.credito.propuestasComerciales` funcione.
+      const credito = ((maestro.credito ?? {}) as unknown) as Record<string, unknown>;
+      credito.propuestasComerciales = data.propuestasComerciales;
+      (maestro as unknown as { credito: Record<string, unknown> }).credito = credito;
+    }
+
+
 
     if (existing) {
       const patch = {
@@ -267,11 +288,21 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
           (existing.cliente_data ?? {}) as Record<string, unknown>,
           exp.cliente_data as unknown as Record<string, unknown>,
         ) as never,
-        credito_data: mergeMeaningful(
-          (existing.credito_data ?? {}) as Record<string, unknown>,
-          exp.credito_data as unknown as Record<string, unknown>,
-        ) as never,
+        credito_data: (() => {
+          const merged = mergeMeaningful(
+            (existing.credito_data ?? {}) as Record<string, unknown>,
+            exp.credito_data as unknown as Record<string, unknown>,
+          );
+          // mergeMeaningful sólo preserva strings/numbers/booleans, así
+          // que arrays (propuestasComerciales) se pierden. Los re-inyectamos
+          // explícitamente tras el merge para conservar las 4 propuestas.
+          if (Array.isArray(data.propuestasComerciales) && data.propuestasComerciales.length === 4) {
+            (merged as Record<string, unknown>).propuestasComerciales = data.propuestasComerciales;
+          }
+          return merged as never;
+        })(),
       };
+
       const { data: updated, error: updateError } = await supabase
         .from("expedientes")
         .update(patch as never)

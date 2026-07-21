@@ -724,11 +724,18 @@ export function UVRSimulator({
   ]);
 
   // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).
+  // Bloqueo estricto Opción A: no emitir hasta tener EXACTAMENTE 4 propuestas.
+  const scenariosReady = useMemo(
+    () => (propuestasComercialesSnapshot?.propuestas?.length ?? 0) === 4,
+    [propuestasComercialesSnapshot],
+  );
   useEffect(() => {
     if (init?.id) return;
     if (!currentQaSnapshot) return;
+    if (!scenariosReady) return;
     emitDraftRawReady(currentQaSnapshot);
-  }, [init?.id, currentQaSnapshot]);
+  }, [init?.id, currentQaSnapshot, scenariosReady]);
+
 
   // Modo expediente: disparo controlado del Auto-QA con INTENCIÓN pegajosa.
   // Requiere completitud UVR (`currentQaSnapshot` no nulo) + variaciones UVR.
@@ -737,6 +744,8 @@ export function UVRSimulator({
     if (!autoQAIntent) return;
     if (!currentQaSnapshot) return;
     if (!uvrVarsReady) return;
+    if (!scenariosReady) return;
+
     const snapshot: typeof currentQaSnapshot = {
       ...currentQaSnapshot,
       archivoPath: autoQAIntent.archivoPath ?? currentQaSnapshot.archivoPath ?? null,
@@ -787,7 +796,7 @@ export function UVRSimulator({
         setAutoQAError(e instanceof Error ? e.message : "Error al ejecutar Auto-QA.");
       },
     });
-  }, [init?.id, autoQAIntent, currentQaSnapshot, uvrVarsReady]);
+  }, [init?.id, autoQAIntent, currentQaSnapshot, uvrVarsReady, scenariosReady]);
 
   const retryAutoQA = () => {
     lastFailedHashRef.current = null;
