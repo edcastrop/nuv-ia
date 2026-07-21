@@ -544,6 +544,13 @@ export function PesosSimulator({
   const lastSuccessfulHashRef = useRef<string | null>(null);
   const lastFailedHashRef = useRef<string | null>(null);
 
+  // Bloqueo estricto Opción A: certificación / Auto-QA / snapshot v2 sólo
+  // proceden con EXACTAMENTE cuatro propuestas comerciales válidas.
+  const scenariosReady = useMemo(
+    () => (propuestasComercialesSnapshot?.propuestas?.length ?? 0) === 4,
+    [propuestasComercialesSnapshot],
+  );
+
   // Snapshot canónico desde el estado del formulario (form-source-of-truth).
   const currentQaSnapshot = useMemo(() => {
     const saldoN = parseCurrency(saldoCapital);
@@ -586,6 +593,21 @@ export function PesosSimulator({
             fuente: manualValido ? "manual" : "automatica",
           }
         : null,
+      // v2 sólo se estampa cuando hay exactamente 4 escenarios.
+      escenarios: propuestasComercialesSnapshot?.propuestas?.map((p) => ({
+        index: p.index,
+        cuotasEliminadas: p.cuotasEliminadas,
+        añosEliminados: p.añosEliminados,
+        nuevoPlazo: p.nuevoPlazo,
+        nuevaCuota: p.nuevaCuota,
+        ahorroIntereses: p.ahorroIntereses,
+        ahorroSeguros: p.ahorroSeguros,
+        ahorroTotal: p.ahorroTotal,
+        honorarios: p.honorarios,
+        totalProyectado: p.totalProyectado,
+        incrementoMensual: p.incrementoMensual,
+        fuente: p.fuente,
+      })) ?? null,
     });
   }, [
     client.banco,
@@ -607,14 +629,19 @@ export function PesosSimulator({
     recomendada,
     discount,
     manualValido,
+    propuestasComercialesSnapshot,
   ]);
 
   // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).
+  // Opción A: no emitimos hasta tener las 4 propuestas → el card queda en
+  // espera y no permite certificar.
   useEffect(() => {
     if (init?.id) return;
     if (!currentQaSnapshot) return;
+    if (!scenariosReady) return;
     emitDraftRawReady(currentQaSnapshot);
-  }, [init?.id, currentQaSnapshot]);
+  }, [init?.id, currentQaSnapshot, scenariosReady]);
+
 
   // Modo expediente: disparo controlado del Auto-QA con INTENCIÓN pegajosa.
   useEffect(() => {
