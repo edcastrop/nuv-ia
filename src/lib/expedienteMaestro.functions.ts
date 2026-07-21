@@ -288,11 +288,21 @@ export const certificarExpedienteServer = createServerFn({ method: "POST" })
           (existing.cliente_data ?? {}) as Record<string, unknown>,
           exp.cliente_data as unknown as Record<string, unknown>,
         ) as never,
-        credito_data: mergeMeaningful(
-          (existing.credito_data ?? {}) as Record<string, unknown>,
-          exp.credito_data as unknown as Record<string, unknown>,
-        ) as never,
+        credito_data: (() => {
+          const merged = mergeMeaningful(
+            (existing.credito_data ?? {}) as Record<string, unknown>,
+            exp.credito_data as unknown as Record<string, unknown>,
+          );
+          // mergeMeaningful sólo preserva strings/numbers/booleans, así
+          // que arrays (propuestasComerciales) se pierden. Los re-inyectamos
+          // explícitamente tras el merge para conservar las 4 propuestas.
+          if (Array.isArray(data.propuestasComerciales) && data.propuestasComerciales.length === 4) {
+            (merged as Record<string, unknown>).propuestasComerciales = data.propuestasComerciales;
+          }
+          return merged as never;
+        })(),
       };
+
       const { data: updated, error: updateError } = await supabase
         .from("expedientes")
         .update(patch as never)
