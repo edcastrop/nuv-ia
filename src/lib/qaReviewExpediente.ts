@@ -256,8 +256,11 @@ export function escenariosFromAudit(
   const modalidad = String(
     (auditoria?.modalidad as string | undefined) ??
       (inputs?.modalidad as string | undefined) ??
+      (snapshotObj?.tipoCredito as string | undefined) ??
+      (snapshotObj?.moneda === "UVR" ? "uvr" : "") ??
       "",
   ).toLowerCase();
+
   if (modalidad !== "uvr") {
     return {
       origen: null,
