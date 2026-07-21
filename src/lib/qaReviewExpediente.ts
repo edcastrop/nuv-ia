@@ -253,13 +253,16 @@ export function escenariosFromAudit(
   //   • UVR: motor determinístico `reconstructLegacyUvrScenarios`.
   //   • Pesos: NO existe reconstructor legacy y no se inventan escenarios.
   //     El caso queda no certificable y el analista debe re-auditar.
+  const modalidadFromSnapshot =
+    (snapshotObj?.tipoCredito as string | undefined) ??
+    (snapshotObj?.moneda === "UVR" ? "uvr" : undefined);
   const modalidad = String(
     (auditoria?.modalidad as string | undefined) ??
       (inputs?.modalidad as string | undefined) ??
-      (snapshotObj?.tipoCredito as string | undefined) ??
-      (snapshotObj?.moneda === "UVR" ? "uvr" : "") ??
+      modalidadFromSnapshot ??
       "",
   ).toLowerCase();
+
 
   if (modalidad !== "uvr") {
     return {
