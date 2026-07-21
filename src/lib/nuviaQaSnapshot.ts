@@ -80,7 +80,14 @@ export type PesosSnapshotInput = {
   propuesta?: SnapshotPropuesta;
   archivoPath?: string | null;
   archivoNombre?: string | null;
+  /**
+   * Cuatro escenarios financieros (v2). Persistencia obligatoria: sin
+   * exactamente 4 el snapshot queda en v1 (no se estampa snapshotVersion
+   * ni propuestasComerciales) para evitar sellos v2 corruptos.
+   */
+  escenarios?: SnapshotEscenario[] | null;
 };
+
 
 export type UvrSnapshotInput = {
   banco?: string | null;
