@@ -469,6 +469,10 @@ export function SimuladorPage() {
           honorariosFinal: certification?.snapshot?.honorariosFinal ?? null,
           descuento: certification?.snapshot?.descuento ?? null,
           propuestaData: certification?.snapshot?.propuesta ?? null,
+          // Las cuatro propuestas comerciales viajan al server como array
+          // tipado para que se persistan explícitamente en `credito_data`.
+          propuestasComerciales: escenariosSnapshot as Record<string, unknown>[],
+
         },
       })) as { maestro: ExpedienteMaestro; expediente: Expediente };
       const maestro = certResult.maestro;
