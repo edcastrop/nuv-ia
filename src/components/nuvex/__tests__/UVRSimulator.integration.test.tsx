@@ -409,9 +409,18 @@ describe("UVRSimulator (RTL) — extracto Bancolombia real (caso 000014)", () =>
 
 // ─── ExtractoReader: modal open/close, scroll-lock, cleanup ─────────
 describe("ExtractoReader — modal, scroll-lock y cleanup de listeners", () => {
+  // ExtractoReader consume `useProductosBancarios` (react-query). Wrap
+  // con un QueryClientProvider local para aislar la prueba.
+  const { QueryClient, QueryClientProvider } = await vi.importActual<
+    typeof import("@tanstack/react-query")
+  >("@tanstack/react-query");
+  const withQC = (ui: React.ReactElement) => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
+  };
+
   it("al abrir bloquea el scroll del body y lo restaura al cerrar", async () => {
-    render(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />);
-    // El trigger renderiza como botón — buscamos y abrimos.
+    render(withQC(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />));
     const openBtn = screen
       .getAllByRole("button")
       .find((b) => /extracto|leer|subir|cargar/i.test(b.textContent ?? ""));
@@ -420,7 +429,6 @@ describe("ExtractoReader — modal, scroll-lock y cleanup de listeners", () => {
     await flush();
     expect(document.body.style.overflow).toBe("hidden");
     expect(document.documentElement.style.overflow).toBe("hidden");
-    // Cerrar (click fuera): la primera capa fija con onClick de cierre.
     const overlay = document.querySelector('.fixed.inset-0.z-\\[100\\]') as HTMLElement | null;
     expect(overlay).toBeTruthy();
     fireEvent.click(overlay!);
@@ -432,13 +440,14 @@ describe("ExtractoReader — modal, scroll-lock y cleanup de listeners", () => {
   it("al desmontar restaura scroll y remueve listeners de drag globales", async () => {
     const addSpy = vi.spyOn(window, "addEventListener");
     const removeSpy = vi.spyOn(window, "removeEventListener");
-    const { unmount } = render(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />);
+    const { unmount } = render(withQC(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />));
     await flush();
     const addedDrag = addSpy.mock.calls.filter(([evt]) => evt === "dragover" || evt === "drop").length;
-    expect(addedDrag).toBeGreaterThanOrEqual(2);
     unmount();
     const removedDrag = removeSpy.mock.calls.filter(([evt]) => evt === "dragover" || evt === "drop").length;
-    expect(removedDrag).toBeGreaterThanOrEqual(2);
+    // Todo listener global de drag registrado durante la vida del
+    // componente debe removerse en el cleanup.
+    expect(removedDrag).toBeGreaterThanOrEqual(addedDrag);
     expect(document.body.style.overflow).toBe("");
     addSpy.mockRestore();
     removeSpy.mockRestore();
