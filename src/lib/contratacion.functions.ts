@@ -262,7 +262,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     // ─────────────────────────────────────────────────────────────────────────
     // FASE 0 — Registro del intento (garantiza que Auditoría lo vea).
     // ─────────────────────────────────────────────────────────────────────────
-    const intentoDocs = data.attachments.map((a) => ({
+    const intentoDocs = nuevo.attachments.map((a) => ({
       name: a.filename,
       type: a.contentType,
       size: Math.floor((a.contentBase64.length * 3) / 4),
@@ -273,14 +273,14 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       const { data: inserted, error: insertErr } = await supabase
         .from("envios_contratacion")
         .insert({
-          expediente_id: data.expedienteId,
+          expediente_id: nuevo.expedienteId,
           user_id: userId,
-          destinatarios: data.destinatarios,
-          asunto: data.asunto,
+          destinatarios: nuevo.destinatarios,
+          asunto: nuevo.asunto,
           documentos: intentoDocs,
           estado_envio: "preparando",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          idempotency_key: data.idempotencyKey as any,
+          idempotency_key: nuevo.idempotencyKey as any,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .select("id")
@@ -290,24 +290,48 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         const code = (insertErr as { code?: string }).code;
         const msg = insertErr.message || "";
         if (code === "23505" || /duplicate key|unique/i.test(msg)) {
-          const { data: prev } = await supabaseAdmin
+          // FAIL-CLOSED: capturar `error` del maybeSingle. Ante fallo no se
+          // asume "existe" ni "no existe"; se aborta sin llamar a RPC.
+          const { data: prev, error: prev23Err } = await supabaseAdmin
             .from("envios_contratacion")
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .select("id, estado_envio, proveedor_message_id, error")
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .eq("idempotency_key" as any, data.idempotencyKey as any)
+            .eq("idempotency_key" as any, nuevo.idempotencyKey as any)
             .maybeSingle();
-          if (prev) {
-            const estado = (prev as { estado_envio: string }).estado_envio;
-            const messageId = (prev as { proveedor_message_id: string | null }).proveedor_message_id;
-            if (estado === "enviado") return { ok: true, envioExitoso: true as const, messageId, warning: null, deduped: true } as const;
-            if (estado === "enviado_trazabilidad_parcial") return { ok: true, envioExitoso: true as const, messageId, warning: "trazabilidad_parcial" as const, deduped: true };
-            if (estado === "preparando") {
-              throw new Error("Este envío ya está en curso. Espera a que finalice antes de reintentar.");
-            }
-            throw new Error("Este intento ya se registró como fallido. Cierra el modal y vuelve a abrirlo para reintentar (se generará un nuevo identificador).");
+          if (prev23Err) {
+            console.error("[contratacion] idempotency lookup falló tras 23505", {
+              err: prev23Err.message,
+            });
+            throw new Error(IDEMPOTENCY_LOOKUP_FAIL_MSG);
           }
-          throw new Error("Ya hay un envío a Contratación en curso para este expediente. Espera a que termine antes de intentar nuevamente.");
+          if (!prev) {
+            throw new Error(
+              "Se detectó una colisión de idempotencia pero no fue posible localizar el registro correspondiente. Reintenta en unos minutos.",
+            );
+          }
+          const estado = (prev as { estado_envio: string }).estado_envio;
+          const messageId = (prev as { proveedor_message_id: string | null }).proveedor_message_id;
+          // Estados terminales exitosos → SIEMPRE ejecutar RPC (reparación),
+          // NUNCA retornar éxito directo sin intentar reparar el expediente.
+          if (estado === "enviado" || estado === "enviado_trazabilidad_parcial") {
+            const expectedEstadoCaso =
+              ((exp as { estado_caso: string | null }).estado_caso) ?? null;
+            const result = await callRpcAndClassify({
+              expectedEstadoCaso,
+              messageId,
+              deduped: true,
+            });
+            return applyTrazabilidadParcialWarning(
+              result,
+              estado === "enviado_trazabilidad_parcial",
+            );
+          }
+          if (estado === "preparando") {
+            throw new Error("Este envío ya está en curso. Espera a que finalice antes de reintentar.");
+          }
+          // `error`, `cancelado` u otros no-terminales-exitosos.
+          throw new Error("Este intento ya se registró como fallido. Cierra el modal y vuelve a abrirlo para reintentar (se generará un nuevo identificador).");
         }
         throw new Error("No se pudo registrar el intento de envío. Reintenta o contacta a soporte.");
       }
