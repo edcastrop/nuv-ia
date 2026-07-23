@@ -294,6 +294,32 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
   }, []);
 
+  // Listener del evento HERMANO `nuvia:draftRawInvalidate`. Contrato:
+  //  · Sólo transiciona a `invalidated` desde `ready` o `done`.
+  //  · Idempotente desde idle/waiting/invalidated/loading/error.
+  //  · No ejecuta auditoría, no toca score/reglas/certificación.
+  //  · Limpia snapshotRef, lastEmittedHashRef, doneHashRef, directorApproval.
+  //  · Resetea `firstSnapshotReceivedRef` para que un `draftRawReady`
+  //    posterior sea tratado como hidratación (→ `ready`) y no como
+  //    "stay-invalidated". La invalidación impide reutilizar la auditoría
+  //    anterior, no impide iniciar una nueva sobre el snapshot recuperado.
+  useEffect(() => {
+    const invalidateHandler = () => {
+      const decision = evaluateInvalidateTransition({ prevKind: stateRef.current.kind });
+      if (decision.kind === "noop") return;
+      snapshotRef.current = null;
+      lastEmittedHashRef.current = null;
+      doneHashRef.current = null;
+      firstSnapshotReceivedRef.current = false;
+      setDirectorApproval(null);
+      setState({ kind: "invalidated" });
+    };
+    window.addEventListener(NUVIA_DRAFT_INVALIDATE_EVENT, invalidateHandler);
+    return () => window.removeEventListener(NUVIA_DRAFT_INVALIDATE_EVENT, invalidateHandler);
+  }, []);
+
+
+
 
   // Re-consulta la aprobación cuando la pestaña vuelve al foco o el
   // documento se hace visible: si Realtime falla o no llega, la fuente
