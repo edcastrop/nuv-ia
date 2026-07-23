@@ -112,7 +112,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     // ─────────────────────────────────────────────────────────────────────────
     const { data: exp, error: expErr } = await supabase
       .from("expedientes")
-      .select("id, cliente_nombre, estado, estado_caso, asesor_id, credito_data, cliente_data")
+      .select("id, cliente_nombre, estado, estado_caso, asesor_id, credito_data, cliente_data, validacion_confirmado_licenciado")
       .eq("id", data.expedienteId)
       .single();
     if (expErr || !exp) {
