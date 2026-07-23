@@ -152,12 +152,29 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         });
       }
       if (rpcResult === "estado_cambio_concurrente") {
-        // UNA sola reevaluación con lectura fresca (sin lock).
-        const { data: fresh } = await supabaseAdmin
+        // UNA sola reevaluación con lectura fresca (sin lock). Si la lectura
+        // fresca falla, no se puede clasificar la etapa → error parcial
+        // preservando messageId y deduped.
+        const { data: fresh, error: freshErr } = await supabaseAdmin
           .from("expedientes")
           .select("estado_caso")
           .eq("id", data.expedienteId)
           .maybeSingle();
+        if (freshErr) {
+          console.error("[contratacion] lectura fresca falló tras cambio concurrente", {
+            expedienteId: data.expedienteId,
+            err: freshErr.message,
+          });
+          return {
+            ok: false,
+            envioExitoso: true,
+            codigo: args.deduped
+              ? "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO"
+              : "ENVIO_OK_ESTADO_NO_ACTUALIZADO",
+            messageId: args.messageId,
+            deduped: args.deduped,
+          };
+        }
         const freshEstado =
           ((fresh as { estado_caso: string | null } | null)?.estado_caso) ?? null;
         return classifyEnvioResult({
@@ -181,35 +198,66 @@ export const enviarContratacion = createServerFn({ method: "POST" })
 
     // ─────────────────────────────────────────────────────────────────────────
     // FASE PRE-0.5 — Dedupe por envío exitoso previo (SQL, independiente de
-    // idempotencyKey). Si ya existe un `envios_contratacion` con
-    // `estado_envio='enviado'` para este expediente, NO preparamos adjuntos,
-    // NO llamamos a Resend y NO insertamos otra fila: sólo intentamos reparar
-    // el estado canónico vía RPC y devolvemos el contrato correspondiente,
-    // preservando `proveedor_message_id`.
+    // idempotencyKey). Cubre AMBOS estados terminales exitosos:
+    //   - "enviado"
+    //   - "enviado_trazabilidad_parcial"
+    //
+    // FAIL-CLOSED: si la consulta falla se ABORTA con `DEDUP_LOOKUP_FAIL_MSG`
+    // sin preparar adjuntos, sin llamar a Resend, sin llamar a la RPC y sin
+    // insertar filas. El mensaje NO afirma que ningún correo nuevo se envió.
+    //
+    // Si existe fila terminal exitosa: NO se prepara adjuntos, NO se llama a
+    // Resend, NO se inserta otra fila. Se conserva `proveedor_message_id`, se
+    // ejecuta la RPC (reparación de estado) y se devuelve el contrato. Para
+    // el caso `enviado_trazabilidad_parcial`, `warning:"trazabilidad_parcial"`
+    // se adosa SÓLO cuando la reparación termina ok:true sin otro warning.
     // ─────────────────────────────────────────────────────────────────────────
     {
-      const { data: prevEnviados } = await supabaseAdmin
+      const { data: prevEnviados, error: prevErr } = await supabaseAdmin
         .from("envios_contratacion")
-        .select("id, proveedor_message_id, created_at")
+        .select("id, proveedor_message_id, estado_envio, created_at")
         .eq("expediente_id", data.expedienteId)
-        .eq("estado_envio", "enviado")
+        .in("estado_envio", ["enviado", "enviado_trazabilidad_parcial"])
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(1);
+      if (prevErr) {
+        console.error("[contratacion] dedup lookup falló (fail-closed)", {
+          expedienteId: data.expedienteId,
+          err: prevErr.message,
+        });
+        throw new Error(DEDUP_LOOKUP_FAIL_MSG);
+      }
       const prev = (prevEnviados ?? [])[0] as
-        | { id: string; proveedor_message_id: string | null; created_at: string }
+        | {
+            id: string;
+            proveedor_message_id: string | null;
+            estado_envio: string;
+            created_at: string;
+          }
         | undefined;
       if (prev) {
         const messageId = prev.proveedor_message_id ?? null;
         const expectedEstadoCaso =
           ((exp as { estado_caso: string | null }).estado_caso) ?? null;
-        return await callRpcAndClassify({
+        const result = await callRpcAndClassify({
           expectedEstadoCaso,
           messageId,
           deduped: true,
         });
+        return applyTrazabilidadParcialWarning(
+          result,
+          prev.estado_envio === "enviado_trazabilidad_parcial",
+        );
       }
     }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // A partir de aquí es ruta de ENVÍO NUEVO. Validamos payload completo
+    // (`NuevoEnvioSchema`): idempotencyKey, destinatarios, asunto, cuerpo y
+    // al menos 1 adjunto. Cualquier ausencia rechaza con ZodError explícito.
+    // ─────────────────────────────────────────────────────────────────────────
+    const nuevo = NuevoEnvioSchema.parse(data);
 
     // ─────────────────────────────────────────────────────────────────────────
     // FASE 0 — Registro del intento (garantiza que Auditoría lo vea).
