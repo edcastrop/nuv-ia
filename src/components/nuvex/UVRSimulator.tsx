@@ -1351,15 +1351,31 @@ export function UVRSimulator({
                 perfilCliente={client.perfil}
                 ingresos={client.ingresos}
                 onIngresosChange={(ingresos) => setClient((prev) => ({ ...prev, ingresos }))}
-                initialState={propuestasComercialesDraft}
-                onStateChange={(snapshot) => {
-                  setPropuestasComercialesDraft({
-                    cuotasList: snapshot.cuotasList,
-                    recomendadaIdx: snapshot.recomendadaIdx,
-                  });
-                  setPropuestasComercialesSnapshot(snapshot);
+                // El hijo re-siembra su estado interno cada vez que el motor
+                // del padre entrega una nueva `cuotasList` (ej. escala
+                // regenerada por cambio de `plazoInicial`).
+                initialState={{
+                  cuotasList:
+                    escenariosResult?.cuotasList ??
+                    (userDirty && userCuotasList.length === 4
+                      ? userCuotasList
+                      : []),
+                  recomendadaIdx:
+                    escenariosResult?.recomendadaListIdx ?? userRecomendadaListIdx,
                 }}
-                onRecomendadaChange={setRecomendadaPicked}
+                onStateChange={(snapshot) => {
+                  // Único punto de captura de ediciones del analista. El
+                  // padre re-invoca `buildUvrEscenarios` con estos datos;
+                  // no existe una segunda ruta de cálculo aguas abajo.
+                  setUserCuotasList(snapshot.cuotasList);
+                  setUserRecomendadaListIdx(snapshot.recomendadaIdx);
+                  setUserDirty(true);
+                }}
+                onRecomendadaChange={() => {
+                  // No-op: la recomendada la resuelve el motor del padre a
+                  // partir de `userRecomendadaListIdx`. El hijo la señala
+                  // vía onStateChange en la misma tick.
+                }}
               />
             )}
 
