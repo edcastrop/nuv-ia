@@ -2,13 +2,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Trash2, AlertTriangle, PhoneCall, Calculator, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { formatCOP, formatNumber } from "../../lib/format";
 import {
-  calculatePesosManualByCuotas,
-  calculateUVRManualByCuotas,
   getUVRReductionOptions,
   type PesosInput,
   type UVRInput,
   type UVREscenarioActual,
 } from "../../lib/finance";
+// Motor puro común (Pesos + UVR). Elimina la divergencia con el padre
+// (`UVRSimulator` consume el mismo motor vía `buildUvrEscenarios`).
+import {
+  computePropuestaPesos,
+  computePropuestaUVR,
+  type PropuestaCalc,
+} from "../../lib/propuestasEngine";
 import { Card, SectionTitle, Alert } from "./ui";
 import { AbonoInteligenteCard } from "./AbonoInteligenteCard";
 import { PerfilIngresosEnVivo, type IngresosCliente, type PropuestaParaCapacidad } from "./PerfilIngresosEnVivo";
