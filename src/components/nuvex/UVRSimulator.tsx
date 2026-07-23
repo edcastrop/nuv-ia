@@ -84,6 +84,7 @@ import {
 import { deriveDraftKey, purgeStaleAnonEntries } from "./pendingSoportes";
 
 import { aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
+import { buildUvrEscenarios } from "@/lib/uvrEscenariosEngine";
 
 export function UVRSimulator({
   initialExpediente,
@@ -178,10 +179,27 @@ export function UVRSimulator({
   const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.interesMensualExtracto));
   const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.capitalMensualExtracto));
   const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.beneficioFrechMensualExtracto));
-  const [propuestasComercialesDraft, setPropuestasComercialesDraft] =
-    useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
-  const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
-    useState<PropuestasComercialesSnapshot | null>(null);
+  // Estado del analista para el bloque de propuestas comerciales.
+  // El motor (`buildUvrEscenarios`) es la ÚNICA fuente de verdad: cuando
+  // `userDirty` es false, la lista se deriva de la escala automática por
+  // `plazoInicial`. Cuando el analista edita, `userDirty` se activa y el
+  // motor consume la lista manual (o la regenera si deja de ser válida).
+  const [userCuotasList, setUserCuotasList] = useState<number[]>(
+    () => draft.propuestasComerciales?.cuotasList ?? [],
+  );
+  const [userDirty, setUserDirty] = useState<boolean>(
+    () => (draft.propuestasComerciales?.cuotasList?.length ?? 0) > 0,
+  );
+  const [userRecomendadaListIdx, setUserRecomendadaListIdx] = useState<number>(
+    () => draft.propuestasComerciales?.recomendadaIdx ?? -1,
+  );
+  // Borrador comercial persistente. Sólo se guardan overrides reales del
+  // analista (userDirty). Cuando no hay ediciones se persiste `undefined`
+  // → la próxima apertura re-derivará la escala automática por plazo.
+  const propuestasComercialesDraft: PropuestasComercialesDraft | undefined =
+    userDirty && userCuotasList.length === 4
+      ? { cuotasList: userCuotasList, recomendadaIdx: userRecomendadaListIdx }
+      : undefined;
   const [aprobando, setAprobando] = useState(false);
   const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
@@ -498,8 +516,72 @@ export function UVRSimulator({
     return baseResult;
   }, [datosCompletos, input, calc, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada]);
 
-  // Recomendada elegida desde el bloque comercial de Propuestas (cards editables)
-  const [recomendadaPicked, setRecomendadaPicked] = useState<RecomendadaSeleccionada | null>(null);
+  // ═════════════════════════════════════════════════════════════════
+  // Motor de escenarios UVR — FUENTE ÚNICA DE VERDAD.
+  //   • Se calcula en el padre vía `buildUvrEscenarios`.
+  //   • Habilita NUVIA y la tarjeta comercial en el MISMO tick en que
+  //     `datosCompletos && calc` son true (sin depender de que el hijo
+  //     `PropuestasComerciales` se monte y emita snapshot).
+  //   • Escala por `plazoInicial`, validez por `plazoRestante`.
+  //   • Las ediciones del analista viajan por `userCuotasList` /
+  //     `userRecomendadaListIdx` con bandera `userDirty`.
+  // ═════════════════════════════════════════════════════════════════
+  const escenariosResult = useMemo(() => {
+    if (!datosCompletos || !calc) return null;
+    return buildUvrEscenarios({
+      plazoInicial,
+      plazoRestante: Math.max(0, cuotasPendientes),
+      input,
+      escenarioActual: calc.escenarioActual,
+      cuotasList: userDirty && userCuotasList.length === 4 ? userCuotasList : undefined,
+      recomendadaListIdx: userRecomendadaListIdx,
+    });
+  }, [
+    datosCompletos,
+    calc,
+    plazoInicial,
+    cuotasPendientes,
+    input,
+    userDirty,
+    userCuotasList,
+    userRecomendadaListIdx,
+  ]);
+
+  // Snapshot derivado — reemplaza al antiguo `propuestasComercialesSnapshot`
+  // que dependía del `onStateChange` del hijo. Mismo contrato de tipos.
+  const propuestasComercialesSnapshot: PropuestasComercialesSnapshot | null = useMemo(() => {
+    if (!escenariosResult) return null;
+    return {
+      cuotasList: escenariosResult.cuotasList,
+      recomendadaIdx: escenariosResult.recomendadaListIdx,
+      recommendedIndex: escenariosResult.recomendadaRowIdx,
+      propuestas: escenariosResult.propuestas.map((p) => ({
+        index: p.index,
+        cuotasEliminadas: p.cuotasEliminadas,
+        añosEliminados: p.añosEliminados,
+        nuevoPlazo: p.nuevoPlazo,
+        nuevaCuota: p.nuevaCuota,
+        ahorroIntereses: p.ahorroIntereses,
+        ahorroSeguros: p.ahorroSeguros,
+        ahorroTotal: p.ahorroTotal,
+        honorarios: p.honorarios,
+        totalProyectado: p.totalProyectado,
+        incrementoMensual: p.incrementoMensual,
+        fuente: p.fuente,
+      })),
+    };
+  }, [escenariosResult]);
+
+  // Recomendada derivada del motor. `recomendadaPicked` conserva su
+  // contrato para el resto del árbol; el hijo ya no dispara el setter.
+  const recomendadaPicked: RecomendadaSeleccionada | null = useMemo(() => {
+    if (!escenariosResult) return null;
+    const rowIdx = escenariosResult.recomendadaRowIdx;
+    if (rowIdx < 0) return null;
+    const row = escenariosResult.propuestas[rowIdx];
+    if (!row) return null;
+    return { ...row };
+  }, [escenariosResult]);
   const manualValido = recomendadaPicked?.fuente === "manual";
   const recomendada = recomendadaPicked
     ? {
@@ -1269,15 +1351,31 @@ export function UVRSimulator({
                 perfilCliente={client.perfil}
                 ingresos={client.ingresos}
                 onIngresosChange={(ingresos) => setClient((prev) => ({ ...prev, ingresos }))}
-                initialState={propuestasComercialesDraft}
-                onStateChange={(snapshot) => {
-                  setPropuestasComercialesDraft({
-                    cuotasList: snapshot.cuotasList,
-                    recomendadaIdx: snapshot.recomendadaIdx,
-                  });
-                  setPropuestasComercialesSnapshot(snapshot);
+                // El hijo re-siembra su estado interno cada vez que el motor
+                // del padre entrega una nueva `cuotasList` (ej. escala
+                // regenerada por cambio de `plazoInicial`).
+                initialState={{
+                  cuotasList:
+                    escenariosResult?.cuotasList ??
+                    (userDirty && userCuotasList.length === 4
+                      ? userCuotasList
+                      : []),
+                  recomendadaIdx:
+                    escenariosResult?.recomendadaListIdx ?? userRecomendadaListIdx,
                 }}
-                onRecomendadaChange={setRecomendadaPicked}
+                onStateChange={(snapshot) => {
+                  // Único punto de captura de ediciones del analista. El
+                  // padre re-invoca `buildUvrEscenarios` con estos datos;
+                  // no existe una segunda ruta de cálculo aguas abajo.
+                  setUserCuotasList(snapshot.cuotasList);
+                  setUserRecomendadaListIdx(snapshot.recomendadaIdx);
+                  setUserDirty(true);
+                }}
+                onRecomendadaChange={() => {
+                  // No-op: la recomendada la resuelve el motor del padre a
+                  // partir de `userRecomendadaListIdx`. El hijo la señala
+                  // vía onStateChange en la misma tick.
+                }}
               />
             )}
 

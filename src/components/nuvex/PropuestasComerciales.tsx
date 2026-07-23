@@ -2,13 +2,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Plus, Trash2, AlertTriangle, PhoneCall, Calculator, ChevronDown, ChevronUp, Star } from "lucide-react";
 import { formatCOP, formatNumber } from "../../lib/format";
 import {
-  calculatePesosManualByCuotas,
-  calculateUVRManualByCuotas,
   getUVRReductionOptions,
   type PesosInput,
   type UVRInput,
   type UVREscenarioActual,
 } from "../../lib/finance";
+// Motor puro común (Pesos + UVR). Elimina la divergencia con el padre
+// (`UVRSimulator` consume el mismo motor vía `buildUvrEscenarios`).
+import {
+  computePropuestaPesos,
+  computePropuestaUVR,
+  type PropuestaCalc,
+} from "../../lib/propuestasEngine";
 import { Card, SectionTitle, Alert } from "./ui";
 import { AbonoInteligenteCard } from "./AbonoInteligenteCard";
 import { PerfilIngresosEnVivo, type IngresosCliente, type PropuestaParaCapacidad } from "./PerfilIngresosEnVivo";
@@ -109,52 +114,16 @@ type AuditorProps = AuditorCommon & {
 
 type Props = PesosProps | UVRProps | AuditorProps;
 
-interface PropuestaCalc {
-  valid: boolean;
-  motivo?: string;
-  cuotasEliminadas: number;
-  añosEliminados: number;
-  nuevoPlazo: number;
-  nuevaCuota: number;
-  ahorroIntereses: number;
-  ahorroSeguros: number;
-  ahorroTotal: number;
-  honorarios: number;
-  totalProyectado: number;
-  incrementoMensual: number;
-}
-
-// Forma normalizada consumida por `PropuestasCardsLayout` (renderer visual
-// compartido entre modo analista y modo auditor). Incluye `cuotasInput`
-// para alimentar el input de cuotas del modo analista.
+// `PropuestaCalc` proviene ahora de `propuestasEngine` (motor común).
+// El renderer visual sólo añade `cuotasInput` para alimentar el input.
 interface EscenarioLayout extends PropuestaCalc {
   index: number;
   cuotasInput: number;
 }
 
 function computePropuesta(props: PesosProps | UVRProps, cuotasEliminadas: number): PropuestaCalc {
-  if (props.mode === "pesos") {
-    const r = calculatePesosManualByCuotas(props.input, cuotasEliminadas);
-    return {
-      valid: r.valid, motivo: r.motivo,
-      cuotasEliminadas: r.cuotasEliminadas || cuotasEliminadas,
-      añosEliminados: r.añosEliminados, nuevoPlazo: r.nuevoPlazo,
-      nuevaCuota: r.nuevaCuotaConSeguro,
-      ahorroIntereses: r.ahorroIntereses, ahorroSeguros: r.ahorroSeguros,
-      ahorroTotal: r.ahorroTotal, honorarios: r.honorarios,
-      totalProyectado: r.totalProyectado, incrementoMensual: r.incrementoMensual,
-    };
-  }
-  const r = calculateUVRManualByCuotas(props.input, props.escenarioActual, cuotasEliminadas);
-  return {
-    valid: r.valid, motivo: r.motivo,
-    cuotasEliminadas: r.cuotasEliminadas || cuotasEliminadas,
-    añosEliminados: r.añosEliminados, nuevoPlazo: r.nuevoPlazo,
-    nuevaCuota: r.nuevaCuotaPesos,
-    ahorroIntereses: r.ahorroIntereses, ahorroSeguros: r.ahorroSeguros,
-    ahorroTotal: r.ahorroTotal, honorarios: r.honorarios,
-    totalProyectado: r.totalProyectado, incrementoMensual: r.incrementoMensual,
-  };
+  if (props.mode === "pesos") return computePropuestaPesos(props.input, cuotasEliminadas);
+  return computePropuestaUVR(props.input, props.escenarioActual, cuotasEliminadas);
 }
 
 function defaultCuotas(props: PesosProps | UVRProps): number[] {
