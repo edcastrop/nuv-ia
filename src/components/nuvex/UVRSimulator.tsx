@@ -84,6 +84,7 @@ import {
 import { deriveDraftKey, purgeStaleAnonEntries } from "./pendingSoportes";
 
 import { aprobarAuditoriaPorAuditor } from "@/lib/qaAI.functions";
+import { buildUvrEscenarios } from "@/lib/uvrEscenariosEngine";
 
 export function UVRSimulator({
   initialExpediente,
