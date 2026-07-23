@@ -46,9 +46,13 @@ vi.mock("@/lib/contratacion.functions", async () => {
   };
 });
 
-vi.mock("@tanstack/react-start", () => ({
-  useServerFn: (fn: unknown) => fn as (...args: unknown[]) => unknown,
-}));
+vi.mock("@tanstack/react-start", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-start")>();
+  return {
+    ...actual,
+    useServerFn: (fn: unknown) => fn as (...args: unknown[]) => unknown,
+  };
+});
 
 // Cliente Supabase: apenas hace falta que existan `from(...).select(...)` en
 // cascada devolviendo vacío. El componente ya tolera datos ausentes al montar.
