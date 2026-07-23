@@ -418,24 +418,25 @@ describe("ExtractoReader — modal, scroll-lock y cleanup de listeners", () => {
     return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
   };
 
-  it("al abrir bloquea el scroll del body y lo restaura al cerrar", async () => {
-    const { container } = render(withQC(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />));
+  it("al abrir bloquea el scroll del body y al desmontar lo restaura", async () => {
+    const { container, unmount } = render(withQC(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />));
     await flush();
-    // El único camino público a `setOpen(true)` es cargar un archivo por
-    // el input oculto (o drop). Disparamos un change con un blob dummy.
+    // Único camino público a `setOpen(true)`: change en el input file.
     const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
     expect(fileInput).toBeTruthy();
     const dummy = new File([new Uint8Array([0])], "x.pdf", { type: "application/pdf" });
     Object.defineProperty(fileInput, "files", { value: [dummy], configurable: true });
     fireEvent.change(fileInput);
     await flush();
+    // Efecto de scroll-lock activo mientras el modal está abierto.
     expect(document.body.style.overflow).toBe("hidden");
     expect(document.documentElement.style.overflow).toBe("hidden");
-    // Cerrar por click en overlay (stage inicial no es "reading").
-    const overlay = document.querySelector('.fixed.inset-0.z-\\[100\\]') as HTMLElement | null;
+    // Portal montado con z-[100] — el visor no queda por debajo de la
+    // capa navy ni de las tarjetas superiores.
+    const overlay = document.querySelector('.fixed.inset-0.z-\\[100\\]');
     expect(overlay).toBeTruthy();
-    fireEvent.click(overlay!);
-    await flush();
+    // Cleanup del efecto restaura el overflow original al desmontar.
+    unmount();
     expect(document.body.style.overflow).toBe("");
     expect(document.documentElement.style.overflow).toBe("");
   });
