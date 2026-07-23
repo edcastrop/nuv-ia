@@ -193,6 +193,13 @@ export function UVRSimulator({
   const [userRecomendadaListIdx, setUserRecomendadaListIdx] = useState<number>(
     () => draft.propuestasComerciales?.recomendadaIdx ?? -1,
   );
+  // Borrador comercial persistente. Sólo se guardan overrides reales del
+  // analista (userDirty). Cuando no hay ediciones se persiste `undefined`
+  // → la próxima apertura re-derivará la escala automática por plazo.
+  const propuestasComercialesDraft: PropuestasComercialesDraft | undefined =
+    userDirty && userCuotasList.length === 4
+      ? { cuotasList: userCuotasList, recomendadaIdx: userRecomendadaListIdx }
+      : undefined;
   const [aprobando, setAprobando] = useState(false);
   const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
