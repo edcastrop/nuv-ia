@@ -112,7 +112,37 @@ type AuditorProps = AuditorCommon & {
   mode: "pesos" | "uvr";
 };
 
-type Props = PesosProps | UVRProps | AuditorProps;
+/**
+ * Contrato CONTROLADO (modo UVR). El padre (`UVRSimulator`) es la única
+ * fuente de verdad: calcula los 4 escenarios con `buildUvrEscenarios` y
+ * los pasa aquí. Este componente NO mantiene estado propio, NO recalcula
+ * propuestas, NO decide el bestIdx y NO publica cambios vía `useEffect`.
+ * Toda edición del analista viaja hacia arriba por `onCuotasChange` /
+ * `onRecomendadaIdxChange`.
+ */
+export type ControlledPropuestasUvrProps = {
+  mode: "uvr";
+  controlled: true;
+  readOnly?: false;
+  input: UVRInput;
+  escenarioActual: UVREscenarioActual;
+  cuotasPendientes: number;
+  baseCredito: number;
+  dineroPagado?: number;
+  perfilCliente?: PerfilCliente;
+  ingresos?: IngresosCliente;
+  onIngresosChange?: (v: IngresosCliente) => void;
+  /** Exactamente 4 valores (mismo orden que `propuestas`). */
+  cuotasList: number[];
+  /** 0..3 ó -1. Índice de la recomendada dentro de `cuotasList`. */
+  recomendadaIdx: number;
+  /** Exactamente 4 escenarios, alineados por índice con `cuotasList`. */
+  propuestas: PropuestaCalc[];
+  onCuotasChange: (next: number[]) => void;
+  onRecomendadaIdxChange: (idx: number) => void;
+};
+
+type Props = PesosProps | UVRProps | AuditorProps | ControlledPropuestasUvrProps;
 
 // `PropuestaCalc` proviene ahora de `propuestasEngine` (motor común).
 // El renderer visual sólo añade `cuotasInput` para alimentar el input.
@@ -147,10 +177,19 @@ function toPdfRow(c: PropuestaCalc, index: number, fuente: "automatica" | "manua
   };
 }
 
+function isControlledUvr(props: Props): props is ControlledPropuestasUvrProps {
+  return (
+    (props as ControlledPropuestasUvrProps).controlled === true &&
+    (props as { mode?: string }).mode === "uvr" &&
+    !(props as { readOnly?: boolean }).readOnly
+  );
+}
+
 export function PropuestasComerciales(props: Props) {
   // Switch de nivel superior: cada rama es un componente independiente con
   // su propio orden estable de hooks. No hay hooks condicionales.
-  if (props.readOnly) return <PropuestasComercialesReadOnly {...props} />;
+  if ((props as AuditorProps).readOnly) return <PropuestasComercialesReadOnly {...(props as AuditorProps)} />;
+  if (isControlledUvr(props)) return <PropuestasComercialesControlledUVR {...props} />;
   return <PropuestasComercialesInteractive {...(props as PesosProps | UVRProps)} />;
 }
 
