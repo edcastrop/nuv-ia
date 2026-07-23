@@ -516,8 +516,72 @@ export function UVRSimulator({
     return baseResult;
   }, [datosCompletos, input, calc, nuevaCuotaManual, cuotasEliminarManual, modoPersonalizada]);
 
-  // Recomendada elegida desde el bloque comercial de Propuestas (cards editables)
-  const [recomendadaPicked, setRecomendadaPicked] = useState<RecomendadaSeleccionada | null>(null);
+  // ═════════════════════════════════════════════════════════════════
+  // Motor de escenarios UVR — FUENTE ÚNICA DE VERDAD.
+  //   • Se calcula en el padre vía `buildUvrEscenarios`.
+  //   • Habilita NUVIA y la tarjeta comercial en el MISMO tick en que
+  //     `datosCompletos && calc` son true (sin depender de que el hijo
+  //     `PropuestasComerciales` se monte y emita snapshot).
+  //   • Escala por `plazoInicial`, validez por `plazoRestante`.
+  //   • Las ediciones del analista viajan por `userCuotasList` /
+  //     `userRecomendadaListIdx` con bandera `userDirty`.
+  // ═════════════════════════════════════════════════════════════════
+  const escenariosResult = useMemo(() => {
+    if (!datosCompletos || !calc) return null;
+    return buildUvrEscenarios({
+      plazoInicial,
+      plazoRestante: Math.max(0, cuotasPendientes),
+      input,
+      escenarioActual: calc.escenarioActual,
+      cuotasList: userDirty && userCuotasList.length === 4 ? userCuotasList : undefined,
+      recomendadaListIdx: userRecomendadaListIdx,
+    });
+  }, [
+    datosCompletos,
+    calc,
+    plazoInicial,
+    cuotasPendientes,
+    input,
+    userDirty,
+    userCuotasList,
+    userRecomendadaListIdx,
+  ]);
+
+  // Snapshot derivado — reemplaza al antiguo `propuestasComercialesSnapshot`
+  // que dependía del `onStateChange` del hijo. Mismo contrato de tipos.
+  const propuestasComercialesSnapshot: PropuestasComercialesSnapshot | null = useMemo(() => {
+    if (!escenariosResult) return null;
+    return {
+      cuotasList: escenariosResult.cuotasList,
+      recomendadaIdx: escenariosResult.recomendadaListIdx,
+      recommendedIndex: escenariosResult.recomendadaRowIdx,
+      propuestas: escenariosResult.propuestas.map((p) => ({
+        index: p.index,
+        cuotasEliminadas: p.cuotasEliminadas,
+        añosEliminados: p.añosEliminados,
+        nuevoPlazo: p.nuevoPlazo,
+        nuevaCuota: p.nuevaCuota,
+        ahorroIntereses: p.ahorroIntereses,
+        ahorroSeguros: p.ahorroSeguros,
+        ahorroTotal: p.ahorroTotal,
+        honorarios: p.honorarios,
+        totalProyectado: p.totalProyectado,
+        incrementoMensual: p.incrementoMensual,
+        fuente: p.fuente,
+      })),
+    };
+  }, [escenariosResult]);
+
+  // Recomendada derivada del motor. `recomendadaPicked` conserva su
+  // contrato para el resto del árbol; el hijo ya no dispara el setter.
+  const recomendadaPicked: RecomendadaSeleccionada | null = useMemo(() => {
+    if (!escenariosResult) return null;
+    const rowIdx = escenariosResult.recomendadaRowIdx;
+    if (rowIdx < 0) return null;
+    const row = escenariosResult.propuestas[rowIdx];
+    if (!row) return null;
+    return { ...row };
+  }, [escenariosResult]);
   const manualValido = recomendadaPicked?.fuente === "manual";
   const recomendada = recomendadaPicked
     ? {
