@@ -805,16 +805,29 @@ export function UVRSimulator({
     propuestasComercialesSnapshot,
   ]);
 
-  // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).
-  // Bloqueo estricto Opción A: no emitir hasta tener EXACTAMENTE 4 propuestas.
-  const scenariosReady = useMemo(
-    () => (propuestasComercialesSnapshot?.propuestas?.length ?? 0) === 4,
-    [propuestasComercialesSnapshot],
-  );
+  // ── Modo standalone: emisión del snapshot NUVIA con dedup por hash ──
+  // Contrato:
+  //   1. Sólo emitimos cuando `currentQaSnapshot` está completo y tenemos
+  //      EXACTAMENTE 4 propuestas (`scenariosReady`).
+  //   2. Deduplicación STANDALONE por `hashQaSnapshot`, SEPARADA del
+  //      Auto-QA de expediente (que usa sus propios refs de hash).
+  //   3. Si el formulario deja de estar listo (por ejemplo, el analista
+  //      limpia un campo crítico o pierde una propuesta), reseteamos el
+  //      guard local. La `NuviaDraftAuditCard` mantiene su estado
+  //      (`ready`/`done`/`invalidated`) hasta recibir un nuevo hash: al
+  //      volver a estar listo, esta emisión reincidirá con el nuevo
+  //      snapshot y disparará la transición `invalidate` o `ready` según
+  //      corresponda dentro del contrato existente.
+  const standaloneLastHashRef = useRef<string | null>(null);
   useEffect(() => {
     if (init?.id) return;
-    if (!currentQaSnapshot) return;
-    if (!scenariosReady) return;
+    if (!currentQaSnapshot || !scenariosReady) {
+      standaloneLastHashRef.current = null;
+      return;
+    }
+    const h = hashQaSnapshot(currentQaSnapshot);
+    if (standaloneLastHashRef.current === h) return;
+    standaloneLastHashRef.current = h;
     emitDraftRawReady(currentQaSnapshot);
   }, [init?.id, currentQaSnapshot, scenariosReady]);
 
