@@ -53,11 +53,26 @@ export type DraftRawSnapshot = {
 };
 
 const NUVIA_DRAFT_EVENT = "nuvia:draftRawReady";
+// Evento HERMANO e independiente de `nuvia:draftRawReady`. Se dispara
+// desde el simulador cuando el snapshot standalone deja de estar
+// completo (por ejemplo, el analista borra un campo crítico o pierde
+// una de las 4 propuestas comerciales). No transporta payload: sólo
+// señala pérdida de completitud. El listener del panel decide qué
+// hacer según su estado actual (idempotente desde idle/waiting/
+// invalidated/loading/error; transiciona a `invalidated` sólo desde
+// `ready` o `done`).
+export const NUVIA_DRAFT_INVALIDATE_EVENT = "nuvia:draftRawInvalidate";
 
 export function emitDraftRawReady(snapshot: DraftRawSnapshot) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(NUVIA_DRAFT_EVENT, { detail: snapshot }));
 }
+
+export function emitDraftRawInvalidate(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(NUVIA_DRAFT_INVALIDATE_EVENT));
+}
+
 
 type PanelState =
   | { kind: "idle" }
@@ -98,6 +113,21 @@ export function evaluateSnapshotTransition(args: {
   if (prevKind === "invalidated") return { kind: "stay-invalidated" };
   return { kind: "ready" };
 }
+
+// Pura, testeable: decide qué hace el listener del panel al recibir un
+// evento `nuvia:draftRawInvalidate`. Sólo transiciona a `invalidated`
+// desde `ready` o `done`; en cualquier otro estado es idempotente y
+// no ejecuta ningún efecto.
+export type InvalidateTransition = { kind: "invalidate" } | { kind: "noop" };
+
+export function evaluateInvalidateTransition(args: {
+  prevKind: PanelState["kind"];
+}): InvalidateTransition {
+  const { prevKind } = args;
+  if (prevKind === "ready" || prevKind === "done") return { kind: "invalidate" };
+  return { kind: "noop" };
+}
+
 
 type Props = {
   mode: "pesos" | "uvr" | null;
@@ -264,6 +294,32 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
     return () => window.removeEventListener(NUVIA_DRAFT_EVENT, handler as EventListener);
   }, []);
 
+  // Listener del evento HERMANO `nuvia:draftRawInvalidate`. Contrato:
+  //  · Sólo transiciona a `invalidated` desde `ready` o `done`.
+  //  · Idempotente desde idle/waiting/invalidated/loading/error.
+  //  · No ejecuta auditoría, no toca score/reglas/certificación.
+  //  · Limpia snapshotRef, lastEmittedHashRef, doneHashRef, directorApproval.
+  //  · Resetea `firstSnapshotReceivedRef` para que un `draftRawReady`
+  //    posterior sea tratado como hidratación (→ `ready`) y no como
+  //    "stay-invalidated". La invalidación impide reutilizar la auditoría
+  //    anterior, no impide iniciar una nueva sobre el snapshot recuperado.
+  useEffect(() => {
+    const invalidateHandler = () => {
+      const decision = evaluateInvalidateTransition({ prevKind: stateRef.current.kind });
+      if (decision.kind === "noop") return;
+      snapshotRef.current = null;
+      lastEmittedHashRef.current = null;
+      doneHashRef.current = null;
+      firstSnapshotReceivedRef.current = false;
+      setDirectorApproval(null);
+      setState({ kind: "invalidated" });
+    };
+    window.addEventListener(NUVIA_DRAFT_INVALIDATE_EVENT, invalidateHandler);
+    return () => window.removeEventListener(NUVIA_DRAFT_INVALIDATE_EVENT, invalidateHandler);
+  }, []);
+
+
+
 
   // Re-consulta la aprobación cuando la pestaña vuelve al foco o el
   // documento se hace visible: si Realtime falla o no llega, la fuente
@@ -422,7 +478,7 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
               <button
                 type="button"
                 onClick={handleAuditar}
-                disabled={state.kind === "loading" || state.kind === "idle" || state.kind === "waiting"}
+                disabled={state.kind === "loading" || state.kind === "idle" || state.kind === "waiting" || state.kind === "invalidated"}
                 className="rounded-lg border border-sky-400/40 bg-sky-400/15 px-3 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-sky-100 shadow-[0_10px_30px_-15px_rgba(56,189,248,0.55)] transition hover:bg-sky-400/25 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {state.kind === "loading" ? "Auditando…" : done ? "Reevaluar" : "Auditar con NUVIA"}

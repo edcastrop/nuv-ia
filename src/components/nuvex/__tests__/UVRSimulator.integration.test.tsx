@@ -405,7 +405,68 @@ describe("UVRSimulator (RTL) — extracto Bancolombia real (caso 000014)", () =>
     expect(hashQaSnapshot(detailB as never)).toBe(hashQaSnapshot(snapshot));
     captured.stop();
   });
+
+  it("invalidación end-to-end vía UI: perder completitud emite `nuvia:draftRawInvalidate` (una vez), deshabilita Auditar; al restaurar el dato llega un nuevo `draftRawReady` y el botón se re-habilita para una NUEVA auditoría", async () => {
+    seedBancolombiaDraft();
+    const readyEvents: CustomEvent[] = [];
+    const invalidateEvents: Event[] = [];
+    const readyHandler = (e: Event) => readyEvents.push(e as CustomEvent);
+    const invalidateHandler = (e: Event) => invalidateEvents.push(e);
+    window.addEventListener("nuvia:draftRawReady", readyHandler as EventListener);
+    window.addEventListener("nuvia:draftRawInvalidate", invalidateHandler);
+
+    render(
+      <>
+        <NuviaDraftAuditCard mode="uvr" onCertificar={() => {}} onSalir={() => {}} />
+        <UVRSimulator />
+      </>,
+    );
+    await flush();
+
+    // Estado inicial: snapshot standalone emitido, botón habilitado.
+    expect(readyEvents.length).toBeGreaterThanOrEqual(1);
+    const btn = () => screen.getByRole("button", { name: /Auditar con NUVIA|Reevaluar|Auditando/i });
+    expect(btn()).not.toBeDisabled();
+    const readyCountA = readyEvents.length;
+    const invalidatedCountA = invalidateEvents.length;
+
+    // Interacción REAL sobre la UI: borramos "Saldo actual en UVR" —
+    // input renderizado directamente por UVRSimulator (no mockeado).
+    const saldoInput = screen.getByLabelText(/Saldo actual en UVR/i) as HTMLInputElement;
+    expect(saldoInput.value).not.toBe("");
+    await act(async () => {
+      fireEvent.change(saldoInput, { target: { value: "" } });
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    // Se emitió EXACTAMENTE una invalidación (idempotencia por render).
+    expect(invalidateEvents.length - invalidatedCountA).toBe(1);
+    // Botón deshabilitado tras la invalidación.
+    expect(btn()).toBeDisabled();
+
+    // Simulamos varios re-renders sin restaurar → sigue sin re-emitir.
+    await flush();
+    await flush();
+    expect(invalidateEvents.length - invalidatedCountA).toBe(1);
+
+    // Restauramos el dato por la UI real → nuevo `draftRawReady`.
+    await act(async () => {
+      fireEvent.change(saldoInput, { target: { value: "475070.5937" } });
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(readyEvents.length).toBeGreaterThan(readyCountA);
+
+    // El botón vuelve a estar habilitado y presenta la etiqueta de una
+    // NUEVA auditoría (no `Reevaluar`) — evidencia de que el resultado
+    // anterior no se está reutilizando.
+    expect(btn()).not.toBeDisabled();
+    expect(btn().textContent).toMatch(/Auditar con NUVIA/i);
+
+    window.removeEventListener("nuvia:draftRawReady", readyHandler as EventListener);
+    window.removeEventListener("nuvia:draftRawInvalidate", invalidateHandler);
+  });
 });
+
 
 // ─── ExtractoReader: modal open/close, scroll-lock, cleanup ─────────
 // `await import()` a nivel de módulo mantiene el import como dinámico
