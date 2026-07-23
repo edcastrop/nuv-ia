@@ -53,11 +53,26 @@ export type DraftRawSnapshot = {
 };
 
 const NUVIA_DRAFT_EVENT = "nuvia:draftRawReady";
+// Evento HERMANO e independiente de `nuvia:draftRawReady`. Se dispara
+// desde el simulador cuando el snapshot standalone deja de estar
+// completo (por ejemplo, el analista borra un campo crítico o pierde
+// una de las 4 propuestas comerciales). No transporta payload: sólo
+// señala pérdida de completitud. El listener del panel decide qué
+// hacer según su estado actual (idempotente desde idle/waiting/
+// invalidated/loading/error; transiciona a `invalidated` sólo desde
+// `ready` o `done`).
+export const NUVIA_DRAFT_INVALIDATE_EVENT = "nuvia:draftRawInvalidate";
 
 export function emitDraftRawReady(snapshot: DraftRawSnapshot) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(NUVIA_DRAFT_EVENT, { detail: snapshot }));
 }
+
+export function emitDraftRawInvalidate(): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(NUVIA_DRAFT_INVALIDATE_EVENT));
+}
+
 
 type PanelState =
   | { kind: "idle" }
