@@ -197,6 +197,122 @@ describe("pickLatestEnvioExitoso — orden determinístico (created_at DESC, id 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// applyTrazabilidadParcialWarning — sólo adosa el warning cuando corresponde.
+// No transforma ok:false, no sobreescribe warnings previos, no altera nada si
+// el envío anterior estaba en `enviado` (no parcial).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("applyTrazabilidadParcialWarning", () => {
+  it("wasTrazabilidadParcial=false → no cambia nada (ok:true, warning:null)", () => {
+    const base = {
+      ok: true as const,
+      envioExitoso: true as const,
+      messageId: "m1",
+      deduped: true,
+      warning: null,
+    };
+    expect(applyTrazabilidadParcialWarning(base, false)).toEqual(base);
+  });
+
+  it("wasTrazabilidadParcial=true + ok:true + warning:null → adosa 'trazabilidad_parcial'", () => {
+    const out = applyTrazabilidadParcialWarning(
+      { ok: true, envioExitoso: true, messageId: "m2", deduped: true, warning: null },
+      true,
+    );
+    expect(out.ok).toBe(true);
+    if (out.ok) expect(out.warning).toBe("trazabilidad_parcial");
+  });
+
+  it("wasTrazabilidadParcial=true + ok:true + warning:'etapa_posterior' → NO sobreescribe", () => {
+    const base = {
+      ok: true as const,
+      envioExitoso: true as const,
+      messageId: "m3",
+      deduped: true,
+      warning: "etapa_posterior" as const,
+    };
+    const out = applyTrazabilidadParcialWarning(base, true);
+    expect(out.ok).toBe(true);
+    if (out.ok) expect(out.warning).toBe("etapa_posterior");
+  });
+
+  it("wasTrazabilidadParcial=true + ok:false → NO transforma en éxito", () => {
+    const base = {
+      ok: false as const,
+      envioExitoso: true,
+      codigo: "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO",
+      messageId: "m4",
+      deduped: true,
+    };
+    const out = applyTrazabilidadParcialWarning(base, true);
+    expect(out.ok).toBe(false);
+    if (!out.ok) expect(out.codigo).toBe("ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO");
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Esquemas separados: la ruta de reparación NO exige idempotencyKey ni
+// destinatarios/asunto/cuerpo/adjuntos. El envío nuevo SÍ los exige.
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("RepairLookupSchema / NuevoEnvioSchema — separación de contratos", () => {
+  const validExpId = "11111111-1111-4111-8111-111111111111";
+  const validKey = "22222222-2222-4222-8222-222222222222";
+
+  it("RepairLookupSchema acepta sólo { expedienteId } válido", () => {
+    expect(RepairLookupSchema.safeParse({ expedienteId: validExpId }).success).toBe(true);
+  });
+
+  it("RepairLookupSchema rechaza expedienteId no-uuid", () => {
+    expect(RepairLookupSchema.safeParse({ expedienteId: "no-uuid" }).success).toBe(false);
+  });
+
+  it("NuevoEnvioSchema exige idempotencyKey, destinatarios, asunto, cuerpo y attachments", () => {
+    expect(NuevoEnvioSchema.safeParse({ expedienteId: validExpId }).success).toBe(false);
+    const ok = NuevoEnvioSchema.safeParse({
+      expedienteId: validExpId,
+      idempotencyKey: validKey,
+      destinatarios: ["a@b.co"],
+      asunto: "Asunto",
+      cuerpo: "Cuerpo",
+      attachments: [
+        { filename: "poder.pdf", contentType: "application/pdf", contentBase64: "aGk=" },
+      ],
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it("NuevoEnvioSchema rechaza attachments vacío", () => {
+    const res = NuevoEnvioSchema.safeParse({
+      expedienteId: validExpId,
+      idempotencyKey: validKey,
+      destinatarios: ["a@b.co"],
+      asunto: "x",
+      cuerpo: "y",
+      attachments: [],
+    });
+    expect(res.success).toBe(false);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Mensajes fail-closed: NO deben afirmar que "no se envió ningún correo nuevo".
+// Estas constantes son el único texto que el handler emite ante fallos de
+// lectura previa (dedupe o idempotencia).
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("Mensajes fail-closed — no afirman estado real del envío", () => {
+  it("DEDUP_LOOKUP_FAIL_MSG no afirma que no se envió correo", () => {
+    expect(DEDUP_LOOKUP_FAIL_MSG).not.toMatch(/no se envió|no se ha enviado/i);
+    expect(DEDUP_LOOKUP_FAIL_MSG).toMatch(/detenida|reintenta/i);
+  });
+  it("IDEMPOTENCY_LOOKUP_FAIL_MSG no afirma que no se envió correo", () => {
+    expect(IDEMPOTENCY_LOOKUP_FAIL_MSG).not.toMatch(/no se envió|no se ha enviado/i);
+    expect(IDEMPOTENCY_LOOKUP_FAIL_MSG).toMatch(/detenida/i);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Cliente: garantía por identidad de que `cambiarEstadoConValidacion` NUNCA
 // se invoca desde el flujo de envío a contratación. Se mockea el módulo
 // completo `@/lib/pipelineTransiciones` y se importa el módulo del componente
