@@ -45,12 +45,20 @@ const AttachmentSchema = z.object({
   contentType: z.string().min(1).max(120),
 });
 
-// Schema BASE: valida SOLO identificación + payload textual. NO valida cota
-// superior de adjuntos (esa se hace después de crear la fila `preparando`
-// para dejar rastro en Auditoría). Sí exige al menos 1 adjunto para no
-// permitir un ping vacío.
-const InputSchema = z.object({
+// ─────────────────────────────────────────────────────────────────────────────
+// Esquemas separados:
+//  - RepairLookupSchema: mínimo indispensable para la ruta de reparación.
+//    Sólo exige `expedienteId`. La reparación NO requiere idempotencyKey,
+//    destinatarios, asunto, cuerpo ni adjuntos.
+//  - NuevoEnvioSchema: exigencias completas para un envío NUEVO. Se valida
+//    únicamente cuando no existe un envío exitoso previo.
+//  - InputSchema (borde): passthrough tras validar sólo `expedienteId`.
+// ─────────────────────────────────────────────────────────────────────────────
+export const RepairLookupSchema = z.object({
   expedienteId: z.string().uuid(),
+});
+
+export const NuevoEnvioSchema = RepairLookupSchema.extend({
   idempotencyKey: z.string().uuid({
     message: "Falta idempotencyKey (protección contra envíos duplicados).",
   }),
@@ -59,6 +67,35 @@ const InputSchema = z.object({
   cuerpo: z.string().min(1).max(20000),
   attachments: z.array(AttachmentSchema).min(1),
 });
+
+const InputSchema = RepairLookupSchema.passthrough();
+
+// Mensajes fail-closed autorizados. Se exponen para que las pruebas verifiquen
+// que las ramas de error de lectura no pretenden garantizar el estado real
+// del envío ("no se envió ningún correo nuevo" está PROHIBIDO en esas ramas).
+export const DEDUP_LOOKUP_FAIL_MSG =
+  "No se pudo verificar si ya existe un envío anterior. Esta ejecución fue detenida y no continuará con un nuevo envío. Reintenta en unos minutos.";
+
+export const IDEMPOTENCY_LOOKUP_FAIL_MSG =
+  "No se pudo verificar el intento de envío existente. Esta ejecución fue detenida.";
+
+// Adosa el warning "trazabilidad_parcial" SÓLO cuando la reparación resultó
+// ok:true sin otro warning y el envío previo estaba en `enviado_trazabilidad_parcial`.
+// Cualquier otra rama (ok:false, warning ya presente, previo "enviado") se preserva
+// tal cual: no se sobreescribe un warning distinto ni se transforma un ok:false.
+type EnvioResult =
+  | { ok: true; envioExitoso: true; messageId: string | null; deduped: boolean; warning: null | "etapa_posterior" | "trazabilidad_parcial" }
+  | { ok: false; envioExitoso: boolean; codigo: string; messageId: string | null; deduped: boolean };
+
+export function applyTrazabilidadParcialWarning<T extends EnvioResult>(
+  result: T,
+  wasTrazabilidadParcial: boolean,
+): T {
+  if (!wasTrazabilidadParcial) return result;
+  if (!result.ok) return result;
+  if (result.warning !== null) return result;
+  return { ...result, warning: "trazabilidad_parcial" as const };
+}
 
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
@@ -133,12 +170,29 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         });
       }
       if (rpcResult === "estado_cambio_concurrente") {
-        // UNA sola reevaluación con lectura fresca (sin lock).
-        const { data: fresh } = await supabaseAdmin
+        // UNA sola reevaluación con lectura fresca (sin lock). Si la lectura
+        // fresca falla, no se puede clasificar la etapa → error parcial
+        // preservando messageId y deduped.
+        const { data: fresh, error: freshErr } = await supabaseAdmin
           .from("expedientes")
           .select("estado_caso")
           .eq("id", data.expedienteId)
           .maybeSingle();
+        if (freshErr) {
+          console.error("[contratacion] lectura fresca falló tras cambio concurrente", {
+            expedienteId: data.expedienteId,
+            err: freshErr.message,
+          });
+          return {
+            ok: false,
+            envioExitoso: true,
+            codigo: args.deduped
+              ? "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO"
+              : "ENVIO_OK_ESTADO_NO_ACTUALIZADO",
+            messageId: args.messageId,
+            deduped: args.deduped,
+          };
+        }
         const freshEstado =
           ((fresh as { estado_caso: string | null } | null)?.estado_caso) ?? null;
         return classifyEnvioResult({
@@ -162,40 +216,71 @@ export const enviarContratacion = createServerFn({ method: "POST" })
 
     // ─────────────────────────────────────────────────────────────────────────
     // FASE PRE-0.5 — Dedupe por envío exitoso previo (SQL, independiente de
-    // idempotencyKey). Si ya existe un `envios_contratacion` con
-    // `estado_envio='enviado'` para este expediente, NO preparamos adjuntos,
-    // NO llamamos a Resend y NO insertamos otra fila: sólo intentamos reparar
-    // el estado canónico vía RPC y devolvemos el contrato correspondiente,
-    // preservando `proveedor_message_id`.
+    // idempotencyKey). Cubre AMBOS estados terminales exitosos:
+    //   - "enviado"
+    //   - "enviado_trazabilidad_parcial"
+    //
+    // FAIL-CLOSED: si la consulta falla se ABORTA con `DEDUP_LOOKUP_FAIL_MSG`
+    // sin preparar adjuntos, sin llamar a Resend, sin llamar a la RPC y sin
+    // insertar filas. El mensaje NO afirma que ningún correo nuevo se envió.
+    //
+    // Si existe fila terminal exitosa: NO se prepara adjuntos, NO se llama a
+    // Resend, NO se inserta otra fila. Se conserva `proveedor_message_id`, se
+    // ejecuta la RPC (reparación de estado) y se devuelve el contrato. Para
+    // el caso `enviado_trazabilidad_parcial`, `warning:"trazabilidad_parcial"`
+    // se adosa SÓLO cuando la reparación termina ok:true sin otro warning.
     // ─────────────────────────────────────────────────────────────────────────
     {
-      const { data: prevEnviados } = await supabaseAdmin
+      const { data: prevEnviados, error: prevErr } = await supabaseAdmin
         .from("envios_contratacion")
-        .select("id, proveedor_message_id, created_at")
+        .select("id, proveedor_message_id, estado_envio, created_at")
         .eq("expediente_id", data.expedienteId)
-        .eq("estado_envio", "enviado")
+        .in("estado_envio", ["enviado", "enviado_trazabilidad_parcial"])
         .order("created_at", { ascending: false })
         .order("id", { ascending: false })
         .limit(1);
+      if (prevErr) {
+        console.error("[contratacion] dedup lookup falló (fail-closed)", {
+          expedienteId: data.expedienteId,
+          err: prevErr.message,
+        });
+        throw new Error(DEDUP_LOOKUP_FAIL_MSG);
+      }
       const prev = (prevEnviados ?? [])[0] as
-        | { id: string; proveedor_message_id: string | null; created_at: string }
+        | {
+            id: string;
+            proveedor_message_id: string | null;
+            estado_envio: string;
+            created_at: string;
+          }
         | undefined;
       if (prev) {
         const messageId = prev.proveedor_message_id ?? null;
         const expectedEstadoCaso =
           ((exp as { estado_caso: string | null }).estado_caso) ?? null;
-        return await callRpcAndClassify({
+        const result = await callRpcAndClassify({
           expectedEstadoCaso,
           messageId,
           deduped: true,
         });
+        return applyTrazabilidadParcialWarning(
+          result,
+          prev.estado_envio === "enviado_trazabilidad_parcial",
+        );
       }
     }
 
     // ─────────────────────────────────────────────────────────────────────────
+    // A partir de aquí es ruta de ENVÍO NUEVO. Validamos payload completo
+    // (`NuevoEnvioSchema`): idempotencyKey, destinatarios, asunto, cuerpo y
+    // al menos 1 adjunto. Cualquier ausencia rechaza con ZodError explícito.
+    // ─────────────────────────────────────────────────────────────────────────
+    const nuevo = NuevoEnvioSchema.parse(data);
+
+    // ─────────────────────────────────────────────────────────────────────────
     // FASE 0 — Registro del intento (garantiza que Auditoría lo vea).
     // ─────────────────────────────────────────────────────────────────────────
-    const intentoDocs = data.attachments.map((a) => ({
+    const intentoDocs = nuevo.attachments.map((a) => ({
       name: a.filename,
       type: a.contentType,
       size: Math.floor((a.contentBase64.length * 3) / 4),
@@ -206,14 +291,14 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       const { data: inserted, error: insertErr } = await supabase
         .from("envios_contratacion")
         .insert({
-          expediente_id: data.expedienteId,
+          expediente_id: nuevo.expedienteId,
           user_id: userId,
-          destinatarios: data.destinatarios,
-          asunto: data.asunto,
+          destinatarios: nuevo.destinatarios,
+          asunto: nuevo.asunto,
           documentos: intentoDocs,
           estado_envio: "preparando",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          idempotency_key: data.idempotencyKey as any,
+          idempotency_key: nuevo.idempotencyKey as any,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } as any)
         .select("id")
@@ -223,24 +308,48 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         const code = (insertErr as { code?: string }).code;
         const msg = insertErr.message || "";
         if (code === "23505" || /duplicate key|unique/i.test(msg)) {
-          const { data: prev } = await supabaseAdmin
+          // FAIL-CLOSED: capturar `error` del maybeSingle. Ante fallo no se
+          // asume "existe" ni "no existe"; se aborta sin llamar a RPC.
+          const { data: prev, error: prev23Err } = await supabaseAdmin
             .from("envios_contratacion")
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .select("id, estado_envio, proveedor_message_id, error")
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .eq("idempotency_key" as any, data.idempotencyKey as any)
+            .eq("idempotency_key" as any, nuevo.idempotencyKey as any)
             .maybeSingle();
-          if (prev) {
-            const estado = (prev as { estado_envio: string }).estado_envio;
-            const messageId = (prev as { proveedor_message_id: string | null }).proveedor_message_id;
-            if (estado === "enviado") return { ok: true, envioExitoso: true as const, messageId, warning: null, deduped: true } as const;
-            if (estado === "enviado_trazabilidad_parcial") return { ok: true, envioExitoso: true as const, messageId, warning: "trazabilidad_parcial" as const, deduped: true };
-            if (estado === "preparando") {
-              throw new Error("Este envío ya está en curso. Espera a que finalice antes de reintentar.");
-            }
-            throw new Error("Este intento ya se registró como fallido. Cierra el modal y vuelve a abrirlo para reintentar (se generará un nuevo identificador).");
+          if (prev23Err) {
+            console.error("[contratacion] idempotency lookup falló tras 23505", {
+              err: prev23Err.message,
+            });
+            throw new Error(IDEMPOTENCY_LOOKUP_FAIL_MSG);
           }
-          throw new Error("Ya hay un envío a Contratación en curso para este expediente. Espera a que termine antes de intentar nuevamente.");
+          if (!prev) {
+            throw new Error(
+              "Se detectó una colisión de idempotencia pero no fue posible localizar el registro correspondiente. Reintenta en unos minutos.",
+            );
+          }
+          const estado = (prev as { estado_envio: string }).estado_envio;
+          const messageId = (prev as { proveedor_message_id: string | null }).proveedor_message_id;
+          // Estados terminales exitosos → SIEMPRE ejecutar RPC (reparación),
+          // NUNCA retornar éxito directo sin intentar reparar el expediente.
+          if (estado === "enviado" || estado === "enviado_trazabilidad_parcial") {
+            const expectedEstadoCaso =
+              ((exp as { estado_caso: string | null }).estado_caso) ?? null;
+            const result = await callRpcAndClassify({
+              expectedEstadoCaso,
+              messageId,
+              deduped: true,
+            });
+            return applyTrazabilidadParcialWarning(
+              result,
+              estado === "enviado_trazabilidad_parcial",
+            );
+          }
+          if (estado === "preparando") {
+            throw new Error("Este envío ya está en curso. Espera a que finalice antes de reintentar.");
+          }
+          // `error`, `cancelado` u otros no-terminales-exitosos.
+          throw new Error("Este intento ya se registró como fallido. Cierra el modal y vuelve a abrirlo para reintentar (se generará un nuevo identificador).");
         }
         throw new Error("No se pudo registrar el intento de envío. Reintenta o contacta a soporte.");
       }
@@ -261,7 +370,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       // ───────────────────────────────────────────────────────────────────────
       // FASE 1 — Límite de adjuntos (con trazabilidad garantizada).
       // ───────────────────────────────────────────────────────────────────────
-      const limitViolation = detectAttachmentLimitViolation(data.attachments.length, CONTRATACION_ATTACHMENT_MAX);
+      const limitViolation = detectAttachmentLimitViolation(nuevo.attachments.length, CONTRATACION_ATTACHMENT_MAX);
       if (limitViolation) {
         await markError("validacion", limitViolation);
         throw new Error(limitViolation);
@@ -300,7 +409,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         .eq("activo", true);
       const activosLista = (destActivos ?? []).map((r) => (r as { email: string }).email);
       const { finales: destinatariosFinales, rechazados } = enforceDestinatariosServer(
-        data.destinatarios,
+        nuevo.destinatarios,
         activosLista,
       );
       if (rechazados.length > 0) {
@@ -341,7 +450,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       }
 
       // Ensamblado atado a expediente_id (source of truth = expediente_soportes).
-      const allowedAttachments = [...data.attachments];
+      const allowedAttachments = [...nuevo.attachments];
       const uniqueFilename = (filename: string) => {
         const clean = filename.replace(/[\r\n"<>]/g, "_").trim().slice(0, 180) || "soporte.pdf";
         const lower = new Set(allowedAttachments.map((a) => a.filename.toLowerCase()));
@@ -471,9 +580,9 @@ export const enviarContratacion = createServerFn({ method: "POST" })
             from: fromAddress,
             to: destinatariosFinales,
             reply_to: replyTo,
-            subject: data.asunto,
-            text: data.cuerpo,
-            html: await wrapNuvexEmail({ subject: data.asunto, bodyText: data.cuerpo }),
+            subject: nuevo.asunto,
+            text: nuevo.cuerpo,
+            html: await wrapNuvexEmail({ subject: nuevo.asunto, bodyText: nuevo.cuerpo }),
             attachments: allowedAttachments.map((a) => ({ filename: a.filename, content: a.contentBase64 })),
           }),
         });
