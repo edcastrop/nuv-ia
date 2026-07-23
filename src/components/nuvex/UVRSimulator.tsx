@@ -837,7 +837,7 @@ export function UVRSimulator({
   //      volver a estar listo, esta emisión reincidirá con el nuevo
   //      snapshot y disparará la transición `invalidate` o `ready` según
   //      corresponda dentro del contrato existente.
-  const standaloneLastHashRef = useRef<string | null>(null);
+  // (declaración movida junto a los demás refs de hash)
   useEffect(() => {
     if (init?.id) return;
     if (!currentQaSnapshot || !scenariosReady) {
