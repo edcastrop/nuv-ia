@@ -33,13 +33,13 @@ import {
 
 // ─── Mocks de infraestructura ────────────────────────────────────────
 // tanstack-react-start: `useServerFn` devuelve un fn async no-op.
-vi.mock("@tanstack/react-start", () => ({
-  useServerFn: () => vi.fn(async () => ({})),
-  createServerFn: () => ({
-    inputValidator: () => ({ handler: () => async () => ({}) }),
-    handler: () => async () => ({}),
-  }),
-}));
+vi.mock("@tanstack/react-start", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-start")>();
+  return {
+    ...actual,
+    useServerFn: () => vi.fn(async () => ({})),
+  };
+});
 
 vi.mock("@tanstack/react-router", async () => {
   const Link = (props: React.PropsWithChildren<{ to?: string; onClick?: () => void; className?: string }>) =>
