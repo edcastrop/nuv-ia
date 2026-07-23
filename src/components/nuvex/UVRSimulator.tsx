@@ -805,6 +805,11 @@ export function UVRSimulator({
     propuestasComercialesSnapshot,
   ]);
 
+  // Bloqueo estricto Opción A: no emitir hasta tener EXACTAMENTE 4 propuestas.
+  const scenariosReady = useMemo(
+    () => (propuestasComercialesSnapshot?.propuestas?.length ?? 0) === 4,
+    [propuestasComercialesSnapshot],
+  );
   // ── Modo standalone: emisión del snapshot NUVIA con dedup por hash ──
   // Contrato:
   //   1. Sólo emitimos cuando `currentQaSnapshot` está completo y tenemos
