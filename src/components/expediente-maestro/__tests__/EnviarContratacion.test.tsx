@@ -141,7 +141,7 @@ describe("EnviarContratacion — no invoca cambiarEstadoConValidacion (identidad
       enviarContratacionStub.mockResolvedValueOnce(resp as never);
       // Al invocar el stub imitando lo que haría el componente ante un click,
       // observamos que la mock de la transición cliente permanece intacta.
-      await enviarContratacionStub({} as never);
+      await (enviarContratacionStub as unknown as (a?: unknown) => Promise<unknown>)({});
       expect(cambiarEstadoConValidacionMock).not.toHaveBeenCalled();
     }
   });
