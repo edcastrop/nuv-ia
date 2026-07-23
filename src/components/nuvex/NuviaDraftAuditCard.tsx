@@ -478,7 +478,7 @@ export function NuviaDraftAuditCard({ mode, onCertificar, onSalir, onNuevaSimula
               <button
                 type="button"
                 onClick={handleAuditar}
-                disabled={state.kind === "loading" || state.kind === "idle" || state.kind === "waiting"}
+                disabled={state.kind === "loading" || state.kind === "idle" || state.kind === "waiting" || state.kind === "invalidated"}
                 className="rounded-lg border border-sky-400/40 bg-sky-400/15 px-3 py-1.5 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-sky-100 shadow-[0_10px_30px_-15px_rgba(56,189,248,0.55)] transition hover:bg-sky-400/25 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {state.kind === "loading" ? "Auditando…" : done ? "Reevaluar" : "Auditar con NUVIA"}
