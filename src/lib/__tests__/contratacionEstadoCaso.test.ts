@@ -333,3 +333,96 @@ describe("EnviarContratacion — el cliente no invoca cambiarEstadoConValidacion
     expect(cambiarEstadoConValidacionMock).not.toHaveBeenCalled();
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Regresión — Escenario real NUV_2026_MG_000063
+//
+// Antes de esta corrección, `enviarContratacion` incluía una FASE PRE-0.5 que
+// consultaba `envios_contratacion` filtrando por
+//   estado_envio IN ('enviado', 'enviado_trazabilidad_parcial')
+// y si encontraba ALGUNA fila abortaba el flujo antes de insertar un nuevo
+// registro y antes de llamar a Resend. Ese bloqueo impidió que Marsela Gómez
+// pudiera reenviar el paquete del expediente NUV_2026_MG_000063 tras corregir
+// la whitelist de destinatarios: existía un envío previo con destinatarios
+// incompletos y todo intento posterior devolvía `deduped:true` sin insertar
+// una fila nueva ni invocar al proveedor de correo.
+//
+// La corrección elimina exclusivamente esa FASE PRE-0.5. La deduplicación
+// contra reenvíos accidentales sigue vigente y depende únicamente de
+// `idempotencyKey` (schema + UNIQUE en BD + rama SQLSTATE 23505).
+//
+// Estas aserciones se hacen sobre el texto real del módulo servidor para
+// evitar regresiones silenciosas: si alguien re-introduce el bloqueo por
+// estado_envio, este test falla.
+// ─────────────────────────────────────────────────────────────────────────────
+
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+describe("Regresión NUV_2026_MG_000063 — sin bloqueo por envío exitoso previo", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const source = readFileSync(
+    resolve(here, "../contratacion.functions.ts"),
+    "utf8",
+  );
+
+  it("NO existe una consulta pre-flight que filtre por estado_envio ('enviado','enviado_trazabilidad_parcial')", () => {
+    const bloqueoPrevio =
+      /\.in\(\s*["']estado_envio["']\s*,\s*\[\s*["']enviado["']\s*,\s*["']enviado_trazabilidad_parcial["']\s*\]\s*\)/;
+    expect(source).not.toMatch(bloqueoPrevio);
+  });
+
+  it("NO existe un `return applyTrazabilidadParcialWarning(...)` antes de la inserción del intento", () => {
+    // La única llamada legítima a applyTrazabilidadParcialWarning ahora está
+    // dentro de la rama 23505 (colisión de idempotencyKey), NUNCA como
+    // shortcut pre-flight que evita insertar la nueva fila.
+    const idxInsert = source.indexOf('expediente_id: nuevo.expedienteId');
+    const idx23505 = source.indexOf('code === "23505"');
+    expect(idxInsert).toBeGreaterThan(0);
+    expect(idx23505).toBeGreaterThan(idxInsert);
+    const preFlight = source.slice(0, idxInsert);
+    expect(preFlight).not.toMatch(/return\s+applyTrazabilidadParcialWarning/);
+  });
+
+  it("La rama UNIQUE 23505 sigue reparando estado terminal exitoso vía RPC", () => {
+    // Cada nuevo envío manual usa un idempotencyKey fresco → no colisiona con
+    // el histórico. Un mismo intento repetido (doble clic / retry) SÍ
+    // colisiona y debe re-ejecutar la RPC de reparación sin re-enviar correo.
+    expect(source).toMatch(/code === "23505"/);
+    expect(source).toMatch(
+      /estado === "enviado" \|\| estado === "enviado_trazabilidad_parcial"/,
+    );
+    const branch = source.slice(source.indexOf('code === "23505"'));
+    expect(branch).toMatch(/callRpcAndClassify\(\{/);
+  });
+
+  it("Un nuevo envío manual alcanza la ruta que inserta fila y llama a Resend", () => {
+    // Presencia estructural del pipeline post-inserción: se sigue insertando
+    // en envios_contratacion con estado 'preparando' y, en ausencia de
+    // colisión, se llega al POST hacia Resend.
+    expect(source).toMatch(/estado_envio:\s*["']preparando["']/);
+    expect(source).toMatch(/fetch\(`\$\{RESEND_GATEWAY\}\/emails`/);
+    // El UPDATE que sella el envío exitoso preserva SOLO la fila insertada
+    // (no toca filas históricas: se filtra por `.eq("id", intentoId)`).
+    expect(source).toMatch(
+      /estado_envio:\s*["']enviado["'],\s*proveedor_message_id:\s*messageId/,
+    );
+    expect(source).toMatch(/\.eq\("id",\s*intentoId\)/);
+  });
+
+  it("Ningún UPDATE sobre envios_contratacion se scopea por expediente_id (los históricos son intocables)", () => {
+    // Todos los UPDATE de envios_contratacion deben apuntar al intentoId
+    // recién insertado. Si aparece un UPDATE filtrado por expediente_id,
+    // podría estar reescribiendo el histórico → regresión.
+    const updates =
+      source.match(
+        /from\("envios_contratacion"\)[\s\S]*?\.update\([\s\S]*?\.eq\("[^"]+",\s*[^)]+\)/g,
+      ) ?? [];
+    expect(updates.length).toBeGreaterThan(0);
+    for (const u of updates) {
+      expect(u).toMatch(/\.eq\("id",\s*intentoId\)/);
+      expect(u).not.toMatch(/\.eq\("expediente_id"/);
+    }
+  });
+});
