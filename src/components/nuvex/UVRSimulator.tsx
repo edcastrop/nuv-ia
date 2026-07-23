@@ -1339,42 +1339,31 @@ export function UVRSimulator({
               </Alert>
             )}
 
-            {datosCompletos && calc && (
+            {datosCompletos && calc && escenariosResult && (
               <PropuestasComerciales
                 mode="uvr"
+                controlled
                 input={input}
                 escenarioActual={calc.escenarioActual}
-                plazoInicial={plazoInicial}
                 cuotasPendientes={cuotasBaseSimulacion}
                 baseCredito={baseCredito > 0 ? baseCredito : saldoBase}
                 dineroPagado={baseCredito > 0 ? dineroPagadoFecha : 0}
                 perfilCliente={client.perfil}
                 ingresos={client.ingresos}
                 onIngresosChange={(ingresos) => setClient((prev) => ({ ...prev, ingresos }))}
-                // El hijo re-siembra su estado interno cada vez que el motor
-                // del padre entrega una nueva `cuotasList` (ej. escala
-                // regenerada por cambio de `plazoInicial`).
-                initialState={{
-                  cuotasList:
-                    escenariosResult?.cuotasList ??
-                    (userDirty && userCuotasList.length === 4
-                      ? userCuotasList
-                      : []),
-                  recomendadaIdx:
-                    escenariosResult?.recomendadaListIdx ?? userRecomendadaListIdx,
-                }}
-                onStateChange={(snapshot) => {
+                cuotasList={escenariosResult.cuotasList}
+                recomendadaIdx={escenariosResult.recomendadaListIdx}
+                propuestas={escenariosResult.escenarios}
+                onCuotasChange={(next) => {
                   // Único punto de captura de ediciones del analista. El
                   // padre re-invoca `buildUvrEscenarios` con estos datos;
-                  // no existe una segunda ruta de cálculo aguas abajo.
-                  setUserCuotasList(snapshot.cuotasList);
-                  setUserRecomendadaListIdx(snapshot.recomendadaIdx);
+                  // no hay useEffect ni onStateChange en el hijo.
+                  setUserCuotasList(next);
                   setUserDirty(true);
                 }}
-                onRecomendadaChange={() => {
-                  // No-op: la recomendada la resuelve el motor del padre a
-                  // partir de `userRecomendadaListIdx`. El hijo la señala
-                  // vía onStateChange en la misma tick.
+                onRecomendadaIdxChange={(idx) => {
+                  setUserRecomendadaListIdx(idx);
+                  setUserDirty(true);
                 }}
               />
             )}
