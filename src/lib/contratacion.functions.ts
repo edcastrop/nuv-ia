@@ -215,60 +215,28 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     };
 
     // ─────────────────────────────────────────────────────────────────────────
-    // FASE PRE-0.5 — Dedupe por envío exitoso previo (SQL, independiente de
-    // idempotencyKey). Cubre AMBOS estados terminales exitosos:
-    //   - "enviado"
-    //   - "enviado_trazabilidad_parcial"
+    // NOTA — La deduplicación por estado_envio ("enviado" /
+    // "enviado_trazabilidad_parcial") fue ELIMINADA de forma deliberada.
     //
-    // FAIL-CLOSED: si la consulta falla se ABORTA con `DEDUP_LOOKUP_FAIL_MSG`
-    // sin preparar adjuntos, sin llamar a Resend, sin llamar a la RPC y sin
-    // insertar filas. El mensaje NO afirma que ningún correo nuevo se envió.
+    // Motivo: bloqueaba nuevos envíos manuales legítimos posteriores a un
+    // envío exitoso previo (p. ej. cuando la whitelist de destinatarios se
+    // corrige y el usuario debe reenviar con los destinatarios correctos).
     //
-    // Si existe fila terminal exitosa: NO se prepara adjuntos, NO se llama a
-    // Resend, NO se inserta otra fila. Se conserva `proveedor_message_id`, se
-    // ejecuta la RPC (reparación de estado) y se devuelve el contrato. Para
-    // el caso `enviado_trazabilidad_parcial`, `warning:"trazabilidad_parcial"`
-    // se adosa SÓLO cuando la reparación termina ok:true sin otro warning.
+    // La deduplicación real contra reenvíos ACCIDENTALES (doble clic, retry
+    // automático, refresh) sigue vigente y es la única fuente de verdad:
+    //
+    //   1. El schema exige un `idempotencyKey` UUID por intento.
+    //   2. La tabla `envios_contratacion` tiene UNIQUE sobre `idempotency_key`.
+    //   3. Un choque UNIQUE (SQLSTATE 23505) se maneja abajo en FASE 0 y,
+    //      cuando el registro previo está en estado terminal exitoso, ejecuta
+    //      la RPC de reparación en lugar de re-enviar.
+    //
+    // Cada nuevo envío manual del usuario genera un `idempotencyKey` fresco
+    // en el frontend, por lo que produce un nuevo INSERT, un nuevo
+    // `proveedor_message_id` y una nueva invocación a Resend. Los registros
+    // históricos NUNCA se actualizan, eliminan ni sobrescriben.
     // ─────────────────────────────────────────────────────────────────────────
-    {
-      const { data: prevEnviados, error: prevErr } = await supabaseAdmin
-        .from("envios_contratacion")
-        .select("id, proveedor_message_id, estado_envio, created_at")
-        .eq("expediente_id", data.expedienteId)
-        .in("estado_envio", ["enviado", "enviado_trazabilidad_parcial"])
-        .order("created_at", { ascending: false })
-        .order("id", { ascending: false })
-        .limit(1);
-      if (prevErr) {
-        console.error("[contratacion] dedup lookup falló (fail-closed)", {
-          expedienteId: data.expedienteId,
-          err: prevErr.message,
-        });
-        throw new Error(DEDUP_LOOKUP_FAIL_MSG);
-      }
-      const prev = (prevEnviados ?? [])[0] as
-        | {
-            id: string;
-            proveedor_message_id: string | null;
-            estado_envio: string;
-            created_at: string;
-          }
-        | undefined;
-      if (prev) {
-        const messageId = prev.proveedor_message_id ?? null;
-        const expectedEstadoCaso =
-          ((exp as { estado_caso: string | null }).estado_caso) ?? null;
-        const result = await callRpcAndClassify({
-          expectedEstadoCaso,
-          messageId,
-          deduped: true,
-        });
-        return applyTrazabilidadParcialWarning(
-          result,
-          prev.estado_envio === "enviado_trazabilidad_parcial",
-        );
-      }
-    }
+
 
     // ─────────────────────────────────────────────────────────────────────────
     // A partir de aquí es ruta de ENVÍO NUEVO. Validamos payload completo
