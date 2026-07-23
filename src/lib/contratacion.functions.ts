@@ -588,7 +588,7 @@ export type EnvioClassifyOutput =
     };
 
 export function classifyEnvioResult(input: EnvioClassifyInput): EnvioClassifyOutput {
-  if (input.rpcResult === "actualizado" || input.rpcResult === "ya_actualizado") {
+  if (input.rpcResult !== "estado_cambio_concurrente") {
     return {
       ok: true,
       envioExitoso: true,
