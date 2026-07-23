@@ -228,6 +228,8 @@ export function UVRSimulator({
   const lastAttemptedHashRef = useRef<string | null>(null);
   const lastSuccessfulHashRef = useRef<string | null>(null);
   const lastFailedHashRef = useRef<string | null>(null);
+  // Guard de emisión standalone — separado de los hashes del Auto-QA.
+  const standaloneLastHashRef = useRef<string | null>(null);
 
 
 
