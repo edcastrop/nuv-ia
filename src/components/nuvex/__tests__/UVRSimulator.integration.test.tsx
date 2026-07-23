@@ -354,10 +354,9 @@ describe("UVRSimulator (RTL) — extracto Bancolombia real (caso 000014)", () =>
     // Sembramos con override manual [60,90,120,150] y recomendada=1.
     seedBancolombiaDraft();
     const raw = JSON.parse(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")!);
-    raw.propuestasComerciales = JSON.stringify({
-      cuotasList: [60, 90, 120, 150],
-      recomendadaIdx: 1,
-    });
+    // El draft persiste `propuestasComerciales` como OBJETO (ver
+    // useSimulatorDraft + UVRSimulator L272), no como string.
+    raw.propuestasComerciales = { cuotasList: [60, 90, 120, 150], recomendadaIdx: 1 };
     sessionStorage.setItem("nuvex.simulatorDraft.uvr.standalone", JSON.stringify(raw));
 
     const captured = captureDraftRawEvents();
