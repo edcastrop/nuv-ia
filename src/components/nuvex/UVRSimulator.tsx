@@ -313,6 +313,18 @@ export function UVRSimulator({
     onSaved?.(e);
   };
   const handleResetMode = () => {
+    // Reset comercial completo — cuotas manuales, override de recomendada,
+    // bandera `userDirty`, guard del hash standalone y snapshot Auto-QA.
+    // Sin este reset, "Nueva simulación" reutilizaría ediciones anteriores
+    // aunque el modo se recreara en el padre.
+    setUserCuotasList([]);
+    setUserRecomendadaListIdx(-1);
+    setUserDirty(false);
+    standaloneLastHashRef.current = null;
+    inflightHashRef.current = null;
+    lastAttemptedHashRef.current = null;
+    lastSuccessfulHashRef.current = null;
+    lastFailedHashRef.current = null;
     clearSimulatorDraft("uvr", init?.id);
     onReset?.();
   };
