@@ -546,3 +546,98 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     // (evita "declared but never used" si el import quedara aislado por refactors).
     void CONTRATACION_CORREO_OBLIGATORIO;
   });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Helpers puros exportados para pruebas unitarias. La clasificación de "etapa
+// posterior" se hace SIEMPRE en TypeScript usando los helpers del Pipeline —
+// la RPC nunca decide etapas.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ETAPA_CONTRATACION_ID = "contratacion" as const;
+
+export function isEtapaPosteriorDeContratacion(
+  estadoCaso: string | null | undefined,
+): boolean {
+  const idxContratacion = indexOfEtapa(ETAPA_CONTRATACION_ID);
+  const etapaActual = computeEtapaActual({ estado_caso: estadoCaso ?? null });
+  return indexOfEtapa(etapaActual) > idxContratacion;
+}
+
+export type EnvioClassifyInput =
+  | {
+      rpcResult: "actualizado" | "ya_actualizado";
+      messageId: string | null;
+      deduped: boolean;
+    }
+  | {
+      rpcResult: "estado_cambio_concurrente";
+      freshEstadoCaso: string | null;
+      messageId: string | null;
+      deduped: boolean;
+    };
+
+export type EnvioClassifyOutput =
+  | { ok: true; envioExitoso: true; messageId: string | null; deduped: boolean; warning: null }
+  | { ok: true; envioExitoso: true; messageId: string | null; deduped: boolean; warning: "etapa_posterior" }
+  | {
+      ok: false;
+      envioExitoso: true;
+      codigo: "ENVIO_OK_ESTADO_NO_ACTUALIZADO" | "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO";
+      messageId: string | null;
+      deduped: boolean;
+    };
+
+export function classifyEnvioResult(input: EnvioClassifyInput): EnvioClassifyOutput {
+  if (input.rpcResult === "actualizado" || input.rpcResult === "ya_actualizado") {
+    return {
+      ok: true,
+      envioExitoso: true,
+      messageId: input.messageId,
+      deduped: input.deduped,
+      warning: null,
+    };
+  }
+  const fresh = input.freshEstadoCaso;
+  // Otro proceso ya alineó el estado al objetivo → éxito idempotente.
+  if (fresh === "enviado_contratacion") {
+    return {
+      ok: true,
+      envioExitoso: true,
+      messageId: input.messageId,
+      deduped: input.deduped,
+      warning: null,
+    };
+  }
+  if (isEtapaPosteriorDeContratacion(fresh)) {
+    return {
+      ok: true,
+      envioExitoso: true,
+      messageId: input.messageId,
+      deduped: input.deduped,
+      warning: "etapa_posterior",
+    };
+  }
+  return {
+    ok: false,
+    envioExitoso: true,
+    codigo: input.deduped
+      ? "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO"
+      : "ENVIO_OK_ESTADO_NO_ACTUALIZADO",
+    messageId: input.messageId,
+    deduped: input.deduped,
+  };
+}
+
+// Determinismo: escoge el envío `enviado` más reciente por (created_at DESC, id DESC).
+// La misma ordenación se aplica en SQL con `ORDER BY created_at DESC, id DESC LIMIT 1`.
+export function pickLatestEnvioExitoso<
+  T extends { estado_envio: string; created_at: string; id: string },
+>(rows: ReadonlyArray<T>): T | null {
+  const enviados = rows.filter((r) => r.estado_envio === "enviado");
+  if (enviados.length === 0) return null;
+  const sorted = [...enviados].sort((a, b) => {
+    if (a.created_at !== b.created_at) return a.created_at < b.created_at ? 1 : -1;
+    return a.id < b.id ? 1 : -1;
+  });
+  return sorted[0];
+}
