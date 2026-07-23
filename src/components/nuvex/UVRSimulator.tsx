@@ -228,6 +228,8 @@ export function UVRSimulator({
   const lastAttemptedHashRef = useRef<string | null>(null);
   const lastSuccessfulHashRef = useRef<string | null>(null);
   const lastFailedHashRef = useRef<string | null>(null);
+  // Guard de emisión standalone — separado de los hashes del Auto-QA.
+  const standaloneLastHashRef = useRef<string | null>(null);
 
 
 
@@ -313,6 +315,18 @@ export function UVRSimulator({
     onSaved?.(e);
   };
   const handleResetMode = () => {
+    // Reset comercial completo — cuotas manuales, override de recomendada,
+    // bandera `userDirty`, guard del hash standalone y snapshot Auto-QA.
+    // Sin este reset, "Nueva simulación" reutilizaría ediciones anteriores
+    // aunque el modo se recreara en el padre.
+    setUserCuotasList([]);
+    setUserRecomendadaListIdx(-1);
+    setUserDirty(false);
+    standaloneLastHashRef.current = null;
+    inflightHashRef.current = null;
+    lastAttemptedHashRef.current = null;
+    lastSuccessfulHashRef.current = null;
+    lastFailedHashRef.current = null;
     clearSimulatorDraft("uvr", init?.id);
     onReset?.();
   };
@@ -805,16 +819,34 @@ export function UVRSimulator({
     propuestasComercialesSnapshot,
   ]);
 
-  // Modo standalone: emitir snapshot desde el formulario (no `p.raw`).
   // Bloqueo estricto Opción A: no emitir hasta tener EXACTAMENTE 4 propuestas.
   const scenariosReady = useMemo(
     () => (propuestasComercialesSnapshot?.propuestas?.length ?? 0) === 4,
     [propuestasComercialesSnapshot],
   );
+  // ── Modo standalone: emisión del snapshot NUVIA con dedup por hash ──
+  // Contrato:
+  //   1. Sólo emitimos cuando `currentQaSnapshot` está completo y tenemos
+  //      EXACTAMENTE 4 propuestas (`scenariosReady`).
+  //   2. Deduplicación STANDALONE por `hashQaSnapshot`, SEPARADA del
+  //      Auto-QA de expediente (que usa sus propios refs de hash).
+  //   3. Si el formulario deja de estar listo (por ejemplo, el analista
+  //      limpia un campo crítico o pierde una propuesta), reseteamos el
+  //      guard local. La `NuviaDraftAuditCard` mantiene su estado
+  //      (`ready`/`done`/`invalidated`) hasta recibir un nuevo hash: al
+  //      volver a estar listo, esta emisión reincidirá con el nuevo
+  //      snapshot y disparará la transición `invalidate` o `ready` según
+  //      corresponda dentro del contrato existente.
+  // (declaración movida junto a los demás refs de hash)
   useEffect(() => {
     if (init?.id) return;
-    if (!currentQaSnapshot) return;
-    if (!scenariosReady) return;
+    if (!currentQaSnapshot || !scenariosReady) {
+      standaloneLastHashRef.current = null;
+      return;
+    }
+    const h = hashQaSnapshot(currentQaSnapshot);
+    if (standaloneLastHashRef.current === h) return;
+    standaloneLastHashRef.current = h;
     emitDraftRawReady(currentQaSnapshot);
   }, [init?.id, currentQaSnapshot, scenariosReady]);
 
@@ -1337,6 +1369,17 @@ export function UVRSimulator({
               <Alert tone="error">
                 Revisar datos. El ahorro u honorarios calculados son negativos.
               </Alert>
+            )}
+
+            {escenariosResult?.regeneradaPorInvalidez && (
+              <div data-testid="uvr-regenerada-alert">
+                <Alert tone="warn">
+                  Los escenarios comerciales guardados dejaron de ser válidos
+                  para el plazo restante actual. NUVIA regeneró la escala
+                  automática por <b>plazo inicial</b>. Revisa las cuotas antes
+                  de certificar.
+                </Alert>
+              </div>
             )}
 
             {datosCompletos && calc && escenariosResult && (
