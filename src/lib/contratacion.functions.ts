@@ -37,6 +37,7 @@ import {
   resolveCotitularesFromClienteData,
   type SoporteRow,
 } from "@/lib/contratacionValidacion";
+import { computeEtapaActual, indexOfEtapa } from "@/lib/pipelineEtapas";
 
 const AttachmentSchema = z.object({
   filename: z.string().min(1).max(255),
@@ -74,7 +75,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     // ─────────────────────────────────────────────────────────────────────────
     const { data: exp, error: expErr } = await supabase
       .from("expedientes")
-      .select("id, cliente_nombre, estado, asesor_id, credito_data, cliente_data")
+      .select("id, cliente_nombre, estado, estado_caso, asesor_id, credito_data, cliente_data")
       .eq("id", data.expedienteId)
       .single();
     if (expErr || !exp) {
@@ -86,6 +87,110 @@ export const enviarContratacion = createServerFn({ method: "POST" })
     // Admin client (bypass RLS) SOLO para escrituras de trazabilidad y lecturas
     // de storage/soportes filtradas por expediente_id. Nunca para autorización.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helper: invoca la RPC atómica `avanzar_expediente_a_enviado_contratacion`
+    // (SECURITY DEFINER, GRANT sólo a service_role → usar supabaseAdmin) con
+    // guarda optimista basada en el estado_caso que TypeScript leyó y validó,
+    // y clasifica la respuesta en el contrato final serializable.
+    // ─────────────────────────────────────────────────────────────────────────
+    const callRpcAndClassify = async (args: {
+      expectedEstadoCaso: string | null;
+      messageId: string | null;
+      deduped: boolean;
+    }): Promise<EnvioClassifyOutput> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: rpcRes, error: rpcErr } = await (supabaseAdmin as any).rpc(
+        "avanzar_expediente_a_enviado_contratacion",
+        {
+          p_expediente_id: data.expedienteId,
+          p_user_id: userId,
+          p_estado_caso_esperado: args.expectedEstadoCaso,
+          p_origen: "operativo_envio",
+        },
+      );
+      if (rpcErr) {
+        console.error("[contratacion] RPC estado falló", {
+          expedienteId: data.expedienteId,
+          err: rpcErr.message,
+        });
+        return {
+          ok: false,
+          envioExitoso: true,
+          codigo: args.deduped
+            ? "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO"
+            : "ENVIO_OK_ESTADO_NO_ACTUALIZADO",
+          messageId: args.messageId,
+          deduped: args.deduped,
+        };
+      }
+      const rpcResult = String(rpcRes ?? "");
+      if (rpcResult === "actualizado" || rpcResult === "ya_actualizado") {
+        return classifyEnvioResult({
+          rpcResult,
+          messageId: args.messageId,
+          deduped: args.deduped,
+        });
+      }
+      if (rpcResult === "estado_cambio_concurrente") {
+        // UNA sola reevaluación con lectura fresca (sin lock).
+        const { data: fresh } = await supabaseAdmin
+          .from("expedientes")
+          .select("estado_caso")
+          .eq("id", data.expedienteId)
+          .maybeSingle();
+        const freshEstado =
+          ((fresh as { estado_caso: string | null } | null)?.estado_caso) ?? null;
+        return classifyEnvioResult({
+          rpcResult: "estado_cambio_concurrente",
+          freshEstadoCaso: freshEstado,
+          messageId: args.messageId,
+          deduped: args.deduped,
+        });
+      }
+      // Respuesta no reconocida: correo enviado, estado no confirmado.
+      return {
+        ok: false,
+        envioExitoso: true,
+        codigo: args.deduped
+          ? "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO"
+          : "ENVIO_OK_ESTADO_NO_ACTUALIZADO",
+        messageId: args.messageId,
+        deduped: args.deduped,
+      };
+    };
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // FASE PRE-0.5 — Dedupe por envío exitoso previo (SQL, independiente de
+    // idempotencyKey). Si ya existe un `envios_contratacion` con
+    // `estado_envio='enviado'` para este expediente, NO preparamos adjuntos,
+    // NO llamamos a Resend y NO insertamos otra fila: sólo intentamos reparar
+    // el estado canónico vía RPC y devolvemos el contrato correspondiente,
+    // preservando `proveedor_message_id`.
+    // ─────────────────────────────────────────────────────────────────────────
+    {
+      const { data: prevEnviados } = await supabaseAdmin
+        .from("envios_contratacion")
+        .select("id, proveedor_message_id, created_at")
+        .eq("expediente_id", data.expedienteId)
+        .eq("estado_envio", "enviado")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .limit(1);
+      const prev = (prevEnviados ?? [])[0] as
+        | { id: string; proveedor_message_id: string | null; created_at: string }
+        | undefined;
+      if (prev) {
+        const messageId = prev.proveedor_message_id ?? null;
+        const expectedEstadoCaso =
+          ((exp as { estado_caso: string | null }).estado_caso) ?? null;
+        return await callRpcAndClassify({
+          expectedEstadoCaso,
+          messageId,
+          deduped: true,
+        });
+      }
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // FASE 0 — Registro del intento (garantiza que Auditoría lo vea).
@@ -128,8 +233,8 @@ export const enviarContratacion = createServerFn({ method: "POST" })
           if (prev) {
             const estado = (prev as { estado_envio: string }).estado_envio;
             const messageId = (prev as { proveedor_message_id: string | null }).proveedor_message_id;
-            if (estado === "enviado") return { ok: true, messageId, warning: null, deduped: true } as const;
-            if (estado === "enviado_trazabilidad_parcial") return { ok: true, messageId, warning: "trazabilidad_parcial" as const, deduped: true };
+            if (estado === "enviado") return { ok: true, envioExitoso: true as const, messageId, warning: null, deduped: true } as const;
+            if (estado === "enviado_trazabilidad_parcial") return { ok: true, envioExitoso: true as const, messageId, warning: "trazabilidad_parcial" as const, deduped: true };
             if (estado === "preparando") {
               throw new Error("Este envío ya está en curso. Espera a que finalice antes de reintentar.");
             }
@@ -396,41 +501,33 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       const messageId = body && typeof body === "object" && "id" in body ? String((body as Record<string, unknown>).id) : null;
 
       // ───────────────────────────────────────────────────────────────────────
-      // FASE 7 — Trazabilidad post-envío
+      // FASE 7 — Trazabilidad post-envío:
+      //   (a) marcar `envios_contratacion` como enviado (con message_id/docs)
+      //   (b) RPC atómica que actualiza `expedientes` (estado + estado_caso) e
+      //       inserta `expediente_historial` bajo bloqueo con guarda optimista.
+      //   La clasificación de "etapa posterior" ocurre en TypeScript usando los
+      //   helpers del Pipeline — la RPC nunca decide etapas.
       // ───────────────────────────────────────────────────────────────────────
-      let trazabilidadOk = true;
-
       const { error: envUpErr } = await supabaseAdmin
         .from("envios_contratacion")
         .update({ estado_envio: "enviado", proveedor_message_id: messageId, documentos: docsMeta, destinatarios: destinatariosFinales, error: null })
         .eq("id", intentoId);
-      if (envUpErr) { trazabilidadOk = false; console.error("[contratacion] update envio failed", { intentoId, err: envUpErr.message }); }
-
-      const estadoAnterior = (exp as { estado: string }).estado;
-      if (estadoAnterior !== "ENVIADO_CONTRATACION") {
-        const { error: expUpErr } = await supabase.from("expedientes").update({ estado: "ENVIADO_CONTRATACION" }).eq("id", data.expedienteId);
-        if (expUpErr) { trazabilidadOk = false; console.error("[contratacion] update expediente failed", { intentoId, err: expUpErr.message }); }
-      }
-
-      const { error: histErr } = await supabase.from("expediente_historial").insert({
-        expediente_id: data.expedienteId,
-        estado_anterior: estadoAnterior as never,
-        estado_nuevo: "ENVIADO_CONTRATACION" as never,
-        user_id: userId,
-        nota: estadoAnterior === "ENVIADO_CONTRATACION"
-          ? `Reenvío a contratación (${destinatariosFinales.join(", ")})`
-          : `Documentación enviada a contratación (${destinatariosFinales.join(", ")})`,
-      });
-      if (histErr) { trazabilidadOk = false; console.error("[contratacion] historial failed", { intentoId, err: histErr.message }); }
-
-      if (!trazabilidadOk) {
+      if (envUpErr) {
+        console.error("[contratacion] update envio failed", { intentoId, err: envUpErr.message });
         await supabaseAdmin
           .from("envios_contratacion")
           .update({ estado_envio: "enviado_trazabilidad_parcial", proveedor_message_id: messageId, error: "[trazabilidad] correo enviado pero falló el registro interno" })
           .eq("id", intentoId);
-        return { ok: true, messageId, warning: "trazabilidad_parcial" as const, deduped: false };
+        return { ok: true, envioExitoso: true as const, messageId, warning: "trazabilidad_parcial" as const, deduped: false };
       }
-      return { ok: true, messageId, warning: null, deduped: false };
+
+      const expectedEstadoCaso =
+        ((exp as { estado_caso: string | null }).estado_caso) ?? null;
+      return await callRpcAndClassify({
+        expectedEstadoCaso,
+        messageId,
+        deduped: false,
+      });
     } catch (e) {
       try {
         if (intentoId) {
