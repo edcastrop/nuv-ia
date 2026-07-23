@@ -370,7 +370,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       // ───────────────────────────────────────────────────────────────────────
       // FASE 1 — Límite de adjuntos (con trazabilidad garantizada).
       // ───────────────────────────────────────────────────────────────────────
-      const limitViolation = detectAttachmentLimitViolation(data.attachments.length, CONTRATACION_ATTACHMENT_MAX);
+      const limitViolation = detectAttachmentLimitViolation(nuevo.attachments.length, CONTRATACION_ATTACHMENT_MAX);
       if (limitViolation) {
         await markError("validacion", limitViolation);
         throw new Error(limitViolation);
@@ -409,7 +409,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         .eq("activo", true);
       const activosLista = (destActivos ?? []).map((r) => (r as { email: string }).email);
       const { finales: destinatariosFinales, rechazados } = enforceDestinatariosServer(
-        data.destinatarios,
+        nuevo.destinatarios,
         activosLista,
       );
       if (rechazados.length > 0) {
@@ -450,7 +450,7 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       }
 
       // Ensamblado atado a expediente_id (source of truth = expediente_soportes).
-      const allowedAttachments = [...data.attachments];
+      const allowedAttachments = [...nuevo.attachments];
       const uniqueFilename = (filename: string) => {
         const clean = filename.replace(/[\r\n"<>]/g, "_").trim().slice(0, 180) || "soporte.pdf";
         const lower = new Set(allowedAttachments.map((a) => a.filename.toLowerCase()));
@@ -580,9 +580,9 @@ export const enviarContratacion = createServerFn({ method: "POST" })
             from: fromAddress,
             to: destinatariosFinales,
             reply_to: replyTo,
-            subject: data.asunto,
-            text: data.cuerpo,
-            html: await wrapNuvexEmail({ subject: data.asunto, bodyText: data.cuerpo }),
+            subject: nuevo.asunto,
+            text: nuevo.cuerpo,
+            html: await wrapNuvexEmail({ subject: nuevo.asunto, bodyText: nuevo.cuerpo }),
             attachments: allowedAttachments.map((a) => ({ filename: a.filename, content: a.contentBase64 })),
           }),
         });
