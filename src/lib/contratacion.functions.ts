@@ -45,12 +45,20 @@ const AttachmentSchema = z.object({
   contentType: z.string().min(1).max(120),
 });
 
-// Schema BASE: valida SOLO identificación + payload textual. NO valida cota
-// superior de adjuntos (esa se hace después de crear la fila `preparando`
-// para dejar rastro en Auditoría). Sí exige al menos 1 adjunto para no
-// permitir un ping vacío.
-const InputSchema = z.object({
+// ─────────────────────────────────────────────────────────────────────────────
+// Esquemas separados:
+//  - RepairLookupSchema: mínimo indispensable para la ruta de reparación.
+//    Sólo exige `expedienteId`. La reparación NO requiere idempotencyKey,
+//    destinatarios, asunto, cuerpo ni adjuntos.
+//  - NuevoEnvioSchema: exigencias completas para un envío NUEVO. Se valida
+//    únicamente cuando no existe un envío exitoso previo.
+//  - InputSchema (borde): passthrough tras validar sólo `expedienteId`.
+// ─────────────────────────────────────────────────────────────────────────────
+export const RepairLookupSchema = z.object({
   expedienteId: z.string().uuid(),
+});
+
+export const NuevoEnvioSchema = RepairLookupSchema.extend({
   idempotencyKey: z.string().uuid({
     message: "Falta idempotencyKey (protección contra envíos duplicados).",
   }),
@@ -59,6 +67,17 @@ const InputSchema = z.object({
   cuerpo: z.string().min(1).max(20000),
   attachments: z.array(AttachmentSchema).min(1),
 });
+
+const InputSchema = RepairLookupSchema.passthrough();
+
+// Mensajes fail-closed autorizados. Se exponen para que las pruebas verifiquen
+// que las ramas de error de lectura no pretenden garantizar el estado real
+// del envío ("no se envió ningún correo nuevo" está PROHIBIDO en esas ramas).
+export const DEDUP_LOOKUP_FAIL_MSG =
+  "No se pudo verificar si ya existe un envío anterior. Esta ejecución fue detenida y no continuará con un nuevo envío. Reintenta en unos minutos.";
+
+export const IDEMPOTENCY_LOOKUP_FAIL_MSG =
+  "No se pudo verificar el intento de envío existente. Esta ejecución fue detenida.";
 
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
