@@ -27,6 +27,11 @@ import {
   classifyEnvioResult,
   isEtapaPosteriorDeContratacion,
   pickLatestEnvioExitoso,
+  applyTrazabilidadParcialWarning,
+  RepairLookupSchema,
+  NuevoEnvioSchema,
+  DEDUP_LOOKUP_FAIL_MSG,
+  IDEMPOTENCY_LOOKUP_FAIL_MSG,
 } from "@/lib/contratacion.functions";
 
 describe("classifyEnvioResult — mapeo del contrato de respuesta", () => {
