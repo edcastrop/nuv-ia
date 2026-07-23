@@ -179,10 +179,20 @@ export function UVRSimulator({
   const [interesMensualExtracto, setInteresMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.interesMensualExtracto));
   const [capitalMensualExtracto, setCapitalMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.capitalMensualExtracto));
   const [beneficioFrechMensualExtracto, setBeneficioFrechMensualExtracto] = useState<number | undefined>(() => parseOcrMoney(draft.beneficioFrechMensualExtracto));
-  const [propuestasComercialesDraft, setPropuestasComercialesDraft] =
-    useState<PropuestasComercialesDraft | undefined>(() => draft.propuestasComerciales);
-  const [propuestasComercialesSnapshot, setPropuestasComercialesSnapshot] =
-    useState<PropuestasComercialesSnapshot | null>(null);
+  // Estado del analista para el bloque de propuestas comerciales.
+  // El motor (`buildUvrEscenarios`) es la ÚNICA fuente de verdad: cuando
+  // `userDirty` es false, la lista se deriva de la escala automática por
+  // `plazoInicial`. Cuando el analista edita, `userDirty` se activa y el
+  // motor consume la lista manual (o la regenera si deja de ser válida).
+  const [userCuotasList, setUserCuotasList] = useState<number[]>(
+    () => draft.propuestasComerciales?.cuotasList ?? [],
+  );
+  const [userDirty, setUserDirty] = useState<boolean>(
+    () => (draft.propuestasComerciales?.cuotasList?.length ?? 0) > 0,
+  );
+  const [userRecomendadaListIdx, setUserRecomendadaListIdx] = useState<number>(
+    () => draft.propuestasComerciales?.recomendadaIdx ?? -1,
+  );
   const [aprobando, setAprobando] = useState(false);
   const doAprobar = useServerFn(aprobarAuditoriaPorAuditor);
   const [showConfigVariacion, setShowConfigVariacion] = useState(false);
