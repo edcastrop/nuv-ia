@@ -495,15 +495,22 @@ export const enviarContratacion = createServerFn({ method: "POST" })
       allowedAttachments.push(...nonIdent);
 
       const faltantes: string[] = [];
+      // Excepción autorizada: si el analista marcó el checkbox de confirmación
+      // de datos críticos del cliente (validacion_confirmado_licenciado = true),
+      // se permite continuar aunque la cédula no esté adjunta como soporte.
+      // Si el archivo existe se adjunta igual; si no, no se bloquea el envío.
+      const datosConfirmados = !!(exp as { validacion_confirmado_licenciado?: boolean }).validacion_confirmado_licenciado;
       for (const sub of cedulasRequeridas) {
         const cand = soportes.filter((s) => s.categoria === "identidad" && s.subcategoria === sub && s.archivo_path);
         if (cand.length === 0) {
+          if (datosConfirmados) continue;
           const label = sub === "cedula_titular" ? "cédula del titular" : `cédula de cotitular ${sub.replace("cedula_cotitular_", "")}`;
           faltantes.push(label);
           continue;
         }
         const prefix = sub === "cedula_titular" ? "Cedula_Titular" : `Cedula_Cotitular_${sub.replace("cedula_cotitular_", "")}`;
         if (!(await downloadAndAppend(cand[0], "soportes-banco", prefix))) {
+          if (datosConfirmados) continue;
           faltantes.push(`archivo de ${sub.replace(/_/g, " ")} no accesible en storage`);
         }
       }
