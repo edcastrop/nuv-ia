@@ -841,7 +841,16 @@ export function UVRSimulator({
   useEffect(() => {
     if (init?.id) return;
     if (!currentQaSnapshot || !scenariosReady) {
-      standaloneLastHashRef.current = null;
+      // Pérdida de completitud: sólo emitimos invalidación si previamente
+      // se emitió un snapshot standalone válido (ref no nula). Tras
+      // emitir, limpiamos la ref — así el efecto es idempotente durante
+      // renders consecutivos incompletos (una única invalidación por
+      // ciclo de pérdida de completitud). Cuando el formulario vuelva a
+      // ser válido, la rama de abajo publicará un nuevo snapshot.
+      if (standaloneLastHashRef.current !== null) {
+        emitDraftRawInvalidate();
+        standaloneLastHashRef.current = null;
+      }
       return;
     }
     const h = hashQaSnapshot(currentQaSnapshot);
@@ -849,6 +858,7 @@ export function UVRSimulator({
     standaloneLastHashRef.current = h;
     emitDraftRawReady(currentQaSnapshot);
   }, [init?.id, currentQaSnapshot, scenariosReady]);
+
 
 
   // Modo expediente: disparo controlado del Auto-QA con INTENCIÓN pegajosa.
