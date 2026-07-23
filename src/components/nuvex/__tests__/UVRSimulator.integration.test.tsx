@@ -408,12 +408,11 @@ describe("UVRSimulator (RTL) — extracto Bancolombia real (caso 000014)", () =>
 });
 
 // ─── ExtractoReader: modal open/close, scroll-lock, cleanup ─────────
+// `await import()` a nivel de módulo mantiene el import como dinámico
+// (evita ejecutar mocks tempranos) y respeta las reglas de TS.
+const { QueryClient, QueryClientProvider } = await import("@tanstack/react-query");
+
 describe("ExtractoReader — modal, scroll-lock y cleanup de listeners", () => {
-  // ExtractoReader consume `useProductosBancarios` (react-query). Wrap
-  // con un QueryClientProvider local para aislar la prueba.
-  const { QueryClient, QueryClientProvider } = await vi.importActual<
-    typeof import("@tanstack/react-query")
-  >("@tanstack/react-query");
   const withQC = (ui: React.ReactElement) => {
     const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     return <QueryClientProvider client={qc}>{ui}</QueryClientProvider>;
