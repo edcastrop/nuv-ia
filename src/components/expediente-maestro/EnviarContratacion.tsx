@@ -14,7 +14,9 @@ import {
   type DestinatarioContratacion,
 } from "@/lib/contratacion";
 import { enviarContratacion } from "@/lib/contratacion.functions";
-import { cambiarEstadoConValidacion } from "@/lib/pipelineTransiciones";
+// La transición canónica de `estado`/`estado_caso` la realiza atómicamente el
+// servidor dentro de `enviarContratacion` (RPC con guarda optimista). El cliente
+// NO debe invocar `cambiarEstadoConValidacion` para esta transición.
 import { evaluarQaGuard } from "@/lib/qaGuard";
 
 interface SoporteAdjunto {
@@ -230,9 +232,9 @@ export function EnviarContratacionButton({ ctx, onSent }: Props) {
           onClose={() => setOpen(false)}
           onSent={() => {
             setOpen(false);
-            // Disparador automático: envío a contratación → estado "documentación completa"
-            cambiarEstadoConValidacion(ctx.expedienteId, "documentacion_completa", "documentacion_completa")
-              .catch((err) => console.warn("[estado] documentacion_completa", err));
+            // El servidor ya transicionó estado + estado_caso atómicamente
+            // (o registró el error parcial). El padre refresca vía onSent →
+            // onJuridicaSaved → reload; no ejecutamos transiciones cliente.
             onSent?.();
           }}
         />
@@ -252,7 +254,12 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
-  const [successInfo, setSuccessInfo] = useState<{ messageId: string | null; warning: string | null } | null>(null);
+  const [successInfo, setSuccessInfo] = useState<{ messageId: string | null; warning: null | "trazabilidad_parcial" | "etapa_posterior" } | null>(null);
+  const [partialError, setPartialError] = useState<{
+    codigo: "ENVIO_OK_ESTADO_NO_ACTUALIZADO" | "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO";
+    messageId: string | null;
+    deduped: boolean;
+  } | null>(null);
   const [obligatorioBloqueado, setObligatorioBloqueado] = useState(false);
   const [soportes, setSoportes] = useState<SoporteAdjunto[]>([]);
   const [loadingSoportes, setLoadingSoportes] = useState(true);
@@ -355,6 +362,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
   const handleSend = async () => {
     setError(null);
     setSuccessInfo(null);
+    setPartialError(null);
     if (obligatorioBloqueado) {
       setError("Falta el destinatario operativo obligatorio (contabilidad@nuvex.com.co). Contacta a Admin para activarlo.");
       return;
@@ -399,14 +407,22 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
         contentType: a.contentType,
         contentBase64: await blobToBase64(a.blob),
       })));
-      const result = await send({ data: { expedienteId: ctx.expedienteId, idempotencyKey, destinatarios: dests, asunto, cuerpo, attachments: encoded } });
-      const messageId = (result as { messageId?: string | null } | null)?.messageId ?? null;
-      const warning = (result as { warning?: string | null } | null)?.warning ?? null;
-      setSuccessInfo({ messageId, warning });
+      const raw = await send({ data: { expedienteId: ctx.expedienteId, idempotencyKey, destinatarios: dests, asunto, cuerpo, attachments: encoded } });
+      type SendResult =
+        | { ok: true; envioExitoso: true; messageId: string | null; deduped: boolean; warning: null | "etapa_posterior" | "trazabilidad_parcial" }
+        | { ok: false; envioExitoso: true; codigo: "ENVIO_OK_ESTADO_NO_ACTUALIZADO" | "ENVIO_PREVIO_OK_ESTADO_NO_ACTUALIZADO"; messageId: string | null; deduped: boolean };
+      const result = raw as SendResult;
+      const messageId = result.messageId ?? null;
       setDone(true);
-      if (!warning) {
-        setTimeout(() => onSent(), 1500);
+      if (result.ok === false) {
+        setPartialError({ codigo: result.codigo, messageId, deduped: result.deduped });
+      } else {
+        setSuccessInfo({ messageId, warning: result.warning });
       }
+      // Siempre notificamos al padre para que refresque estado_caso desde BD
+      // (reload → onJuridicaSaved → onSent). El servidor ya persistió lo que
+      // pudo persistir; el cliente no ejecuta transiciones.
+      setTimeout(() => onSent(), 1500);
     } catch (e) {
       setError((e as Error).message);
       setDone(false);
@@ -556,6 +572,25 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
               <div className="font-semibold mb-1">Correo enviado, pero falló el registro interno.</div>
               {successInfo.messageId && <div>ID del envío: <code>{successInfo.messageId}</code></div>}
               <div className="mt-1">Contacta a soporte con este ID. <strong>No reenvíes.</strong></div>
+            </div>
+          )}
+          {done && successInfo?.warning === "etapa_posterior" && (
+            <div className="rounded-lg border p-2 text-xs"
+              style={{ borderColor: "#BBE4C9", background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }}>
+              <div className="font-semibold mb-1">Correo enviado. El expediente ya se encuentra en una etapa posterior.</div>
+              {successInfo.messageId && <div>ID del envío: <code>{successInfo.messageId}</code></div>}
+              <div className="mt-1"><strong>No vuelva a enviar el correo.</strong></div>
+            </div>
+          )}
+          {done && partialError && (
+            <div className="rounded-lg border p-2 text-xs"
+              style={{ borderColor: "#FDE68A", background: "#FEF3C7", color: "#92400E" }}>
+              <div className="font-semibold mb-1">
+                El correo de contratación fue enviado, pero no se pudo actualizar el avance del expediente.
+              </div>
+              <div><strong>No vuelva a enviar el correo.</strong></div>
+              {partialError.messageId && <div className="mt-1">ID del envío: <code>{partialError.messageId}</code></div>}
+              <div className="mt-1 text-[11px] opacity-80">Código: <code>{partialError.codigo}</code>. Contacta a soporte con este ID para completar el avance del expediente.</div>
             </div>
           )}
         </div>

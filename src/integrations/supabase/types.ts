@@ -6226,6 +6226,15 @@ export type Database = {
         Args: { _auditoria_id: string; _motivo: string }
         Returns: Json
       }
+      avanzar_expediente_a_enviado_contratacion: {
+        Args: {
+          p_estado_caso_esperado: Database["public"]["Enums"]["caso_estado"]
+          p_expediente_id: string
+          p_origen: Database["public"]["Enums"]["contratacion_origen_transicion"]
+          p_user_id: string
+        }
+        Returns: string
+      }
       calcular_etapa_onboarding: { Args: { _user_id: string }; Returns: string }
       can_access_expediente: {
         Args: { _exp: string; _uid: string }
@@ -6569,6 +6578,7 @@ export type Database = {
         | "proyeccion_aprobada_qa"
         | "proyeccion_devuelta_qa"
       colab_canal_tipo: "area" | "caso" | "dm" | "custom" | "qa_auditoria"
+      contratacion_origen_transicion: "operativo_envio" | "repair_migration"
       expediente_estado:
         | "SIMULADO"
         | "FIRMADO"
@@ -6909,6 +6919,7 @@ export const Constants = {
         "proyeccion_devuelta_qa",
       ],
       colab_canal_tipo: ["area", "caso", "dm", "custom", "qa_auditoria"],
+      contratacion_origen_transicion: ["operativo_envio", "repair_migration"],
       expediente_estado: [
         "SIMULADO",
         "FIRMADO",
