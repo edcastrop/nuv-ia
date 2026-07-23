@@ -419,15 +419,19 @@ describe("ExtractoReader — modal, scroll-lock y cleanup de listeners", () => {
   };
 
   it("al abrir bloquea el scroll del body y lo restaura al cerrar", async () => {
-    render(withQC(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />));
-    const openBtn = screen
-      .getAllByRole("button")
-      .find((b) => /extracto|leer|subir|cargar/i.test(b.textContent ?? ""));
-    expect(openBtn).toBeTruthy();
-    fireEvent.click(openBtn!);
+    const { container } = render(withQC(<ExtractoReaderReal modo="uvr" onApply={vi.fn()} />));
+    await flush();
+    // El único camino público a `setOpen(true)` es cargar un archivo por
+    // el input oculto (o drop). Disparamos un change con un blob dummy.
+    const fileInput = container.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput).toBeTruthy();
+    const dummy = new File([new Uint8Array([0])], "x.pdf", { type: "application/pdf" });
+    Object.defineProperty(fileInput, "files", { value: [dummy], configurable: true });
+    fireEvent.change(fileInput);
     await flush();
     expect(document.body.style.overflow).toBe("hidden");
     expect(document.documentElement.style.overflow).toBe("hidden");
+    // Cerrar por click en overlay (stage inicial no es "reading").
     const overlay = document.querySelector('.fixed.inset-0.z-\\[100\\]') as HTMLElement | null;
     expect(overlay).toBeTruthy();
     fireEvent.click(overlay!);
