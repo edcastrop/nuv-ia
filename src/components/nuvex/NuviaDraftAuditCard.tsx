@@ -114,6 +114,21 @@ export function evaluateSnapshotTransition(args: {
   return { kind: "ready" };
 }
 
+// Pura, testeable: decide qué hace el listener del panel al recibir un
+// evento `nuvia:draftRawInvalidate`. Sólo transiciona a `invalidated`
+// desde `ready` o `done`; en cualquier otro estado es idempotente y
+// no ejecuta ningún efecto.
+export type InvalidateTransition = { kind: "invalidate" } | { kind: "noop" };
+
+export function evaluateInvalidateTransition(args: {
+  prevKind: PanelState["kind"];
+}): InvalidateTransition {
+  const { prevKind } = args;
+  if (prevKind === "ready" || prevKind === "done") return { kind: "invalidate" };
+  return { kind: "noop" };
+}
+
+
 type Props = {
   mode: "pesos" | "uvr" | null;
   onCertificar: (payload: { snapshot: DraftRawSnapshot; result: DraftAuditResult }) => void;
