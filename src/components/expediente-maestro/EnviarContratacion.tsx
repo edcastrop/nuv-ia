@@ -574,6 +574,25 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
               <div className="mt-1">Contacta a soporte con este ID. <strong>No reenvíes.</strong></div>
             </div>
           )}
+          {done && successInfo?.warning === "etapa_posterior" && (
+            <div className="rounded-lg border p-2 text-xs"
+              style={{ borderColor: "#BBE4C9", background: NUVEX.verdeClaro, color: NUVEX.verdeTextoFuerte }}>
+              <div className="font-semibold mb-1">Correo enviado. El expediente ya se encuentra en una etapa posterior.</div>
+              {successInfo.messageId && <div>ID del envío: <code>{successInfo.messageId}</code></div>}
+              <div className="mt-1"><strong>No vuelva a enviar el correo.</strong></div>
+            </div>
+          )}
+          {done && partialError && (
+            <div className="rounded-lg border p-2 text-xs"
+              style={{ borderColor: "#FDE68A", background: "#FEF3C7", color: "#92400E" }}>
+              <div className="font-semibold mb-1">
+                El correo de contratación fue enviado, pero no se pudo actualizar el avance del expediente.
+              </div>
+              <div><strong>No vuelva a enviar el correo.</strong></div>
+              {partialError.messageId && <div className="mt-1">ID del envío: <code>{partialError.messageId}</code></div>}
+              <div className="mt-1 text-[11px] opacity-80">Código: <code>{partialError.codigo}</code>. Contacta a soporte con este ID para completar el avance del expediente.</div>
+            </div>
+          )}
         </div>
 
         <div className="border-t border-[#E3E7EE] px-5 py-3 flex justify-end gap-2">
