@@ -284,8 +284,145 @@ function PropuestasComercialesReadOnly(props: AuditorProps) {
 }
 
 // ═════════════════════════════════════════════════════════════════════
-// Modo analista (interactivo). Preserva íntegramente todos los hooks,
-// callbacks y comportamiento original.
+// Modo CONTROLADO (UVR). Sin useState, sin useMemo de cálculo, sin
+// useEffect de publicación. El padre pasa `cuotasList`, `recomendadaIdx`
+// y `propuestas`; las ediciones vuelven por `onCuotasChange` /
+// `onRecomendadaIdxChange`. La invariante de 4 escenarios se preserva a
+// nivel de tipos y de UI (no hay "Nuevo escenario" ni "Eliminar").
+// ═════════════════════════════════════════════════════════════════════
+function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps) {
+  const {
+    input,
+    escenarioActual,
+    cuotasPendientes,
+    baseCredito,
+    dineroPagado,
+    perfilCliente,
+    ingresos,
+    onIngresosChange,
+    cuotasList,
+    recomendadaIdx,
+    propuestas,
+    onCuotasChange,
+    onRecomendadaIdxChange,
+  } = props;
+
+  const setCuota = (idx: number, val: number) => {
+    if (!Array.isArray(cuotasList) || cuotasList.length === 0) return;
+    const next = cuotasList.map((c, i) => (i === idx ? val : c));
+    onCuotasChange(next);
+  };
+
+  const buscarCuotasPorAbono = (abono: number): { cuotasEliminadas: number; calc: PropuestaCalc } | null => {
+    if (!Number.isFinite(abono) || abono <= 0) return null;
+    const maxCuotas = Math.max(0, cuotasPendientes - 1);
+    let best: { cuotasEliminadas: number; calc: PropuestaCalc; diff: number } | null = null;
+    for (let n = 1; n <= maxCuotas; n++) {
+      const c = computePropuestaUVR(input, escenarioActual, n);
+      if (!c.valid) continue;
+      const diff = Math.abs(c.incrementoMensual - abono);
+      if (!best || diff < best.diff) best = { cuotasEliminadas: n, calc: c, diff };
+      if (c.incrementoMensual > abono * 1.6 && best && best.calc.incrementoMensual >= abono) break;
+    }
+    return best ? { cuotasEliminadas: best.cuotasEliminadas, calc: best.calc } : null;
+  };
+
+  // Reemplaza el escenario de mayor cuotas (índice 3) por `n`, reordena
+  // ascendente y marca la posición resultante como recomendada. Mantiene
+  // la invariante de exactamente 4 escenarios.
+  const usarComoEscenario = (n: number) => {
+    if (!Number.isFinite(n) || n <= 0 || cuotasList.length !== 4) return;
+    const existing = cuotasList.indexOf(n);
+    if (existing >= 0) {
+      onRecomendadaIdxChange(existing);
+      return;
+    }
+    const next = [...cuotasList];
+    next[3] = n;
+    next.sort((a, b) => a - b);
+    onCuotasChange(next);
+    onRecomendadaIdxChange(next.indexOf(n));
+  };
+
+  const escenariosLayout: EscenarioLayout[] = propuestas.map((c, i) => ({
+    ...c,
+    index: i,
+    cuotasInput: cuotasList[i] ?? c.cuotasEliminadas,
+  }));
+
+  const recommendedIndex: number | null =
+    Number.isInteger(recomendadaIdx) && recomendadaIdx >= 0 && recomendadaIdx < propuestas.length
+      ? recomendadaIdx
+      : null;
+
+  const cuotaRecomendada = recommendedIndex !== null ? propuestas[recommendedIndex]?.nuevaCuota ?? 0 : 0;
+
+  return (
+    <Card>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <SectionTitle sub="Cada escenario se recalcula al editar las cuotas a eliminar. Marca el que enviarás al cliente.">
+          Propuestas comerciales
+        </SectionTitle>
+      </div>
+
+      <div className="mb-4">
+        <Alert tone="info">
+          <span className="font-semibold">¿Qué cuotas se eliminan?</span> El abono adicional a capital reduce el saldo pendiente, pero la cuota mensual se mantiene igual. Esto hace que el crédito termine antes — las cuotas que «desaparecen» son las <strong>últimas del cronograma</strong> (las más lejanas en el tiempo), no las que siguen a la cuota actual.
+        </Alert>
+      </div>
+
+      <CalculadoraEnVivo
+        cuotasPendientes={cuotasPendientes}
+        buscarCuotasPorAbono={buscarCuotasPorAbono}
+        onAgregarEscenario={usarComoEscenario}
+      />
+
+      {onIngresosChange && (
+        <PerfilIngresosEnVivo
+          value={ingresos ?? {}}
+          onChange={onIngresosChange}
+          cuotaRecomendada={cuotaRecomendada}
+          propuestas={propuestas.map<PropuestaParaCapacidad>((c, i) => ({
+            index: i,
+            cuotasEliminadas: c.cuotasEliminadas,
+            nuevaCuota: c.nuevaCuota,
+            valid: c.valid,
+          }))}
+          onSugerirEscenario={onRecomendadaIdxChange}
+        />
+      )}
+
+      <PropuestasCardsLayout
+        escenarios={escenariosLayout}
+        recommendedIndex={recommendedIndex}
+        cuotasPendientes={cuotasPendientes}
+        baseCredito={baseCredito}
+        dineroPagado={dineroPagado}
+        perfilCliente={perfilCliente}
+        readOnly={false}
+        onCuotasChange={setCuota}
+        onMarkRecommended={onRecomendadaIdxChange}
+      />
+
+      {propuestas.length === 0 && (
+        <div
+          className="rounded-xl border border-dashed p-6 text-center text-sm backdrop-blur-md"
+          style={{
+            borderColor: "rgba(255,255,255,0.15)",
+            background: "rgba(20,28,54,0.4)",
+            color: "rgba(230,236,255,0.6)",
+          }}
+        >
+          Sin escenarios disponibles.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// Modo analista (interactivo, legacy — usado por PesosSimulator).
+// Preserva íntegramente todos los hooks y comportamiento original.
 // ═════════════════════════════════════════════════════════════════════
 function PropuestasComercialesInteractive(props: PesosProps | UVRProps) {
   const [revision, setRevision] = useState(0);
