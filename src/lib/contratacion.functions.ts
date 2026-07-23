@@ -79,6 +79,24 @@ export const DEDUP_LOOKUP_FAIL_MSG =
 export const IDEMPOTENCY_LOOKUP_FAIL_MSG =
   "No se pudo verificar el intento de envío existente. Esta ejecución fue detenida.";
 
+// Adosa el warning "trazabilidad_parcial" SÓLO cuando la reparación resultó
+// ok:true sin otro warning y el envío previo estaba en `enviado_trazabilidad_parcial`.
+// Cualquier otra rama (ok:false, warning ya presente, previo "enviado") se preserva
+// tal cual: no se sobreescribe un warning distinto ni se transforma un ok:false.
+type EnvioResult =
+  | { ok: true; envioExitoso: true; messageId: string | null; deduped: boolean; warning: null | "etapa_posterior" | "trazabilidad_parcial" }
+  | { ok: false; envioExitoso: boolean; codigo: string; messageId: string | null; deduped: boolean };
+
+export function applyTrazabilidadParcialWarning<T extends EnvioResult>(
+  result: T,
+  wasTrazabilidadParcial: boolean,
+): T {
+  if (!wasTrazabilidadParcial) return result;
+  if (!result.ok) return result;
+  if (result.warning !== null) return result;
+  return { ...result, warning: "trazabilidad_parcial" as const };
+}
+
 const RESEND_GATEWAY = "https://connector-gateway.lovable.dev/resend";
 
 export const enviarContratacion = createServerFn({ method: "POST" })
