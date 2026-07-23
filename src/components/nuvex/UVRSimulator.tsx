@@ -1357,6 +1357,17 @@ export function UVRSimulator({
               </Alert>
             )}
 
+            {escenariosResult?.regeneradaPorInvalidez && (
+              <div data-testid="uvr-regenerada-alert">
+                <Alert tone="warn">
+                  Los escenarios comerciales guardados dejaron de ser válidos
+                  para el plazo restante actual. NUVIA regeneró la escala
+                  automática por <b>plazo inicial</b>. Revisa las cuotas antes
+                  de certificar.
+                </Alert>
+              </div>
+            )}
+
             {datosCompletos && calc && escenariosResult && (
               <PropuestasComerciales
                 mode="uvr"
