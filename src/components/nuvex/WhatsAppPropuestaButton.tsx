@@ -154,20 +154,20 @@ export function buildWhatsAppMessage(p: {
 
   lines.push(
     asesor
-      ? `Hola ${nombre} 👋 Soy ${nombreAnalista(asesor)}, tu ${analistaRol.replace(/^analista.*/, "analista")} en *NUVEX*.`
+      ? `Hola ${nombre} 👋 Soy ${nombreAnalista(asesor)}, tu analista en *NUVEX*.`
       : `Hola ${nombre} 👋 Te escribo desde *NUVEX*, tu equipo de optimización de crédito.`
   );
   lines.push("");
 
   if (total > 1) {
     lines.push(
-      `Ya revisé tu crédito con *${banco}* y sí, hay buenas noticias: podemos eliminar entre *${añosRange}* de tu crédito, lo que se traduce en un ahorro de *${ahorroRange}* en intereses y seguros. Todo con un proceso jurídico-financiero, subiendo tu cuota entre *${incRange}* al mes.`
+      `Ya revisé tu crédito con *${banco}* y encontré una muy buena oportunidad: podemos eliminar entre *${añosRange}* de tu crédito, generando un ahorro de *${ahorroRange}* en intereses y seguros, aumentando tu cuota entre *${incRange}* al mes.`
     );
     lines.push("");
-    lines.push(`Armé *${total} escenarios* posibles, pero el que más me gusta para tu caso es este:`);
+    lines.push(`De las *${total} alternativas* que preparé, esta es la que más te recomiendo:`);
   } else {
     lines.push(
-      `Ya revisé tu crédito con *${banco}* y sí, hay buenas noticias. Te preparé una propuesta de optimización pensada para tu caso:`
+      `Ya revisé tu crédito con *${banco}* y encontré una muy buena oportunidad. Te preparé una propuesta pensada para tu caso:`
     );
   }
   lines.push("");
@@ -193,23 +193,23 @@ export function buildWhatsAppMessage(p: {
 
     if (ahorroHon > 0) {
       lines.push(
-        `💰 Honorarios: ${formatCOP(honBaseRecomendado)}, con ${pctDescuento}% de descuento quedan en *${formatCOP(honFinalRecomendado)}* (solo se cobran si el banco aprueba el resultado; si no, no pagas nada).`
+        `💰 Honorarios: ${formatCOP(honBaseRecomendado)}. Con el ${pctDescuento}% de descuento quedan en *${formatCOP(honFinalRecomendado)}*. Solo los pagas si el banco aprueba el resultado; si no, no pagas nada.`
       );
     } else {
       lines.push(
-        `💰 Honorarios: *${formatCOP(honFinalRecomendado)}* (solo se cobran si el banco aprueba el resultado; si no, no pagas nada).`
+        `💰 Honorarios: *${formatCOP(honFinalRecomendado)}*. Solo los pagas si el banco aprueba el resultado; si no, no pagas nada.`
       );
     }
     lines.push("");
   }
 
   lines.push(
-    total > 1
-      ? `Te mando el PDF con el detalle de las ${total} alternativas para que las compares con calma. El proceso con ${banco} toma cerca de ${tiempo}.`
-      : `Te mando el PDF con el detalle completo de la propuesta. El proceso con ${banco} toma cerca de ${tiempo}.`
+    `Cada mes que pasa es dinero que podrías estar destinando al bienestar de tu familia, en lugar de seguir pagándolo en intereses.`
   );
   lines.push("");
-  lines.push(`¿Te cuadra una llamada corta esta semana para revisarlo juntos? Cuéntame qué día te sirve más 😊`);
+  lines.push(
+    `¿Te parece si lo revisamos en una llamada de 10 minutos entre hoy y mañana? Así resolvemos tus dudas y, si estás de acuerdo, podemos iniciar de inmediato. 😊`
+  );
   lines.push("");
   lines.push(asesor ? `${nombreAnalista(asesor)}` : `Equipo NUVEX`);
   lines.push(`NUVEX`);
@@ -217,8 +217,10 @@ export function buildWhatsAppMessage(p: {
   // Referencias para evitar warnings de variables sin uso directo en el nuevo texto.
   void cierre;
   void genero;
+  void tiempo;
 
   return lines.join("\n");
+
 }
 
 export function WhatsAppPropuestaButton(props: Props) {
