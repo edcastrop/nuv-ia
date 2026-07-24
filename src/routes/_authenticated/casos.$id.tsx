@@ -173,6 +173,21 @@ function CasoDetail() {
               >
                 NUVEX · Expediente Guiado
               </span>
+              <div className="mt-1.5">
+                <span
+                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 font-bold uppercase"
+                  style={{
+                    background: "rgba(96,165,250,0.12)",
+                    color: "#93C5FD",
+                    border: "1px solid rgba(96,165,250,0.35)",
+                    fontSize: "10px",
+                    letterSpacing: "0.14em",
+                  }}
+                >
+                  {exp.codigo?.trim() ? `CASO ${exp.codigo}` : "CASO SIN CÓDIGO"}
+                </span>
+              </div>
+
               <h1
                 className="mt-1.5 font-bold tracking-tight break-words"
                 style={{
