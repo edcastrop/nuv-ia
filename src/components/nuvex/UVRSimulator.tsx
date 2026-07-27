@@ -607,6 +607,16 @@ export function UVRSimulator({
     const currentList = escenariosResult.cuotasList;
     if (!Array.isArray(currentList) || currentList.length === 0) return;
     if (!Number.isInteger(idx) || idx < 0 || idx >= currentList.length) return;
+    // Guardarraíl: nunca vaciar la lista. El motor editable rechaza
+    // listas vacías (< 1) y regeneraría automáticamente la escala de 4,
+    // contradiciendo la "eliminación real". La papelera se oculta a
+    // nivel de props (ver `onRemove={... > 1 ? handler : undefined}`);
+    // este bloqueo es la defensa en profundidad si algo la invoca igual.
+    if (currentList.length <= 1) {
+      toast.error("Debe conservar al menos un escenario comercial.");
+      return;
+    }
+
 
     const removedValue = currentList[idx];
     const recommendedValue =
