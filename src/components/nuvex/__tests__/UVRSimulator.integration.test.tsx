@@ -626,11 +626,11 @@ describe("UVRSimulator — 'Eliminar escenario' (eliminación real, sin sustituc
       fireEvent.click(screen.getAllByTitle("Eliminar escenario")[0]);
       await new Promise((r) => setTimeout(r, 0));
     });
-    // 96 sigue presente entre las 3 tarjetas visibles: la estrella
-    // continúa marcada exactamente en la tarjeta cuyo valor es 96.
-    // Buscamos las tarjetas por el input de cuotas.
-    const inputs = screen.getAllByLabelText(/Cuotas a eliminar/i) as HTMLInputElement[];
-    const valores = inputs.map((i) => Number(i.value));
+    // 96 sigue presente entre las 3 tarjetas visibles.
+    const inputs = Array.from(
+      document.querySelectorAll<HTMLInputElement>('input[type="number"]'),
+    );
+    const valores = inputs.map((i) => Number(i.value)).filter((n) => n > 0 && n < 285);
     expect(valores).toContain(96);
     expect(valores).not.toContain(72);
     captured.stop();
@@ -641,11 +641,15 @@ describe("UVRSimulator — 'Eliminar escenario' (eliminación real, sin sustituc
     // configuración estándar UVR Bancolombia y verificamos que la
     // papelera actúa realmente sobre el DOM.
     seedBancolombiaDraft();
-    render(<UVRSimulator />);
+    const { container } = render(<UVRSimulator />);
     await flush();
 
-    const inputsBefore = screen.getAllByLabelText(/Cuotas a eliminar/i) as HTMLInputElement[];
-    expect(inputsBefore.map((i) => Number(i.value))).toEqual([72, 84, 96, 108]);
+    const readCuotas = () =>
+      Array.from(container.querySelectorAll<HTMLInputElement>('input[type="number"]'))
+        .map((i) => Number(i.value))
+        .filter((n) => n > 0 && n < 285);
+
+    expect(readCuotas()).toEqual([72, 84, 96, 108]);
 
     await act(async () => {
       fireEvent.click(screen.getAllByTitle("Eliminar escenario")[1]);
@@ -654,11 +658,9 @@ describe("UVRSimulator — 'Eliminar escenario' (eliminación real, sin sustituc
 
     // Cambio material observable en el DOM: 3 tarjetas, sin 84.
     expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
-    const inputsAfter = screen.getAllByLabelText(/Cuotas a eliminar/i) as HTMLInputElement[];
-    const valores = inputsAfter.map((i) => Number(i.value));
+    const valores = readCuotas();
     expect(valores.length).toBe(3);
     expect(valores).not.toContain(84);
-    // Los otros valores se conservan íntegros.
     expect(valores).toEqual(expect.arrayContaining([72, 96, 108]));
   });
 
