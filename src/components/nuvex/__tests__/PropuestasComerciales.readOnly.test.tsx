@@ -8,9 +8,10 @@
 //   • el modo analista permanece intacto.
 
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, fireEvent } from "@testing-library/react";
 import { PropuestasComerciales } from "@/components/nuvex/PropuestasComerciales";
-import type { PesosInput } from "@/lib/finance";
+import type { PesosInput, UVRInput, UVREscenarioActual } from "@/lib/finance";
+import { computePropuestaUVR } from "@/lib/propuestasEngine";
 
 // Escenarios completos (los que reciben tras `escenariosFromAudit`).
 const ESC = [
