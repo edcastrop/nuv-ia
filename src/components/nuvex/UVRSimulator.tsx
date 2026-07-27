@@ -1543,6 +1543,7 @@ export function UVRSimulator({
                   setUserRecomendadaListIdx(idx);
                   setUserDirty(true);
                 }}
+                onRemove={handleRemoveEscenarioUVR}
               />
             )}
 
