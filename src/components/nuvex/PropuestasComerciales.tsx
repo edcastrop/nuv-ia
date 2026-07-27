@@ -313,6 +313,7 @@ function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps)
     propuestas,
     onCuotasChange,
     onRecomendadaIdxChange,
+    onRemove,
   } = props;
 
   const setCuota = (idx: number, val: number) => {
