@@ -552,7 +552,10 @@ export function UVRSimulator({
       plazoRestante: Math.max(0, cuotasPendientes),
       input,
       escenarioActual: calc.escenarioActual,
-      cuotasList: userDirty && userCuotasList.length === 4 ? userCuotasList : undefined,
+      cuotasList:
+        userDirty && userCuotasList.length >= 1 && userCuotasList.length <= 4
+          ? userCuotasList
+          : undefined,
       recomendadaListIdx: userRecomendadaListIdx,
     });
   }, [
