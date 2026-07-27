@@ -142,12 +142,18 @@ export type ControlledPropuestasUvrProps = {
   onRecomendadaIdxChange: (idx: number) => void;
   /**
    * Opcional. Cuando se suministra, se renderiza el botón "Eliminar
-   * escenario" en cada tarjeta editable. El padre es responsable de
-   * sustituir el escenario eliminado por otro válido conservando la
-   * invariante de EXACTAMENTE 4 escenarios (no se reduce la longitud
-   * del arreglo). Si el prop no se suministra, el botón no aparece.
+   * escenario" en cada tarjeta editable. El padre decide qué hacer
+   * (en NUVIA v2 revisado: eliminación real, la lista queda con N-1
+   * tarjetas). Sin este prop el botón no aparece (protege readOnly).
    */
   onRemove?: (idx: number) => void;
+  /**
+   * Opcional. Cuando se suministra Y `cuotasList.length < 4`, se
+   * renderiza el botón "+ Agregar escenario" en la cabecera. El padre
+   * decide qué valor comercial insertar. Sin este prop, o con 4
+   * escenarios ya presentes, el botón no aparece.
+   */
+  onAdd?: () => void;
 };
 
 type Props = PesosProps | UVRProps | AuditorProps | ControlledPropuestasUvrProps;
