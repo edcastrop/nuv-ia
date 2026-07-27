@@ -1537,8 +1537,13 @@ export function UVRSimulator({
                   setUserRecomendadaListIdx(idx);
                   setUserDirty(true);
                 }}
-                onRemove={handleRemoveEscenarioUVR}
+                onRemove={
+                  escenariosResult.cuotasList.length > 1
+                    ? handleRemoveEscenarioUVR
+                    : undefined
+                }
                 onAdd={handleAddEscenarioUVR}
+
               />
             )}
 
