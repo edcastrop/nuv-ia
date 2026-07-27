@@ -299,10 +299,13 @@ function PropuestasComercialesReadOnly(props: AuditorProps) {
 
 // ═════════════════════════════════════════════════════════════════════
 // Modo CONTROLADO (UVR). Sin useState, sin useMemo de cálculo, sin
-// useEffect de publicación. El padre pasa `cuotasList`, `recomendadaIdx`
-// y `propuestas`; las ediciones vuelven por `onCuotasChange` /
-// `onRecomendadaIdxChange`. La invariante de 4 escenarios se preserva a
-// nivel de tipos y de UI (no hay "Nuevo escenario" ni "Eliminar").
+// useEffect de publicación. El padre pasa `cuotasList` (1..4),
+// `recomendadaIdx` y `propuestas`; las ediciones vuelven por
+// `onCuotasChange` / `onRecomendadaIdxChange` / `onRemove` / `onAdd`.
+// La cabecera muestra "+ Agregar escenario" cuando cuotasList.length<4
+// y `onAdd` está presente; la papelera aparece por tarjeta cuando
+// `onRemove` está presente (v2 revisado: eliminación real, sin
+// sustitución automática).
 // ═════════════════════════════════════════════════════════════════════
 function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps) {
   const {
