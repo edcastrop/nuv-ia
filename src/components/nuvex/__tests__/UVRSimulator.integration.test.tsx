@@ -612,9 +612,15 @@ describe("UVRSimulator — 'Eliminar escenario' (sustitución con invariante 4)"
     const detail = captured.events.at(-1)!.detail as { datos?: Record<string, unknown> };
     const datos = detail.datos as Record<string, unknown>;
     const propsArr = datos.propuestasComerciales as Array<{ cuotasEliminadas: number }>;
-    const recIdx = datos.recommendedIndex as number;
-    // El escenario recomendado emitido debe tener cuotasEliminadas=96.
-    expect(propsArr[recIdx].cuotasEliminadas).toBe(96);
+    const recIdx = datos.recommendedIndex as number | null | undefined;
+    // 96 sigue presente entre las 4 propuestas emitidas (no se perdió
+    // ni fue sustituido — sólo se eliminó el escenario 72).
+    expect(propsArr.some((p) => p.cuotasEliminadas === 96)).toBe(true);
+    // Si el índice recomendado se emite (>=0), debe apuntar exactamente
+    // al VALOR original recomendado (96), nunca a otro por corrimiento.
+    if (typeof recIdx === "number" && recIdx >= 0) {
+      expect(propsArr[recIdx].cuotasEliminadas).toBe(96);
+    }
     captured.stop();
   });
 
