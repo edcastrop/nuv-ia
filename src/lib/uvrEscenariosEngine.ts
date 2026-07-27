@@ -32,31 +32,34 @@ export interface UvrEscenariosInput {
   plazoRestante: number;
   input: UVRInput;
   escenarioActual: UVREscenarioActual;
-  /** Override manual del analista. Si es undefined, longitud ≠ 4 o
-   *  falla `isCuotasListValid`, se usa la escala automática. */
+  /** Override manual del analista. Si es undefined, longitud fuera de
+   *  1..4 o falla `isEditableCuotasListValid`, se usa la escala automática. */
   cuotasList?: number[];
-  /** Posición 0..3 dentro de `cuotasList` marcada manualmente como
+  /** Posición 0..N-1 dentro de `cuotasList` marcada manualmente como
    *  recomendada. -1 = usar automática (bestIdx por ahorro total). */
   recomendadaListIdx?: number;
 }
 
 export interface UvrEscenariosResult {
-  /** cuotasList efectiva (siempre 4 posiciones). */
+  /** cuotasList efectiva (1..4 posiciones — refleja ediciones del
+   *  analista, incluida la papelera). NUVIA sólo audita cuando
+   *  `isCuotasListValid` (exactamente 4) es true. */
   cuotasList: number[];
   /** Escala automática correspondiente al `plazoInicial` recibido. */
   cuotasAutomaticas: number[];
   /** Origen de `cuotasList`. */
   fuente: PropuestaFuente;
-  /** 4 cálculos crudos (incluye no-válidos para render). */
+  /** Cálculos crudos (mismo largo que `cuotasList`, incluye no-válidos
+   *  para render). */
   escenarios: PropuestaCalc[];
   /** Sólo propuestas válidas (contrato PDF/snapshot). */
   propuestas: PropuestaRow[];
-  /** Índice recomendado dentro de `cuotasList` (0..3). -1 si ninguno. */
+  /** Índice recomendado dentro de `cuotasList` (0..N-1). -1 si ninguno. */
   recomendadaListIdx: number;
   /** Índice recomendado dentro de `propuestas` (válidas). -1 si vacío. */
   recomendadaRowIdx: number;
   /** true si el override manual del padre existía pero no pasó la
-   *  validación estructural y se regeneró la escala automática. */
+   *  validación estructural editable y se regeneró la escala automática. */
   regeneradaPorInvalidez: boolean;
 }
 
