@@ -1528,6 +1528,7 @@ export function UVRSimulator({
                   setUserDirty(true);
                 }}
                 onRemove={handleRemoveEscenarioUVR}
+                onAdd={handleAddEscenarioUVR}
               />
             )}
 
