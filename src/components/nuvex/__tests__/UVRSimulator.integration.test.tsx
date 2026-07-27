@@ -639,7 +639,59 @@ describe("UVRSimulator — 'Eliminar escenario' (sustitución con invariante 4)"
     await act(async () => { fireEvent.click(botones[3]); await new Promise((r) => setTimeout(r, 0)); });
     expect(btn()).not.toBeDisabled();
   });
+
+  it("regresión: eliminar 72 SIN espacio para 120 (plazoRestante=110) NO reinserta 72 y la lista cambia materialmente", async () => {
+    // Reproduce el bug: canónicos [72,84,96,108], plazoRestante bajo
+    // (110) impide subir a 120 → el algoritmo antiguo bajaba con step
+    // 12 y regresaba justo el valor recién eliminado (84-12=72),
+    // dejando la lista idéntica y el botón "sin efecto".
+    seedBancolombiaDraft();
+    const raw = JSON.parse(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")!);
+    raw.client.cuotasPagadas = "253"; // 363 - 253 = 110 pendientes (derivado)
+    raw.client.cuotasPendientes = "110";
+
+    sessionStorage.setItem("nuvex.simulatorDraft.uvr.standalone", JSON.stringify(raw));
+
+    const captured = captureDraftRawEvents();
+    render(<UVRSimulator />);
+    await flush();
+
+    const initialList = cuotasFromLastEvent(captured.events);
+    expect(initialList).toEqual([72, 84, 96, 108]);
+
+    const botones = screen.getAllByTitle("Eliminar escenario");
+    await act(async () => { fireEvent.click(botones[0]); await new Promise((r) => setTimeout(r, 0)); });
+    const nueva = cuotasFromLastEvent(captured.events);
+
+    // Invariantes estructurales de la propuesta v2.
+    expect(nueva.length).toBe(4);
+    expect(new Set(nueva).size).toBe(4);
+    expect([...nueva].sort((a, b) => a - b)).toEqual(nueva);
+
+    // El valor eliminado NO puede reutilizarse como sustituto.
+    expect(nueva).not.toContain(72);
+
+    // La lista resultante DEBE ser distinta de la inicial (aserción
+    // negativa exigida por la corrección: no basta con ejecutar el
+    // handler, la mutación debe ser real).
+    expect(nueva).not.toEqual(initialList);
+
+    // Se preservan los tres valores no eliminados.
+    expect(nueva).toEqual(expect.arrayContaining([84, 96, 108]));
+
+    // 120 no es viable (>= 110) y el sustituto seleccionado debe ser
+    // un entero positivo estrictamente menor a 110 y ≠ 72.
+    const sustituto = nueva.find((v) => ![84, 96, 108].includes(v))!;
+    expect(sustituto).toBeGreaterThan(0);
+    expect(sustituto).toBeLessThan(110);
+    expect(sustituto).not.toBe(72);
+
+    captured.stop();
+  });
 });
+
+
+
 
 
 // ─── ExtractoReader: modal open/close, scroll-lock, cleanup ─────────
