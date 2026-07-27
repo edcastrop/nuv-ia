@@ -320,6 +320,7 @@ function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps)
     onCuotasChange,
     onRecomendadaIdxChange,
     onRemove,
+    onAdd,
   } = props;
 
   const setCuota = (idx: number, val: number) => {
@@ -342,18 +343,21 @@ function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps)
     return best ? { cuotasEliminadas: best.cuotasEliminadas, calc: best.calc } : null;
   };
 
-  // Reemplaza el escenario de mayor cuotas (índice 3) por `n`, reordena
-  // ascendente y marca la posición resultante como recomendada. Mantiene
-  // la invariante de exactamente 4 escenarios.
+  // Inserta `n` como escenario si aún hay cupo (<4). Si ya existe,
+  // sólo lo marca como recomendado. Si la lista ya tiene 4, reemplaza
+  // el de mayor cuotas (índice final) — comportamiento previo.
   const usarComoEscenario = (n: number) => {
-    if (!Number.isFinite(n) || n <= 0 || cuotasList.length !== 4) return;
+    if (!Number.isFinite(n) || n <= 0) return;
     const existing = cuotasList.indexOf(n);
-    if (existing >= 0) {
-      onRecomendadaIdxChange(existing);
+    if (existing >= 0) { onRecomendadaIdxChange(existing); return; }
+    if (cuotasList.length < 4) {
+      const next = [...cuotasList, n].sort((a, b) => a - b);
+      onCuotasChange(next);
+      onRecomendadaIdxChange(next.indexOf(n));
       return;
     }
     const next = [...cuotasList];
-    next[3] = n;
+    next[next.length - 1] = n;
     next.sort((a, b) => a - b);
     onCuotasChange(next);
     onRecomendadaIdxChange(next.indexOf(n));
@@ -372,13 +376,36 @@ function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps)
 
   const cuotaRecomendada = recommendedIndex !== null ? propuestas[recommendedIndex]?.nuevaCuota ?? 0 : 0;
 
+  const puedeAgregar = typeof onAdd === "function" && cuotasList.length < 4;
+
   return (
     <Card>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <SectionTitle sub="Cada escenario se recalcula al editar las cuotas a eliminar. Marca el que enviarás al cliente.">
           Propuestas comerciales
         </SectionTitle>
+        {puedeAgregar && (
+          <button
+            type="button"
+            onClick={onAdd}
+            className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold text-white shadow-[0_8px_20px_-10px_rgba(68,93,163,0.55)] transition hover:scale-[1.02] sm:w-auto"
+            style={{ background: "linear-gradient(135deg, #445DA3 0%, #5B7DC8 60%, #84B98F 100%)" }}
+            title="Agregar escenario"
+          >
+            <Plus size={14} /> Agregar escenario
+          </button>
+        )}
       </div>
+
+      {cuotasList.length < 4 && (
+        <div className="mb-3">
+          <Alert tone="warn">
+            NUVIA sólo audita con cuatro propuestas comerciales. Actualmente
+            tienes <strong>{cuotasList.length} de 4</strong>. Usa
+            "+ Agregar escenario" para completar antes de auditar.
+          </Alert>
+        </div>
+      )}
 
       <div className="mb-4">
         <Alert tone="info">
