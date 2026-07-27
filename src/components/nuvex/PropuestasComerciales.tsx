@@ -411,6 +411,7 @@ function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps)
         readOnly={false}
         onCuotasChange={setCuota}
         onMarkRecommended={onRecomendadaIdxChange}
+        onRemove={onRemove}
       />
 
       {propuestas.length === 0 && (
