@@ -690,12 +690,36 @@ export function UVRSimulator({
       return;
     }
 
+    // Guardarraíl defensivo: el sustituto NUNCA puede coincidir con el
+    // valor recién eliminado (el usuario percibiría que el botón no hizo
+    // nada aunque el handler se haya ejecutado).
+    if (substitute === removedValue) {
+      toast.error(
+        "No fue posible encontrar un escenario diferente para sustituir el eliminado.",
+      );
+      return;
+    }
+
     // Nueva lista: incluye sustituto, ordenada ascendente, sin duplicados.
     const next = Array.from(new Set([...remaining, substitute])).sort((a, b) => a - b);
     if (next.length !== 4) {
       toast.error("Inconsistencia interna al sustituir escenario. Operación cancelada.");
       return;
     }
+
+    // Guardarraíl material: la lista resultante debe ser distinta de la
+    // lista inicial en al menos una posición. Si es idéntica, no hubo
+    // eliminación real y no se debe fingir éxito.
+    const sameList =
+      next.length === currentList.length &&
+      next.every((value, index) => value === currentList[index]);
+    if (sameList) {
+      toast.error(
+        "No fue posible generar un escenario diferente. La lista permanece intacta.",
+      );
+      return;
+    }
+
 
     // Recalcular índice recomendado a partir del VALOR conservado.
     let nextRec = -1;
