@@ -306,13 +306,7 @@ const UVR_INPUT: UVRInput = {
   plazoInicial: 363,
   porcentajeHonorarios: 6,
 };
-const UVR_ESC_ACTUAL: UVREscenarioActual = {
-  cuotasRestantes: 285,
-  valorEsperadoTotal: 0,
-  valorEsperadoIntereses: 0,
-  valorEsperadoSeguros: 0,
-  cuotasParaTerminarActual: 285,
-} as unknown as UVREscenarioActual;
+const UVR_ESC_ACTUAL = calculateUVRProjection(UVR_INPUT).escenarioActual;
 
 const CUOTAS_UVR = [72, 84, 96, 108];
 const PROPUESTAS_UVR = CUOTAS_UVR.map((n) => computePropuestaUVR(UVR_INPUT, UVR_ESC_ACTUAL, n));
