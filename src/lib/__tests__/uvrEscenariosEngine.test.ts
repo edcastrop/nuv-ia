@@ -20,6 +20,8 @@ import {
   buildUvrEscenarios,
   getUVRReductionOptions,
   isCuotasListValid,
+  isCuotasListReadyForNuvia,
+  isEditableCuotasListValid,
 } from "@/lib/uvrEscenariosEngine";
 
 // ─── Fixtures ────────────────────────────────────────────────────────
