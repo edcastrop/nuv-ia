@@ -647,7 +647,9 @@ describe("UVRSimulator — 'Eliminar escenario' (sustitución con invariante 4)"
     // dejando la lista idéntica y el botón "sin efecto".
     seedBancolombiaDraft();
     const raw = JSON.parse(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")!);
+    raw.client.cuotasPagadas = "253"; // 363 - 253 = 110 pendientes (derivado)
     raw.client.cuotasPendientes = "110";
+
     sessionStorage.setItem("nuvex.simulatorDraft.uvr.standalone", JSON.stringify(raw));
 
     const captured = captureDraftRawEvents();
