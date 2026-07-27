@@ -140,6 +140,14 @@ export type ControlledPropuestasUvrProps = {
   propuestas: PropuestaCalc[];
   onCuotasChange: (next: number[]) => void;
   onRecomendadaIdxChange: (idx: number) => void;
+  /**
+   * Opcional. Cuando se suministra, se renderiza el botón "Eliminar
+   * escenario" en cada tarjeta editable. El padre es responsable de
+   * sustituir el escenario eliminado por otro válido conservando la
+   * invariante de EXACTAMENTE 4 escenarios (no se reduce la longitud
+   * del arreglo). Si el prop no se suministra, el botón no aparece.
+   */
+  onRemove?: (idx: number) => void;
 };
 
 type Props = PesosProps | UVRProps | AuditorProps | ControlledPropuestasUvrProps;
@@ -305,6 +313,7 @@ function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps)
     propuestas,
     onCuotasChange,
     onRecomendadaIdxChange,
+    onRemove,
   } = props;
 
   const setCuota = (idx: number, val: number) => {
@@ -402,6 +411,7 @@ function PropuestasComercialesControlledUVR(props: ControlledPropuestasUvrProps)
         readOnly={false}
         onCuotasChange={setCuota}
         onMarkRecommended={onRecomendadaIdxChange}
+        onRemove={onRemove}
       />
 
       {propuestas.length === 0 && (

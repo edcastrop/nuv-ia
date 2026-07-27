@@ -24,10 +24,12 @@ import {
   calculateUVRManual,
   calculateUVRManualByCuotas,
   calculateUVRProjection,
+  getUVRReductionOptions,
   pickBestProposal,
   pmt,
   type UVRInput,
 } from "../../lib/finance";
+import { computePropuestaUVR } from "@/lib/propuestasEngine";
 import {
   parseUVRNumberCandidates,
   resolveUVRByCoherence,
@@ -585,6 +587,129 @@ export function UVRSimulator({
       })),
     };
   }, [escenariosResult]);
+
+  // ─── Eliminación con SUSTITUCIÓN (invariante financiera de 4) ─────
+  // Regla NUVIA UVR: `cuotasList` siempre debe contener exactamente 4
+  // valores válidos, únicos y ordenados. "Eliminar escenario" NO reduce
+  // la longitud del arreglo: sustituye el escenario removido por otro
+  // valor comercialmente coherente calculado con el motor canónico
+  // (`computePropuestaUVR` + `getUVRReductionOptions`). Si no existe una
+  // sustitución válida, se aborta con toast y no se muta el estado.
+  const handleRemoveEscenarioUVR = (idx: number) => {
+    if (!escenariosResult) return;
+    const currentList = escenariosResult.cuotasList;
+    if (!Array.isArray(currentList) || currentList.length !== 4) return;
+    if (!Number.isInteger(idx) || idx < 0 || idx >= currentList.length) return;
+
+    const plazoRestante = Math.max(0, cuotasPendientes);
+    if (plazoRestante <= 1) {
+      toast.error("No se puede eliminar el escenario: plazo restante insuficiente.");
+      return;
+    }
+    if (!calc) return;
+    const escActual = calc.escenarioActual;
+
+    // Conservar el valor de la recomendación ANTES de mutar la lista.
+    const recommendedValue =
+      userRecomendadaListIdx >= 0 && userRecomendadaListIdx < currentList.length
+        ? currentList[userRecomendadaListIdx]
+        : null;
+
+    const removedValue = currentList[idx];
+    const remaining = currentList.filter((_, i) => i !== idx);
+    const used = new Set<number>(remaining);
+
+    const isViable = (n: number): boolean => {
+      if (!Number.isInteger(n) || n <= 0) return false;
+      if (n >= plazoRestante) return false;
+      if (used.has(n)) return false;
+      const r = computePropuestaUVR(input, escActual, n);
+      return r.valid;
+    };
+
+    // 1) Preferir valores canónicos de la escala automática que no
+    //    estén ya en la lista.
+    const canon = getUVRReductionOptions(plazoInicial);
+    let substitute: number | null = null;
+    for (const n of canon) {
+      if (n === removedValue) continue;
+      if (isViable(n)) { substitute = n; break; }
+    }
+
+    // 2) Si todos los canónicos están utilizados, buscar por encima del
+    //    máximo actual conservando el intervalo predominante.
+    if (substitute === null) {
+      const sortedRemaining = [...remaining].sort((a, b) => a - b);
+      const max = sortedRemaining[sortedRemaining.length - 1] ?? 0;
+      const min = sortedRemaining[0] ?? 0;
+      // Intervalo predominante (moda de diferencias). Fallback 12.
+      const diffs: number[] = [];
+      for (let i = 1; i < sortedRemaining.length; i++) {
+        diffs.push(sortedRemaining[i] - sortedRemaining[i - 1]);
+      }
+      const step = (() => {
+        if (diffs.length === 0) return 12;
+        const c = new Map<number, number>();
+        for (const d of diffs) c.set(d, (c.get(d) ?? 0) + 1);
+        let bestK = diffs[0]!, bestV = 0;
+        for (const [k, v] of c) if (v > bestV) { bestV = v; bestK = k; }
+        return bestK > 0 ? bestK : 12;
+      })();
+
+      // 2a) Múltiplos ascendentes por encima del máximo.
+      for (let n = max + step; n < plazoRestante; n += step) {
+        if (isViable(n)) { substitute = n; break; }
+      }
+      // 2b) Enteros consecutivos ascendentes por encima del máximo.
+      if (substitute === null) {
+        for (let n = max + 1; n < plazoRestante; n++) {
+          if (isViable(n)) { substitute = n; break; }
+        }
+      }
+      // 3) Si no hay ninguno superior válido, bajar desde el mínimo
+      //    actual (sin caer en el entero positivo más pequeño de forma
+      //    automática: comenzamos en `min - step` y luego `min - 1`).
+      if (substitute === null && min > 1) {
+        for (let n = min - step; n > 0; n -= step) {
+          if (isViable(n)) { substitute = n; break; }
+        }
+      }
+      if (substitute === null && min > 1) {
+        for (let n = min - 1; n > 0; n--) {
+          if (isViable(n)) { substitute = n; break; }
+        }
+      }
+    }
+
+    if (substitute === null) {
+      toast.error(
+        "No fue posible sustituir el escenario por uno comercialmente coherente. La lista permanece intacta.",
+      );
+      return;
+    }
+
+    // Nueva lista: incluye sustituto, ordenada ascendente, sin duplicados.
+    const next = Array.from(new Set([...remaining, substitute])).sort((a, b) => a - b);
+    if (next.length !== 4) {
+      toast.error("Inconsistencia interna al sustituir escenario. Operación cancelada.");
+      return;
+    }
+
+    // Recalcular índice recomendado a partir del VALOR conservado.
+    let nextRec = -1;
+    if (recommendedValue !== null) {
+      if (recommendedValue === removedValue) {
+        nextRec = -1; // se eliminó el recomendado
+      } else {
+        const found = next.indexOf(recommendedValue);
+        nextRec = found >= 0 ? found : -1;
+      }
+    }
+
+    setUserCuotasList(next);
+    setUserRecomendadaListIdx(nextRec);
+    setUserDirty(true);
+  };
 
   // Recomendada derivada del motor. `recomendadaPicked` conserva su
   // contrato para el resto del árbol; el hijo ya no dispara el setter.
@@ -1418,6 +1543,7 @@ export function UVRSimulator({
                   setUserRecomendadaListIdx(idx);
                   setUserDirty(true);
                 }}
+                onRemove={handleRemoveEscenarioUVR}
               />
             )}
 
