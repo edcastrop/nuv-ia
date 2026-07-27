@@ -283,3 +283,127 @@ describe("PropuestasComerciales · readOnly=false (analista) sigue interactivo",
     expect(within(container).getAllByText(/^Elimina/).length).toBeGreaterThanOrEqual(1);
   });
 });
+
+// ─────────────────────────────────────────────────────────────────────
+// Contrato controlado UVR: el botón "Eliminar escenario" sólo aparece
+// cuando el padre suministra `onRemove`. Sin `onRemove` (o en readOnly)
+// no se renderiza el botón. Esta es la corrección directa del defecto
+// reportado en NUV_AUD_2026_DL_00030.
+// ─────────────────────────────────────────────────────────────────────
+const UVR_INPUT: UVRInput = {
+  valorDesembolsado: 138_466_000,
+  saldoPesos: 475_070.5937 * 416.6181,
+  saldoUVR: 475_070.5937,
+  valorUVR: 416.6181,
+  cuotaActualPesos: 1_604_548.92,
+  cuotaSinSeguros: 1_604_548.92 - 75_138,
+  seguros: 75_138,
+  teaCobrada: 8.05,
+  variacionUVR: 6,
+  variacionUVRPropuestas: 5,
+  cuotasPendientes: 285,
+  plazoInicial: 363,
+  porcentajeHonorarios: 6,
+};
+const UVR_ESC_ACTUAL: UVREscenarioActual = {
+  cuotasRestantes: 285,
+  valorEsperadoTotal: 0,
+  valorEsperadoIntereses: 0,
+  valorEsperadoSeguros: 0,
+  cuotasParaTerminarActual: 285,
+} as unknown as UVREscenarioActual;
+
+const CUOTAS_UVR = [72, 84, 96, 108];
+const PROPUESTAS_UVR = CUOTAS_UVR.map((n) => computePropuestaUVR(UVR_INPUT, UVR_ESC_ACTUAL, n));
+
+describe("PropuestasComerciales · modo controlado UVR (analista)", () => {
+  it("con `onRemove` suministrado: renderiza EXACTAMENTE 4 botones 'Eliminar escenario'", () => {
+    render(
+      <PropuestasComerciales
+        mode="uvr"
+        controlled
+        input={UVR_INPUT}
+        escenarioActual={UVR_ESC_ACTUAL}
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        cuotasList={CUOTAS_UVR}
+        recomendadaIdx={0}
+        propuestas={PROPUESTAS_UVR}
+        onCuotasChange={vi.fn()}
+        onRecomendadaIdxChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    const botones = screen.getAllByTitle("Eliminar escenario");
+    expect(botones.length).toBe(4);
+  });
+
+  it("sin `onRemove`: NO renderiza ningún botón 'Eliminar escenario' (protege el modo auditor)", () => {
+    render(
+      <PropuestasComerciales
+        mode="uvr"
+        controlled
+        input={UVR_INPUT}
+        escenarioActual={UVR_ESC_ACTUAL}
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        cuotasList={CUOTAS_UVR}
+        recomendadaIdx={0}
+        propuestas={PROPUESTAS_UVR}
+        onCuotasChange={vi.fn()}
+        onRecomendadaIdxChange={vi.fn()}
+      />,
+    );
+    expect(screen.queryAllByTitle("Eliminar escenario").length).toBe(0);
+  });
+
+  it("clic en 'Eliminar escenario' invoca `onRemove` con el índice correcto y detiene la propagación", () => {
+    const onRemove = vi.fn();
+    render(
+      <PropuestasComerciales
+        mode="uvr"
+        controlled
+        input={UVR_INPUT}
+        escenarioActual={UVR_ESC_ACTUAL}
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        cuotasList={CUOTAS_UVR}
+        recomendadaIdx={0}
+        propuestas={PROPUESTAS_UVR}
+        onCuotasChange={vi.fn()}
+        onRecomendadaIdxChange={vi.fn()}
+        onRemove={onRemove}
+      />,
+    );
+    const botones = screen.getAllByTitle("Eliminar escenario");
+    fireEvent.click(botones[2]);
+    expect(onRemove).toHaveBeenCalledTimes(1);
+    expect(onRemove).toHaveBeenCalledWith(2);
+  });
+
+  it("modo auditor readOnly UVR: no muestra 'Eliminar escenario' (regresión del defecto)", () => {
+    render(
+      <PropuestasComerciales
+        readOnly
+        mode="uvr"
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        auditorEscenarios={PROPUESTAS_UVR.map((p, i) => ({
+          index: i,
+          cuotasEliminadas: p.cuotasEliminadas,
+          añosEliminados: p.añosEliminados,
+          nuevoPlazo: p.nuevoPlazo,
+          nuevaCuota: p.nuevaCuota,
+          ahorroIntereses: p.ahorroIntereses,
+          ahorroSeguros: p.ahorroSeguros,
+          ahorroTotal: p.ahorroTotal,
+          honorarios: p.honorarios,
+          totalProyectado: p.totalProyectado,
+          incrementoMensual: p.incrementoMensual,
+        }))}
+        auditorRecomendadaIdx={0}
+      />,
+    );
+    expect(screen.queryAllByTitle("Eliminar escenario").length).toBe(0);
+  });
+});
