@@ -298,17 +298,46 @@ describe("buildUvrEscenarios — conservación y regeneración", () => {
     expect(r.propuestas.length).toBeLessThan(4);
   });
 
-  it("regenera cuando la lista provista tiene longitud incorrecta", () => {
+  it("regenera cuando la lista provista excede 4 elementos", () => {
     const r = buildUvrEscenarios({
       plazoInicial: 363,
       plazoRestante: 285,
       input,
       escenarioActual: proj.escenarioActual,
-      cuotasList: [72, 84, 96],
+      cuotasList: [72, 84, 96, 108, 120],
     });
     expect(r.fuente).toBe("automatica");
     expect(r.regeneradaPorInvalidez).toBe(true);
     expect(r.cuotasList).toEqual([72, 84, 96, 108]);
+  });
+
+  it("conserva listas parciales (1..4) editables sin regenerar (papelera v2)", () => {
+    // Lista de 3: es editable-válida (no NUVIA-válida). El motor debe
+    // conservarla textualmente, NO regenerar la escala automática de 4.
+    const r3 = buildUvrEscenarios({
+      plazoInicial: 363,
+      plazoRestante: 285,
+      input,
+      escenarioActual: proj.escenarioActual,
+      cuotasList: [72, 96, 108],
+    });
+    expect(r3.fuente).toBe("manual");
+    expect(r3.regeneradaPorInvalidez).toBe(false);
+    expect(r3.cuotasList).toEqual([72, 96, 108]);
+    expect(r3.propuestas.length).toBe(3);
+
+    // Lista de 1: caso extremo también válido para edición.
+    const r1 = buildUvrEscenarios({
+      plazoInicial: 363,
+      plazoRestante: 285,
+      input,
+      escenarioActual: proj.escenarioActual,
+      cuotasList: [96],
+    });
+    expect(r1.fuente).toBe("manual");
+    expect(r1.regeneradaPorInvalidez).toBe(false);
+    expect(r1.cuotasList).toEqual([96]);
+    expect(r1.propuestas.length).toBe(1);
   });
 });
 
