@@ -681,7 +681,74 @@ describe("UVRSimulator — 'Eliminar escenario' (eliminación real, sin sustituc
     expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
     void cuotasFromLastReady; // helper reservado para casos con snapshot v2
   });
+
+  // ─── Regresión: 4 → 3 → 2 → 1 (no debe llegar a 0 ni regenerar 4) ──
+  it("4 → 3 → 2 → 1: bloquea el borrado del último, no regenera a 4, NUVIA permanece deshabilitada y se reconstruye con 'Agregar escenario'", async () => {
+    seedBancolombiaDraft();
+    const invalidateEvents: Event[] = [];
+    const invHandler = (e: Event) => { invalidateEvents.push(e); };
+    window.addEventListener("nuvia:draftRawInvalidate", invHandler);
+
+    render(
+      <>
+        <NuviaDraftAuditCard mode="uvr" onCertificar={() => {}} onSalir={() => {}} />
+        <UVRSimulator />
+      </>,
+    );
+    await flush();
+
+    // 4 → 3
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[3]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+
+    // 3 → 2
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[2]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(2);
+
+    // 2 → 1
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[1]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    // Con 1 escenario la papelera se OCULTA (padre no entrega onRemove).
+    expect(screen.queryAllByTitle("Eliminar escenario").length).toBe(0);
+
+    // Sanity: no se regeneró automáticamente a 4.
+    // Sigue habiendo exactamente 1 tarjeta comercial → el botón
+    // "+ Agregar escenario" está presente para reconstruir manualmente.
+    expect(screen.getByTitle("Agregar escenario")).toBeInTheDocument();
+
+    // NUVIA continúa deshabilitada (snapshot standalone invalidado).
+    const auditarBtn = screen.getByRole("button", { name: /Auditar con NUVIA/i });
+    expect(auditarBtn).toBeDisabled();
+    expect(invalidateEvents.length).toBeGreaterThan(0);
+
+    // Reconstruir progresivamente 1 → 2 → 3 → 4 con "+ Agregar escenario".
+    for (const expectedLen of [2, 3, 4]) {
+      await act(async () => {
+        fireEvent.click(screen.getByTitle("Agregar escenario"));
+        await new Promise((r) => setTimeout(r, 0));
+      });
+      // Cuando vuelve a 4 la papelera reaparece en todas.
+      if (expectedLen < 4) {
+        // Con 2 o 3, papelera visible porque length > 1.
+        expect(screen.getAllByTitle("Eliminar escenario").length).toBe(expectedLen);
+      } else {
+        expect(screen.getAllByTitle("Eliminar escenario").length).toBe(4);
+      }
+    }
+
+    window.removeEventListener("nuvia:draftRawInvalidate", invHandler);
+    void cuotasFromLastReady;
+  });
 });
+
 
 
 
