@@ -24,10 +24,12 @@ import {
   calculateUVRManual,
   calculateUVRManualByCuotas,
   calculateUVRProjection,
+  getUVRReductionOptions,
   pickBestProposal,
   pmt,
   type UVRInput,
 } from "../../lib/finance";
+import { computePropuestaUVR } from "@/lib/propuestasEngine";
 import {
   parseUVRNumberCandidates,
   resolveUVRByCoherence,
