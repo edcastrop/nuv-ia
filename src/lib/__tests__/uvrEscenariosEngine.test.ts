@@ -80,6 +80,32 @@ describe("isCuotasListValid", () => {
   });
 });
 
+// ─── isEditableCuotasListValid / isCuotasListReadyForNuvia ──────────
+describe("isEditableCuotasListValid (contrato analista, 1..4)", () => {
+  it("acepta listas de 1..4 enteros positivos, únicos, ascendentes y < plazoRestante", () => {
+    expect(isEditableCuotasListValid([96], 285)).toBe(true);
+    expect(isEditableCuotasListValid([72, 96], 285)).toBe(true);
+    expect(isEditableCuotasListValid([72, 84, 96], 285)).toBe(true);
+    expect(isEditableCuotasListValid([72, 84, 96, 108], 285)).toBe(true);
+  });
+  it("rechaza vacío, >4, undefined y no-arrays", () => {
+    expect(isEditableCuotasListValid([], 285)).toBe(false);
+    expect(isEditableCuotasListValid([72, 84, 96, 108, 120], 285)).toBe(false);
+    expect(isEditableCuotasListValid(undefined, 285)).toBe(false);
+  });
+  it("rechaza duplicados, no ascendentes, no enteros y >= plazoRestante", () => {
+    expect(isEditableCuotasListValid([72, 72], 285)).toBe(false);
+    expect(isEditableCuotasListValid([96, 72], 285)).toBe(false);
+    expect(isEditableCuotasListValid([72.5, 96], 285)).toBe(false);
+    expect(isEditableCuotasListValid([72, 285], 285)).toBe(false);
+  });
+  it("isCuotasListReadyForNuvia es alias exacto de isCuotasListValid (=4)", () => {
+    expect(isCuotasListReadyForNuvia).toBe(isCuotasListValid);
+    expect(isCuotasListReadyForNuvia([72, 84, 96], 285)).toBe(false);
+    expect(isCuotasListReadyForNuvia([72, 84, 96, 108], 285)).toBe(true);
+  });
+});
+
 // ─── getUVRReductionOptions ──────────────────────────────────────────
 describe("getUVRReductionOptions (contrato comercial)", () => {
   it("plazo >= 360 → [72,84,96,108]", () => {
