@@ -621,11 +621,13 @@ export function UVRSimulator({
 
     const isViable = (n: number): boolean => {
       if (!Number.isInteger(n) || n <= 0) return false;
+      if (n === removedValue) return false;
       if (n >= plazoRestante) return false;
       if (used.has(n)) return false;
       const r = computePropuestaUVR(input, escActual, n);
       return r.valid;
     };
+
 
     // 1) Preferir valores canónicos de la escala automática que no
     //    estén ya en la lista.
