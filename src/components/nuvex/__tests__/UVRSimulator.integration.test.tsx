@@ -686,6 +686,9 @@ describe("UVRSimulator — 'Eliminar escenario' (sustitución con invariante 4)"
 
     captured.stop();
   });
+});
+
+
 
 
 
