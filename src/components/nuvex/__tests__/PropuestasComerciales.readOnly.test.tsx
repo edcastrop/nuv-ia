@@ -10,7 +10,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, within, fireEvent } from "@testing-library/react";
 import { PropuestasComerciales } from "@/components/nuvex/PropuestasComerciales";
-import type { PesosInput, UVRInput, UVREscenarioActual } from "@/lib/finance";
+import type { PesosInput, UVRInput } from "@/lib/finance";
+import { calculateUVRProjection } from "@/lib/finance";
 import { computePropuestaUVR } from "@/lib/propuestasEngine";
 
 // Escenarios completos (los que reciben tras `escenariosFromAudit`).
