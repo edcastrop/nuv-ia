@@ -401,4 +401,96 @@ describe("PropuestasComerciales · modo controlado UVR (analista)", () => {
     );
     expect(screen.queryAllByTitle("Eliminar escenario").length).toBe(0);
   });
+
+  it("modo auditor readOnly UVR: no muestra '+ Agregar escenario' aun si el auditor sólo tiene 3 escenarios persistidos", () => {
+    render(
+      <PropuestasComerciales
+        readOnly
+        mode="uvr"
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        auditorEscenarios={PROPUESTAS_UVR.slice(0, 3).map((p, i) => ({
+          index: i,
+          cuotasEliminadas: p.cuotasEliminadas,
+          añosEliminados: p.añosEliminados,
+          nuevoPlazo: p.nuevoPlazo,
+          nuevaCuota: p.nuevaCuota,
+          ahorroIntereses: p.ahorroIntereses,
+          ahorroSeguros: p.ahorroSeguros,
+          ahorroTotal: p.ahorroTotal,
+          honorarios: p.honorarios,
+          totalProyectado: p.totalProyectado,
+          incrementoMensual: p.incrementoMensual,
+        }))}
+        auditorRecomendadaIdx={0}
+      />,
+    );
+    expect(screen.queryByTitle("Agregar escenario")).toBeNull();
+  });
+
+  it("modo controlado UVR: con `onAdd` y cuotasList.length===3 muestra '+ Agregar escenario'; con 4 lo oculta", () => {
+    const onAdd = vi.fn();
+    const { rerender } = render(
+      <PropuestasComerciales
+        mode="uvr"
+        controlled
+        input={UVR_INPUT}
+        escenarioActual={UVR_ESC_ACTUAL}
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        cuotasList={[72, 84, 96]}
+        recomendadaIdx={0}
+        propuestas={PROPUESTAS_UVR.slice(0, 3)}
+        onCuotasChange={vi.fn()}
+        onRecomendadaIdxChange={vi.fn()}
+        onRemove={vi.fn()}
+        onAdd={onAdd}
+      />,
+    );
+    const boton = screen.getByTitle("Agregar escenario");
+    expect(boton).toBeInTheDocument();
+    fireEvent.click(boton);
+    expect(onAdd).toHaveBeenCalledTimes(1);
+
+    // Con 4 escenarios el botón desaparece.
+    rerender(
+      <PropuestasComerciales
+        mode="uvr"
+        controlled
+        input={UVR_INPUT}
+        escenarioActual={UVR_ESC_ACTUAL}
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        cuotasList={CUOTAS_UVR}
+        recomendadaIdx={0}
+        propuestas={PROPUESTAS_UVR}
+        onCuotasChange={vi.fn()}
+        onRecomendadaIdxChange={vi.fn()}
+        onRemove={vi.fn()}
+        onAdd={onAdd}
+      />,
+    );
+    expect(screen.queryByTitle("Agregar escenario")).toBeNull();
+  });
+
+  it("modo controlado UVR: SIN `onAdd` no aparece '+ Agregar escenario' aun con 3 propuestas", () => {
+    render(
+      <PropuestasComerciales
+        mode="uvr"
+        controlled
+        input={UVR_INPUT}
+        escenarioActual={UVR_ESC_ACTUAL}
+        cuotasPendientes={285}
+        baseCredito={UVR_INPUT.valorDesembolsado}
+        cuotasList={[72, 84, 96]}
+        recomendadaIdx={0}
+        propuestas={PROPUESTAS_UVR.slice(0, 3)}
+        onCuotasChange={vi.fn()}
+        onRecomendadaIdxChange={vi.fn()}
+        onRemove={vi.fn()}
+      />,
+    );
+    expect(screen.queryByTitle("Agregar escenario")).toBeNull();
+  });
 });
+

@@ -198,8 +198,11 @@ export function UVRSimulator({
   // Borrador comercial persistente. Sólo se guardan overrides reales del
   // analista (userDirty). Cuando no hay ediciones se persiste `undefined`
   // → la próxima apertura re-derivará la escala automática por plazo.
+  // Se acepta cualquier longitud 1..4 (papelera + agregar) para que el
+  // borrador local refleje la lista visible; la persistencia server-side
+  // sigue exigiendo 4 (ver handleSaveAsCase, out-of-scope).
   const propuestasComercialesDraft: PropuestasComercialesDraft | undefined =
-    userDirty && userCuotasList.length === 4
+    userDirty && userCuotasList.length >= 1 && userCuotasList.length <= 4
       ? { cuotasList: userCuotasList, recomendadaIdx: userRecomendadaListIdx }
       : undefined;
   const [aprobando, setAprobando] = useState(false);
@@ -549,7 +552,10 @@ export function UVRSimulator({
       plazoRestante: Math.max(0, cuotasPendientes),
       input,
       escenarioActual: calc.escenarioActual,
-      cuotasList: userDirty && userCuotasList.length === 4 ? userCuotasList : undefined,
+      cuotasList:
+        userDirty && userCuotasList.length >= 1 && userCuotasList.length <= 4
+          ? userCuotasList
+          : undefined,
       recomendadaListIdx: userRecomendadaListIdx,
     });
   }, [
@@ -588,149 +594,101 @@ export function UVRSimulator({
     };
   }, [escenariosResult]);
 
-  // ─── Eliminación con SUSTITUCIÓN (invariante financiera de 4) ─────
-  // Regla NUVIA UVR: `cuotasList` siempre debe contener exactamente 4
-  // valores válidos, únicos y ordenados. "Eliminar escenario" NO reduce
-  // la longitud del arreglo: sustituye el escenario removido por otro
-  // valor comercialmente coherente calculado con el motor canónico
-  // (`computePropuestaUVR` + `getUVRReductionOptions`). Si no existe una
-  // sustitución válida, se aborta con toast y no se muta el estado.
+  // ─── Papelera: ELIMINACIÓN REAL (sin sustitución) ────────────────
+  // Contrato NUVIA v2 revisado: la papelera reduce la lista en uno.
+  // - Nunca se busca sustituto ni se recalcula otra tarjeta.
+  // - La recomendación se preserva por VALOR (no por índice).
+  // - NUVIA (que exige exactamente 4) se invalida automáticamente al
+  //   caer `scenariosReady` (ver useEffect standalone).
+  // - Para volver a 4 el analista usa el botón "+ Agregar escenario"
+  //   (acción independiente, ver `handleAddEscenarioUVR`).
   const handleRemoveEscenarioUVR = (idx: number) => {
     if (!escenariosResult) return;
     const currentList = escenariosResult.cuotasList;
-    if (!Array.isArray(currentList) || currentList.length !== 4) return;
+    if (!Array.isArray(currentList) || currentList.length === 0) return;
     if (!Number.isInteger(idx) || idx < 0 || idx >= currentList.length) return;
 
-    const plazoRestante = Math.max(0, cuotasPendientes);
-    if (plazoRestante <= 1) {
-      toast.error("No se puede eliminar el escenario: plazo restante insuficiente.");
-      return;
-    }
-    if (!calc) return;
-    const escActual = calc.escenarioActual;
-
-    // Conservar el valor de la recomendación ANTES de mutar la lista.
+    const removedValue = currentList[idx];
     const recommendedValue =
       userRecomendadaListIdx >= 0 && userRecomendadaListIdx < currentList.length
         ? currentList[userRecomendadaListIdx]
         : null;
 
-    const removedValue = currentList[idx];
-    const remaining = currentList.filter((_, i) => i !== idx);
-    const used = new Set<number>(remaining);
+    const next = currentList.filter((_, i) => i !== idx);
 
+    // Recalcular índice recomendado a partir del VALOR conservado.
+    let nextRec = -1;
+    if (recommendedValue !== null) {
+      if (recommendedValue === removedValue) {
+        nextRec = -1;
+      } else {
+        const found = next.indexOf(recommendedValue);
+        nextRec = found >= 0 ? found : -1;
+      }
+    }
+
+    setUserCuotasList(next);
+    setUserRecomendadaListIdx(nextRec);
+    setUserDirty(true);
+  };
+
+  // ─── "+ Agregar escenario": acción INDEPENDIENTE ─────────────────
+  // Sólo válido cuando la lista actual tiene menos de 4. Añade un
+  // valor comercialmente coherente:
+  //   1) primer canónico (getUVRReductionOptions) que no esté en la
+  //      lista y sea viable con el plazoRestante actual;
+  //   2) primer múltiplo de 12 estrictamente > max, < plazoRestante;
+  //   3) primer entero > max, < plazoRestante.
+  // La papelera nunca invoca esto: agregar es explícito del analista.
+  const handleAddEscenarioUVR = () => {
+    if (!escenariosResult || !calc) return;
+    const currentList = escenariosResult.cuotasList;
+    if (currentList.length >= 4) return;
+    const plazoRestante = Math.max(0, cuotasPendientes);
+    if (plazoRestante <= 1) {
+      toast.error("No se puede agregar escenario: plazo restante insuficiente.");
+      return;
+    }
+    const escActual = calc.escenarioActual;
+    const used = new Set<number>(currentList);
     const isViable = (n: number): boolean => {
       if (!Number.isInteger(n) || n <= 0) return false;
-      if (n === removedValue) return false;
       if (n >= plazoRestante) return false;
       if (used.has(n)) return false;
       const r = computePropuestaUVR(input, escActual, n);
       return r.valid;
     };
 
-
-    // 1) Preferir valores canónicos de la escala automática que no
-    //    estén ya en la lista.
-    const canon = getUVRReductionOptions(plazoInicial);
-    let substitute: number | null = null;
-    for (const n of canon) {
-      if (n === removedValue) continue;
-      if (isViable(n)) { substitute = n; break; }
+    let chosen: number | null = null;
+    for (const n of getUVRReductionOptions(plazoInicial)) {
+      if (isViable(n)) { chosen = n; break; }
     }
-
-    // 2) Si todos los canónicos están utilizados, buscar por encima del
-    //    máximo actual conservando el intervalo predominante.
-    if (substitute === null) {
-      const sortedRemaining = [...remaining].sort((a, b) => a - b);
-      const max = sortedRemaining[sortedRemaining.length - 1] ?? 0;
-      const min = sortedRemaining[0] ?? 0;
-      // Intervalo predominante (moda de diferencias). Fallback 12.
-      const diffs: number[] = [];
-      for (let i = 1; i < sortedRemaining.length; i++) {
-        diffs.push(sortedRemaining[i] - sortedRemaining[i - 1]);
-      }
-      const step = (() => {
-        if (diffs.length === 0) return 12;
-        const c = new Map<number, number>();
-        for (const d of diffs) c.set(d, (c.get(d) ?? 0) + 1);
-        let bestK = diffs[0]!, bestV = 0;
-        for (const [k, v] of c) if (v > bestV) { bestV = v; bestK = k; }
-        return bestK > 0 ? bestK : 12;
-      })();
-
-      // 2a) Múltiplos ascendentes por encima del máximo.
-      for (let n = max + step; n < plazoRestante; n += step) {
-        if (isViable(n)) { substitute = n; break; }
-      }
-      // 2b) Enteros consecutivos ascendentes por encima del máximo.
-      if (substitute === null) {
-        for (let n = max + 1; n < plazoRestante; n++) {
-          if (isViable(n)) { substitute = n; break; }
-        }
-      }
-      // 3) Si no hay ninguno superior válido, bajar desde el mínimo
-      //    actual (sin caer en el entero positivo más pequeño de forma
-      //    automática: comenzamos en `min - step` y luego `min - 1`).
-      if (substitute === null && min > 1) {
-        for (let n = min - step; n > 0; n -= step) {
-          if (isViable(n)) { substitute = n; break; }
-        }
-      }
-      if (substitute === null && min > 1) {
-        for (let n = min - 1; n > 0; n--) {
-          if (isViable(n)) { substitute = n; break; }
-        }
+    if (chosen === null) {
+      const max = Math.max(0, ...currentList);
+      for (let n = Math.max(12, Math.ceil((max + 1) / 12) * 12); n < plazoRestante; n += 12) {
+        if (isViable(n)) { chosen = n; break; }
       }
     }
-
-    if (substitute === null) {
-      toast.error(
-        "No fue posible sustituir el escenario por uno comercialmente coherente. La lista permanece intacta.",
-      );
+    if (chosen === null) {
+      const max = Math.max(0, ...currentList);
+      for (let n = max + 1; n < plazoRestante; n++) {
+        if (isViable(n)) { chosen = n; break; }
+      }
+    }
+    if (chosen === null) {
+      toast.error("No fue posible agregar un escenario comercialmente coherente.");
       return;
     }
 
-    // Guardarraíl defensivo: el sustituto NUNCA puede coincidir con el
-    // valor recién eliminado (el usuario percibiría que el botón no hizo
-    // nada aunque el handler se haya ejecutado).
-    if (substitute === removedValue) {
-      toast.error(
-        "No fue posible encontrar un escenario diferente para sustituir el eliminado.",
-      );
-      return;
-    }
+    // Preservar la recomendación por VALOR (el índice puede desplazarse
+    // al reordenar ascendentemente).
+    const recommendedValue =
+      userRecomendadaListIdx >= 0 && userRecomendadaListIdx < currentList.length
+        ? currentList[userRecomendadaListIdx]
+        : null;
 
-    // Nueva lista: incluye sustituto, ordenada ascendente, sin duplicados.
-    const next = Array.from(new Set([...remaining, substitute])).sort((a, b) => a - b);
-    if (next.length !== 4) {
-      toast.error("Inconsistencia interna al sustituir escenario. Operación cancelada.");
-      return;
-    }
-
-    // Guardarraíl material: la lista resultante debe ser distinta de la
-    // lista inicial en al menos una posición. Si es idéntica, no hubo
-    // eliminación real y no se debe fingir éxito.
-    const sameList =
-      next.length === currentList.length &&
-      next.every((value, index) => value === currentList[index]);
-    if (sameList) {
-      toast.error(
-        "No fue posible generar un escenario diferente. La lista permanece intacta.",
-      );
-      return;
-    }
-
-
-    // Recalcular índice recomendado a partir del VALOR conservado.
-    let nextRec = -1;
-    if (recommendedValue !== null) {
-      if (recommendedValue === removedValue) {
-        nextRec = -1; // se eliminó el recomendado
-      } else {
-        const found = next.indexOf(recommendedValue);
-        nextRec = found >= 0 ? found : -1;
-      }
-    }
+    const next = [...currentList, chosen].sort((a, b) => a - b);
+    const nextRec = recommendedValue !== null ? next.indexOf(recommendedValue) : -1;
 
     setUserCuotasList(next);
     setUserRecomendadaListIdx(nextRec);
@@ -1570,6 +1528,7 @@ export function UVRSimulator({
                   setUserDirty(true);
                 }}
                 onRemove={handleRemoveEscenarioUVR}
+                onAdd={handleAddEscenarioUVR}
               />
             )}
 

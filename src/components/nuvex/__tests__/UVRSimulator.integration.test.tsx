@@ -468,133 +468,138 @@ describe("UVRSimulator (RTL) — extracto Bancolombia real (caso 000014)", () =>
 });
 
 // ─────────────────────────────────────────────────────────────────────
-// "Eliminar escenario" en UVR (regresión NUV_AUD_2026_DL_00030).
-// - El analista ve 4 botones y al pulsarlos el escenario se SUSTITUYE.
-// - `cuotasList` conserva EXACTAMENTE 4 valores, ordenados y únicos.
-// - El sustituto es comercialmente coherente (no 1, no valor absurdo).
-// - Snapshot v2 emitido contiene 4 propuestas tras la sustitución.
-// - PESOS no se ve afectado (no se toca su código).
+// "Eliminar escenario" en UVR — CONTRATO REVISADO (v2 papelera real).
+// - La papelera reduce la lista en 1 (4 → 3). No hay sustitución.
+// - Un botón "+ Agregar escenario" aparece cuando length<4 y permite
+//   volver a 4 explícitamente (acción independiente).
+// - Snapshot NUVIA v2 requiere exactamente 4: <4 dispara invalidación
+//   y el botón "Auditar con NUVIA" queda deshabilitado.
+// - La recomendación se preserva por VALOR, no por índice.
+// - PESOS no se toca.
+// - Fixture de regresión: NUV_2026_EC_000208.
 // ─────────────────────────────────────────────────────────────────────
-describe("UVRSimulator — 'Eliminar escenario' (sustitución con invariante 4)", () => {
-  const cuotasFromLastEvent = (events: CustomEvent[]) => {
+describe("UVRSimulator — 'Eliminar escenario' (eliminación real, sin sustitución)", () => {
+  const cuotasFromLastReady = (events: CustomEvent[]) => {
     const detail = events.at(-1)!.detail as { datos?: Record<string, unknown> };
     const props = (detail.datos!.propuestasComerciales as Array<{ cuotasEliminadas: number }>);
     return props.map((p) => p.cuotasEliminadas);
   };
 
-  it("modo editable: renderiza 4 botones 'Eliminar escenario'", async () => {
+  it("modo editable: renderiza 4 botones 'Eliminar escenario' inicialmente", async () => {
     seedBancolombiaDraft();
     render(<UVRSimulator />);
     await flush();
-    const botones = screen.getAllByTitle("Eliminar escenario");
-    expect(botones.length).toBe(4);
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(4);
   });
 
-  it("al borrar cualquier escenario, `cuotasList` sigue con EXACTAMENTE 4 valores, únicos y ascendentes", async () => {
+  it("clic en papelera: la tarjeta DESAPARECE del DOM (4 → 3), NO se sustituye", async () => {
     seedBancolombiaDraft();
-    const captured = captureDraftRawEvents();
     render(<UVRSimulator />);
     await flush();
-    // Escala automática por plazoInicial=363 → [72,84,96,108]
-    expect(cuotasFromLastEvent(captured.events)).toEqual([72, 84, 96, 108]);
+    // Escala automática por plazoInicial=363 → [72,84,96,108].
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(4);
+    const target = screen.getAllByTitle("Eliminar escenario")[1]; // valor 84
+    await act(async () => { fireEvent.click(target); await new Promise((r) => setTimeout(r, 0)); });
+    // Contrato: la tarjeta se elimina realmente. Ahora quedan 3.
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+  });
 
-    // Borrar el escenario 1 (cuotasEliminadas=84).
-    const botones1 = screen.getAllByTitle("Eliminar escenario");
-    await act(async () => { fireEvent.click(botones1[1]); await new Promise((r) => setTimeout(r, 0)); });
-    const c1 = cuotasFromLastEvent(captured.events);
-    expect(c1.length).toBe(4);
-    expect(new Set(c1).size).toBe(4);
-    expect([...c1].sort((a, b) => a - b)).toEqual(c1);
+  it("con 3 escenarios se muestra el botón '+ Agregar escenario' y con 4 se oculta", async () => {
+    seedBancolombiaDraft();
+    render(<UVRSimulator />);
+    await flush();
+    // Con 4 escenarios el botón NO está presente.
+    expect(screen.queryByTitle("Agregar escenario")).toBeNull();
+    // Borrar uno.
+    const del = screen.getAllByTitle("Eliminar escenario")[0];
+    await act(async () => { fireEvent.click(del); await new Promise((r) => setTimeout(r, 0)); });
+    // Ahora sí aparece.
+    expect(screen.getByTitle("Agregar escenario")).toBeInTheDocument();
+  });
 
-    // Borrar el escenario 0 tras la sustitución previa.
-    const botones2 = screen.getAllByTitle("Eliminar escenario");
-    await act(async () => { fireEvent.click(botones2[0]); await new Promise((r) => setTimeout(r, 0)); });
-    const c2 = cuotasFromLastEvent(captured.events);
-    expect(c2.length).toBe(4);
-    expect(new Set(c2).size).toBe(4);
-    expect([...c2].sort((a, b) => a - b)).toEqual(c2);
+  it("clic en '+ Agregar escenario': la lista vuelve a 4, todos únicos y ascendentes", async () => {
+    seedBancolombiaDraft();
+    render(<UVRSimulator />);
+    await flush();
+    // Borrar 84 (idx 1) → 3.
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[1]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+    // Agregar → 4.
+    await act(async () => {
+      fireEvent.click(screen.getByTitle("Agregar escenario"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(4);
+  });
 
+  it("NUVIA se INVALIDA al bajar de 4 y se REHABILITA al volver a 4 con '+ Agregar escenario'", async () => {
+    seedBancolombiaDraft();
+    const captured = captureDraftRawEvents();
+    const invalidateEvents: Event[] = [];
+    const invHandler = (e: Event) => { invalidateEvents.push(e); };
+    window.addEventListener("nuvia:draftRawInvalidate", invHandler);
+
+    render(
+      <>
+        <NuviaDraftAuditCard mode="uvr" onCertificar={() => {}} onSalir={() => {}} />
+        <UVRSimulator />
+      </>,
+    );
+    await flush();
+    const btn = () => screen.getByRole("button", { name: /Auditar con NUVIA|Reevaluar|Auditando/i });
+    expect(btn()).not.toBeDisabled();
+    const readyBefore = captured.events.length;
+
+    // Borrar uno → cae a 3 → invalidación + botón deshabilitado.
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[2]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+    expect(invalidateEvents.length).toBeGreaterThan(0);
+    // No se emitió un nuevo snapshot "ready" mientras hay 3.
+    expect(captured.events.length).toBe(readyBefore);
+    expect(btn()).toBeDisabled();
+
+    // Agregar → vuelve a 4 → snapshot v2 se re-emite y botón habilitado.
+    await act(async () => {
+      fireEvent.click(screen.getByTitle("Agregar escenario"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(4);
+    expect(captured.events.length).toBeGreaterThan(readyBefore);
+    const last = captured.events.at(-1)!.detail as { datos?: Record<string, unknown> };
+    expect((last.datos!.propuestasComerciales as unknown[]).length).toBe(4);
+    expect(btn()).not.toBeDisabled();
+
+    window.removeEventListener("nuvia:draftRawInvalidate", invHandler);
     captured.stop();
   });
 
-  it("regresión: eliminar 72 de [72,84,96,108] NO produce 1 ni valores comercialmente absurdos", async () => {
-    seedBancolombiaDraft();
-    const captured = captureDraftRawEvents();
-    render(<UVRSimulator />);
-    await flush();
-    expect(cuotasFromLastEvent(captured.events)).toEqual([72, 84, 96, 108]);
-
-    const botones = screen.getAllByTitle("Eliminar escenario");
-    // idx 0 corresponde a cuotasEliminadas=72 (lista ascendente).
-    await act(async () => { fireEvent.click(botones[0]); await new Promise((r) => setTimeout(r, 0)); });
-    const nueva = cuotasFromLastEvent(captured.events);
-
-    expect(nueva.length).toBe(4);
-    // No contiene 1 ni ningún valor absurdo (<12 se considera absurdo
-    // para una escala comercial 12-múltiplos con plazoInicial 363).
-    for (const v of nueva) expect(v).toBeGreaterThanOrEqual(12);
-    expect(nueva).not.toContain(1);
-    // Conserva los otros tres valores no eliminados.
-    expect(nueva).toEqual(expect.arrayContaining([84, 96, 108]));
-    // El sustituto debe estar por encima del máximo previo (política:
-    // preferir arriba antes de bajar). Con step=12 y plazoRestante=285
-    // el motor elige 120.
-    const sustituto = nueva.find((v) => ![84, 96, 108].includes(v))!;
-    expect(sustituto).toBeGreaterThan(108);
-    expect(sustituto).toBeLessThan(285);
-    captured.stop();
-  });
-
-  it("snapshot v2 emitido tras eliminar contiene EXACTAMENTE 4 propuestas", async () => {
-    seedBancolombiaDraft();
-    const captured = captureDraftRawEvents();
-    render(<UVRSimulator />);
-    await flush();
-    const botones = screen.getAllByTitle("Eliminar escenario");
-    await act(async () => { fireEvent.click(botones[2]); await new Promise((r) => setTimeout(r, 0)); });
-    const detail = captured.events.at(-1)!.detail as { datos?: Record<string, unknown> };
-    const datos = detail.datos as Record<string, unknown>;
-    expect(datos.snapshotVersion).toBe(2);
-    const propsArr = datos.propuestasComerciales as unknown[];
-    expect(propsArr.length).toBe(4);
-    captured.stop();
-  });
-
-  it("recomendación por VALOR: si se elimina el escenario recomendado, el índice recomendado queda en -1 (no apunta a otro por desplazamiento)", async () => {
-    // Sembramos con recomendada explícita en idx=1 (valor=84).
+  it("recomendación por VALOR: si el recomendado se elimina, el índice queda en -1", async () => {
     seedBancolombiaDraft();
     const raw = JSON.parse(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")!);
+    // recomendada idx=1 → valor 84.
     raw.propuestasComerciales = { cuotasList: [72, 84, 96, 108], recomendadaIdx: 1 };
     sessionStorage.setItem("nuvex.simulatorDraft.uvr.standalone", JSON.stringify(raw));
 
-    const captured = captureDraftRawEvents();
     render(<UVRSimulator />);
     await flush();
-
-    // Borrar idx 1 (el recomendado, valor 84).
-    const botones = screen.getAllByTitle("Eliminar escenario");
-    await act(async () => { fireEvent.click(botones[1]); await new Promise((r) => setTimeout(r, 0)); });
-    const nueva = cuotasFromLastEvent(captured.events);
-    expect(nueva.length).toBe(4);
-    // Aún tiene 4, únicos, ordenados; el valor eliminado no está.
-    expect(new Set(nueva).size).toBe(4);
-    expect(nueva).not.toContain(84);
-    // Como el recomendado fue eliminado, la recomendación se reasigna
-    // al bestIdx por ahorro (el motor decide, nunca queda apuntando a
-    // otro escenario por accidente de índice). Verificamos que si hay
-    // recomendada, apunta a un valor que sigue en la lista.
-    const detail = captured.events.at(-1)!.detail as { datos?: Record<string, unknown> };
-    const datos = detail.datos as Record<string, unknown>;
-    const recIdx = datos.recommendedIndex as number | null | undefined;
-    if (typeof recIdx === "number" && recIdx >= 0) {
-      const propsArr = datos.propuestasComerciales as Array<{ cuotasEliminadas: number }>;
-      const recValor = propsArr[recIdx]?.cuotasEliminadas;
-      expect(nueva).toContain(recValor);
-    }
-    captured.stop();
+    // Eliminar el recomendado (idx 1, valor 84).
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[1]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    // Quedan 3. Ninguna estrella marcada (recomendada = -1).
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+    const marcadas = screen.queryAllByTitle(/recomendada.*enviada al cliente/i);
+    expect(marcadas.length).toBe(0);
   });
 
-  it("recomendación por VALOR: si se elimina un escenario distinto del recomendado, el recomendado se preserva por su VALOR (no se desplaza el índice)", async () => {
+  it("recomendación por VALOR: si se elimina OTRO escenario, el recomendado se preserva por su valor", async () => {
     seedBancolombiaDraft();
     const raw = JSON.parse(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")!);
     // recomendada idx=2 → valor 96.
@@ -605,90 +610,79 @@ describe("UVRSimulator — 'Eliminar escenario' (sustitución con invariante 4)"
     render(<UVRSimulator />);
     await flush();
 
-    // Borrar idx 0 (valor 72). El recomendado (96) sigue en la lista.
-    const botones = screen.getAllByTitle("Eliminar escenario");
-    await act(async () => { fireEvent.click(botones[0]); await new Promise((r) => setTimeout(r, 0)); });
-
-    const detail = captured.events.at(-1)!.detail as { datos?: Record<string, unknown> };
-    const datos = detail.datos as Record<string, unknown>;
-    const propsArr = datos.propuestasComerciales as Array<{ cuotasEliminadas: number }>;
-    const recIdx = datos.recommendedIndex as number | null | undefined;
-    // 96 sigue presente entre las 4 propuestas emitidas (no se perdió
-    // ni fue sustituido — sólo se eliminó el escenario 72).
-    expect(propsArr.some((p) => p.cuotasEliminadas === 96)).toBe(true);
-    // Si el índice recomendado se emite (>=0), debe apuntar exactamente
-    // al VALOR original recomendado (96), nunca a otro por corrimiento.
-    if (typeof recIdx === "number" && recIdx >= 0) {
-      expect(propsArr[recIdx].cuotasEliminadas).toBe(96);
+    // Borrar 72 (idx 0). Recomendada 96 sigue viva → snapshot NUVIA se
+    // re-emite con 3 propuestas? No: NUVIA invalidación (3 < 4). El
+    // consumidor debe validar recomendación tras re-agregar. Verificamos
+    // que en el último snapshot con 4 (inicial) el recomendado apunta a
+    // 96.
+    const initialDatos = captured.events.at(-1)!.detail as { datos?: Record<string, unknown> };
+    const initialProps = initialDatos.datos!.propuestasComerciales as Array<{ cuotasEliminadas: number }>;
+    const initialRec = initialDatos.datos!.recommendedIndex as number | null;
+    if (typeof initialRec === "number" && initialRec >= 0) {
+      expect(initialProps[initialRec].cuotasEliminadas).toBe(96);
     }
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[0]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    // 96 sigue presente entre las 3 tarjetas visibles.
+    const inputs = Array.from(
+      document.querySelectorAll<HTMLInputElement>('input[type="number"]'),
+    );
+    const valores = inputs.map((i) => Number(i.value)).filter((n) => n > 0 && n < 285);
+    expect(valores).toContain(96);
+    expect(valores).not.toContain(72);
     captured.stop();
   });
 
-  it("botón 'Auditar con NUVIA' permanece habilitado tras eliminar (siguen existiendo 4 propuestas)", async () => {
+  it("regresión NUV_2026_EC_000208: eliminar 84 reduce la lista a 3 y NO reinserta 84", async () => {
+    // Fixture sin PII inspirado en NUV_2026_EC_000208. Simulamos la
+    // configuración estándar UVR Bancolombia y verificamos que la
+    // papelera actúa realmente sobre el DOM.
     seedBancolombiaDraft();
-    render(
-      <>
-        <NuviaDraftAuditCard mode="uvr" onCertificar={() => {}} onSalir={() => {}} />
-        <UVRSimulator />
-      </>,
-    );
+    const { container } = render(<UVRSimulator />);
     await flush();
-    const btn = () => screen.getByRole("button", { name: /Auditar con NUVIA|Reevaluar|Auditando/i });
-    expect(btn()).not.toBeDisabled();
-    const botones = screen.getAllByTitle("Eliminar escenario");
-    await act(async () => { fireEvent.click(botones[3]); await new Promise((r) => setTimeout(r, 0)); });
-    expect(btn()).not.toBeDisabled();
+
+    const readCuotas = () =>
+      Array.from(container.querySelectorAll<HTMLInputElement>('input[type="number"]'))
+        .map((i) => Number(i.value))
+        .filter((n) => n > 0 && n < 285);
+
+    expect(readCuotas()).toEqual([72, 84, 96, 108]);
+
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[1]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+
+    // Cambio material observable en el DOM: 3 tarjetas, sin 84.
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+    const valores = readCuotas();
+    expect(valores.length).toBe(3);
+    expect(valores).not.toContain(84);
+    expect(valores).toEqual(expect.arrayContaining([72, 96, 108]));
   });
 
-  it("regresión: eliminar 72 SIN espacio para 120 (plazoRestante=110) NO reinserta 72 y la lista cambia materialmente", async () => {
-    // Reproduce el bug: canónicos [72,84,96,108], plazoRestante bajo
-    // (110) impide subir a 120 → el algoritmo antiguo bajaba con step
-    // 12 y regresaba justo el valor recién eliminado (84-12=72),
-    // dejando la lista idéntica y el botón "sin efecto".
+  it("persistencia local: 3 escenarios sobreviven a remount (no se regeneran a 4 automáticamente)", async () => {
     seedBancolombiaDraft();
-    const raw = JSON.parse(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")!);
-    raw.client.cuotasPagadas = "253"; // 363 - 253 = 110 pendientes (derivado)
-    raw.client.cuotasPendientes = "110";
-
-    sessionStorage.setItem("nuvex.simulatorDraft.uvr.standalone", JSON.stringify(raw));
-
-    const captured = captureDraftRawEvents();
+    const { unmount } = render(<UVRSimulator />);
+    await flush();
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[1]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+    unmount();
     render(<UVRSimulator />);
     await flush();
-
-    const initialList = cuotasFromLastEvent(captured.events);
-    expect(initialList).toEqual([72, 84, 96, 108]);
-
-    const botones = screen.getAllByTitle("Eliminar escenario");
-    await act(async () => { fireEvent.click(botones[0]); await new Promise((r) => setTimeout(r, 0)); });
-    const nueva = cuotasFromLastEvent(captured.events);
-
-    // Invariantes estructurales de la propuesta v2.
-    expect(nueva.length).toBe(4);
-    expect(new Set(nueva).size).toBe(4);
-    expect([...nueva].sort((a, b) => a - b)).toEqual(nueva);
-
-    // El valor eliminado NO puede reutilizarse como sustituto.
-    expect(nueva).not.toContain(72);
-
-    // La lista resultante DEBE ser distinta de la inicial (aserción
-    // negativa exigida por la corrección: no basta con ejecutar el
-    // handler, la mutación debe ser real).
-    expect(nueva).not.toEqual(initialList);
-
-    // Se preservan los tres valores no eliminados.
-    expect(nueva).toEqual(expect.arrayContaining([84, 96, 108]));
-
-    // 120 no es viable (>= 110) y el sustituto seleccionado debe ser
-    // un entero positivo estrictamente menor a 110 y ≠ 72.
-    const sustituto = nueva.find((v) => ![84, 96, 108].includes(v))!;
-    expect(sustituto).toBeGreaterThan(0);
-    expect(sustituto).toBeLessThan(110);
-    expect(sustituto).not.toBe(72);
-
-    captured.stop();
+    // Al reabrir con el mismo sessionStorage la lista sigue siendo de 3
+    // — no se regenera automáticamente a 4.
+    expect(screen.getAllByTitle("Eliminar escenario").length).toBe(3);
+    void cuotasFromLastReady; // helper reservado para casos con snapshot v2
   });
 });
+
 
 
 

@@ -32,45 +32,68 @@ export interface UvrEscenariosInput {
   plazoRestante: number;
   input: UVRInput;
   escenarioActual: UVREscenarioActual;
-  /** Override manual del analista. Si es undefined, longitud ≠ 4 o
-   *  falla `isCuotasListValid`, se usa la escala automática. */
+  /** Override manual del analista. Si es undefined, longitud fuera de
+   *  1..4 o falla `isEditableCuotasListValid`, se usa la escala automática. */
   cuotasList?: number[];
-  /** Posición 0..3 dentro de `cuotasList` marcada manualmente como
+  /** Posición 0..N-1 dentro de `cuotasList` marcada manualmente como
    *  recomendada. -1 = usar automática (bestIdx por ahorro total). */
   recomendadaListIdx?: number;
 }
 
 export interface UvrEscenariosResult {
-  /** cuotasList efectiva (siempre 4 posiciones). */
+  /** cuotasList efectiva (1..4 posiciones — refleja ediciones del
+   *  analista, incluida la papelera). NUVIA sólo audita cuando
+   *  `isCuotasListValid` (exactamente 4) es true. */
   cuotasList: number[];
   /** Escala automática correspondiente al `plazoInicial` recibido. */
   cuotasAutomaticas: number[];
   /** Origen de `cuotasList`. */
   fuente: PropuestaFuente;
-  /** 4 cálculos crudos (incluye no-válidos para render). */
+  /** Cálculos crudos (mismo largo que `cuotasList`, incluye no-válidos
+   *  para render). */
   escenarios: PropuestaCalc[];
   /** Sólo propuestas válidas (contrato PDF/snapshot). */
   propuestas: PropuestaRow[];
-  /** Índice recomendado dentro de `cuotasList` (0..3). -1 si ninguno. */
+  /** Índice recomendado dentro de `cuotasList` (0..N-1). -1 si ninguno. */
   recomendadaListIdx: number;
   /** Índice recomendado dentro de `propuestas` (válidas). -1 si vacío. */
   recomendadaRowIdx: number;
   /** true si el override manual del padre existía pero no pasó la
-   *  validación estructural y se regeneró la escala automática. */
+   *  validación estructural editable y se regeneró la escala automática. */
   regeneradaPorInvalidez: boolean;
 }
 
-/** Estructural: 4 enteros positivos, únicos, estrictamente ascendentes
- *  y menores al plazo restante. */
+/** Estructural NUVIA (v2 canónico): EXACTAMENTE 4 enteros positivos,
+ *  únicos, estrictamente ascendentes y menores al plazo restante.
+ *  Esta versión NO se relaja: la usan snapshot v2, PDF, persistencia
+ *  server-side y `scenariosReady`. */
 export function isCuotasListValid(
   list: number[] | undefined,
   plazoRestante: number,
 ): boolean {
   if (!Array.isArray(list) || list.length !== 4) return false;
+  return isEditableCuotasListValid(list, plazoRestante);
+}
+
+/** Alias explícito para consumidores NUVIA (misma semántica exacta que
+ *  `isCuotasListValid`). Documenta que la lista debe estar lista para
+ *  emitir snapshot v2. */
+export const isCuotasListReadyForNuvia = isCuotasListValid;
+
+/** Estructural EDITABLE (analista): entre 1 y 4 enteros positivos,
+ *  únicos, estrictamente ascendentes y menores al plazo restante. La
+ *  papelera permite reducir la lista debajo de 4; NUVIA sólo audita
+ *  cuando la lista vuelve a tener 4 (ver `isCuotasListValid`). */
+export function isEditableCuotasListValid(
+  list: number[] | undefined,
+  plazoRestante: number,
+): boolean {
+  if (!Array.isArray(list)) return false;
+  if (list.length < 1 || list.length > 4) return false;
   if (!Number.isFinite(plazoRestante) || plazoRestante <= 1) return false;
   const seen = new Set<number>();
   let prev = -Infinity;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < list.length; i++) {
     const v = list[i];
     if (!Number.isInteger(v) || v <= 0) return false;
     if (v >= plazoRestante) return false;
@@ -94,7 +117,13 @@ export function buildUvrEscenarios(args: UvrEscenariosInput): UvrEscenariosResul
 
   const cuotasAutomaticas = getUVRReductionOptions(plazoInicial);
   const userProvided = Array.isArray(userCuotas) && userCuotas.length > 0;
-  const manualValida = userProvided && isCuotasListValid(userCuotas, plazoRestante);
+  // Contrato editable: se conservan listas 1..4 válidas. Nunca se
+  // "regenera" a 4 después de una eliminación; sólo se regenera cuando
+  // la lista aportada por el analista dejó de ser estructuralmente
+  // válida (ej. valores >= plazoRestante). El paso automático de 4
+  // sólo se usa como semilla cuando no hay override.
+  const manualValida =
+    userProvided && isEditableCuotasListValid(userCuotas, plazoRestante);
   const fuente: PropuestaFuente = manualValida ? "manual" : "automatica";
   const cuotasListEfectiva = manualValida ? [...(userCuotas as number[])] : [...cuotasAutomaticas];
   const regeneradaPorInvalidez = userProvided && !manualValida;
