@@ -198,8 +198,11 @@ export function UVRSimulator({
   // Borrador comercial persistente. Sólo se guardan overrides reales del
   // analista (userDirty). Cuando no hay ediciones se persiste `undefined`
   // → la próxima apertura re-derivará la escala automática por plazo.
+  // Se acepta cualquier longitud 1..4 (papelera + agregar) para que el
+  // borrador local refleje la lista visible; la persistencia server-side
+  // sigue exigiendo 4 (ver handleSaveAsCase, out-of-scope).
   const propuestasComercialesDraft: PropuestasComercialesDraft | undefined =
-    userDirty && userCuotasList.length === 4
+    userDirty && userCuotasList.length >= 1 && userCuotasList.length <= 4
       ? { cuotasList: userCuotasList, recomendadaIdx: userRecomendadaListIdx }
       : undefined;
   const [aprobando, setAprobando] = useState(false);
