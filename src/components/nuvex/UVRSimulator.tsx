@@ -644,12 +644,13 @@ export function UVRSimulator({
 
   // ─── "+ Agregar escenario": acción INDEPENDIENTE ─────────────────
   // Sólo válido cuando la lista actual tiene menos de 4. Añade un
-  // valor comercialmente coherente:
-  //   1) primer canónico (getUVRReductionOptions) que no esté en la
-  //      lista y sea viable con el plazoRestante actual;
-  //   2) primer múltiplo de 12 estrictamente > max, < plazoRestante;
-  //   3) primer entero > max, < plazoRestante.
-  // La papelera nunca invoca esto: agregar es explícito del analista.
+  // valor comercialmente coherente. Orden de prioridad:
+  //   1) progresión estricta de +12 por encima del máximo actual
+  //      (max+12, max+24, …), acotada por plazoRestante;
+  //   2) canónicas (getUVRReductionOptions) como fallback, no
+  //      duplicadas y viables;
+  //   3) primer entero > max, < plazoRestante, no duplicado.
+  // Con [96] → agrega 108 (nunca 72). La papelera nunca invoca esto.
   const handleAddEscenarioUVR = () => {
     if (!escenariosResult || !calc) return;
     const currentList = escenariosResult.cuotasList;
@@ -669,18 +670,24 @@ export function UVRSimulator({
       return r.valid;
     };
 
+    const max = currentList.length > 0 ? Math.max(...currentList) : 0;
+
     let chosen: number | null = null;
-    for (const n of getUVRReductionOptions(plazoInicial)) {
-      if (isViable(n)) { chosen = n; break; }
-    }
-    if (chosen === null) {
-      const max = Math.max(0, ...currentList);
-      for (let n = Math.max(12, Math.ceil((max + 1) / 12) * 12); n < plazoRestante; n += 12) {
+    // 1) Progresión +12 sobre el máximo actual (sólo si hay al menos 1).
+    if (currentList.length > 0) {
+      for (let n = max + 12; n < plazoRestante; n += 12) {
         if (isViable(n)) { chosen = n; break; }
       }
     }
+
+    // 2) Fallback canónico (no duplicados, viables).
     if (chosen === null) {
-      const max = Math.max(0, ...currentList);
+      for (const n of getUVRReductionOptions(plazoInicial)) {
+        if (isViable(n)) { chosen = n; break; }
+      }
+    }
+    // 3) Fallback entero > max.
+    if (chosen === null) {
       for (let n = max + 1; n < plazoRestante; n++) {
         if (isViable(n)) { chosen = n; break; }
       }
@@ -689,6 +696,7 @@ export function UVRSimulator({
       toast.error("No fue posible agregar un escenario comercialmente coherente.");
       return;
     }
+
 
     // Preservar la recomendación por VALOR (el índice puede desplazarse
     // al reordenar ascendentemente).

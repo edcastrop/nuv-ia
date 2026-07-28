@@ -747,7 +747,97 @@ describe("UVRSimulator — 'Eliminar escenario' (eliminación real, sin sustituc
     window.removeEventListener("nuvia:draftRawInvalidate", invHandler);
     void cuotasFromLastReady;
   });
+
+  // ─── Regresión: prioridad de "+ Agregar escenario" = max + 12 ────
+  // Contrato revisado: la búsqueda del sustituto debe empezar en
+  // (max + 12) y avanzar en pasos de 12. Las canónicas [72,84,96,108]
+  // son SÓLO fallback. Con [96], el resultado debe ser [96,108],
+  // nunca [72,96]. Con [72] la reconstrucción debe recorrer
+  // 72 → 84 → 96 → 108.
+  const readCuotasFromDom = (): number[] => {
+    // "−N cuotas (…)" aparece una vez por tarjeta comercial.
+    const nodes = Array.from(document.querySelectorAll("div")).filter((el) =>
+      /^−\d+\s+cuotas\s*\(/.test((el.textContent ?? "").trim()),
+    );
+    const vals: number[] = [];
+    for (const n of nodes) {
+      const m = (n.textContent ?? "").trim().match(/^−(\d+)\s+cuotas/);
+      if (m) vals.push(parseInt(m[1], 10));
+    }
+    return Array.from(new Set(vals)).sort((a, b) => a - b);
+  };
+
+  it("con [96] agregar produce [96,108] (nunca 72): prioriza max+12 sobre canónicas", async () => {
+    seedBancolombiaDraft();
+    render(<UVRSimulator />);
+    await flush();
+    // Inicial [72,84,96,108]. Borrar 72 (idx0), 84 (idx0 tras shift), 108 (último).
+    // Tras cada borrado la lista se re-renderiza ordenada.
+    // Objetivo: dejar únicamente [96].
+    // 1) borra idx0 (72) → [84,96,108]
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[0]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    // 2) borra idx0 (84) → [96,108]
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[0]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    // 3) borra idx1 (108) → [96]
+    await act(async () => {
+      fireEvent.click(screen.getAllByTitle("Eliminar escenario")[1]);
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(readCuotasFromDom()).toEqual([96]);
+
+    // Agregar: debe elegir 96+12 = 108, NO 72.
+    await act(async () => {
+      fireEvent.click(screen.getByTitle("Agregar escenario"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    const after = readCuotasFromDom();
+    expect(after).toEqual([96, 108]);
+    expect(after).not.toContain(72);
+  });
+
+  it("reconstrucción desde [72]: 72 → 84 → 96 → 108 (pasos estrictos de +12)", async () => {
+    seedBancolombiaDraft();
+    render(<UVRSimulator />);
+    await flush();
+    // Dejar [72]: borrar el último 3 veces (siempre elimina el mayor).
+    for (let i = 0; i < 3; i++) {
+      const btns = screen.getAllByTitle("Eliminar escenario");
+      await act(async () => {
+        fireEvent.click(btns[btns.length - 1]);
+        await new Promise((r) => setTimeout(r, 0));
+      });
+    }
+    expect(readCuotasFromDom()).toEqual([72]);
+
+    // 1er add → 84
+    await act(async () => {
+      fireEvent.click(screen.getByTitle("Agregar escenario"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(readCuotasFromDom()).toEqual([72, 84]);
+
+    // 2do add → 96
+    await act(async () => {
+      fireEvent.click(screen.getByTitle("Agregar escenario"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(readCuotasFromDom()).toEqual([72, 84, 96]);
+
+    // 3er add → 108
+    await act(async () => {
+      fireEvent.click(screen.getByTitle("Agregar escenario"));
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(readCuotasFromDom()).toEqual([72, 84, 96, 108]);
+  });
 });
+
 
 
 
