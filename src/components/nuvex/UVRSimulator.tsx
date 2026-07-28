@@ -673,10 +673,13 @@ export function UVRSimulator({
     const max = currentList.length > 0 ? Math.max(...currentList) : 0;
 
     let chosen: number | null = null;
-    // 1) Progresión +12 sobre el máximo actual.
-    for (let n = max + 12; n < plazoRestante; n += 12) {
-      if (isViable(n)) { chosen = n; break; }
+    // 1) Progresión +12 sobre el máximo actual (sólo si hay al menos 1).
+    if (currentList.length > 0) {
+      for (let n = max + 12; n < plazoRestante; n += 12) {
+        if (isViable(n)) { chosen = n; break; }
+      }
     }
+
     // 2) Fallback canónico (no duplicados, viables).
     if (chosen === null) {
       for (const n of getUVRReductionOptions(plazoInicial)) {
