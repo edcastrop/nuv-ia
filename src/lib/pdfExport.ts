@@ -179,7 +179,21 @@ export function validatePdfLayout(elementId: string): LayoutValidationResult {
    EXPORTACIÓN A PDF — con validación obligatoria
 ============================================================ */
 
-async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
+export interface ExportPdfOptions {
+  /**
+   * Cuando es `true`, aborta la exportación si validatePdfLayout detecta
+   * overflow o colisión inferior real (tolerancia conservadora ~2px) y
+   * muestra un mensaje claro al usuario. Por defecto es `false` para
+   * preservar el comportamiento actual de todos los demás documentos.
+   * Actualmente sólo lo activa la generación de la Cuenta de Cobro NUVEX.
+   */
+  strict?: boolean;
+}
+
+async function renderElementToPdf(
+  elementId: string,
+  options: ExportPdfOptions = {},
+): Promise<jsPDF | null> {
   await new Promise((r) => setTimeout(r, 300));
 
   const element = document.getElementById(elementId);
@@ -203,7 +217,28 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
 
   const validation = validatePdfLayout(elementId);
   if (!validation.ok) {
-    console.warn("[NUVEX PDF] Layout warnings:", validation.issues);
+    if (options.strict) {
+      const criticals = [
+        validation.overflow ? "el contenido excede el alto de la página A4" : null,
+        validation.footerCollision ? "hay colisión con el borde inferior" : null,
+        validation.headerCollision ? "hay colisión con el borde superior" : null,
+      ].filter(Boolean) as string[];
+      if (criticals.length > 0) {
+        const detalle = validation.issues.slice(0, 4).join("\n• ");
+        alert(
+          "No se puede generar el PDF porque " +
+            criticals.join(" y ") +
+            ".\n\nDetalle:\n• " +
+            detalle +
+            "\n\nAjusta el contenido para que quepa en una sola página A4 y vuelve a intentarlo.",
+        );
+        return null;
+      }
+      // Sin issues críticos (sólo advertencias de uso < 75%): continuar.
+      console.warn("[NUVEX PDF] Layout advertencias no bloqueantes:", validation.issues);
+    } else {
+      console.warn("[NUVEX PDF] Layout warnings:", validation.issues);
+    }
   }
 
   const logoOk = imgs.some((i) => i.naturalWidth > 0);
@@ -246,6 +281,15 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
       }
       if (i > 0) pdf.addPage();
       pdf.addImage(pageCanvas.toDataURL("image/jpeg", 0.82), "JPEG", 0, 0, 210, 297);
+    }
+    if (options.strict && pdf.getNumberOfPages() > 1) {
+      alert(
+        "No se puede generar el PDF: la cuenta de cobro debe caber en una sola página A4 " +
+          "y se detectaron " +
+          pdf.getNumberOfPages() +
+          " páginas. Reduce el contenido y vuelve a intentarlo.",
+      );
+      return null;
     }
     return pdf;
   }
@@ -295,12 +339,25 @@ async function renderElementToPdf(elementId: string): Promise<jsPDF | null> {
     pdf.addImage(imgData, "JPEG", 0, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
   }
+  if (options.strict && pdf.getNumberOfPages() > 1) {
+    alert(
+      "No se puede generar el PDF: el documento debe caber en una sola página A4 " +
+        "y se detectaron " +
+        pdf.getNumberOfPages() +
+        " páginas. Reduce el contenido y vuelve a intentarlo.",
+    );
+    return null;
+  }
   return pdf;
 }
 
-export async function exportElementToPdf(elementId: string, filename: string) {
+export async function exportElementToPdf(
+  elementId: string,
+  filename: string,
+  options: ExportPdfOptions = {},
+) {
   try {
-    const pdf = await renderElementToPdf(elementId);
+    const pdf = await renderElementToPdf(elementId, options);
     if (!pdf) return;
     pdf.save(filename);
   } catch (err) {
@@ -309,6 +366,7 @@ export async function exportElementToPdf(elementId: string, filename: string) {
     alert("No se pudo exportar el PDF: " + msg);
   }
 }
+
 
 export async function elementToPdfBlob(
   elementId: string,
