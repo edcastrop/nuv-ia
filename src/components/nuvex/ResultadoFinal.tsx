@@ -1255,7 +1255,7 @@ function PrintCuentaCobro({
 }) {
   const hoy = new Date().toISOString().slice(0, 10);
   const hasDiscount = aprobado.descuento > 0;
-  const expedienteCorto = expedienteId ? `EXP-${expedienteId.slice(0, 8).toUpperCase()}` : "—";
+  void expedienteId;
   return (
     <div id={id} style={printShell}>
       <div
@@ -1446,10 +1446,10 @@ function PrintCuentaCobro({
               }}
             >
               <CcRow label="Titular" value="NUVEX Finanzas Inteligentes S.A.S." />
-              <CcRow label="NIT" value="901.891.264-1" />
+              <CcRow label="NIT" value="901422948" />
               <CcRow label="Banco" value="Bancolombia" />
               <CcRow label="Tipo de cuenta" value="Ahorros" />
-              <CcRow label="N° de cuenta" value="291-000014-92" />
+              <CcRow label="N° de cuenta" value="29100001492" />
               <CcRow label="Referencia" value={consecutivo} />
             </div>
             <div style={{ marginTop: 6, fontSize: 9.5, color: "#5C6770", lineHeight: 1.5 }}>
