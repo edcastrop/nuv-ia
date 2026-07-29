@@ -513,7 +513,7 @@ export function ResultadoFinal({
                     { key: "honorarios", label: "Honorarios finales", value: aprobado?.honorariosFinales },
                   ]);
                   ensureValidAdvisory("Cuenta de Cobro", v);
-                  exportElementToPdf(cuentaId, `NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`);
+                  exportElementToPdf(cuentaId, `NUVEX_Cuenta_Cobro_${consecutivo}_${sanitizeFileName(client.nombre)}.pdf`, { strict: true });
                 }}
                 className="rounded-lg px-5 py-2.5 text-sm font-semibold text-white shadow transition-transform hover:scale-[1.01]"
                 style={{ backgroundColor: NUVEX.negro }}
