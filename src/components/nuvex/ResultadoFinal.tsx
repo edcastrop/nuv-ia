@@ -1251,43 +1251,53 @@ function PrintCuentaCobro({
   const expedienteCorto = expedienteId ? `EXP-${expedienteId.slice(0, 8).toUpperCase()}` : "—";
   return (
     <div id={id} style={printShell}>
-      <div style={{ display: "flex", minHeight: 1080 }}>
+      <div
+        className="nuvex-print-page"
+        style={{
+          width: 794,
+          height: 1123,
+          overflow: "hidden",
+          position: "relative",
+          display: "flex",
+          background: "#FFFFFF",
+        }}
+      >
         <div
           style={{
-            width: 220,
+            width: 210,
             background: NUVEX_GRADIENT,
             color: "#fff",
-            padding: "36px 24px",
+            padding: "30px 22px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
           }}
         >
           <div>
-            <LogoMark light size={180} />
-            <div style={{ marginTop: 18, fontSize: 9.5, letterSpacing: 2.5, fontWeight: 700, opacity: 0.85 }}>
+            <LogoMark light size={160} />
+            <div style={{ marginTop: 14, fontSize: 9, letterSpacing: 2.5, fontWeight: 700, opacity: 0.85 }}>
               DOCUMENTO
             </div>
-            <div style={{ fontSize: 20, fontWeight: 900, lineHeight: 1.1, marginTop: 4, letterSpacing: -0.3 }}>
+            <div style={{ fontSize: 19, fontWeight: 900, lineHeight: 1.1, marginTop: 4, letterSpacing: -0.3 }}>
               Cuenta<br />de cobro
             </div>
 
-            <div style={{ marginTop: 28 }}>
+            <div style={{ marginTop: 22 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>CONSECUTIVO</div>
-              <div style={{ fontSize: 15, fontWeight: 900, marginTop: 4 }}>{consecutivo}</div>
+              <div style={{ fontSize: 14, fontWeight: 900, marginTop: 3 }}>{consecutivo}</div>
             </div>
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>EXPEDIENTE</div>
-              <div style={{ fontSize: 12, fontWeight: 800, marginTop: 4 }}>{expedienteCorto}</div>
+              <div style={{ fontSize: 11.5, fontWeight: 800, marginTop: 3 }}>{expedienteCorto}</div>
             </div>
-            <div style={{ marginTop: 14 }}>
+            <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>FECHA</div>
-              <div style={{ fontSize: 12, fontWeight: 700, marginTop: 4 }}>{hoy}</div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, marginTop: 3 }}>{hoy}</div>
             </div>
           </div>
 
-          <div style={{ fontSize: 9, opacity: 0.85, lineHeight: 1.5, letterSpacing: 0.3 }}>
-            <div style={{ fontWeight: 800, letterSpacing: 1.5, marginBottom: 6 }}>NUVEX</div>
+          <div style={{ fontSize: 8.5, opacity: 0.85, lineHeight: 1.5, letterSpacing: 0.3 }}>
+            <div style={{ fontWeight: 800, letterSpacing: 1.5, marginBottom: 5 }}>NUVEX</div>
             Carrera 16 # 37-48 Piso 4<br />
             Centro Bucaramanga<br />
             Bogotá | Bucaramanga<br />
@@ -1296,15 +1306,15 @@ function PrintCuentaCobro({
           </div>
         </div>
 
-        <div style={{ flex: 1, padding: "44px 40px 32px" }}>
-          <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.azul }}>
+        <div style={{ flex: 1, padding: "28px 32px 24px", display: "flex", flexDirection: "column" }}>
+          <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 2.5, color: NUVEX.azul }}>
             FIRMA ESPECIALIZADA EN OPTIMIZACIÓN FINANCIERA
           </div>
-          <div style={{ fontSize: 22, fontWeight: 900, marginTop: 8, letterSpacing: -0.3 }}>
+          <div style={{ fontSize: 20, fontWeight: 900, marginTop: 6, letterSpacing: -0.3 }}>
             Liquidación de honorarios
           </div>
 
-          <div style={{ marginTop: 22, display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 14, columnGap: 24, border: "1px solid #E3E7EE", borderRadius: 12, padding: "18px 20px" }}>
+          <div style={{ marginTop: 14, display: "grid", gridTemplateColumns: "1fr 1fr", rowGap: 10, columnGap: 20, border: "1px solid #E3E7EE", borderRadius: 10, padding: "12px 16px" }}>
             <CcRow label="Cliente" value={client.nombre || "—"} />
             <CcRow label="Cédula" value={client.cedula || "—"} />
             <CcRow label="Banco" value={aprob.banco || client.banco || "—"} />
@@ -1316,25 +1326,24 @@ function PrintCuentaCobro({
           </div>
 
           {(() => {
-            // Solo renderizar bloque INTERVINIENTES si existen titulares con datos reales
             const ints = (client.intervinientes ?? []).filter(
               (p) => (p.nombreCompleto || "").trim() !== "" || (p.cedula || "").trim() !== "",
             );
             if (ints.length === 0) return null;
             return (
-              <div style={{ marginTop: 18 }}>
-                <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>INTERVINIENTES</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+              <div style={{ marginTop: 12 }}>
+                <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 6 }}>INTERVINIENTES</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
                   {ints.map((p, i) => (
-                    <div key={i} style={{ border: "1px solid #E3E7EE", borderRadius: 10, padding: "10px 12px", background: i === 0 ? "#F4F6FC" : "#FFFFFF" }}>
-                      <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.azul, textTransform: "uppercase" }}>
+                    <div key={i} style={{ border: "1px solid #E3E7EE", borderRadius: 8, padding: "8px 10px", background: i === 0 ? "#F4F6FC" : "#FFFFFF" }}>
+                      <div style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.azul, textTransform: "uppercase" }}>
                         {i === 0 ? p.rol : `${p.rol} ${i}`}
                       </div>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: NUVEX.negro, marginTop: 3 }}>{p.nombreCompleto || "—"}</div>
-                      <div style={{ fontSize: 9, color: "#5C6770", marginTop: 2 }}>
+                      <div style={{ fontSize: 10.5, fontWeight: 700, color: NUVEX.negro, marginTop: 2 }}>{p.nombreCompleto || "—"}</div>
+                      <div style={{ fontSize: 8.5, color: "#5C6770", marginTop: 1 }}>
                         CC {p.cedula || "—"}{p.lugarExpedicionCedula ? ` · ${p.lugarExpedicionCedula}` : ""}
                       </div>
-                      {p.direccion && <div style={{ fontSize: 9, color: "#5C6770", marginTop: 1 }}>{p.direccion}</div>}
+                      {p.direccion && <div style={{ fontSize: 8.5, color: "#5C6770", marginTop: 1 }}>{p.direccion}</div>}
                     </div>
                   ))}
                 </div>
@@ -1343,39 +1352,39 @@ function PrintCuentaCobro({
           })()}
 
           {client.cobertura && (client.cobertura.activo || client.cobertura.valorCobertura || client.cobertura.tasaCobertura) && (
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.verdeTextoFuerte, marginBottom: 8 }}>BENEFICIO DE COBERTURA</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 10, padding: "10px 12px", background: NUVEX.verdeClaro }}>
-                  <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Valor de cobertura</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.valorCobertura || "No aplica"}</div>
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 2, color: NUVEX.verdeTextoFuerte, marginBottom: 6 }}>BENEFICIO DE COBERTURA</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 8, padding: "8px 10px", background: NUVEX.verdeClaro }}>
+                  <div style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Valor de cobertura</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 2 }}>{client.cobertura.valorCobertura || "No aplica"}</div>
                 </div>
-                <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 10, padding: "10px 12px", background: NUVEX.verdeClaro }}>
-                  <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Tasa de cobertura</div>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 3 }}>{client.cobertura.tasaCobertura ? `${client.cobertura.tasaCobertura}%` : "No aplica"}</div>
+                <div style={{ border: `1px solid ${NUVEX.verde}`, borderRadius: 8, padding: "8px 10px", background: NUVEX.verdeClaro }}>
+                  <div style={{ fontSize: 8, fontWeight: 800, letterSpacing: 1.2, color: NUVEX.verdeTextoFuerte, textTransform: "uppercase" }}>Tasa de cobertura</div>
+                  <div style={{ fontSize: 11, fontWeight: 800, color: NUVEX.verdeTextoFuerte, marginTop: 2 }}>{client.cobertura.tasaCobertura ? `${client.cobertura.tasaCobertura}%` : "No aplica"}</div>
                 </div>
               </div>
             </div>
           )}
 
-          <div style={{ marginTop: 22 }}>
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>CONCEPTO</div>
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 6 }}>CONCEPTO</div>
             <div
               style={{
-                padding: "18px 20px",
+                padding: "12px 16px",
                 border: "1px solid #E3E7EE",
                 borderLeft: `4px solid ${NUVEX.azul}`,
-                borderRadius: 12,
+                borderRadius: 10,
                 background: "#FAFBFD",
-                fontSize: 11.5,
-                lineHeight: 1.6,
+                fontSize: 10.5,
+                lineHeight: 1.55,
                 color: NUVEX.negro,
               }}
             >
               <div style={{ fontWeight: 800, letterSpacing: 0.3 }}>
                 SERVICIO TECNOLÓGICO FINANCIERO
               </div>
-              <div style={{ marginTop: 6, color: "#5C6770" }}>
+              <div style={{ marginTop: 4, color: "#5C6770" }}>
                 Servicio Tecnológico Financiero prestado por NUVEX Finanzas Inteligentes,
                 asociado al análisis, proyección, gestión tecnológica y acompañamiento
                 financiero del proceso de optimización del crédito hipotecario o leasing
@@ -1384,18 +1393,18 @@ function PrintCuentaCobro({
             </div>
           </div>
 
-          <div style={{ marginTop: 22 }}>
-            <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 8 }}>LIQUIDACIÓN</div>
-            <div style={{ border: "1px solid #E3E7EE", borderRadius: 14, overflow: "hidden" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #EEF1F5" }}>
-                <div style={{ fontSize: 11, color: "#5C6770" }}>Honorarios originales</div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: NUVEX.negro, textDecoration: hasDiscount ? "line-through" : "none", opacity: hasDiscount ? 0.55 : 1 }}>
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 6 }}>LIQUIDACIÓN</div>
+            <div style={{ border: "1px solid #E3E7EE", borderRadius: 12, overflow: "hidden" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #EEF1F5" }}>
+                <div style={{ fontSize: 10.5, color: "#5C6770" }}>Honorarios originales</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: NUVEX.negro, textDecoration: hasDiscount ? "line-through" : "none", opacity: hasDiscount ? 0.55 : 1 }}>
                   {formatCOP(aprobado.honorariosBase)}
                 </div>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", padding: "14px 20px", borderBottom: "1px solid #EEF1F5", background: "#FAFBFD" }}>
-                <div style={{ fontSize: 11, color: "#5C6770" }}>Descuento comercial</div>
-                <div style={{ fontSize: 13, fontWeight: 800, color: hasDiscount ? NUVEX.azul : "#8892A0" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", padding: "10px 16px", borderBottom: "1px solid #EEF1F5", background: "#FAFBFD" }}>
+                <div style={{ fontSize: 10.5, color: "#5C6770" }}>Descuento comercial</div>
+                <div style={{ fontSize: 12, fontWeight: 800, color: hasDiscount ? NUVEX.azul : "#8892A0" }}>
                   {hasDiscount ? `− ${formatCOP(aprobado.descuento)}` : formatCOP(0)}
                 </div>
               </div>
@@ -1404,50 +1413,67 @@ function PrintCuentaCobro({
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
-                  padding: "20px 22px",
+                  padding: "14px 18px",
                   background: NUVEX_GRADIENT,
                   color: "#fff",
                 }}
               >
                 <div>
-                  <div style={{ fontSize: 9, letterSpacing: 2, opacity: 0.85, fontWeight: 700 }}>TOTAL A PAGAR</div>
-                  <div style={{ fontSize: 9.5, opacity: 0.85, marginTop: 2 }}>Honorarios finales</div>
+                  <div style={{ fontSize: 8.5, letterSpacing: 2, opacity: 0.85, fontWeight: 700 }}>TOTAL A PAGAR</div>
+                  <div style={{ fontSize: 9, opacity: 0.85, marginTop: 2 }}>Honorarios finales</div>
                 </div>
-                <div style={{ fontSize: 26, fontWeight: 900, letterSpacing: -0.5 }}>
+                <div style={{ fontSize: 22, fontWeight: 900, letterSpacing: -0.5 }}>
                   {formatCOP(aprobado.honorariosFinales)}
                 </div>
               </div>
             </div>
-            {hasDiscount && (
-              <div style={{ marginTop: 8, fontSize: 10, color: NUVEX.verdeTextoFuerte, fontWeight: 700, letterSpacing: 0.4 }}>
-                Descuento comercial aplicado: ahorras {formatCOP(aprobado.descuento)} sobre los honorarios originales.
-              </div>
-            )}
           </div>
 
-          <div style={{ marginTop: 22, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 8.5, fontWeight: 800, letterSpacing: 2, color: NUVEX.azul, marginBottom: 6 }}>DATOS PARA EL PAGO</div>
+            <div
+              style={{
+                border: "1px solid #E3E7EE",
+                borderLeft: `4px solid ${NUVEX.azul}`,
+                borderRadius: 10,
+                background: "#FAFBFD",
+                padding: "12px 16px",
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                rowGap: 8,
+                columnGap: 14,
+              }}
+            >
+              <CcRow label="Titular" value="NUVEX Finanzas Inteligentes S.A.S." />
+              <CcRow label="NIT" value="901.891.264-1" />
+              <CcRow label="Banco" value="Bancolombia" />
+              <CcRow label="Tipo de cuenta" value="Ahorros" />
+              <CcRow label="N° de cuenta" value="291-000014-92" />
+              <CcRow label="Referencia" value={consecutivo} />
+            </div>
+            <div style={{ marginTop: 6, fontSize: 9.5, color: "#5C6770", lineHeight: 1.5 }}>
+              Envía el comprobante a <span style={{ fontWeight: 700, color: NUVEX.negro }}>contabilidad@nuvex.com.co</span> indicando el consecutivo <span style={{ fontWeight: 700, color: NUVEX.negro }}>{consecutivo}</span>.
+            </div>
+          </div>
+
+          <div style={{ marginTop: "auto", paddingTop: 14, display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 }}>
             {[
               "Solo pagas si el proceso fue exitoso",
               "Estrategia financiera especializada",
               "Acompañamiento profesional NUVEX",
             ].map((t) => (
-              <div key={t} style={{ border: `1px solid ${NUVEX.verde}`, background: NUVEX.verdeClaro, borderRadius: 12, padding: "12px 14px", fontSize: 10.5, fontWeight: 700, color: NUVEX.verdeTextoFuerte, display: "flex", alignItems: "flex-start", gap: 8 }}>
-                <span style={{ fontSize: 14, lineHeight: 1 }}>✓</span>
+              <div key={t} style={{ border: `1px solid ${NUVEX.verde}`, background: NUVEX.verdeClaro, borderRadius: 10, padding: "8px 10px", fontSize: 9.5, fontWeight: 700, color: NUVEX.verdeTextoFuerte, display: "flex", alignItems: "flex-start", gap: 6 }}>
+                <span style={{ fontSize: 12, lineHeight: 1 }}>✓</span>
                 <span>{t}</span>
               </div>
             ))}
-          </div>
-
-          <div style={{ marginTop: 22, padding: "18px 20px", borderRadius: 12, border: "1px solid #E3E7EE", fontSize: 11, lineHeight: 1.6, color: "#5C6770" }}>
-            <div style={{ fontWeight: 800, color: NUVEX.negro, letterSpacing: 0.4, marginBottom: 4 }}>Gracias por confiar en NUVEX.</div>
-            Nos sentimos orgullosos de haber contribuido a mejorar las condiciones de tu crédito.
-            Cada año eliminado representa más tranquilidad financiera para tu familia.
           </div>
         </div>
       </div>
     </div>
   );
 }
+
 
 function CcRow({ label, value }: { label: string; value: string }) {
   return (
