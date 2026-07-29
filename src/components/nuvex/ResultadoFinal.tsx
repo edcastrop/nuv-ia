@@ -1323,9 +1323,7 @@ function PrintCuentaCobro({
             <CcRow label="Banco" value={aprob.banco || client.banco || "—"} />
             <CcRow label="N° crédito" value={client.numeroCredito || "—"} />
             <CcRow label="Producto" value={client.tipoProducto || "—"} />
-            <CcRow label="Fecha aprobación" value={aprob.fechaAprobacion || "—"} />
             <CcRow label="Asesor responsable" value={client.asesor || "—"} />
-            <CcRow label="N° expediente" value={expedienteCorto} />
           </div>
 
           {(() => {
