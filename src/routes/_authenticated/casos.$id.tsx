@@ -457,6 +457,17 @@ function CasoDetail() {
             const cuotaActualConSeguro = parseCurrency(String(cred.cuotaActual ?? ""));
             const seguros = parseCurrency(String(cred.seguros ?? ""));
             const nuevoPlazo = Number(prop.nuevoPlazo ?? 0);
+            const honorariosBaseRaw = Number(exp.honorarios_base ?? prop.honorarios ?? 0);
+            const descuentoRaw = Number(exp.descuento ?? 0);
+            const honorariosFinalPersistido = Number(exp.honorarios_final ?? prop.honorarios ?? 0);
+            // Coherencia matemática: final = max(0, base - descuento).
+            // Se respeta el valor persistido si coincide dentro de ±$1.
+            // No se reinterpreta ni se recalcula el descuento aprobado.
+            const finalCalculado = Math.max(0, honorariosBaseRaw - descuentoRaw);
+            const honorariosFinalNormalizado =
+              Math.abs(honorariosFinalPersistido - finalCalculado) <= 1
+                ? honorariosFinalPersistido
+                : finalCalculado;
             const proyeccion: ProyeccionNuvex | null = (prop.nuevaCuota || prop.honorarios)
               ? {
                   cuotaProyectada: Number(prop.nuevaCuota ?? 0),
@@ -467,9 +478,9 @@ function CasoDetail() {
                   ahorroSegurosProyectado: Number(prop.ahorroSeguros ?? 0),
                   ahorroProyectado: Number(prop.ahorroTotal ?? 0),
                   honorariosProyectados: Number(prop.honorarios ?? 0),
-                  honorariosBase: Number(exp.honorarios_base ?? prop.honorarios ?? 0),
-                  descuentoAplicado: Number(exp.descuento ?? 0),
-                  honorariosFinales: Number(exp.honorarios_final ?? prop.honorarios ?? 0),
+                  honorariosBase: honorariosBaseRaw,
+                  descuentoAplicado: descuentoRaw,
+                  honorariosFinales: honorariosFinalNormalizado,
                   fechaSimulacion: exp.fecha_simulacion,
                   fuente: (prop.fuente as "manual" | "automatica") ?? "automatica",
                 }

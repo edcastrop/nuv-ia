@@ -189,7 +189,14 @@ export function ResultadoFinal({
       ahorroIntereses = proyeccion.ahorroInteresesProyectado;
       honorariosBase = proyeccion.honorariosBase;
       descuento = proyeccion.descuentoAplicado;
-      honorariosFinales = proyeccion.honorariosFinales;
+      // Coherencia matemática defensiva: final = max(0, base - descuento).
+      // Se respeta el persistido si coincide dentro de ±$1 (tolerancia de redondeo).
+      // No se reinterpreta ni limita el descuento aprobado; no se aplica HONORARIOS_MIN_FINAL aquí.
+      const finalCalculado = Math.max(0, honorariosBase - descuento);
+      honorariosFinales =
+        Math.abs(proyeccion.honorariosFinales - finalCalculado) <= 1
+          ? proyeccion.honorariosFinales
+          : finalCalculado;
     } else {
       const totalActual = cuotaActualConSeguro * cuotasPendientes;
       const totalAprobado = cuotaAprobadaNum * plazoAprobadoNum;
@@ -1248,7 +1255,7 @@ function PrintCuentaCobro({
 }) {
   const hoy = new Date().toISOString().slice(0, 10);
   const hasDiscount = aprobado.descuento > 0;
-  const expedienteCorto = expedienteId ? `EXP-${expedienteId.slice(0, 8).toUpperCase()}` : "—";
+  void expedienteId;
   return (
     <div id={id} style={printShell}>
       <div
@@ -1287,10 +1294,6 @@ function PrintCuentaCobro({
               <div style={{ fontSize: 14, fontWeight: 900, marginTop: 3 }}>{consecutivo}</div>
             </div>
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>EXPEDIENTE</div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, marginTop: 3 }}>{expedienteCorto}</div>
-            </div>
-            <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>FECHA</div>
               <div style={{ fontSize: 11.5, fontWeight: 700, marginTop: 3 }}>{hoy}</div>
             </div>
@@ -1320,9 +1323,7 @@ function PrintCuentaCobro({
             <CcRow label="Banco" value={aprob.banco || client.banco || "—"} />
             <CcRow label="N° crédito" value={client.numeroCredito || "—"} />
             <CcRow label="Producto" value={client.tipoProducto || "—"} />
-            <CcRow label="Fecha aprobación" value={aprob.fechaAprobacion || "—"} />
             <CcRow label="Asesor responsable" value={client.asesor || "—"} />
-            <CcRow label="N° expediente" value={expedienteCorto} />
           </div>
 
           {(() => {
@@ -1445,10 +1446,10 @@ function PrintCuentaCobro({
               }}
             >
               <CcRow label="Titular" value="NUVEX Finanzas Inteligentes S.A.S." />
-              <CcRow label="NIT" value="901.891.264-1" />
+              <CcRow label="NIT" value="901422948" />
               <CcRow label="Banco" value="Bancolombia" />
               <CcRow label="Tipo de cuenta" value="Ahorros" />
-              <CcRow label="N° de cuenta" value="291-000014-92" />
+              <CcRow label="N° de cuenta" value="29100001492" />
               <CcRow label="Referencia" value={consecutivo} />
             </div>
             <div style={{ marginTop: 6, fontSize: 9.5, color: "#5C6770", lineHeight: 1.5 }}>
