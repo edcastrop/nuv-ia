@@ -1294,10 +1294,6 @@ function PrintCuentaCobro({
               <div style={{ fontSize: 14, fontWeight: 900, marginTop: 3 }}>{consecutivo}</div>
             </div>
             <div style={{ marginTop: 12 }}>
-              <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>EXPEDIENTE</div>
-              <div style={{ fontSize: 11.5, fontWeight: 800, marginTop: 3 }}>{expedienteCorto}</div>
-            </div>
-            <div style={{ marginTop: 12 }}>
               <div style={{ fontSize: 8.5, letterSpacing: 1.5, opacity: 0.75, fontWeight: 700 }}>FECHA</div>
               <div style={{ fontSize: 11.5, fontWeight: 700, marginTop: 3 }}>{hoy}</div>
             </div>
