@@ -189,7 +189,14 @@ export function ResultadoFinal({
       ahorroIntereses = proyeccion.ahorroInteresesProyectado;
       honorariosBase = proyeccion.honorariosBase;
       descuento = proyeccion.descuentoAplicado;
-      honorariosFinales = proyeccion.honorariosFinales;
+      // Coherencia matemática defensiva: final = max(0, base - descuento).
+      // Se respeta el persistido si coincide dentro de ±$1 (tolerancia de redondeo).
+      // No se reinterpreta ni limita el descuento aprobado; no se aplica HONORARIOS_MIN_FINAL aquí.
+      const finalCalculado = Math.max(0, honorariosBase - descuento);
+      honorariosFinales =
+        Math.abs(proyeccion.honorariosFinales - finalCalculado) <= 1
+          ? proyeccion.honorariosFinales
+          : finalCalculado;
     } else {
       const totalActual = cuotaActualConSeguro * cuotasPendientes;
       const totalAprobado = cuotaAprobadaNum * plazoAprobadoNum;
