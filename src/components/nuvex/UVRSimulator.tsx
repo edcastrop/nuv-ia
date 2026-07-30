@@ -1080,6 +1080,7 @@ export function UVRSimulator({
           expedienteId={init?.id}
           draftKey={draftScopeKey}
           onApply={async (p: ExtractoApplyPayload) => {
+            try {
             // Alerta crítica: bloquear si el extracto está en Pesos pero estamos en simulador UVR.
             if (p.monedaDetectada && p.monedaDetectada !== "uvr") {
               const continuar = await monedaAlerta.confirm({
@@ -1091,7 +1092,7 @@ export function UVRSimulator({
                   "Carga cancelada: el extracto es Pesos pero el simulador es UVR. Usa el simulador de Pesos.",
                   { duration: 6000 },
                 );
-                return;
+                return false;
               }
               toast.warning("Aplicando extracto Pesos en simulador UVR. Revisa los resultados.");
             }
@@ -1140,7 +1141,7 @@ export function UVRSimulator({
                   },
                 },
               );
-              return;
+              return false;
             }
             if (!coh.isCoherent) {
               const diff = ((coh.diffPct ?? 0) * 100).toFixed(2);
@@ -1156,7 +1157,7 @@ export function UVRSimulator({
                   },
                 },
               );
-              return;
+              return false;
             }
             if (resueltoPorCoherencia) {
               toast.info("Formato UVR interpretado mediante validación de coherencia.");
@@ -1217,6 +1218,12 @@ export function UVRSimulator({
                 archivoNombre: p.raw?.archivoNombre ?? null,
               });
               setAutoQA(null);
+            }
+            return true;
+            } catch (error) {
+              console.error("[UVRSimulator] Error aplicando extracto", error);
+              toast.error("No fue posible aplicar el extracto al simulador UVR.");
+              return false;
             }
           }}
         />}

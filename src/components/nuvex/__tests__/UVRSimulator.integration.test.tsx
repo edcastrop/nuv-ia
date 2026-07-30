@@ -30,6 +30,12 @@ import {
   hashQaSnapshot,
   type UvrSnapshotInput,
 } from "@/lib/nuviaQaSnapshot";
+import type { ExtractoApplyPayload } from "@/components/nuvex/ExtractoReader";
+
+const extractoHarness = vi.hoisted(() => ({
+  onApply: null as null | ((payload: ExtractoApplyPayload) => Promise<boolean>),
+  confirm: vi.fn(async () => true),
+}));
 
 // ─── Mocks de infraestructura ────────────────────────────────────────
 // tanstack-react-start: `useServerFn` devuelve un fn async no-op.
@@ -90,7 +96,10 @@ vi.mock("@/lib/propuestaAcciones.functions", () => ({
 // Sub-componentes UI pesados → stubs vacíos. La lógica probada vive en
 // UVRSimulator (emisor) y en PropuestasComerciales (motor controlado).
 vi.mock("@/components/nuvex/ExtractoReader", () => ({
-  ExtractoReader: () => null,
+  ExtractoReader: (props: { onApply: (payload: ExtractoApplyPayload) => Promise<boolean> }) => {
+    extractoHarness.onApply = props.onApply;
+    return null;
+  },
 }));
 vi.mock("@/components/nuvex/SituacionActualBlock", () => ({
   SituacionActualBlock: () => null,
@@ -124,7 +133,7 @@ vi.mock("@/components/nuvex/AuditPanel", () => ({
 }));
 vi.mock("@/components/nuvex/AutoQAPanel", () => ({ AutoQAPanel: () => null }));
 vi.mock("@/components/nuvex/MonedaMismatchDialog", () => ({
-  useMonedaMismatchAlert: () => ({ confirm: async () => true, dialog: null }),
+  useMonedaMismatchAlert: () => ({ confirm: extractoHarness.confirm, dialog: null }),
 }));
 vi.mock("@/components/home/widgets/AnimatedBackground", () => ({
   AnimatedBackground: () => null,
@@ -270,6 +279,9 @@ async function flush() {
 }
 
 beforeEach(() => {
+  extractoHarness.onApply = null;
+  extractoHarness.confirm.mockReset();
+  extractoHarness.confirm.mockResolvedValue(true);
   sessionStorage.clear();
   document.documentElement.style.overflow = "";
   document.body.style.overflow = "";
@@ -282,6 +294,82 @@ afterEach(() => {
 });
 
 describe("UVRSimulator (RTL) — extracto Bancolombia real (caso 000014)", () => {
+  const validPayload = (): ExtractoApplyPayload => ({
+    cliente: { nombre: "Aplicado", banco: "Bancolombia" },
+    monedaDetectada: "uvr",
+    uvr: {
+      saldoUVR: "475070.5937",
+      valorUVR: "416.6181",
+      saldoPesos: String(BANCOLOMBIA_UVR.saldoPesos),
+    },
+  });
+
+  it("onApply devuelve false al cancelar el mismatch y no aplica datos", async () => {
+    seedBancolombiaDraft();
+    extractoHarness.confirm.mockResolvedValue(false);
+    render(<UVRSimulator />);
+    await flush();
+
+    const result = await extractoHarness.onApply!({
+      ...validPayload(),
+      monedaDetectada: "pesos",
+    });
+
+    expect(result).toBe(false);
+    expect(extractoHarness.confirm).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")).not.toContain("Aplicado");
+  });
+
+  it("onApply devuelve true al aceptar el mismatch y confirma una sola vez", async () => {
+    seedBancolombiaDraft();
+    render(<UVRSimulator />);
+    await flush();
+
+    const result = await extractoHarness.onApply!({
+      ...validPayload(),
+      monedaDetectada: "pesos",
+    });
+
+    expect(result).toBe(true);
+    expect(extractoHarness.confirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("onApply devuelve false si la confirmación falla por excepción", async () => {
+    seedBancolombiaDraft();
+    extractoHarness.confirm.mockRejectedValue(new Error("fallo controlado"));
+    render(<UVRSimulator />);
+    await flush();
+
+    expect(await extractoHarness.onApply!({
+      ...validPayload(),
+      monedaDetectada: "pesos",
+    })).toBe(false);
+  });
+
+  it.each([
+    ["coherencia no ejecutable", { saldoUVR: "", valorUVR: "416.6181", saldoPesos: "100" }],
+    ["datos críticos inválidos", { saldoUVR: "abc", valorUVR: "416.6181", saldoPesos: "100" }],
+    ["discrepancia bloqueante", { saldoUVR: "100", valorUVR: "400", saldoPesos: "100000" }],
+  ])("onApply devuelve false ante %s", async (_case, uvr) => {
+    seedBancolombiaDraft();
+    render(<UVRSimulator />);
+    await flush();
+
+    expect(await extractoHarness.onApply!({ ...validPayload(), uvr })).toBe(false);
+  });
+
+  it("onApply devuelve true y aplica una sola vez tras validar un payload UVR", async () => {
+    seedBancolombiaDraft();
+    render(<UVRSimulator />);
+    await flush();
+
+    expect(await extractoHarness.onApply!(validPayload())).toBe(true);
+    await flush();
+
+    expect(extractoHarness.confirm).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("nuvex.simulatorDraft.uvr.standalone")).toContain("Aplicado");
+  });
+
   it("emite `nuvia:draftRawReady` con el snapshot v2 (4 propuestas) al montar hidratado", async () => {
     seedBancolombiaDraft();
     const captured = captureDraftRawEvents();
