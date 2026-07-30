@@ -294,6 +294,61 @@ async function renderElementToPdf(
     return pdf;
   }
 
+  // Informe final: renderizar hasta 2 hijos directos visibles, uno por página A4.
+  if (elementId.startsWith("pdf-resultado-final-")) {
+    const visibleChildren = (Array.from(element.children) as HTMLElement[])
+      .filter((child) => {
+        const style = window.getComputedStyle(child);
+        if (style.display === "none" || style.visibility === "hidden") return false;
+        const rect = child.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+      })
+      .slice(0, 2);
+
+    if (visibleChildren.length > 0) {
+      for (let i = 0; i < visibleChildren.length; i += 1) {
+        const childCanvas = await html2canvas(visibleChildren[i], {
+          scale: 1.5,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+          windowWidth: 1200,
+          onclone: (doc) => {
+            const target = doc.getElementById(elementId) as HTMLElement | null;
+            if (target) {
+              target.style.position = "static";
+              target.style.left = "0";
+              target.style.top = "0";
+              target.style.right = "auto";
+              target.style.bottom = "auto";
+              target.style.margin = "0";
+              target.style.zIndex = "auto";
+              target.style.opacity = "1";
+              target.style.visibility = "visible";
+              target.style.transform = "none";
+              target.style.pointerEvents = "auto";
+              target.style.display = "block";
+            }
+          },
+        });
+        if (!childCanvas.width || !childCanvas.height) {
+          alert("No se pudo renderizar una sección del informe final.");
+          return null;
+        }
+        if (i > 0) pdf.addPage();
+        const ratio = Math.min(210 / childCanvas.width, 297 / childCanvas.height);
+        const w = childCanvas.width * ratio;
+        const h = childCanvas.height * ratio;
+        const x = (210 - w) / 2;
+        const y = (297 - h) / 2;
+        pdf.addImage(childCanvas.toDataURL("image/jpeg", 0.82), "JPEG", x, y, w, h);
+      }
+      return pdf;
+    }
+  }
+
+
+
   const canvas = await html2canvas(element, {
     scale: 1.5,
     useCORS: true,
