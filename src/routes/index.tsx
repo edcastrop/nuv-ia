@@ -920,83 +920,164 @@ function CtaFinal() {
 /* ──────────────────────── FOOTER ──────────────────────── */
 
 function FooterPremium() {
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updateMotionPreference = () => setPrefersReducedMotion(mediaQuery.matches);
+
+    updateMotionPreference();
+    mediaQuery.addEventListener("change", updateMotionPreference);
+
+    return () => mediaQuery.removeEventListener("change", updateMotionPreference);
+  }, []);
+
   return (
-    <footer id="contacto" className="relative mt-24 border-t" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-      <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid gap-12 lg:grid-cols-[1.3fr_1fr_1fr_1fr]">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <LogoMark />
-              <span className="text-[16px] font-semibold tracking-tight">NUVIA</span>
-            </div>
-            <p className="mt-5 text-[13.5px] text-white/55 leading-[1.7] max-w-sm">
-              Tecnología creada por <span className="text-white/80">NUVEX Finanzas Inteligentes</span>.
-              NUVEX es una marca registrada.
-            </p>
-            <div className="mt-6 flex items-center gap-3">
-              <a
-                href="https://www.instagram.com/nuvex_finanzas"
-                target="_blank"
-                rel="noreferrer"
-                className="h-9 w-9 rounded-full flex items-center justify-center border border-white/12 hover:border-white/30 hover:bg-white/5 transition-all"
-                aria-label="Instagram"
-              >
-                <Instagram size={15} />
-              </a>
-              <a
-                href="https://www.tiktok.com/@nuvex_finanzas"
-                target="_blank"
-                rel="noreferrer"
-                className="h-9 w-9 rounded-full flex items-center justify-center border border-white/12 hover:border-white/30 hover:bg-white/5 transition-all"
-                aria-label="TikTok"
-              >
-                <TikTokIcon size={15} />
-              </a>
-            </div>
-          </div>
+    <footer
+      id="contacto"
+      className="relative mt-24 scroll-mt-20 overflow-x-hidden border-t sm:scroll-mt-24"
+      style={{
+        borderColor: "rgba(255,255,255,0.08)",
+        background: `radial-gradient(circle at 50% 0%, ${BLUE}55 0%, transparent 42%), linear-gradient(145deg, ${DARK} 28%, ${BLUE}40 68%, ${GREEN}24 100%), ${DARK}`,
+      }}
+    >
+      {!prefersReducedMotion && (
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden
+          tabIndex={-1}
+          className="absolute inset-0 h-full w-full object-cover"
+        >
+          <source
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260613_180732_a54afbf6-b30d-470e-861f-669871f09f67.mp4"
+            type="video/mp4"
+          />
+        </video>
+      )}
 
-          <FooterCol title="Contacto">
-            <FooterLine Icon={MapPin}>
-              Carrera 16 # 37-48 Piso 4<br />Centro de Bucaramanga
-            </FooterLine>
-            <FooterLine Icon={Building2}>Bogotá · Bucaramanga</FooterLine>
-            <FooterLine Icon={Phone}>+57 316 402 3779</FooterLine>
-            <FooterLine Icon={Globe}>
-              <a href="https://www.nuvex.com.co" target="_blank" rel="noreferrer" className="hover:text-white">
-                www.nuvex.com.co
-              </a>
-            </FooterLine>
-          </FooterCol>
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(10,11,16,0.86)_0%,rgba(10,11,16,0.48)_34%,rgba(10,11,16,0.72)_68%,rgba(10,11,16,0.96)_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(10,11,16,0.3)_54%,rgba(10,11,16,0.76)_100%)]" />
 
-          <FooterCol title="Plataforma">
-            <FooterAnchor href="#tecnologia">Tecnología</FooterAnchor>
-            <FooterAnchor href="#como">Cómo funciona</FooterAnchor>
-            <FooterAnchor href="#impacto">Impacto</FooterAnchor>
-            <FooterAnchor href="#nuvex">NUVEX</FooterAnchor>
-          </FooterCol>
-
-          <FooterCol title="Acceso">
-            <Link to="/login" className="block text-[13px] text-white/60 hover:text-white transition-colors">
+      <div className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 sm:py-24 lg:py-28">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+          className="mx-auto max-w-4xl text-center"
+        >
+          <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-white/65 sm:text-[11px]">
+            El futuro de tu crédito empieza con información
+          </p>
+          <h2 className="mx-auto mt-6 max-w-4xl text-[34px] font-semibold leading-[1.06] tracking-[-0.035em] text-white sm:text-[48px] lg:text-[60px]">
+            Inteligencia financiera para transformar el futuro de tu crédito.
+          </h2>
+          <p className="mx-auto mt-6 max-w-2xl text-[15px] leading-[1.75] text-white/70 sm:text-base">
+            NUVIA convierte información financiera compleja en decisiones claras para ayudarte a
+            entender y optimizar tu crédito de vivienda.
+          </p>
+          <div className="mt-9 flex flex-col items-stretch justify-center gap-3 sm:flex-row sm:items-center">
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_44px_-14px_rgba(68,93,163,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0B10]"
+              style={{ background: `linear-gradient(135deg, ${BLUE}, ${GREEN})` }}
+            >
               Ingresar a NUVIA
+              <ArrowRight size={16} />
             </Link>
             <a
               href="https://www.nuvex.com.co"
               target="_blank"
               rel="noreferrer"
-              className="block text-[13px] text-white/60 hover:text-white transition-colors"
+              className="inline-flex items-center justify-center rounded-full border border-white/20 bg-white/[0.07] px-6 py-3.5 text-sm font-medium text-white backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:border-white/35 hover:bg-white/[0.12] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0A0B10]"
             >
-              Sitio NUVEX
+              Conocer NUVEX
             </a>
-            <FooterAnchor href="#redes">Redes sociales</FooterAnchor>
-          </FooterCol>
-        </div>
-
-        <div className="mt-14 pt-8 border-t flex flex-wrap items-center justify-between gap-4" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-          <div className="text-[12px] text-white/40">
-            © 2026 NUVIA by NUVEX Finanzas Inteligentes. Todos los derechos reservados.
           </div>
-          <div className="text-[11px] uppercase tracking-[0.22em] text-white/35">
-            Hecho en Colombia 🇨🇴
+        </motion.div>
+
+        <div className="mx-1 mt-12 min-w-0 rounded-[28px] border border-white/15 bg-white/[0.055] p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_24px_80px_-32px_rgba(0,0,0,0.85)] backdrop-blur-xl sm:mx-0 sm:mt-16 sm:p-8 lg:mt-20 lg:p-10">
+          <div className="grid min-w-0 grid-cols-1 gap-8 md:grid-cols-2 md:gap-10 lg:grid-cols-[1.3fr_1fr_1fr_1fr] lg:gap-8">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <LogoMark />
+                <span className="text-[16px] font-semibold tracking-tight">NUVIA</span>
+              </div>
+              <p className="mt-5 max-w-sm text-[13.5px] leading-[1.7] text-white/65">
+                Tecnología creada por <span className="text-white/90">NUVEX Finanzas Inteligentes</span>.
+                NUVEX es una marca registrada.
+              </p>
+              <div className="mt-6 flex items-center gap-3">
+                <a
+                  href="https://www.instagram.com/nuvex_finanzas"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] transition-all hover:border-white/35 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  aria-label="Instagram"
+                >
+                  <Instagram size={15} />
+                </a>
+                <a
+                  href="https://www.tiktok.com/@nuvex_finanzas"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.04] transition-all hover:border-white/35 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                  aria-label="TikTok"
+                >
+                  <TikTokIcon size={15} />
+                </a>
+              </div>
+            </div>
+
+            <FooterCol title="Contacto">
+              <FooterLine Icon={MapPin}>
+                Carrera 16 # 37-48 Piso 4<br />Centro de Bucaramanga
+              </FooterLine>
+              <FooterLine Icon={Building2}>Bogotá · Bucaramanga</FooterLine>
+              <FooterLine Icon={Phone}>+57 316 402 3779</FooterLine>
+              <FooterLine Icon={Globe}>
+                <a href="https://www.nuvex.com.co" target="_blank" rel="noreferrer" className="hover:text-white">
+                  www.nuvex.com.co
+                </a>
+              </FooterLine>
+            </FooterCol>
+
+            <FooterCol title="Plataforma">
+              <FooterAnchor href="#tecnologia">Tecnología</FooterAnchor>
+              <FooterAnchor href="#como">Cómo funciona</FooterAnchor>
+              <FooterAnchor href="#impacto">Impacto</FooterAnchor>
+              <FooterAnchor href="#nuvex">NUVEX</FooterAnchor>
+            </FooterCol>
+
+            <FooterCol title="Acceso">
+              <Link to="/login" className="block text-[13px] text-white/60 transition-colors hover:text-white">
+                Ingresar a NUVIA
+              </Link>
+              <a
+                href="https://www.nuvex.com.co"
+                target="_blank"
+                rel="noreferrer"
+                className="block text-[13px] text-white/60 transition-colors hover:text-white"
+              >
+                Sitio NUVEX
+              </a>
+              <FooterAnchor href="#redes">Redes sociales</FooterAnchor>
+            </FooterCol>
+          </div>
+
+          <div className="mt-10 flex flex-col items-start gap-3 border-t pt-6 sm:mt-12 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:pt-7" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+            <div className="max-w-full break-words text-left text-[12px] text-white/45">
+              © 2026 NUVIA by NUVEX Finanzas Inteligentes. Todos los derechos reservados.
+            </div>
+            <div className="text-left text-[11px] uppercase tracking-[0.22em] text-white/40">
+              Hecho en Colombia 🇨🇴
+            </div>
           </div>
         </div>
       </div>
