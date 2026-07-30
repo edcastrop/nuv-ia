@@ -1,7 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useMonedaMismatchAlert } from "../MonedaMismatchDialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type HookHandle = ReturnType<typeof useMonedaMismatchAlert>;
 
@@ -33,6 +38,29 @@ const flush = async () => {
 };
 
 describe("useMonedaMismatchAlert", () => {
+  it("eleva únicamente el diálogo de moneda por encima del lector OCR", async () => {
+    const { getHandle } = mount();
+    await act(async () => {
+      void getHandle().confirm({ detectada: "pesos", simulador: "uvr" });
+    });
+
+    expect(await screen.findByRole("alertdialog")).toHaveClass("z-[120]");
+    expect(document.querySelector('[data-state="open"].fixed.inset-0')).toHaveClass("z-[120]");
+  });
+
+  it("conserva z-50 por defecto en los demás AlertDialog", () => {
+    render(
+      <AlertDialog open>
+        <AlertDialogContent>
+          <AlertDialogTitle>Diálogo normal</AlertDialogTitle>
+        </AlertDialogContent>
+      </AlertDialog>,
+    );
+
+    expect(screen.getByRole("alertdialog")).toHaveClass("z-50");
+    expect(document.querySelector('[data-state="open"].fixed.inset-0')).toHaveClass("z-50");
+  });
+
   it("resuelve true al aceptar ('Aplicar de todos modos')", async () => {
     const user = userEvent.setup();
     const { getHandle } = mount();
@@ -61,6 +89,27 @@ describe("useMonedaMismatchAlert", () => {
     await user.click(cancelBtn);
 
     await expect(promise).resolves.toBe(false);
+  });
+
+  it.each([
+    ["botón X", async (user: ReturnType<typeof userEvent.setup>) =>
+      user.click(screen.getByRole("button", { name: /cerrar/i }))],
+    ["Escape/onOpenChange", async (user: ReturnType<typeof userEvent.setup>) =>
+      user.keyboard("{Escape}")],
+  ])("resuelve false una sola vez mediante %s", async (_label, close) => {
+    const user = userEvent.setup();
+    const { getHandle } = mount();
+    let promise!: Promise<boolean>;
+    await act(async () => {
+      promise = getHandle().confirm({ detectada: "pesos", simulador: "uvr" });
+    });
+    const resolved = vi.fn();
+    void promise.then(resolved);
+
+    await close(user);
+    await expect(promise).resolves.toBe(false);
+    await flush();
+    expect(resolved).toHaveBeenCalledTimes(1);
   });
 
   it("dos confirmaciones consecutivas: la primera resuelve false, la segunda queda vigente y resuelve normal", async () => {

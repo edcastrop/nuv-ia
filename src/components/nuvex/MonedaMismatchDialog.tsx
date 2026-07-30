@@ -78,8 +78,9 @@ export function useMonedaMismatchAlert() {
       }}
     >
       <AlertDialogContent
+        overlayClassName="z-[120]"
         className="
-          max-w-lg overflow-hidden border-0 bg-transparent p-0 shadow-none
+          z-[120] max-w-lg overflow-hidden border-0 bg-transparent p-0 shadow-none
         "
       >
         <VisuallyHidden>
