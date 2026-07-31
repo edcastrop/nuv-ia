@@ -438,6 +438,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
 
   const puedeEnviar = !sending && selected.size > 0 && !done;
   const puedeReintentar = !sending && error !== null && !done;
+  const intentoNoRegistrado = error?.includes("No se pudo registrar el intento de envío") ?? false;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
@@ -552,7 +553,9 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
               style={{ borderColor: "#F5C2C2", background: NUVEX.rojoBg, color: NUVEX.rojoTexto }}>
               <div className="font-semibold mb-1">No fue posible completar el envío.</div>
               <div>{error}</div>
-              <div className="mt-1 text-[11px] opacity-80">El intento quedó registrado. Puedes volver a intentarlo sin crear un nuevo expediente.</div>
+              {!intentoNoRegistrado && (
+                <div className="mt-1 text-[11px] opacity-80">El intento quedó registrado. Puedes volver a intentarlo sin crear un nuevo expediente.</div>
+              )}
             </div>
           )}
           {done && successInfo && !successInfo.warning && (
