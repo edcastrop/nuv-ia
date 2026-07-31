@@ -426,3 +426,23 @@ describe("Regresión NUV_2026_MG_000063 — sin bloqueo por envío exitoso previ
     }
   });
 });
+
+describe("Regresión NUV_2026_EC_000211 — envío por analista reasignado", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const migration = readFileSync(
+    resolve(
+      here,
+      "../../../supabase/migrations/20260731143000_fix_envios_contratacion_reasignados.sql",
+    ),
+    "utf8",
+  );
+
+  it("autoriza al licenciado asignado para consultar y registrar envíos", () => {
+    const matches = migration.match(/e\.licenciado_id\s*=\s*auth\.uid\(\)/g) ?? [];
+    expect(matches).toHaveLength(2);
+  });
+
+  it("atribuye el intento exclusivamente al usuario autenticado", () => {
+    expect(migration).toMatch(/user_id\s*=\s*auth\.uid\(\)/);
+  });
+});
