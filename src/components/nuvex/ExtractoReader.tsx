@@ -185,21 +185,31 @@ async function extractTextFromPdf(file: File, password?: string): Promise<string
   const pages: string[] = [];
   for (let i = 1; i <= max; i++) {
     const page = await pdf.getPage(i);
+    const viewport = page.getViewport({ scale: 1 });
     const content = await page.getTextContent();
     const lines = new Map<number, { x: number; text: string }[]>();
     for (const item of content.items as Array<{ str?: string; transform?: number[] }>) {
       const str = item.str?.trim();
       const transform = item.transform;
       if (!str || !transform) continue;
-      const x = Math.round(transform[4] ?? 0);
-      const y = Math.round((transform[5] ?? 0) / 3) * 3;
+      // PDF.js entrega las coordenadas en el espacio original del PDF. Hay
+      // extractos FNA con /Rotate 90: si agrupamos directamente por transform,
+      // todas las etiquetas verticales terminan en una sola línea y se separan
+      // de sus valores. El viewport aplica la rotación de página antes de
+      // reconstruir filas legibles.
+      const [viewportX, viewportY] = viewport.convertToViewportPoint(
+        transform[4] ?? 0,
+        transform[5] ?? 0,
+      );
+      const x = Math.round(viewportX);
+      const y = Math.round(viewportY / 3) * 3;
       const row = lines.get(y) ?? [];
       row.push({ x, text: str });
       lines.set(y, row);
     }
     pages.push(
       Array.from(lines.entries())
-        .sort((a, b) => b[0] - a[0])
+        .sort((a, b) => a[0] - b[0])
         .map(([, row]) => row.sort((a, b) => a.x - b.x).map((part) => part.text).join(" "))
         .join("\n"),
     );
