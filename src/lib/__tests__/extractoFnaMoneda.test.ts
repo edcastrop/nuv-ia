@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { classifyFnaMoneda } from "@/lib/extracto.functions";
+import {
+  classifyFnaMoneda,
+  extractFnaUvrEvidence,
+} from "@/lib/extracto.functions";
 
 // Contrato actual (FNA):
 // - `saldoUVR > 0` (finito) es la ÚNICA evidencia de crédito UVR.
@@ -93,5 +96,31 @@ describe("classifyFnaMoneda", () => {
   it("12. saldoUVR muy pequeño positivo (0.0001) → UVR", () => {
     const r = classifyFnaMoneda({ saldoUVR: 0.0001, valorUVR: 0 });
     expect(r.moneda).toBe("UVR");
+  });
+});
+
+describe("extractFnaUvrEvidence", () => {
+  const encabezado = `
+FONDO NACIONAL DEL AHORRO S.A.
+COTIZACION A LA FECHA DE PROCESO 416.4389
+MONEDA OP UVR
+SALDO DEUDA PESO UVR
+SALDO CAPITAL FINANCIADO $ 108,662,548.17 260,932.7519
+`;
+
+  it("recupera saldo y cotización UVR del formato real FNA", () => {
+    expect(extractFnaUvrEvidence(encabezado)).toEqual({
+      saldoPesos: 108_662_548.17,
+      saldoUVR: 260_932.7519,
+      valorUVR: 416.4389,
+    });
+  });
+
+  it("no clasifica por la cotización cuando MONEDA OP es PESO", () => {
+    expect(extractFnaUvrEvidence(encabezado.replace("MONEDA OP UVR", "MONEDA OP PESO"))).toBeNull();
+  });
+
+  it("rechaza valores que no cumplen coherencia UVR", () => {
+    expect(extractFnaUvrEvidence(encabezado.replace("260,932.7519", "100,000.0000"))).toBeNull();
   });
 });

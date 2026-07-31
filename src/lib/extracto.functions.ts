@@ -356,6 +356,40 @@ REGLAS ESTRICTAS:
 export type ExtractoData = Record<string, string | Record<string, string>>;
 export type ExtractoResponse = { error: string | null; data: ExtractoData | null };
 
+export type FnaUvrEvidence = {
+  saldoPesos: number;
+  saldoUVR: number;
+  valorUVR: number;
+};
+
+/**
+ * Recupera la evidencia UVR explícita del formato tabular de FNA.
+ * La cotización por sí sola nunca basta: exigimos MONEDA OP UVR y el saldo
+ * financiado expresado simultáneamente en las columnas PESO y UVR.
+ */
+export function extractFnaUvrEvidence(rawText: string): FnaUvrEvidence | null {
+  if (!/fondo\s+nacional\s+del\s+ahorro|\bfna\b/i.test(rawText)) return null;
+  if (!/\bMONEDA\s+OP(?:ERACION)?\s*:?\s*UVR\b/i.test(rawText)) return null;
+
+  const saldoLine = rawText.match(
+    /^\s*SALDO\s+CAPITAL\s+(?:FINANCIADO|TOTAL)\s+\$?\s*([\d.,]+)\s+([\d.,]+)\s*$/im,
+  );
+  const valorMatch = rawText.match(
+    /\bCOTIZACION\s+A\s+LA\s+FECHA\s+DE\s+PROCESO\s*:?\s*([\d.,]+)/i,
+  );
+  if (!saldoLine || !valorMatch) return null;
+
+  const saldoPesos = parseMontoExtracto(saldoLine[1]);
+  const saldoUVR = parseUVRNumber(saldoLine[2]) ?? 0;
+  const valorUVR = parseUVRNumber(valorMatch[1]) ?? 0;
+  if (!(saldoPesos > 0 && saldoUVR > 0 && valorUVR > 0)) return null;
+
+  const diferencia = Math.abs(saldoUVR * valorUVR - saldoPesos) / saldoPesos;
+  if (!Number.isFinite(diferencia) || diferencia > 0.01) return null;
+
+  return { saldoPesos, saldoUVR, valorUVR };
+}
+
 /**
  * Clasifica la moneda de un crédito FNA basándose ÚNICAMENTE en evidencia
  * numérica dura de `saldoUVR` (saldo a capital del crédito expresado en UVR).
@@ -1086,6 +1120,14 @@ export const extractStatement = createServerFn({ method: "POST" })
         // ----- FNA: evitar confundir BASE DE CALCULO 360 (días) con plazo -----
         parsed.banco = "FNA";
         parsed.tipoCredito = "CREDITO_HIPOTECARIO";
+        const evidenciaUvrFna = data.rawText
+          ? extractFnaUvrEvidence(data.rawText)
+          : null;
+        if (evidenciaUvrFna) {
+          parsed.saldoCapital = String(evidenciaUvrFna.saldoPesos);
+          parsed.saldoUVR = String(evidenciaUvrFna.saldoUVR);
+          parsed.valorUVR = String(evidenciaUvrFna.valorUVR);
+        }
         // Clasificación de moneda FNA basada en evidencia numérica dura de
         // `saldoUVR`. `valorUVR` (la Cotización UVR del día) NO clasifica
         // por sí sola: FNA la imprime también en créditos pesos.
