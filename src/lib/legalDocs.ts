@@ -271,6 +271,18 @@ export function buildDatosContrato(
         ? Math.max(0, cuotasPendientes - Math.round(toNum(p.nuevoPlazo)))
         : null;
 
+  // La ficha contractual debe aplicar la regla de plazo propia del banco.
+  // El `nuevoPlazo` persistido por el simulador se calcula sobre las cuotas
+  // restantes y, para bancos del grupo 1, ya descuenta las cuotas pagadas.
+  // Usarlo directamente volvería a descontarlas en la ficha. Cuando tenemos
+  // `cuotasEliminadas` persistidas (casos actuales), recalculamos desde la base
+  // contractual correcta: plazo original para grupo 1 y cuotas pendientes para
+  // grupo 2. En casos históricos sin ese dato conservamos el valor simulado.
+  const nuevoPlazoContractual =
+    cuotasEliminadasPersistidas !== null
+      ? calcularNuevoPlazo(e, cuotasEliminadasPersistidas).nuevoPlazo
+      : p.nuevoPlazo;
+
   // Fuente única de verdad para honorarios a cobrar (recalculado > con descuento > base)
   const honorarios = honorariosFinalesCliente(sim ?? null);
 
@@ -352,7 +364,7 @@ export function buildDatosContrato(
 
     { type: "section", text: "3. PROPUESTA ACEPTADA" },
     { type: "field", label: "Cuotas eliminadas", value: cuotasEliminadas !== null ? String(cuotasEliminadas) : "—" },
-    { type: "field", label: "Nuevo plazo (meses)", value: fmtTxt(p.nuevoPlazo) },
+    { type: "field", label: "Nuevo plazo (meses)", value: fmtTxt(nuevoPlazoContractual) },
     { type: "field", label: "Nueva cuota", value: fmtCOP(p.nuevaCuota) },
     { type: "spacer", size: 6 },
 
@@ -1212,4 +1224,3 @@ export function buildSolicitudCambioPlazos(
     validationIssues: issues.length > 0 ? issues : undefined,
   };
 }
-
