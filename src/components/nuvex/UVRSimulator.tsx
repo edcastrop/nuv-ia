@@ -150,7 +150,7 @@ export function UVRSimulator({
       initCred.valorBeneficio ??
       "",
     propuestasComerciales: parseStoredJson<PropuestasComercialesDraft>(initCred.propuestasComerciales),
-  });
+  }, init?.updated_at);
   const monedaAlerta = useMonedaMismatchAlert();
   const [extractoArchivoPath, setExtractoArchivoPath] = useState<string>(
     () => draft.extractoArchivoPath,
@@ -300,7 +300,7 @@ export function UVRSimulator({
       propuestasComercialesDraft,
     ],
   );
-  useSimulatorDraft("uvr", init?.id, currentDraft);
+  useSimulatorDraft("uvr", init?.id, currentDraft, init?.updated_at);
   useEffect(() => {
     if (init?.id) return;
     purgeStaleAnonEntries();
@@ -316,7 +316,7 @@ export function UVRSimulator({
     [client.cedula, client.nombre, client.numeroCredito, client.banco],
   );
   const handleSaved = (e: Expediente) => {
-    clearSimulatorDraft("uvr", init?.id);
+    clearSimulatorDraft("uvr", init?.id, init?.updated_at);
     onSaved?.(e);
   };
   const handleResetMode = () => {
@@ -332,7 +332,7 @@ export function UVRSimulator({
     lastAttemptedHashRef.current = null;
     lastSuccessfulHashRef.current = null;
     lastFailedHashRef.current = null;
-    clearSimulatorDraft("uvr", init?.id);
+    clearSimulatorDraft("uvr", init?.id, init?.updated_at);
     onReset?.();
   };
 
