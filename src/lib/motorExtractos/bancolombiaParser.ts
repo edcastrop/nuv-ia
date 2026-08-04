@@ -31,6 +31,7 @@ function extractValorUVR(text: string) {
   // Bancolombia rotula esto como "Valor UVR del día" / "Valor UVR" / "Valor de la UVR"
   // Es UN solo número con 4 decimales (ej "372.1234" o "372,1234").
   const patterns = [
+    /Valor\s+de\s+la\s+unidad\s+UVR\s+a\s+la\s+fecha\s+de\s+pago\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
     /Valor\s+(?:de\s+la\s+)?UVR\s+del\s+d[ií]a\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
     /Valor\s+(?:de\s+la\s+)?UVR\s+(?:a\s+la\s+fecha|vigente|del\s+per[ií]odo|actual)\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
     /Valor\s+UVR\s*[:]?\s*\$?\s*([0-9]+(?:[.,][0-9]+)?)/i,
@@ -49,9 +50,9 @@ function extractValorUVR(text: string) {
 function extractSaldoUVR(text: string) {
   // Etiqueta típica: "Saldo UVR" / "Saldo en UVR" / "Saldo de capital en UVR".
   const patterns = [
-    /Saldo\s+(?:de\s+capital\s+)?en\s+UVR\s*[:]?\s*\$?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?)/i,
-    /Saldo\s+UVR\s*[:]?\s*\$?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?)/i,
-    /Saldo\s+capital\s+UVR\s*[:]?\s*\$?\s*([0-9]{1,3}(?:[.,][0-9]{3})*(?:[.,][0-9]+)?)/i,
+    /Saldo\s+(?:de\s+capital\s+)?en\s+UVR\s*[:]?\s*\$?\s*([0-9][0-9.,]*)/i,
+    /Saldo\s+UVR\s*[:]?\s*\$?\s*([0-9][0-9.,]*)/i,
+    /Saldo\s+capital\s+UVR\s*[:]?\s*\$?\s*([0-9][0-9.,]*)/i,
   ];
   for (const rx of patterns) {
     const m = text.match(rx);
@@ -140,7 +141,9 @@ export function parseBancolombiaText(rawText: string): ExtractoRecord | null {
       /Fecha\s+de\s+Pago\s+Fecha\s+en\s+que\s+se\s+gener[oó]\s+el\s+extracto\s+Valor\s+a\s+Pagar\s+Saldo\s+a\s+la\s+fecha\s+en\s+que\s+se\s+gener[oó]\s+el\s+extracto\s+[0-9/]+\s+[0-9/]+\s+\$\s*([0-9][0-9.,]*)/i,
     ),
   );
-  const saldoCapital = moneyToNumber(
+  // Este encabezado de Bancolombia NO reporta capital puro. El propio extracto
+  // aclara que incluye capital, intereses, mora, seguros y otros conceptos.
+  const saldoTotalExtracto = moneyToNumber(
     firstMatch(text, /Valor\s+a\s+Pagar\s+Saldo\s+a\s+la\s+fecha\s+en\s+que\s+se\s+gener[oó]\s+el\s+extracto\s+[0-9/]+\s+[0-9/]+\s+\$\s*[0-9][0-9.,]*\s+\$\s*([0-9][0-9.,]*)/i),
   );
   const fechaExtracto = firstMatch(text, /Valor\s+a\s+Pagar\s+Saldo\s+a\s+la\s+fecha\s+en\s+que\s+se\s+gener[oó]\s+el\s+extracto\s+[0-9/]+\s+([0-9]{4}\/[0-9]{2}\/[0-9]{2})/i).replace(/\//g, "-");
@@ -168,8 +171,16 @@ export function parseBancolombiaText(rawText: string): ExtractoRecord | null {
 
   const valorUVRNum = moneda === "UVR" ? extractValorUVR(text) : 0;
   let saldoUVRNum = moneda === "UVR" ? extractSaldoUVR(text) : 0;
+  // En UVR, "Saldo de capital en UVR" × "Valor de la unidad UVR" sí es el
+  // capital en pesos. No se debe comparar contra saldoTotalExtracto, pues eso
+  // produce falsos bloqueos cuando existen intereses u otros conceptos.
+  let saldoCapital = saldoTotalExtracto;
+  if (moneda === "UVR" && saldoUVRNum > 0 && valorUVRNum > 0) {
+    saldoCapital = Math.round(saldoUVRNum * valorUVRNum * 100) / 100;
+  }
   // Fallback: si no encontramos "Saldo UVR" pero sí "Valor UVR" y "Saldo capital pesos",
-  // derivamos saldoUVR = saldoPesos / valorUVR (con 4 decimales).
+  // usamos el saldo total como último recurso y dejamos que la validación señale
+  // cualquier diferencia material.
   if (moneda === "UVR" && !saldoUVRNum && valorUVRNum > 0 && saldoCapital > 0) {
     saldoUVRNum = Math.round((saldoCapital / valorUVRNum) * 10000) / 10000;
   }
@@ -186,6 +197,7 @@ export function parseBancolombiaText(rawText: string): ExtractoRecord | null {
     tipoCredito: "CREDITO_HIPOTECARIO",
     moneda,
     saldoCapital: formatMontoExtracto(saldoCapital),
+    saldoTotalExtracto: formatMontoExtracto(saldoTotalExtracto),
     valorDesembolsado: formatMontoExtracto(amountAfter(text, "Valor desembolso")),
     cuotaMensual: formatMontoExtracto(cuotaMensual),
     seguros: formatMontoExtracto(seguros),
