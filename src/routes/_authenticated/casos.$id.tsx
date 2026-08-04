@@ -41,6 +41,7 @@ import { ResumenEjecutivo } from "@/components/expediente/ResumenEjecutivo";
 import { EquipoCasoCard } from "@/components/expediente/EquipoCasoCard";
 import { ControlOperativoPanel } from "@/components/expediente/ControlOperativoPanel";
 import { ETAPA_A_DESTINO, type EtapaGuiadaId, type TabId } from "@/lib/expedienteGuiado";
+import { supabase } from "@/integrations/supabase/client";
 
 const TAB_IDS: TabId[] = ["resumen", "tareas", "documentos", "comunicaciones", "financiero", "juridico", "auditoria", "historial"];
 
@@ -77,6 +78,34 @@ function CasoDetail() {
   };
 
   useEffect(() => { reload(); }, [id]);
+
+  // Mantener la ficha sincronizada cuando otro usuario modifica el mismo caso.
+  // Los simuladores conservan estado interno, por eso además se remontan con
+  // `updated_at` como parte de su key (ver la pestaña financiero).
+  useEffect(() => {
+    const channel = supabase
+      .channel(`expediente:${id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "expedientes",
+          filter: `id=eq.${id}`,
+        },
+        () => reload(),
+      )
+      .subscribe();
+
+    const refreshOnFocus = () => reload();
+    window.addEventListener("focus", refreshOnFocus);
+    return () => {
+      window.removeEventListener("focus", refreshOnFocus);
+      void supabase.removeChannel(channel);
+    };
+    // `id` identifica de forma estable la suscripción; reload solo usa ese id.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   useEffect(() => {
     if (exp?.id && exp?.cliente_nombre) addRecentCase(exp.id, exp.cliente_nombre);
@@ -407,9 +436,9 @@ function CasoDetail() {
         <TabsContent value="financiero" className="space-y-4 nuvia-financiero-dark">
           <div id="simulador-financiero-qa" className="scroll-mt-6">
             {exp.modo === "pesos" ? (
-              <PesosSimulator initialExpediente={exp} onSaved={reload} />
+              <PesosSimulator key={`${exp.id}:${exp.updated_at}`} initialExpediente={exp} onSaved={reload} />
             ) : (
-              <UVRSimulator initialExpediente={exp} onSaved={reload} />
+              <UVRSimulator key={`${exp.id}:${exp.updated_at}`} initialExpediente={exp} onSaved={reload} />
             )}
           </div>
 
