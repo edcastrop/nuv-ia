@@ -12,4 +12,12 @@ export default defineConfig({
   tanstackStart: {
     server: { entry: "server" },
   },
+  // Cloudflare's free Workers plan has a strict compressed bundle limit.
+  // TanStack Start builds both the browser app and the SSR worker; explicitly
+  // minifying the latter keeps the deployment below that limit.
+  vite: {
+    build: {
+      minify: "esbuild",
+    },
+  },
 });
