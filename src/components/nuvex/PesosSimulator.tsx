@@ -138,7 +138,7 @@ export function PesosSimulator({
       initCred.valorBeneficio ??
       "",
     propuestasComerciales: parseStoredJson<PropuestasComercialesDraft>(initCred.propuestasComerciales),
-  });
+  }, init?.updated_at);
   const monedaAlerta = useMonedaMismatchAlert();
   const [autoQA, setAutoQA] = useState<AutoQAResult | null>(null);
   const [autoQALoading, setAutoQALoading] = useState(false);
@@ -225,7 +225,7 @@ export function PesosSimulator({
       propuestasComercialesDraft,
     ],
   );
-  useSimulatorDraft("pesos", init?.id, currentDraft);
+  useSimulatorDraft("pesos", init?.id, currentDraft, init?.updated_at);
   // Al montar un simulador standalone (sin caso previo), barrer entradas
   // anónimas huérfanas del registry (ver pendingSoportes.ts). No toca
   // entradas ya asociadas a un cliente identificado.
@@ -244,11 +244,11 @@ export function PesosSimulator({
     [client.cedula, client.nombre, client.numeroCredito, client.banco],
   );
   const handleSaved = (e: Expediente) => {
-    clearSimulatorDraft("pesos", init?.id);
+    clearSimulatorDraft("pesos", init?.id, init?.updated_at);
     onSaved?.(e);
   };
   const handleResetMode = () => {
-    clearSimulatorDraft("pesos", init?.id);
+    clearSimulatorDraft("pesos", init?.id, init?.updated_at);
     onReset?.();
   };
 
