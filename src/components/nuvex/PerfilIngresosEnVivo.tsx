@@ -92,6 +92,15 @@ function promedio(f: FuenteIngreso): number {
   return ((Number(f.mes1) || 0) + (Number(f.mes2) || 0) + (Number(f.mes3) || 0)) / 3;
 }
 
+export function calcularIngresoMensualPerfil(value?: IngresosCliente | null): number {
+  if (!value) return 0;
+  const titular = (value.fuentes ?? []).reduce((acc, f) => acc + promedio(f), 0);
+  const cotitular = value.tieneCotitular
+    ? (value.cotitularFuentes ?? []).reduce((acc, f) => acc + promedio(f), 0)
+    : 0;
+  return titular + cotitular;
+}
+
 function parseCop(s: string): number {
   const clean = s.replace(/[^\d]/g, "");
   return clean ? Number(clean) : 0;
@@ -136,7 +145,7 @@ export function PerfilIngresosEnVivo({
     () => (tieneCotitular ? cotitularFuentes.reduce((acc, f) => acc + promedio(f), 0) : 0),
     [tieneCotitular, cotitularFuentes],
   );
-  const ingresoTotal = ingresoTitular + ingresoCotitular;
+  const ingresoTotal = useMemo(() => calcularIngresoMensualPerfil(value), [value]);
   const capacidadMaxima = ingresoTotal * porcentajeMax;
   const tieneDatos = ingresoTotal > 0;
 

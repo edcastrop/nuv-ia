@@ -20,6 +20,7 @@ import { formatCOP } from "@/lib/format";
 import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
 import { enviarSolicitudPlazoBanco } from "@/lib/solicitudPlazoBanco.functions";
 import { unzipSync } from "fflate";
+import { calcularIngresoMensualPerfil, type IngresosCliente } from "@/components/nuvex/PerfilIngresosEnVivo";
 
 export const BANCOS_REQUIEREN_CAPACIDAD = [
   "davivienda",
@@ -62,6 +63,7 @@ interface Props {
   expedienteId: string;
   banco: string;
   cuotaPropuesta: number;
+  ingresosRegistrados?: IngresosCliente;
 }
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -141,7 +143,7 @@ function SemaforoBadge({ s }: { s: "verde" | "amarillo" | "rojo" | "sin_datos" }
   );
 }
 
-export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta }: Props) {
+export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta, ingresosRegistrados }: Props) {
   const ejecutar = useServerFn(analizarCapacidadPago);
   const enviarSolicitud = useServerFn(enviarSolicitudPlazoBanco);
 
@@ -193,6 +195,11 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
         .limit(1)
         .maybeSingle();
       if (!error && data) {
+        const payloadGuardado = (data.payload_ia ?? {}) as {
+          personas?: unknown[];
+          cuotaMaximaPermitida?: number;
+          fuenteIngreso?: "soportes" | "perfil_expediente" | "sin_datos";
+        };
         setEsVis(!!data.es_vis);
         if (!cuotaPropuesta || cuotaPropuesta <= 0) {
           setCuota(Math.round(Number(data.cuota_propuesta)));
@@ -202,10 +209,13 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           esVis: !!data.es_vis,
           limiteAplicable: Number(data.limite_aplicable),
           ingresoTotal: Number(data.ingreso_total),
+          cuotaMaximaPermitida: Number(payloadGuardado.cuotaMaximaPermitida)
+            || Number(data.ingreso_total) * Number(data.limite_aplicable),
+          fuenteIngreso: payloadGuardado.fuenteIngreso ?? (Number(data.ingreso_total) > 0 ? "soportes" : "sin_datos"),
           porcentajeEndeudamiento: Number(data.porcentaje_endeudamiento ?? 0),
           semaforo: data.semaforo as "verde" | "amarillo" | "rojo" | "sin_datos",
           mensaje: "Último análisis guardado.",
-          personas: (data.payload_ia as { personas?: unknown[] })?.personas as never ?? [],
+          personas: payloadGuardado.personas as never ?? [],
           modelo: data.modelo_ia ?? "",
         });
       }
@@ -215,6 +225,10 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   }, [expedienteId]);
 
   const limiteAplicable = esVis ? 0.40 : 0.30;
+  const ingresoReferencia = useMemo(
+    () => calcularIngresoMensualPerfil(ingresosRegistrados),
+    [ingresosRegistrados],
+  );
   const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
 
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -345,6 +359,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           expedienteId,
           cuotaPropuesta: cuota,
           esVis,
+          banco,
+          ingresoReferencia,
           personas: personas.map((p) => ({
             rol: p.rol,
             tipoPersona: p.tipoPersona,
@@ -634,7 +650,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
               Cambiaste la propuesta. Se recalculó el % de endeudamiento con la nueva cuota ({formatCOP(cuota)}) sobre los ingresos detectados. Vuelve a ejecutar el análisis para persistir el resultado.
             </div>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-4">
             <div className="md:col-span-2 p-5 rounded-xl" style={{ background: "rgba(0,0,0,0.35)", border: "1px solid var(--nuvia-border-medium)", color: "var(--nuvia-text-primary)" }}>
               <div className="text-xs uppercase tracking-wide mb-1" style={{ color: "var(--nuvia-text-tertiary)" }}>% Endeudamiento</div>
               <div className="text-5xl font-bold">{(livePct * 100).toFixed(1)}%</div>
@@ -645,6 +661,14 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
               <div className="text-xs uppercase" style={{ color: "rgb(132,185,143)" }}>Ingreso total detectado</div>
               <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(resultado.ingresoTotal)}</div>
               <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>Titular + codeudor</div>
+              {resultado.fuenteIngreso === "perfil_expediente" && (
+                <div className="text-xs mt-1 text-amber-300">Registrado en expediente · pendiente validar</div>
+              )}
+            </div>
+            <div className="p-4 rounded-xl" style={{ background: "rgba(132,185,143,0.12)", border: "1px solid rgba(132,185,143,0.35)" }}>
+              <div className="text-xs uppercase" style={{ color: "rgb(132,185,143)" }}>Cuota máxima permitida</div>
+              <div className="text-2xl font-bold" style={{ color: "var(--nuvia-text-primary)" }}>{formatCOP(resultado.cuotaMaximaPermitida)}</div>
+              <div className="text-xs mt-1" style={{ color: "var(--nuvia-text-secondary)" }}>{Math.round(limiteAplicable * 100)}% del ingreso</div>
             </div>
             <div className="p-4 rounded-xl" style={{ background: "rgba(122,160,255,0.12)", border: "1px solid rgba(122,160,255,0.35)" }}>
               <div className="text-xs uppercase" style={{ color: "var(--nuvia-accent-primary)" }}>Cuota propuesta</div>

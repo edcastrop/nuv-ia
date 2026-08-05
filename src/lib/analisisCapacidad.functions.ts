@@ -36,6 +36,7 @@ const InputSchema = z.object({
   cuotaPropuesta: z.number().positive(),
   esVis: z.boolean().default(false),
   banco: z.string().max(80).optional(),
+  ingresoReferencia: z.number().nonnegative().optional(),
   personas: z.array(PersonaSchema).min(1).max(2),
 });
 
@@ -66,6 +67,8 @@ export type AnalisisCapacidadResultado = {
     esVis: boolean;
     limiteAplicable: number; // 0.30 o 0.40
     ingresoTotal: number;
+    cuotaMaximaPermitida: number;
+    fuenteIngreso: "soportes" | "perfil_expediente" | "sin_datos";
     porcentajeEndeudamiento: number; // 0..1
     semaforo: "verde" | "amarillo" | "rojo" | "sin_datos";
     mensaje: string;
@@ -281,7 +284,7 @@ function mensajePara(
   esVis: boolean,
 ): string {
   const limPct = Math.round(limite * 100);
-  if (semaforo === "sin_datos") return "No fue posible calcular el endeudamiento con los soportes entregados.";
+  if (semaforo === "sin_datos") return "No se detectaron ingresos. Adjunta extractos de la cuenta donde el cliente recibe sus ingresos, no el extracto del crédito hipotecario.";
   if (semaforo === "verde")
     return `La cuota propuesta está dentro del ${limPct}% permitido por el banco para crédito ${esVis ? "VIS" : "No VIS"}. Puedes radicar con tranquilidad.`;
   if (semaforo === "amarillo")
@@ -304,8 +307,16 @@ export const analizarCapacidadPago = createServerFn({ method: "POST" })
 
     const personas = resultados.map((r) => r.persona);
     const modelo = resultados[0]?.modelo ?? "google/gemini-2.5-pro";
-    const ingresoTotal = personas.reduce((sum, p) => sum + p.ingresoMensualPromedio, 0);
+    const ingresoSoportes = personas.reduce((sum, p) => sum + p.ingresoMensualPromedio, 0);
+    const ingresoReferencia = Math.max(0, Number(data.ingresoReferencia) || 0);
+    const ingresoTotal = ingresoSoportes > 0 ? ingresoSoportes : ingresoReferencia;
+    const fuenteIngreso: "soportes" | "perfil_expediente" | "sin_datos" = ingresoSoportes > 0
+      ? "soportes"
+      : ingresoReferencia > 0
+        ? "perfil_expediente"
+        : "sin_datos";
     const limiteAplicable = data.esVis ? 0.40 : 0.30;
+    const cuotaMaximaPermitida = ingresoTotal * limiteAplicable;
 
     let semaforo: "verde" | "amarillo" | "rojo" | "sin_datos" = "sin_datos";
     let pct = 0;
@@ -313,7 +324,10 @@ export const analizarCapacidadPago = createServerFn({ method: "POST" })
       pct = data.cuotaPropuesta / ingresoTotal;
       semaforo = semaforoFor(pct, limiteAplicable);
     }
-    const mensaje = mensajePara(pct, limiteAplicable, semaforo, data.esVis);
+    const mensajeBase = mensajePara(pct, limiteAplicable, semaforo, data.esVis);
+    const mensaje = fuenteIngreso === "perfil_expediente"
+      ? `${mensajeBase} Cálculo provisional con los ingresos registrados en el expediente; deben validarse con soportes de ingresos.`
+      : mensajeBase;
 
     // El primer error de IA (si lo hubo) se propaga como advertencia, pero
     // igual devolvemos el resultado parcial.
@@ -326,6 +340,8 @@ export const analizarCapacidadPago = createServerFn({ method: "POST" })
         esVis: data.esVis,
         limiteAplicable,
         ingresoTotal,
+        cuotaMaximaPermitida,
+        fuenteIngreso,
         porcentajeEndeudamiento: pct,
         semaforo,
         mensaje,

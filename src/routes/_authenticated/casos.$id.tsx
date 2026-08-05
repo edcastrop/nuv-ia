@@ -42,6 +42,7 @@ import { EquipoCasoCard } from "@/components/expediente/EquipoCasoCard";
 import { ControlOperativoPanel } from "@/components/expediente/ControlOperativoPanel";
 import { ETAPA_A_DESTINO, type EtapaGuiadaId, type TabId } from "@/lib/expedienteGuiado";
 import { supabase } from "@/integrations/supabase/client";
+import type { IngresosCliente } from "@/components/nuvex/PerfilIngresosEnVivo";
 
 const TAB_IDS: TabId[] = ["resumen", "tareas", "documentos", "comunicaciones", "financiero", "juridico", "auditoria", "historial"];
 
@@ -441,9 +442,9 @@ function CasoDetail() {
         <TabsContent value="financiero" className="space-y-4 nuvia-financiero-dark">
           <div id="simulador-financiero-qa" className="scroll-mt-6">
             {exp.modo === "pesos" ? (
-              <PesosSimulator key={`${exp.id}:${exp.updated_at}`} initialExpediente={exp} onSaved={reload} />
+              <PesosSimulator key={`${exp.id}:${exp.updated_at}`} initialExpediente={exp} onSaved={() => reload()} />
             ) : (
-              <UVRSimulator key={`${exp.id}:${exp.updated_at}`} initialExpediente={exp} onSaved={reload} />
+              <UVRSimulator key={`${exp.id}:${exp.updated_at}`} initialExpediente={exp} onSaved={() => reload()} />
             )}
           </div>
 
@@ -460,6 +461,7 @@ function CasoDetail() {
                   expedienteId={exp.id}
                   banco={String(cli.banco ?? "")}
                   cuotaPropuesta={Number(prop.nuevaCuota ?? 0)}
+                  ingresosRegistrados={cli.ingresos as IngresosCliente | undefined}
                 />
                 <RespuestaBancoBlock
                   expedienteId={exp.id}
