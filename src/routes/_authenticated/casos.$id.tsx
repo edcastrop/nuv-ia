@@ -69,12 +69,14 @@ function CasoDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tabSearch]);
 
-  const reload = () => {
-    setLoading(true);
+  const reload = ({ showLoading = true }: { showLoading?: boolean } = {}) => {
+    if (showLoading) setLoading(true);
     getExpediente(id)
       .then(setExp)
       .catch((e) => setErr(e.message))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (showLoading) setLoading(false);
+      });
   };
 
   useEffect(() => { reload(); }, [id]);
@@ -93,11 +95,14 @@ function CasoDetail() {
           table: "expedientes",
           filter: `id=eq.${id}`,
         },
-        () => reload(),
+        () => reload({ showLoading: false }),
       )
       .subscribe();
 
-    const refreshOnFocus = () => reload();
+    // El selector de archivos devuelve el foco a la ventana al cerrarse. La
+    // actualización debe ser silenciosa para no desmontar el expediente y
+    // perder los archivos que el usuario acaba de seleccionar o arrastrar.
+    const refreshOnFocus = () => reload({ showLoading: false });
     window.addEventListener("focus", refreshOnFocus);
     return () => {
       window.removeEventListener("focus", refreshOnFocus);
