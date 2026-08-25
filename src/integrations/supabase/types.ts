@@ -6294,6 +6294,10 @@ export type Database = {
         Args: { payload: Json; queue_name: string }
         Returns: number
       }
+      es_responsable_expediente: {
+        Args: { _exp: string; _uid: string }
+        Returns: boolean
+      }
       gpt_can_see_ticket: {
         Args: { _area: string; _user: string }
         Returns: boolean
