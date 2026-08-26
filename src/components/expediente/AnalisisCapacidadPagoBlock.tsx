@@ -423,6 +423,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     // Solo persistencia opcional. No bloquea el análisis.
     for (const p of personas) {
       for (const a of p.archivos) {
+        if (a.bloqueado || !a.dataUrl) continue;
         const path = `${expedienteId}/${p.rol}/${Date.now()}_${a.nombre}`;
         const blob = await (await fetch(a.dataUrl)).blob();
         const { error } = await supabase.storage.from("capacidad-pago-docs").upload(path, blob, {
@@ -436,8 +437,22 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const correrAnalisis = async () => {
     if (cuota <= 0) { toast.error("Define la cuota propuesta."); return; }
     if (totalArchivos === 0) { toast.error("Sube al menos un soporte financiero."); return; }
+    if (archivosBloqueados > 0) {
+      toast.error(`Hay ${archivosBloqueados} PDF(s) protegidos con contraseña. Ingresa la clave o retíralos antes de ejecutar.`);
+      return;
+    }
     setAnalizando(true);
     try {
+      const personasPayload = personas
+        .map((p) => ({
+          rol: p.rol,
+          tipoPersona: p.tipoPersona,
+          archivos: p.archivos
+            .filter((a) => !a.bloqueado && a.dataUrl)
+            .map((a) => ({ nombre: a.nombre, mime: a.mime, dataUrl: a.dataUrl, tipo: a.tipo })),
+        }))
+        .filter((p) => p.archivos.length > 0);
+      if (personasPayload.length === 0) { toast.error("No hay soportes legibles para analizar."); setAnalizando(false); return; }
       const res = await ejecutar({
         data: {
           expedienteId,
@@ -445,13 +460,10 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           esVis,
           banco,
           ingresoReferencia,
-          personas: personas.map((p) => ({
-            rol: p.rol,
-            tipoPersona: p.tipoPersona,
-            archivos: p.archivos.map((a) => ({ nombre: a.nombre, mime: a.mime, dataUrl: a.dataUrl, tipo: a.tipo })),
-          })),
+          personas: personasPayload,
         },
       });
+
       if (res.error) toast.warning(res.error);
       if (!res.data) { setAnalizando(false); return; }
       setResultado(res.data);
