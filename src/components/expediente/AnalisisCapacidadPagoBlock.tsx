@@ -236,9 +236,13 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     () => calcularIngresoMensualPerfil(ingresosRegistrados),
     [ingresosRegistrados],
   );
-  const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
+  const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.filter((a) => !a.bloqueado).length, 0), [personas]);
+  const archivosBloqueados = useMemo(() => personas.reduce((s, p) => s + p.archivos.filter((a) => a.bloqueado).length, 0), [personas]);
 
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [clavesPdf, setClavesPdf] = useState<Record<string, string>>({});
+  const [desbloqueando, setDesbloqueando] = useState<string | null>(null);
+
 
   const tipoDocFromName = (name: string): TipoDoc => {
     const n = name.toLowerCase();
