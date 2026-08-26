@@ -174,6 +174,9 @@ export function RoleHome({ onLanzarSimulador }: RoleHomeProps) {
     let cancel = false;
     (async () => {
       try {
+        // Sin sesión activa el server fn responde 401 y rompe la vista: no lo llamamos.
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (!sessionData.session?.access_token || cancel) return;
         const qa = await qaKpis();
         if (cancel) return;
         setCounts((prev) => ({
