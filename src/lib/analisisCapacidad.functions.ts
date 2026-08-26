@@ -18,7 +18,9 @@ const FileSchema = z.object({
 const PersonaSchema = z.object({
   rol: z.enum(["titular", "codeudor"]),
   tipoPersona: z.enum(["empleado_mensual", "empleado_quincenal", "independiente", "empleado_mensual_independiente", "empleado_quincenal_independiente"]),
-  archivos: z.array(FileSchema).min(1).max(12),
+  // Un PDF desbloqueado puede rasterizarse en varias páginas → el conteo real
+  // de imágenes por persona supera con facilidad los 12 documentos originales.
+  archivos: z.array(FileSchema).min(1).max(60),
 });
 
 // Bancos que NO consideran la prima como ingreso recurrente para radicación.
