@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText, Sparkles, Mail } from "lucide-react";
+import { Loader2, Upload, X, ShieldCheck, AlertTriangle, AlertOctagon, FileText, Sparkles, Mail, Lock, KeyRound } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCOP } from "@/lib/format";
 import { analizarCapacidadPago, type AnalisisCapacidadResultado } from "@/lib/analisisCapacidad.functions";
@@ -51,7 +51,14 @@ type ArchivoLocal = {
   size: number;
   tipo: TipoDoc;
   dataUrl: string;
+  /** PDF protegido con contraseña: no se puede enviar a la IA hasta desbloquear. */
+  bloqueado?: boolean;
+  /** Bytes originales del PDF bloqueado, para reintentar con la clave. */
+  buffer?: ArrayBuffer;
+  /** Marca de clave incorrecta en el último intento. */
+  claveIncorrecta?: boolean;
 };
+
 
 type PersonaForm = {
   rol: Rol;
@@ -229,9 +236,13 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     () => calcularIngresoMensualPerfil(ingresosRegistrados),
     [ingresosRegistrados],
   );
-  const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.length, 0), [personas]);
+  const totalArchivos = useMemo(() => personas.reduce((s, p) => s + p.archivos.filter((a) => !a.bloqueado).length, 0), [personas]);
+  const archivosBloqueados = useMemo(() => personas.reduce((s, p) => s + p.archivos.filter((a) => a.bloqueado).length, 0), [personas]);
 
   const [dragIdx, setDragIdx] = useState<number | null>(null);
+  const [clavesPdf, setClavesPdf] = useState<Record<string, string>>({});
+  const [desbloqueando, setDesbloqueando] = useState<string | null>(null);
+
 
   const tipoDocFromName = (name: string): TipoDoc => {
     const n = name.toLowerCase();
@@ -240,6 +251,34 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     if (n.includes("carta") || n.includes("labor")) return "carta_laboral";
     if (n.includes("renta") || n.includes("dian") || n.includes("declarac")) return "renta";
     return "otro";
+  };
+
+  /** Construye la entrada local; si el PDF pide clave lo deja bloqueado. */
+  const construirArchivo = async (
+    nombre: string,
+    mime: string,
+    buffer: ArrayBuffer,
+  ): Promise<ArchivoLocal> => {
+    const base: ArchivoLocal = {
+      id: crypto.randomUUID(),
+      nombre,
+      mime,
+      size: buffer.byteLength,
+      tipo: tipoDocFromName(nombre),
+      dataUrl: bytesToDataUrl(new Uint8Array(buffer), mime),
+    };
+    if (mime !== "application/pdf") return base;
+    try {
+      const { probePdf } = await import("@/lib/pdfPasswordUnlock");
+      const probe = await probePdf(buffer);
+      if (probe.needsPassword) {
+        toast.warning(`${nombre} está protegido con contraseña. Ingrésala para que NUVIA pueda leerlo.`);
+        return { ...base, dataUrl: "", bloqueado: true, buffer };
+      }
+    } catch (e) {
+      console.error("probePdf", e);
+    }
+    return base;
   };
 
   const procesarArchivo = async (f: File): Promise<ArchivoLocal[]> => {
@@ -268,14 +307,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
             continue;
           }
           const mime = mimeFromName(base);
-          out.push({
-            id: crypto.randomUUID(),
-            nombre: base,
-            mime,
-            size: bytes.length,
-            tipo: tipoDocFromName(base),
-            dataUrl: bytesToDataUrl(bytes, mime),
-          });
+          const copia = bytes.slice().buffer as ArrayBuffer;
+          out.push(await construirArchivo(base, mime, copia));
         }
         if (out.length === 0) toast.warning(`${f.name}: no se encontraron PDFs o imágenes válidos.`);
         else toast.success(`${f.name}: ${out.length} documento(s) extraído(s).`);
@@ -290,15 +323,65 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       toast.error(`${f.name} excede 10 MB.`);
       return [];
     }
+    const mime = f.type || mimeFromName(f.name);
+    if (mime === "application/pdf") {
+      return [await construirArchivo(f.name, mime, await f.arrayBuffer())];
+    }
     const dataUrl = await fileToDataUrl(f);
     return [{
       id: crypto.randomUUID(),
       nombre: f.name,
-      mime: f.type || mimeFromName(f.name),
+      mime,
       size: f.size,
       tipo: tipoDocFromName(f.name),
       dataUrl,
     }];
+  };
+
+  /** Desbloquea un PDF cifrado con la clave escrita por el analista.
+   *  Rasteriza las páginas a imágenes (igual que el lector de extractos). */
+  const desbloquearArchivo = async (idxPersona: number, idArchivo: string) => {
+    const persona = personas[idxPersona];
+    const archivo = persona?.archivos.find((a) => a.id === idArchivo);
+    const clave = (clavesPdf[idArchivo] ?? "").trim();
+    if (!archivo?.buffer || !clave) return;
+    setDesbloqueando(idArchivo);
+    try {
+      const { probePdf, renderPdfToJpegDataUrls } = await import("@/lib/pdfPasswordUnlock");
+      const probe = await probePdf(archivo.buffer, clave);
+      if (!probe.ok) {
+        setPersonas((prev) => prev.map((p, i) => i === idxPersona ? {
+          ...p,
+          archivos: p.archivos.map((a) => a.id === idArchivo ? { ...a, claveIncorrecta: true } : a),
+        } : p));
+        toast.error(`Contraseña incorrecta para ${archivo.nombre}.`);
+        return;
+      }
+      const imagenes = await renderPdfToJpegDataUrls(archivo.buffer, clave);
+      if (imagenes.length === 0) {
+        toast.error(`${archivo.nombre}: no se pudo leer ninguna página.`);
+        return;
+      }
+      const nuevos: ArchivoLocal[] = imagenes.map((dataUrl, i) => ({
+        id: crypto.randomUUID(),
+        nombre: imagenes.length > 1 ? `${archivo.nombre} (pág. ${i + 1})` : archivo.nombre,
+        mime: "image/jpeg",
+        size: Math.round((dataUrl.length * 3) / 4),
+        tipo: archivo.tipo,
+        dataUrl,
+      }));
+      setPersonas((prev) => prev.map((p, i) => i === idxPersona ? {
+        ...p,
+        archivos: p.archivos.flatMap((a) => (a.id === idArchivo ? nuevos : [a])),
+      } : p));
+      setClavesPdf((prev) => { const next = { ...prev }; delete next[idArchivo]; return next; });
+      toast.success(`${archivo.nombre} desbloqueado (${imagenes.length} página(s)).`);
+    } catch (e) {
+      console.error("desbloquearArchivo", e);
+      toast.error(`No se pudo desbloquear ${archivo.nombre}.`);
+    } finally {
+      setDesbloqueando(null);
+    }
   };
 
   const handleFiles = async (idxPersona: number, files: FileList | File[] | null) => {
@@ -313,6 +396,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     if (nuevos.length === 0) return;
     setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: [...p.archivos, ...nuevos] } : p));
   };
+
 
   const removeArchivo = (idxPersona: number, idArchivo: string) => {
     setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: p.archivos.filter((a) => a.id !== idArchivo) } : p));
@@ -339,6 +423,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     // Solo persistencia opcional. No bloquea el análisis.
     for (const p of personas) {
       for (const a of p.archivos) {
+        if (a.bloqueado || !a.dataUrl) continue;
         const path = `${expedienteId}/${p.rol}/${Date.now()}_${a.nombre}`;
         const blob = await (await fetch(a.dataUrl)).blob();
         const { error } = await supabase.storage.from("capacidad-pago-docs").upload(path, blob, {
@@ -352,8 +437,22 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const correrAnalisis = async () => {
     if (cuota <= 0) { toast.error("Define la cuota propuesta."); return; }
     if (totalArchivos === 0) { toast.error("Sube al menos un soporte financiero."); return; }
+    if (archivosBloqueados > 0) {
+      toast.error(`Hay ${archivosBloqueados} PDF(s) protegidos con contraseña. Ingresa la clave o retíralos antes de ejecutar.`);
+      return;
+    }
     setAnalizando(true);
     try {
+      const personasPayload = personas
+        .map((p) => ({
+          rol: p.rol,
+          tipoPersona: p.tipoPersona,
+          archivos: p.archivos
+            .filter((a) => !a.bloqueado && a.dataUrl)
+            .map((a) => ({ nombre: a.nombre, mime: a.mime, dataUrl: a.dataUrl, tipo: a.tipo })),
+        }))
+        .filter((p) => p.archivos.length > 0);
+      if (personasPayload.length === 0) { toast.error("No hay soportes legibles para analizar."); setAnalizando(false); return; }
       const res = await ejecutar({
         data: {
           expedienteId,
@@ -361,13 +460,10 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           esVis,
           banco,
           ingresoReferencia,
-          personas: personas.map((p) => ({
-            rol: p.rol,
-            tipoPersona: p.tipoPersona,
-            archivos: p.archivos.map((a) => ({ nombre: a.nombre, mime: a.mime, dataUrl: a.dataUrl, tipo: a.tipo })),
-          })),
+          personas: personasPayload,
         },
       });
+
       if (res.error) toast.warning(res.error);
       if (!res.data) { setAnalizando(false); return; }
       setResultado(res.data);
@@ -409,8 +505,9 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const construirYEnviarSolicitud = async () => {
     if (!resultado) { toast.error("Primero ejecuta el análisis de capacidad."); return; }
     if (!plazoNuevo || plazoNuevo <= 0) { toast.error("Indica el nuevo plazo en meses."); return; }
-    const archivos = personas.flatMap((p) => p.archivos);
-    if (archivos.length === 0) { toast.error("No hay soportes adjuntos."); return; }
+    const archivos = personas.flatMap((p) => p.archivos).filter((a) => !a.bloqueado && a.dataUrl);
+    if (archivos.length === 0) { toast.error("No hay soportes adjuntos legibles."); return; }
+
 
     setEnviandoSolicitud(true);
     try {
@@ -586,24 +683,60 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           {p.archivos.length > 0 && (
             <ul className="mt-3 space-y-1">
               {p.archivos.map((a) => (
-                <li key={a.id} className="flex items-center gap-2 text-sm p-2 rounded" style={{ background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-secondary)" }}>
-                  <FileText className="w-4 h-4" style={{ color: "var(--nuvia-text-tertiary)" }} />
-                  <span className="truncate flex-1">{a.nombre}</span>
-                  <Select value={a.tipo} onValueChange={(v) => setTipoDoc(idx, a.id, v as TipoDoc)}>
-                    <SelectTrigger className="w-[150px] h-7 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nomina">Nómina</SelectItem>
-                      <SelectItem value="carta_laboral">Carta laboral</SelectItem>
-                      <SelectItem value="renta">Renta</SelectItem>
-                      <SelectItem value="extracto">Extracto bancario</SelectItem>
-                      <SelectItem value="otro">Otro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" variant="ghost" onClick={() => removeArchivo(idx, a.id)}><X className="w-3 h-3" /></Button>
+                <li key={a.id} className="p-2 rounded text-sm" style={{ background: a.bloqueado ? "rgba(255,190,120,0.10)" : "rgba(255,255,255,0.04)", color: "var(--nuvia-text-secondary)" }}>
+                  <div className="flex items-center gap-2">
+                    {a.bloqueado
+                      ? <Lock className="w-4 h-4" style={{ color: "#F5B971" }} />
+                      : <FileText className="w-4 h-4" style={{ color: "var(--nuvia-text-tertiary)" }} />}
+                    <span className="truncate flex-1">{a.nombre}</span>
+                    <Select value={a.tipo} onValueChange={(v) => setTipoDoc(idx, a.id, v as TipoDoc)}>
+                      <SelectTrigger className="w-[150px] h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nomina">Nómina</SelectItem>
+                        <SelectItem value="carta_laboral">Carta laboral</SelectItem>
+                        <SelectItem value="renta">Renta</SelectItem>
+                        <SelectItem value="extracto">Extracto bancario</SelectItem>
+                        <SelectItem value="otro">Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" variant="ghost" onClick={() => removeArchivo(idx, a.id)}><X className="w-3 h-3" /></Button>
+                  </div>
+                  {a.bloqueado && (
+                    <div className="mt-2 pl-6">
+                      <p className="text-xs mb-1" style={{ color: a.claveIncorrecta ? "#F08A8A" : "#F5B971" }}>
+                        {a.claveIncorrecta
+                          ? "Contraseña incorrecta. Verifica la clave del extracto e inténtalo de nuevo."
+                          : "Documento protegido con contraseña. Ingresa la clave para que NUVIA pueda leerlo."}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="password"
+                          autoComplete="off"
+                          placeholder="Contraseña del documento"
+                          className="nuvia-input nuvia-input-sm h-8 text-xs flex-1"
+                          value={clavesPdf[a.id] ?? ""}
+                          onChange={(e) => setClavesPdf((prev) => ({ ...prev, [a.id]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void desbloquearArchivo(idx, a.id); } }}
+                        />
+                        <Button
+                          size="sm"
+                          className="h-8 border-0 text-white"
+                          style={{ background: "var(--nuvia-accent-primary)" }}
+                          disabled={!((clavesPdf[a.id] ?? "").trim()) || desbloqueando === a.id}
+                          onClick={() => void desbloquearArchivo(idx, a.id)}
+                        >
+                          {desbloqueando === a.id
+                            ? (<><Loader2 className="w-3 h-3 mr-1 animate-spin" />Leyendo…</>)
+                            : (<><KeyRound className="w-3 h-3 mr-1" />Desbloquear</>)}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
           )}
+
         </div>
       ))}
 
