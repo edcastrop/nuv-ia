@@ -51,7 +51,14 @@ type ArchivoLocal = {
   size: number;
   tipo: TipoDoc;
   dataUrl: string;
+  /** PDF protegido con contraseña: no se puede enviar a la IA hasta desbloquear. */
+  bloqueado?: boolean;
+  /** Bytes originales del PDF bloqueado, para reintentar con la clave. */
+  buffer?: ArrayBuffer;
+  /** Marca de clave incorrecta en el último intento. */
+  claveIncorrecta?: boolean;
 };
+
 
 type PersonaForm = {
   rol: Rol;
