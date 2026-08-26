@@ -682,24 +682,60 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
           {p.archivos.length > 0 && (
             <ul className="mt-3 space-y-1">
               {p.archivos.map((a) => (
-                <li key={a.id} className="flex items-center gap-2 text-sm p-2 rounded" style={{ background: "rgba(255,255,255,0.04)", color: "var(--nuvia-text-secondary)" }}>
-                  <FileText className="w-4 h-4" style={{ color: "var(--nuvia-text-tertiary)" }} />
-                  <span className="truncate flex-1">{a.nombre}</span>
-                  <Select value={a.tipo} onValueChange={(v) => setTipoDoc(idx, a.id, v as TipoDoc)}>
-                    <SelectTrigger className="w-[150px] h-7 text-xs"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nomina">Nómina</SelectItem>
-                      <SelectItem value="carta_laboral">Carta laboral</SelectItem>
-                      <SelectItem value="renta">Renta</SelectItem>
-                      <SelectItem value="extracto">Extracto bancario</SelectItem>
-                      <SelectItem value="otro">Otro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" variant="ghost" onClick={() => removeArchivo(idx, a.id)}><X className="w-3 h-3" /></Button>
+                <li key={a.id} className="p-2 rounded text-sm" style={{ background: a.bloqueado ? "rgba(255,190,120,0.10)" : "rgba(255,255,255,0.04)", color: "var(--nuvia-text-secondary)" }}>
+                  <div className="flex items-center gap-2">
+                    {a.bloqueado
+                      ? <Lock className="w-4 h-4" style={{ color: "#F5B971" }} />
+                      : <FileText className="w-4 h-4" style={{ color: "var(--nuvia-text-tertiary)" }} />}
+                    <span className="truncate flex-1">{a.nombre}</span>
+                    <Select value={a.tipo} onValueChange={(v) => setTipoDoc(idx, a.id, v as TipoDoc)}>
+                      <SelectTrigger className="w-[150px] h-7 text-xs"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="nomina">Nómina</SelectItem>
+                        <SelectItem value="carta_laboral">Carta laboral</SelectItem>
+                        <SelectItem value="renta">Renta</SelectItem>
+                        <SelectItem value="extracto">Extracto bancario</SelectItem>
+                        <SelectItem value="otro">Otro</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" variant="ghost" onClick={() => removeArchivo(idx, a.id)}><X className="w-3 h-3" /></Button>
+                  </div>
+                  {a.bloqueado && (
+                    <div className="mt-2 pl-6">
+                      <p className="text-xs mb-1" style={{ color: a.claveIncorrecta ? "#F08A8A" : "#F5B971" }}>
+                        {a.claveIncorrecta
+                          ? "Contraseña incorrecta. Verifica la clave del extracto e inténtalo de nuevo."
+                          : "Documento protegido con contraseña. Ingresa la clave para que NUVIA pueda leerlo."}
+                      </p>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="password"
+                          autoComplete="off"
+                          placeholder="Contraseña del documento"
+                          className="nuvia-input nuvia-input-sm h-8 text-xs flex-1"
+                          value={clavesPdf[a.id] ?? ""}
+                          onChange={(e) => setClavesPdf((prev) => ({ ...prev, [a.id]: e.target.value }))}
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void desbloquearArchivo(idx, a.id); } }}
+                        />
+                        <Button
+                          size="sm"
+                          className="h-8 border-0 text-white"
+                          style={{ background: "var(--nuvia-accent-primary)" }}
+                          disabled={!((clavesPdf[a.id] ?? "").trim()) || desbloqueando === a.id}
+                          onClick={() => void desbloquearArchivo(idx, a.id)}
+                        >
+                          {desbloqueando === a.id
+                            ? (<><Loader2 className="w-3 h-3 mr-1 animate-spin" />Leyendo…</>)
+                            : (<><KeyRound className="w-3 h-3 mr-1" />Desbloquear</>)}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
           )}
+
         </div>
       ))}
 
