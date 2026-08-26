@@ -505,8 +505,9 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
   const construirYEnviarSolicitud = async () => {
     if (!resultado) { toast.error("Primero ejecuta el análisis de capacidad."); return; }
     if (!plazoNuevo || plazoNuevo <= 0) { toast.error("Indica el nuevo plazo en meses."); return; }
-    const archivos = personas.flatMap((p) => p.archivos);
-    if (archivos.length === 0) { toast.error("No hay soportes adjuntos."); return; }
+    const archivos = personas.flatMap((p) => p.archivos).filter((a) => !a.bloqueado && a.dataUrl);
+    if (archivos.length === 0) { toast.error("No hay soportes adjuntos legibles."); return; }
+
 
     setEnviandoSolicitud(true);
     try {
