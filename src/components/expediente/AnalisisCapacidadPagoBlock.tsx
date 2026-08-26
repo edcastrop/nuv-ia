@@ -249,6 +249,34 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     return "otro";
   };
 
+  /** Construye la entrada local; si el PDF pide clave lo deja bloqueado. */
+  const construirArchivo = async (
+    nombre: string,
+    mime: string,
+    buffer: ArrayBuffer,
+  ): Promise<ArchivoLocal> => {
+    const base: ArchivoLocal = {
+      id: crypto.randomUUID(),
+      nombre,
+      mime,
+      size: buffer.byteLength,
+      tipo: tipoDocFromName(nombre),
+      dataUrl: bytesToDataUrl(new Uint8Array(buffer), mime),
+    };
+    if (mime !== "application/pdf") return base;
+    try {
+      const { probePdf } = await import("@/lib/pdfPasswordUnlock");
+      const probe = await probePdf(buffer);
+      if (probe.needsPassword) {
+        toast.warning(`${nombre} está protegido con contraseña. Ingrésala para que NUVIA pueda leerlo.`);
+        return { ...base, dataUrl: "", bloqueado: true, buffer };
+      }
+    } catch (e) {
+      console.error("probePdf", e);
+    }
+    return base;
+  };
+
   const procesarArchivo = async (f: File): Promise<ArchivoLocal[]> => {
     if (isCompressedUnsupported(f)) {
       toast.error(`${f.name}: solo soportamos .zip. Recomprime el archivo.`);
@@ -275,14 +303,8 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
             continue;
           }
           const mime = mimeFromName(base);
-          out.push({
-            id: crypto.randomUUID(),
-            nombre: base,
-            mime,
-            size: bytes.length,
-            tipo: tipoDocFromName(base),
-            dataUrl: bytesToDataUrl(bytes, mime),
-          });
+          const copia = bytes.slice().buffer as ArrayBuffer;
+          out.push(await construirArchivo(base, mime, copia));
         }
         if (out.length === 0) toast.warning(`${f.name}: no se encontraron PDFs o imágenes válidos.`);
         else toast.success(`${f.name}: ${out.length} documento(s) extraído(s).`);
@@ -297,15 +319,65 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
       toast.error(`${f.name} excede 10 MB.`);
       return [];
     }
+    const mime = f.type || mimeFromName(f.name);
+    if (mime === "application/pdf") {
+      return [await construirArchivo(f.name, mime, await f.arrayBuffer())];
+    }
     const dataUrl = await fileToDataUrl(f);
     return [{
       id: crypto.randomUUID(),
       nombre: f.name,
-      mime: f.type || mimeFromName(f.name),
+      mime,
       size: f.size,
       tipo: tipoDocFromName(f.name),
       dataUrl,
     }];
+  };
+
+  /** Desbloquea un PDF cifrado con la clave escrita por el analista.
+   *  Rasteriza las páginas a imágenes (igual que el lector de extractos). */
+  const desbloquearArchivo = async (idxPersona: number, idArchivo: string) => {
+    const persona = personas[idxPersona];
+    const archivo = persona?.archivos.find((a) => a.id === idArchivo);
+    const clave = (clavesPdf[idArchivo] ?? "").trim();
+    if (!archivo?.buffer || !clave) return;
+    setDesbloqueando(idArchivo);
+    try {
+      const { probePdf, renderPdfToJpegDataUrls } = await import("@/lib/pdfPasswordUnlock");
+      const probe = await probePdf(archivo.buffer, clave);
+      if (!probe.ok) {
+        setPersonas((prev) => prev.map((p, i) => i === idxPersona ? {
+          ...p,
+          archivos: p.archivos.map((a) => a.id === idArchivo ? { ...a, claveIncorrecta: true } : a),
+        } : p));
+        toast.error(`Contraseña incorrecta para ${archivo.nombre}.`);
+        return;
+      }
+      const imagenes = await renderPdfToJpegDataUrls(archivo.buffer, clave);
+      if (imagenes.length === 0) {
+        toast.error(`${archivo.nombre}: no se pudo leer ninguna página.`);
+        return;
+      }
+      const nuevos: ArchivoLocal[] = imagenes.map((dataUrl, i) => ({
+        id: crypto.randomUUID(),
+        nombre: imagenes.length > 1 ? `${archivo.nombre} (pág. ${i + 1})` : archivo.nombre,
+        mime: "image/jpeg",
+        size: Math.round((dataUrl.length * 3) / 4),
+        tipo: archivo.tipo,
+        dataUrl,
+      }));
+      setPersonas((prev) => prev.map((p, i) => i === idxPersona ? {
+        ...p,
+        archivos: p.archivos.flatMap((a) => (a.id === idArchivo ? nuevos : [a])),
+      } : p));
+      setClavesPdf((prev) => { const next = { ...prev }; delete next[idArchivo]; return next; });
+      toast.success(`${archivo.nombre} desbloqueado (${imagenes.length} página(s)).`);
+    } catch (e) {
+      console.error("desbloquearArchivo", e);
+      toast.error(`No se pudo desbloquear ${archivo.nombre}.`);
+    } finally {
+      setDesbloqueando(null);
+    }
   };
 
   const handleFiles = async (idxPersona: number, files: FileList | File[] | null) => {
@@ -320,6 +392,7 @@ export function AnalisisCapacidadPagoBlock({ expedienteId, banco, cuotaPropuesta
     if (nuevos.length === 0) return;
     setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: [...p.archivos, ...nuevos] } : p));
   };
+
 
   const removeArchivo = (idxPersona: number, idArchivo: string) => {
     setPersonas((prev) => prev.map((p, i) => i === idxPersona ? { ...p, archivos: p.archivos.filter((a) => a.id !== idArchivo) } : p));
