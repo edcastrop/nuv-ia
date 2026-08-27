@@ -31,11 +31,29 @@ export async function listDestinatarios(): Promise<DestinatarioContratacion[]> {
 }
 
 export async function addDestinatario(email: string, nombre?: string) {
+  const clean = email.trim().toLowerCase();
+  // Si el correo ya existe (posiblemente inactivo) se reactiva: agregarlo desde
+  // el modal siempre debe dejarlo utilizable para el envío.
+  const { data: existing, error: findErr } = await supabase
+    .from("contratacion_destinatarios")
+    .select("id")
+    .eq("email", clean)
+    .maybeSingle();
+  if (findErr) throw findErr;
+  if (existing) {
+    const { error } = await supabase
+      .from("contratacion_destinatarios")
+      .update({ activo: true, ...(nombre?.trim() ? { nombre: nombre.trim() } : {}) })
+      .eq("id", (existing as { id: string }).id);
+    if (error) throw error;
+    return;
+  }
   const { error } = await supabase
     .from("contratacion_destinatarios")
-    .insert({ email: email.trim().toLowerCase(), nombre: nombre?.trim() || null, activo: true });
+    .insert({ email: clean, nombre: nombre?.trim() || null, activo: true });
   if (error) throw error;
 }
+
 
 export async function setDestinatarioActivo(id: string, activo: boolean) {
   const { error } = await supabase
