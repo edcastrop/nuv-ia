@@ -381,8 +381,15 @@ export const enviarContratacion = createServerFn({ method: "POST" })
         activosLista,
       );
       if (rechazados.length > 0) {
-        console.warn("[contratacion] destinatarios rechazados (no activos)", { intentoId, rechazados });
+        // Fail-closed: nunca enviar un paquete parcial. Si algún destinatario
+        // seleccionado no está activo, se aborta el envío con mensaje claro.
+        const msg =
+          `Destinatarios no autorizados (inactivos): ${rechazados.join(", ")}. ` +
+          `Actívalos en la lista de destinatarios y vuelve a intentarlo.`;
+        await markError("destinatarios", msg);
+        throw new Error(msg);
       }
+
 
       // ───────────────────────────────────────────────────────────────────────
       // FASE 4 — Consistencia cotitular + ensamblado por subcategoría
