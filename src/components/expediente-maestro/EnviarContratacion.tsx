@@ -512,7 +512,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
                         type="checkbox"
                         checked={selected.has(d.email)}
                         disabled={esObligatorio && !obligatorioBloqueado}
-                        onChange={() => toggleSel(d.email)}
+                        onChange={() => { void toggleSel(d); }}
                       />
                       <div className="flex-1">
                         <div className="font-medium text-[#242424]">
