@@ -346,11 +346,25 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
     try { await deleteDestinatario(d.id); await reload(); } catch (e) { setError((e as Error).message); }
   };
 
-  const toggleSel = (email: string) => {
+  const toggleSel = async (d: DestinatarioContratacion) => {
+    const email = d.email;
     if (email.toLowerCase() === CORREO_OPERATIVO_OBLIGATORIO && !obligatorioBloqueado) {
       setError("El correo operativo de contratación no puede desmarcarse.");
       setSelected((prev) => new Set([...prev, CORREO_OPERATIVO_OBLIGATORIO]));
       return;
+    }
+    const marcando = !selected.has(email);
+    // El servidor sólo acepta destinatarios activos. Si se marca uno inactivo,
+    // se activa aquí para que UI y servidor compartan el mismo criterio.
+    if (marcando && !d.activo) {
+      try {
+        await setDestinatarioActivo(d.id, true);
+        await reload();
+        setError(null);
+      } catch (er) {
+        setError(`No se pudo activar ${email}: ${(er as Error).message}`);
+        return;
+      }
     }
     setSelected((prev) => {
       const n = new Set(prev);
@@ -358,6 +372,7 @@ function EnviarContratacionModal({ ctx, onClose, onSent }: { ctx: ContratacionCo
       return n;
     });
   };
+
 
   const handleSend = async () => {
     setError(null);
