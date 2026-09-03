@@ -202,3 +202,22 @@ export function resolveUVRByCoherence(opts: {
   }
   return { resolved: false, multipleCoherent: coherent.length > 1, triedCombinations: tried };
 }
+
+/**
+ * Parseo tolerante del "Valor UVR" (unidad UVR del día).
+ *
+ * Motivo: "416.491" es sintácticamente ambiguo (416,491 miles vs 416.491
+ * decimal). La UVR colombiana se mueve en un rango acotado (aprox. 100–2.000),
+ * por lo que cuando existen dos candidatos se elige el que cae en ese rango.
+ * Si ninguno o ambos caen, se devuelve `undefined` y el caller decide.
+ */
+export const UVR_VALUE_MIN = 50;
+export const UVR_VALUE_MAX = 5000;
+
+export function parseValorUVRField(input: unknown): number | undefined {
+  const cands = parseUVRNumberCandidates(input);
+  if (cands.length === 0) return undefined;
+  if (cands.length === 1) return cands[0];
+  const plausibles = cands.filter((n) => n >= UVR_VALUE_MIN && n <= UVR_VALUE_MAX);
+  return plausibles.length === 1 ? plausibles[0] : undefined;
+}
