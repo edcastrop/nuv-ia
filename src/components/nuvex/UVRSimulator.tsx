@@ -1657,7 +1657,7 @@ export function UVRSimulator({
                         variacionUVRPropuestas,
                         nuevaCuotaManual,
                         cuotasEliminarManual,
-                        propuestasComerciales: JSON.stringify(propuestasComercialesDraft ?? null),
+                        propuestasComerciales: JSON.stringify(propuestasComercialesPersist),
                         cuotaPagadaCliente: cobertura.cuotaPagadaCliente || "",
                         valorBeneficio: cobertura.valorCobertura || "",
                         tipoBeneficio: cobertura.tipoBeneficio || "",
