@@ -32,9 +32,15 @@ import {
 import { computePropuestaUVR } from "@/lib/propuestasEngine";
 import {
   parseUVRNumberCandidates,
+  parseValorUVRField,
   resolveUVRByCoherence,
   validateUVRCoherence,
 } from "../../lib/uvrNumber";
+
+// El "Valor UVR" puede venir con 3 decimales (ej "416.491"), formato
+// sintácticamente ambiguo. Se resuelve por rango real de la UVR.
+const parseValorUVRSeguro = (raw: string | number | null | undefined) =>
+  parseValorUVRField(raw) ?? parseDecimal(raw);
 
 import { PrintDocument } from "./PrintDocument";
 import { exportElementToPdf, sanitizeFileName } from "../../lib/pdfExport";
@@ -423,7 +429,7 @@ export function UVRSimulator({
       valorDesembolsado: valorDesembolsadoNum,
       saldoPesos: saldoPesosNum,
       saldoUVR: parseDecimal(saldoUVR),
-      valorUVR: parseDecimal(valorUVR),
+      valorUVR: parseValorUVRSeguro(valorUVR),
       cuotaActualPesos: cuotaSimulacionPesosNum,
       cuotaSinSeguros: cuotaSinSegurosNum,
       seguros: segurosNum,
@@ -769,7 +775,7 @@ export function UVRSimulator({
           cuotaBase: cuotaSimulacionPesosNum,
           cuotasPendientes,
           saldoUVR: parseDecimal(saldoUVR),
-          valorUVR: parseDecimal(valorUVR),
+          valorUVR: parseValorUVRSeguro(valorUVR),
           variacionUVR: parsePercentage(variacionUVR),
           nuevaCuota: recomendada?.nuevaCuota ?? null,
         },
@@ -854,7 +860,7 @@ export function UVRSimulator({
   // ── Snapshot canónico UVR desde el estado del formulario ─────────
   const currentQaSnapshot = useMemo(() => {
     const saldoUVRN = parseDecimal(saldoUVR);
-    const valorUVRN = parseDecimal(valorUVR);
+    const valorUVRN = parseValorUVRSeguro(valorUVR);
     const saldoPesosN = parseCurrency(saldoPesos);
     const cuotaN = parseCurrency(cuotaActualPesos);
     const teaN = parsePercentage(teaCobrada);
