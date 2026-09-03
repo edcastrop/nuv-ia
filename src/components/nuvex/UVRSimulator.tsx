@@ -600,6 +600,26 @@ export function UVRSimulator({
     };
   }, [escenariosResult]);
 
+  // ─── Persistencia server-side de las propuestas (credito_data) ────
+  // Antes sólo se guardaba el borrador del analista (`cuotasList` +
+  // `recomendadaIdx`), y `recomendadaIdx` quedaba en -1 cuando la
+  // recomendación venía del motor. Al reabrir el caso otro analista no
+  // veía ni la recomendación ni los escenarios calculados.
+  // Ahora persistimos el snapshot derivado completo (v2): lista de
+  // cuotas, índice recomendado real y los escenarios financieros.
+  const propuestasComercialesPersist = useMemo(() => {
+    if (propuestasComercialesSnapshot) {
+      return {
+        cuotasList: propuestasComercialesSnapshot.cuotasList,
+        recomendadaIdx: propuestasComercialesSnapshot.recomendadaIdx,
+        recommendedIndex: propuestasComercialesSnapshot.recommendedIndex,
+        escenarios: propuestasComercialesSnapshot.propuestas,
+      };
+    }
+    return propuestasComercialesDraft ?? null;
+  }, [propuestasComercialesSnapshot, propuestasComercialesDraft]);
+
+
   // ─── Papelera: ELIMINACIÓN REAL (sin sustitución) ────────────────
   // Contrato NUVIA v2 revisado: la papelera reduce la lista en uno.
   // - Nunca se busca sustituto ni se recalcula otra tarjeta.
