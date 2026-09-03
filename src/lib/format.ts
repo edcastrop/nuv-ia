@@ -39,12 +39,19 @@ export function parseDecimal(value: string | number | null | undefined): number 
       : unsigned.replace(/,/g, "");
   } else if (lastComma !== -1) {
     const parts = unsigned.split(",");
-    const last = parts.at(-1) ?? "";
-    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    // Sólo es separador de miles si TODOS los grupos siguientes tienen 3 dígitos
+    // Y el primer grupo tiene 1–3 dígitos ("1,342,298" sí; "1342298,376" no).
+    const thousands =
+      parts.length > 1 &&
+      /^\d{1,3}$/.test(parts[0]) &&
+      parts.slice(1).every((p) => p.length === 3);
     normalized = thousands ? unsigned.replace(/,/g, "") : unsigned.replace(",", ".");
   } else if (lastDot !== -1) {
     const parts = unsigned.split(".");
-    const thousands = parts.length > 1 && parts.slice(1).every((p) => p.length === 3);
+    const thousands =
+      parts.length > 1 &&
+      /^\d{1,3}$/.test(parts[0]) &&
+      parts.slice(1).every((p) => p.length === 3);
     normalized = thousands ? unsigned.replace(/\./g, "") : unsigned;
   }
   const parsed = parseFloat(`${negative ? "-" : ""}${normalized}`);
